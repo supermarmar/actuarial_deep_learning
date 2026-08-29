@@ -123,9 +123,11 @@ Everything else in `coding-standards.md`, `git-conventions.md` and the writing r
 - Never commit secrets, credentials or client data. Nothing from a Gini engagement enters this
   repo, and no example here borrows a client's parameters or figures.
 - Never commit `data/` or `.venv/`.
-- **Never add a git remote.** This repo stays local, because `lectures/`, `exercises/` and
-  `reference/` hold the course authors' own material rather than Mario's, and pushing it
-  anywhere would republish it. Decided 29 August 2026.
+- **This repo stays private.** `lectures/`, `exercises/` and `reference/` hold the course
+  authors' material rather than Mario's, so pushing to a public remote would republish it.
+  `origin` is `github.com/supermarmar/actuarial_deep_learning`. Confirm it is private before
+  any push, e.g. `gh repo view supermarmar/actuarial_deep_learning --json isPrivate`.
+  Decided 29 August 2026.
 - Never force-push `main`.
 
 ## Instructions for Claude Code
