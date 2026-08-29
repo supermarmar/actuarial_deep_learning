@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich, Ronald Richman">
+<meta name="dcterms.date" content="2026-09-03">
+
+<title>quarto-inpute5e323fe92768477</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="transformers_files/libs/clipboard/clipboard.min.js"></script>
+<script src="transformers_files/libs/quarto-html/quarto.js"></script>
+<script src="transformers_files/libs/quarto-html/popper.min.js"></script>
+<script src="transformers_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="transformers_files/libs/quarto-html/anchor.min.js"></script>
+<link href="transformers_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="transformers_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="transformers_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="transformers_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="transformers_files/libs/bootstrap/bootstrap-fa5de772639a04fa03a337443d63a7e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#transformers---building-blocks" id="toc-transformers---building-blocks" class="nav-link active" data-scroll-target="#transformers---building-blocks"><span class="header-section-number">1</span> Transformers - building blocks</a>
+  <ul class="collapse">
+  <li><a href="#basic-components-of-transformers" id="toc-basic-components-of-transformers" class="nav-link" data-scroll-target="#basic-components-of-transformers"><span class="header-section-number">1.1</span> Basic components of Transformers</a></li>
+  <li><a href="#time-distributed-layer" id="toc-time-distributed-layer" class="nav-link" data-scroll-target="#time-distributed-layer"><span class="header-section-number">1.2</span> Time-distributed layer</a></li>
+  <li><a href="#layer-normalization" id="toc-layer-normalization" class="nav-link" data-scroll-target="#layer-normalization"><span class="header-section-number">1.3</span> Layer normalization</a></li>
+  <li><a href="#example-layer-normalization-time-distributed-fnn" id="toc-example-layer-normalization-time-distributed-fnn" class="nav-link" data-scroll-target="#example-layer-normalization-time-distributed-fnn"><span class="header-section-number">1.4</span> Example: layer normalization &amp; time-distributed FNN</a></li>
+  <li><a href="#attention-layer" id="toc-attention-layer" class="nav-link" data-scroll-target="#attention-layer"><span class="header-section-number">1.5</span> Attention layer</a></li>
+  <li><a href="#sequential-input-data" id="toc-sequential-input-data" class="nav-link" data-scroll-target="#sequential-input-data"><span class="header-section-number">1.6</span> Sequential input data</a></li>
+  <li><a href="#query-key-and-value" id="toc-query-key-and-value" class="nav-link" data-scroll-target="#query-key-and-value"><span class="header-section-number">1.7</span> Query, key and value</a></li>
+  <li><a href="#attention-head" id="toc-attention-head" class="nav-link" data-scroll-target="#attention-head"><span class="header-section-number">1.8</span> Attention head</a></li>
+  <li><a href="#discussion-of-attention-heads" id="toc-discussion-of-attention-heads" class="nav-link" data-scroll-target="#discussion-of-attention-heads"><span class="header-section-number">1.9</span> Discussion of attention heads</a></li>
+  <li><a href="#multi-head-attention" id="toc-multi-head-attention" class="nav-link" data-scroll-target="#multi-head-attention"><span class="header-section-number">1.10</span> Multi-head attention</a></li>
+  </ul></li>
+  <li><a href="#transformers-for-sequential-data" id="toc-transformers-for-sequential-data" class="nav-link" data-scroll-target="#transformers-for-sequential-data"><span class="header-section-number">2</span> Transformers for sequential data</a>
+  <ul class="collapse">
+  <li><a href="#transformer-layer" id="toc-transformer-layer" class="nav-link" data-scroll-target="#transformer-layer"><span class="header-section-number">2.1</span> Transformer layer</a></li>
+  <li><a href="#illustration-of-a-transformer-layer" id="toc-illustration-of-a-transformer-layer" class="nav-link" data-scroll-target="#illustration-of-a-transformer-layer"><span class="header-section-number">2.2</span> Illustration of a Transformer layer</a></li>
+  <li><a href="#remarks-on-transformer-layers" id="toc-remarks-on-transformer-layers" class="nav-link" data-scroll-target="#remarks-on-transformer-layers"><span class="header-section-number">2.3</span> Remarks on Transformer layers</a></li>
+  <li><a href="#positional-index" id="toc-positional-index" class="nav-link" data-scroll-target="#positional-index"><span class="header-section-number">2.4</span> Positional index</a></li>
+  <li><a href="#time-causality" id="toc-time-causality" class="nav-link" data-scroll-target="#time-causality"><span class="header-section-number">2.5</span> Time-causality</a></li>
+  <li><a href="#example-of-a-transformer-layer" id="toc-example-of-a-transformer-layer" class="nav-link" data-scroll-target="#example-of-a-transformer-layer"><span class="header-section-number">2.6</span> Example of a Transformer layer</a></li>
+  </ul></li>
+  <li><a href="#transformers-for-tabular-data" id="toc-transformers-for-tabular-data" class="nav-link" data-scroll-target="#transformers-for-tabular-data"><span class="header-section-number">3</span> Transformers for tabular data</a>
+  <ul class="collapse">
+  <li><a href="#input-tensor-construction" id="toc-input-tensor-construction" class="nav-link" data-scroll-target="#input-tensor-construction"><span class="header-section-number">3.1</span> Input tensor construction</a></li>
+  <li><a href="#categorical-covariates-entity-embedding-revisited" id="toc-categorical-covariates-entity-embedding-revisited" class="nav-link" data-scroll-target="#categorical-covariates-entity-embedding-revisited"><span class="header-section-number">3.2</span> Categorical covariates: entity embedding, revisited</a></li>
+  <li><a href="#continuous-covariates-and-2d-tensors" id="toc-continuous-covariates-and-2d-tensors" class="nav-link" data-scroll-target="#continuous-covariates-and-2d-tensors"><span class="header-section-number">3.3</span> Continuous covariates and 2D tensors</a></li>
+  <li><a href="#cls-token" id="toc-cls-token" class="nav-link" data-scroll-target="#cls-token"><span class="header-section-number">3.4</span> CLS token</a></li>
+  <li><a href="#the-augmented-input-tensor" id="toc-the-augmented-input-tensor" class="nav-link" data-scroll-target="#the-augmented-input-tensor"><span class="header-section-number">3.5</span> The augmented input tensor</a></li>
+  <li><a href="#the-cls-token-encoding" id="toc-the-cls-token-encoding" class="nav-link" data-scroll-target="#the-cls-token-encoding"><span class="header-section-number">3.6</span> The CLS token encoding</a></li>
+  <li><a href="#remark-positional-encodings" id="toc-remark-positional-encodings" class="nav-link" data-scroll-target="#remark-positional-encodings"><span class="header-section-number">3.7</span> Remark positional encodings</a></li>
+  </ul></li>
+  <li><a href="#the-credibility-transformer" id="toc-the-credibility-transformer" class="nav-link" data-scroll-target="#the-credibility-transformer"><span class="header-section-number">4</span> The credibility Transformer</a>
+  <ul class="collapse">
+  <li><a href="#the-augmented-input-tensor-revisited" id="toc-the-augmented-input-tensor-revisited" class="nav-link" data-scroll-target="#the-augmented-input-tensor-revisited"><span class="header-section-number">4.1</span> The augmented input tensor, revisited</a></li>
+  <li><a href="#transformer-layer-and-cls-token-encoding" id="toc-transformer-layer-and-cls-token-encoding" class="nav-link" data-scroll-target="#transformer-layer-and-cls-token-encoding"><span class="header-section-number">4.2</span> Transformer layer and CLS token encoding</a></li>
+  <li><a href="#prior-cls-token" id="toc-prior-cls-token" class="nav-link" data-scroll-target="#prior-cls-token"><span class="header-section-number">4.3</span> Prior CLS token</a></li>
+  <li><a href="#credibility-inspired-mechanism" id="toc-credibility-inspired-mechanism" class="nav-link" data-scroll-target="#credibility-inspired-mechanism"><span class="header-section-number">4.4</span> Credibility-inspired mechanism</a></li>
+  <li><a href="#remarks-on-the-credibility-transformer" id="toc-remarks-on-the-credibility-transformer" class="nav-link" data-scroll-target="#remarks-on-the-credibility-transformer"><span class="header-section-number">4.5</span> Remarks on the credibility Transformer</a></li>
+  <li><a href="#example-credibility-transformer" id="toc-example-credibility-transformer" class="nav-link" data-scroll-target="#example-credibility-transformer"><span class="header-section-number">4.6</span> Example: Credibility Transformer</a></li>
+  <li><a href="#the-hidden-credibility-mechanism" id="toc-the-hidden-credibility-mechanism" class="nav-link" data-scroll-target="#the-hidden-credibility-mechanism"><span class="header-section-number">4.7</span> The hidden credibility mechanism</a></li>
+  <li><a href="#conclusions-and-summary" id="toc-conclusions-and-summary" class="nav-link" data-scroll-target="#conclusions-and-summary"><span class="header-section-number">4.8</span> Conclusions and summary</a></li>
+  </ul></li>
+  <li><a href="#appendix-drop-out-layer" id="toc-appendix-drop-out-layer" class="nav-link" data-scroll-target="#appendix-drop-out-layer"><span class="header-section-number">5</span> Appendix: Drop-out layer</a></li>
+  <li><a href="#copyright" id="toc-copyright" class="nav-link" data-scroll-target="#copyright">Copyright</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><div class="line-block">Lectures 10 &amp; 11: Attention Layers, Transformers and Credibility Transformers</div></h1>
+<p class="subtitle lead"></p><div class="line-block">Deep Learning for Actuarial Modeling<br>
+Summer School ‘Lifelong Learning’<br>
+Università Cattolica del Sacro Cuore, Milano</div><p></p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich, Ronald Richman </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 3, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    Attention layers are fundamental components of the Transformer architecture, which have achieved remarkable success across a wide range of tasks. This notebook introduces the core concepts of attention, it discusses positional encoding and CLS tokens, and it introduces the Transformer and the Credibility Transformer architectures.
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="transformers---building-blocks" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Transformers - building blocks</h1>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p><em>Transformers</em> are a class of deep learning architectures that have revolutionized natural language processing (NLP).</p></li>
+<li><p>Transformers are at the core of the great success of large language models (LLMs).</p></li>
+<li><p>Transformer architectures replace traditional recurrent and convolutional structures by <em>attention layers</em>.</p></li>
+<li><p>Attention layers use <em>weighting schemes</em> to identify and prioritize the most relevant information and their interactions.</p></li>
+<li><p>The first section of this lecture introduces auxiliary building blocks before diving into the theory of Transformers.</p></li>
+</ul>
+</div>
+</div>
+<hr>
+<p><img src="Vaswani.png" class="img-fluid" style="width:90.0%"></p>
+<ul>
+<li>Transformers and attention layers were introduced in the celebrated work of <span class="citation" data-cites="vaswani2017attention">Vaswani <em>et al.</em> (<a href="#ref-vaswani2017attention" role="doc-biblioref">2017</a>)</span>.</li>
+<li>People say that this is the most important deep learning paper of the last decade.</li>
+</ul>
+<section id="basic-components-of-transformers" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="basic-components-of-transformers"><span class="header-section-number">1.1</span> Basic components of Transformers</h2>
+<p>Transformers are sophisticated architectures that combine multiple layers. Before discussing the Transformer architecture, we introduce the key layers that serve as building blocks of these advanced architectures.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="transformer_capsule.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:45.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="time-distributed-layer" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="time-distributed-layer"><span class="header-section-number">1.2</span> Time-distributed layer</h2>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>We generally work with <em>2D tensors</em> in this lecture given by <em>sequential data</em> <span class="math display">\[\boldsymbol{X}_{1:t}=\Big[
+\boldsymbol{X}_1 , \ldots , \boldsymbol{X}_t
+\Big]^\top
+\in \mathbb{R}^{t \times q},\]</span> with <em>time slices</em> <span class="math inline">\(\boldsymbol{X}_u \in \mathbb{R}^q\)</span> at time points <span class="math inline">\(u=1,\ldots, t\)</span>, and having <span class="math inline">\(q\)</span> <em>channels</em>.</p></li>
+<li><p>A <em>time-distributed layer</em> applies the <em>identical</em> operation to every component (time slice) <span class="math inline">\(\boldsymbol{X}_u\)</span> of the sequential data <span class="math inline">\(\boldsymbol{X}_{1:t} \in \mathbb{R}^{t \times q}\)</span>.</p></li>
+<li><p>We illustrate a <em>time-distributed FNN layer</em> in this section.</p></li>
+</ul>
+</div>
+</div>
+<hr>
+<ul>
+<li><p>Let <span class="math inline">\(\boldsymbol{z}^{\mathrm{FNN}}: \mathbb{R}^q \to \mathbb{R}^{q_1}\)</span> be a FNN layer with <span class="math inline">\(q_1\)</span> units/neurons.</p></li>
+<li><p>A time-distributed FNN layer with <span class="math inline">\(q_1\)</span> units performs the mapping <span class="math display">\[\begin{eqnarray*}
+\boldsymbol{z}^{\mathrm{t\text{-}FNN}}&amp;:&amp; \mathbb{R}^{t \times q} \to \mathbb{R}^{t \times q_1},
+\\&amp;&amp;
+\boldsymbol{X}_{1:t} \mapsto \boldsymbol{z}^{\mathrm{t\text{-}FNN}} (\boldsymbol{X}_{1:t}) =
+\left( \boldsymbol{z}^{\mathrm{FNN}}(\boldsymbol{X}_1), \ldots, \boldsymbol{z}^{\mathrm{FNN}}(\boldsymbol{X}_t) \right)^\top.
+\end{eqnarray*}\]</span></p></li>
+<li><p>This transformation leaves the time dimension <span class="math inline">\(t\)</span> unchanged.</p></li>
+<li><p>Important, the same parameters (network biases and weights) are shared across all time steps <span class="math inline">\(1\le u \le t\)</span>, i.e., the same transformation <span class="math inline">\(\boldsymbol{z}^{\mathrm{FNN}}\)</span> is applied to all time slices <span class="math inline">\(\boldsymbol{X}_u\)</span>.</p></li>
+<li><p>This makes the FNN layer a so-called <em>time-distributed</em> one.</p></li>
+<li><p>There is no interaction between different time slices <span class="math inline">\(\boldsymbol{X}_u\)</span> and <span class="math inline">\(\boldsymbol{X}_s\)</span>, <span class="math inline">\(u\neq s\)</span>!</p></li>
+</ul>
+</section>
+<section id="layer-normalization" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="layer-normalization"><span class="header-section-number">1.3</span> Layer normalization</h2>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><em>Layer normalization</em>, introduced by <span class="citation" data-cites="ba2016layer">Ba, Kiros and Hinton (<a href="#ref-ba2016layer" role="doc-biblioref">2016</a>)</span>, is a technique used to improve the learning process, i.e., to robustify and accelerate convergence of SGD.<br>
+</li>
+<li>A layer normalization is applied to the <em>individual</em> instances <span class="math inline">\(\boldsymbol{X}_{i, 1:t}\)</span> across <em>all</em> covariate (feature) components – this is not affected by the batch size.</li>
+<li>In contrast, <em>batch normalization</em> of <span class="citation" data-cites="ioffe2015">Ioffe and Szegedy (<a href="#ref-ioffe2015" role="doc-biblioref">2015</a>)</span> is applied for a fixed covariate component across all instances in the batch; additionally, batch normalization often involves a moving average mechanism for having stability across multiple batches.</li>
+</ul>
+</div>
+</div>
+<hr>
+<ul>
+<li><p>For sequential data <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span>, a <em>layer normalization</em> is a mapping <span class="math display">\[\begin{eqnarray*}
+\boldsymbol{z}^{\text{norm}} : \mathbb{R}^{t \times q} &amp;\to&amp; \mathbb{R}^{t\times q}, \\  \boldsymbol{X}_{1:t} &amp;\mapsto&amp; \boldsymbol{z}^{\text{norm}} ( \boldsymbol{X}_{1:t}) = \left( \gamma_j \left( \frac{ {X}_{u,j} -  \bar{X}_u}{\sqrt{s_u^2 + \epsilon}} \right) + \delta_j\right)_{1\le u \le t, 1\le j \le q},
+\end{eqnarray*}\]</span> where <span class="math inline">\(\epsilon &gt; 0\)</span> is a small constant added for numerical stability.</p></li>
+<li><p>The empirical means <span class="math inline">\(\bar{X}_u \in \mathbb{R}\)</span> and variances <span class="math inline">\(s_u^2 \in \mathbb{R}_+\)</span> are computed within the time slices <span class="math display">\[
+\bar{X}_u= \frac{1}{{q}} \sum_{j=1}^{q} X_{u,j} \qquad \text{ and } \qquad
+s_u^2 = \frac{1}{q} \sum_{j=1}^{q} (X_{u,j} - \bar{X}_u)^2.\]</span></p></li>
+<li><p><span class="math inline">\(\boldsymbol{\gamma} = (\gamma_1, \ldots, \gamma_{q})^\top \in \mathbb{R}^{q}\)</span> and <span class="math inline">\(\boldsymbol{\delta} = (\delta_1, \ldots, \delta_{q})^\top \in \mathbb{R}^{q}\)</span> are two vectors of trainable parameters.</p></li>
+<li><p>This adds <span class="math inline">\(2q\)</span> trainable parameters.</p></li>
+</ul>
+</section>
+<section id="example-layer-normalization-time-distributed-fnn" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="example-layer-normalization-time-distributed-fnn"><span class="header-section-number">1.4</span> Example: layer normalization &amp; time-distributed FNN</h2>
+<p>The following code shows a layer normalization followed by a time-distributed FNN layer processing the input tensor <span class="math inline">\(\boldsymbol{X}_{1:t}\in \mathbb{R}^{t \times q}\)</span>.</p>
+<p>The following <code>TD_1layer</code> function takes the following arguments:</p>
+<ul>
+<li><code>seed</code>: to ensure reproducibility of results (initialization of weights);<br>
+</li>
+<li><code>input_size</code>: input dimension of the 2D tensor (sequence length <span class="math inline">\(t\)</span> and number of channels <span class="math inline">\(q\)</span>);</li>
+<li><code>td_units</code>: number of neurons in the <code>time_distributed</code> FNN layer.</li>
+</ul>
+<p>The layer normalization layer is called <code>layer_layer_normalization</code>; see next code.</p>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>TD_1layer <span class="ot">&lt;-</span> <span class="cf">function</span>(seed, input_size, td_units) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">k_clear_session</span>(); <span class="fu">set.seed</span>(seed); <span class="fu">set_random_seed</span>(seed)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># input layer</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    Design <span class="ot">&lt;-</span> <span class="fu">layer_input</span>(<span class="at">shape =</span> input_size, <span class="at">dtype =</span> <span class="st">'float32'</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">#  layer normalization and time-distributed FNN layer</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    Output <span class="ot">&lt;-</span> Design <span class="sc">%&gt;%</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>       <span class="fu">layer_layer_normalization</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>       <span class="fu">time_distributed</span>(<span class="fu">layer_dense</span>(<span class="at">units =</span> td_units, <span class="at">activation =</span> <span class="st">'relu'</span>))</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># define model</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">keras_model</span>(<span class="at">inputs =</span> Design, <span class="at">outputs =</span> Output)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>To understand its functioning and parametrization, it is useful to have a numerical example.</li>
+</ul>
+<hr>
+<ul>
+<li>This example uses an input tensor of dimension <span class="math inline">\((t,q)=(10,5)\)</span> and the time-distributed FNN layer has <span class="math inline">\(q_1=8\)</span>.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>model <span class="ot">=</span> <span class="fu">TD_1layer</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">100</span>, </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">input_size =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">5</span>),    <span class="co"># time steps t=10 and channels q=5 </span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">td_units =</span> <span class="dv">8</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li><p>The time-distributed FNN layer has <span class="math inline">\((q+1)q_1=6\cdot 8=48\)</span> parameters.</p></li>
+<li><p>The layer normalization adds another <span class="math inline">\(2q=10\)</span> (time-distributed) parameters to the architecture.</p></li>
+<li><p>The sequence length <span class="math inline">\(t\)</span> does not impact the number of parameters because all operations are performed in a time-distributed manner.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(model)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Model: "model"
+________________________________________________________________________________
+ Layer (type)                       Output Shape                    Param #     
+================================================================================
+ input_1 (InputLayer)               [(None, 10, 5)]                 0           
+ layer_normalization (LayerNormali  (None, 10, 5)                   10          
+ zation)                                                                        
+ time_distributed (TimeDistributed  (None, 10, 8)                   48          
+ )                                                                              
+================================================================================
+Total params: 58 (232.00 Byte)
+Trainable params: 58 (232.00 Byte)
+Non-trainable params: 0 (0.00 Byte)
+________________________________________________________________________________</code></pre>
+</div>
+</div>
+<ul>
+<li><p>Up to this stage, the time slices <span class="math inline">\(\boldsymbol{X}_u\)</span> have not interacted, yet!</p></li>
+<li><p>In fact, this can be seen as a simultaneous pre-processing of all time slices before they start to interact.</p></li>
+</ul>
+</section>
+<section id="attention-layer" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="attention-layer"><span class="header-section-number">1.5</span> Attention layer</h2>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p><em>Attention layers</em> are the <em>key building blocks</em> of <em>Transformers</em>.</p></li>
+<li><p>Attention layers are designed to identify the most relevant information in the input data.</p></li>
+<li><p>The central idea is to learn a weighting scheme that prioritizes the most important parts and their interactions.</p></li>
+<li><p>Different attention mechanisms are available in the literature. Our focus is on the most commonly used variant called <em>scaled dot-product attention</em>.</p></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="sequential-input-data" class="level2" data-number="1.6">
+<h2 data-number="1.6" class="anchored" data-anchor-id="sequential-input-data"><span class="header-section-number">1.6</span> Sequential input data</h2>
+<p>Attention layers were first designed for sequential input data.</p>
+<p>The starting point is an input sequence of elements:</p>
+<p><span class="math display">\[
+\boldsymbol{X}_{1:t} =
+\big[ \boldsymbol{X}_1, \,  \, \dots, \, \boldsymbol{X}_t \big]^\top
+\in \mathbb{R}^{t \times q},
+\]</span></p>
+<p>where (again):</p>
+<ul>
+<li><span class="math inline">\(t\)</span> is length of the sequence,<br>
+</li>
+<li><span class="math inline">\(q\)</span> is dimension of the series (number of channels),<br>
+</li>
+<li><span class="math inline">\(\boldsymbol{X}_u \in \mathbb{R}^q\)</span> is the <span class="math inline">\(u\)</span>-th time slice, with <span class="math inline">\(1 \leq u \leq t\)</span>.</li>
+</ul>
+<p>Below, we are also going to apply attention to tabular input data, but this will require suitable pre-processing.</p>
+</section>
+<section id="query-key-and-value" class="level2" data-number="1.7">
+<h2 data-number="1.7" class="anchored" data-anchor-id="query-key-and-value"><span class="header-section-number">1.7</span> Query, key and value</h2>
+<p>In order to be applied, an attention layer requires the following elements:</p>
+<ul>
+<li><p>Queries <span class="math inline">\(\boldsymbol{q}_u \in \mathbb{R}^q,\; 1 \leq u \leq t\)</span>:</p>
+<ul>
+<li><p>The query <span class="math inline">\(\boldsymbol{q}_u\)</span> represents what the <span class="math inline">\(u\)</span>-th time slice is trying to find in the overall input.</p></li>
+<li><p>It acts like <em>question asking</em>: “What information is relevant to me?”</p></li>
+</ul></li>
+<li><p>Keys <span class="math inline">\(\boldsymbol{k}_u \in \mathbb{R}^q,\; 1 \leq u \leq t\)</span>:</p>
+<ul>
+<li><p>The key <span class="math inline">\(\boldsymbol{k}_u\)</span> describes what the <span class="math inline">\(u\)</span>-th time slice can offer to others.</p></li>
+<li><p>It functions like <em>label indicating</em>: “This is the kind of information I carry”.</p></li>
+</ul></li>
+<li><p>Values <span class="math inline">\(\boldsymbol{v}_u \in \mathbb{R}^q,\; 1 \leq u \leq t\)</span>:</p>
+<ul>
+<li><p>The value <span class="math inline">\(\boldsymbol{v}_u\)</span> contains the actual content that can be shared.</p></li>
+<li><p>When a query matches a key, the corresponding value is passed along as useful context.</p></li>
+</ul></li>
+</ul>
+<hr>
+<ul>
+<li>Colloquially speaking, the input data <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span> is going to be equipped with <em>queries</em> <span class="math inline">\(\boldsymbol{q}_{1:t}\)</span> and <em>keys</em> <span class="math inline">\(\boldsymbol{k}_{1:t}\)</span> that communicate with each other.</li>
+</ul>
+<div class="callout callout-style-default callout-tip no-icon callout-titled" title="Attention mechanism">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Attention mechanism
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <em>query</em> <span class="math inline">\(\boldsymbol{q}_u\)</span> searches for a <em>key</em> <span class="math inline">\(\boldsymbol{k}_s\)</span> that gives a match. E.g., in a sentence, the query of the subject ‘car’ tries to find a verb ‘accelerate’ in the sentence. This would give a match for a dangerous driving maneuver, and a high attention is paid to the corresponding <em>value</em> <span class="math inline">\(\boldsymbol{v}_s\)</span>.</p>
+</div>
+</div>
+<ul>
+<li><p>Queries, keys and values are represented by the three 2D tensors <span class="math display">\[\begin{eqnarray*}
+Q &amp;:=&amp; \boldsymbol{q}_{1:t}~=~\left[\boldsymbol{q}_1, \ldots, \boldsymbol{q}_t\right]^\top \in \mathbb{R}^{t \times q},
+\\
+K &amp;:=&amp; \boldsymbol{k}_{1:t}~=~\left[\boldsymbol{k}_1, \ldots, \boldsymbol{k}_t\right]^\top \in \mathbb{R}^{t \times q},
+\\
+V &amp;:=&amp; \boldsymbol{v}_{1:t}~=~\left[\boldsymbol{v}_1, \ldots, \boldsymbol{v}_t\right]^\top \in \mathbb{R}^{t \times q}.
+\end{eqnarray*}\]</span> <span class="math inline">\(\triangleright\)</span> Their explicit construction will be discussed later, below.</p></li>
+<li><p>Careful: <span class="math inline">\(q\)</span> is the number of channels and <span class="math inline">\(\boldsymbol{q}_u\)</span> are the queries.</p></li>
+</ul>
+</section>
+<section id="attention-head" class="level2" data-number="1.8">
+<h2 data-number="1.8" class="anchored" data-anchor-id="attention-head"><span class="header-section-number">1.8</span> Attention head</h2>
+<ul>
+<li><p>The <em>attention head</em> <span class="math inline">\(H\)</span> is defined by the mapping <span class="math display">\[
+(Q,K,V) ~\mapsto~ H = H(Q, K, V)~\in~ \mathbb{R}^{t \times q}, \]</span> with scaled <em>dot-product attention</em> <span class="math display">\[
+H = A\,V = \operatorname{softmax}\left(\frac{Q K^{\top}}{\sqrt{q}}\right) V ~\in~ \mathbb{R}^{t \times q}.\]</span></p></li>
+<li><p>The <em>attention matrix</em> <span class="math inline">\(A \in \mathbb{R}^{t \times t}\)</span> is obtained by applying the softmax function <em>row-wise</em> to the matrix <span class="math inline">\(A^\circ := QK^\top / \sqrt{q}\)</span>, that is, <span class="math display">\[
+A = \operatorname{softmax}(A^\circ), \qquad \text{with} \quad a_{u,s} = \frac{\exp(a^\circ_{u,s})}{\sum_{k=1}^{t} \exp(a^\circ_{u,k})} \in (0,1). \]</span> <span class="math inline">\(\Longrightarrow\)</span> This ensures that the rows sums of <span class="math inline">\(A\)</span> are equal to one.</p></li>
+</ul>
+</section>
+<section id="discussion-of-attention-heads" class="level2" data-number="1.9">
+<h2 data-number="1.9" class="anchored" data-anchor-id="discussion-of-attention-heads"><span class="header-section-number">1.9</span> Discussion of attention heads</h2>
+<ul>
+<li><p>Recalling the notation. We have query and key tensors <span class="math display">\[
+Q = \left[\boldsymbol{q}_1, \ldots, \boldsymbol{q}_t\right]^\top \in \mathbb{R}^{t \times q}
+\quad \text{and} \quad
+K = \left[\boldsymbol{k}_1, \ldots, \boldsymbol{k}_t\right]^\top \in \mathbb{R}^{t \times q}. \]</span> The elements <span class="math inline">\(a^\circ_{u,s}\)</span> of matrix <span class="math inline">\(A^\circ\)</span> are given by the dot-product <span class="math display">\[
+a^\circ_{u,s} = \frac{1}{\sqrt{q}}\, \boldsymbol{q}_u^\top \boldsymbol{k}_s
+= \frac{1}{\sqrt{q}}\, \left\langle \boldsymbol{q}_u, \boldsymbol{k}_s \right\rangle=   \boldsymbol{q}_u \cdot \boldsymbol{k}_s/\sqrt{q};\]</span> these are three ways to write a scalar product; see also next figure.</p></li>
+<li><p>The scaling factor <span class="math inline">\(\sqrt{q}\)</span> removes the input dimension dependence. I.e., it prevents the dot-product operation from being too flat or too spiky.</p></li>
+<li><p>Each entry of the attention head <span class="math inline">\(H=A\,V\)</span> is a weighted average of the columns of the value matrix <span class="math inline">\(V\)</span>. The weights <span class="math inline">\(a_{u,s}\)</span> determine the <em>importance</em> of each row vector <span class="math inline">\(\boldsymbol{v}_s\)</span> of <span class="math inline">\(V\)</span>.</p></li>
+</ul>
+<hr>
+<p><img src="querykey0.png" class="img-fluid" style="width:105.0%"></p>
+<ul>
+<li><p>If the query <span class="math inline">\(\boldsymbol{q}_u\)</span> points into the same direction as the key <span class="math inline">\(\boldsymbol{k}_s\)</span>, we receive a large attention weight <span class="math inline">\(a_{u,s}\)</span> (supposed all vectors have roughly the same length).</p></li>
+<li><p>This implies that the corresponding entry <span class="math inline">\(\boldsymbol{v}_s\)</span> on the <span class="math inline">\(s\)</span>-th row of the value matrix <span class="math inline">\(V\)</span> receives a big attention, i.e., the information <span class="math inline">\(\boldsymbol{v}_s\)</span> at time <span class="math inline">\(s\)</span> is important for period <span class="math inline">\(u\)</span> (the query <span class="math inline">\(\boldsymbol{q}_u\)</span> at time <span class="math inline">\(u\)</span>).</p></li>
+</ul>
+</section>
+<section id="multi-head-attention" class="level2" data-number="1.10">
+<h2 data-number="1.10" class="anchored" data-anchor-id="multi-head-attention"><span class="header-section-number">1.10</span> Multi-head attention</h2>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>An attention head <span class="math inline">\(H\)</span> can be interpreted like a single neuron in a FNN layer because it uses a single set of parameters.</p></li>
+<li><p>Similar to FNN layers, we can have <em>multiple attention heads</em> <span class="math inline">\(H_j\)</span> <em>in parallel</em> that perform the attention mechanism with different sets of parameters.</p></li>
+<li><p>This give the <em>multi-head attention mechanism</em>, allowing the model to focus more effectively on different parts of the input sequence simultaneously.</p></li>
+</ul>
+</div>
+</div>
+<hr>
+<ul>
+<li><p>The <em>multi-head attention</em> mechanism applies <span class="math inline">\(n_h \ge 2\)</span> attention heads to the sequential input <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span> in parallel.</p></li>
+<li><p>Assume the <span class="math inline">\(j\)</span>-th attention head is given by the query, key and value <span class="math inline">\(Q_j\)</span>, <span class="math inline">\(K_j\)</span>, and <span class="math inline">\(V_j\)</span>, respectively, defining the <span class="math inline">\(j\)</span>-th attention head <span class="math display">\[
+H_j=H_j(\boldsymbol{X}_{1:t}) =A_jV_j= \operatorname{softmax}\left(Q_j K_j^\top/\sqrt{q}\right) V_j \in \mathbb{R}^{t \times q}. \]</span></p></li>
+<li><p>These heads are concatenated and linearly transformed <span class="math display">\[
+H_{\text{MH}}(\boldsymbol{X}_{1:t}) = \operatorname{Concat}\left(H_1, H_2, \dots, H_{n_h}\right) W \in \mathbb{R}^{t \times q}, \]</span> with an output weight matrix <span class="math inline">\(W \in \mathbb{R}^{n_hq \times q}\)</span>.</p></li>
+<li><p>This concatenation and linear transformation is performed to ensure that the multi-head attention <span class="math inline">\(H_{\text{MH}} \in \mathbb{R}^{t \times q}\)</span> has the same dimension <span class="math inline">\((t,q)\)</span> as the input.</p></li>
+<li><p>This multi-head attention is further processed as described below.</p></li>
+</ul>
+</section>
+</section>
+<section id="transformers-for-sequential-data" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Transformers for sequential data</h1>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>We are now ready to dive into the theory of Transformers for sequential data.</p></li>
+<li><p>This applies the attention mechanism precisely using the interpretation as discussed above.</p></li>
+<li><p>We present the so-called <em>self-attention mechanism</em> by letting the query, key and value be functions of the input tensor <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span>.</p></li>
+<li><p>This self-attention mechanism uses time-distributed FNNs to construct the queries, keys and values from the sequential input data.</p></li>
+</ul>
+</div>
+</div>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="transformer_capsule.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="transformer-layer" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="transformer-layer"><span class="header-section-number">2.1</span> Transformer layer</h2>
+<ul>
+<li><p>Consider input data with a sequential structure represented in a 2D tensor form <span class="math inline">\(\boldsymbol{X}_{1:t} \in \mathbb{R}^{t \times q}\)</span>.</p></li>
+<li><p>The 1st module of the Transformer architecture is a <em>layer normalization</em>.</p></li>
+<li><p>The 2nd module of the Transformer architecture is the <em>attention layer</em>.</p></li>
+<li><p>To apply the attention mechanism to the (layer normalized) input data <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span>, we need to construct the query <span class="math inline">\(Q\)</span>, key <span class="math inline">\(K\)</span>, and value <span class="math inline">\(V\)</span> matrices.</p></li>
+<li><p>We select <em>3 time-distributed</em> <span class="math inline">\(q\)</span>-dimensional FNNs <span class="math display">\[
+\boldsymbol{z}_\kappa^{\text{t-FNN}} : \mathbb{R}^{t \times q} \to \mathbb{R}^{t \times q}, \qquad \boldsymbol{X}_{1:t} \mapsto \boldsymbol{z}_\kappa^{\text{t-FNN}}(\boldsymbol{X}_{1:t}), \]</span> for the query, key and value <span class="math inline">\(\kappa =Q, K, V\)</span>, respectively.</p></li>
+</ul>
+<hr>
+<ul>
+<li><p>These give us the time-slices for fixed time points <span class="math inline">\(1 \le u \le t\)</span> <span class="math display">\[
+\begin{aligned}
+\boldsymbol{q}_u &amp;= \boldsymbol{z}^{\text{FNN}}_Q(\boldsymbol{X}_u) = \phi_Q \left( \boldsymbol{w}_0^{(Q)} + W^{(Q)} \boldsymbol{X}_u \right) \in \mathbb{R}^q, \\
+\boldsymbol{k}_u &amp;= \boldsymbol{z}^{\text{FNN}}_K(\boldsymbol{X}_u) = \phi_K \left( \boldsymbol{w}_0^{(K)} + W^{(K)} \boldsymbol{X}_u \right) \in \mathbb{R}^q, \\
+\boldsymbol{v}_u &amp;= \boldsymbol{z}^{\text{FNN}}_V(\boldsymbol{X}_u) = \phi_V \left( \boldsymbol{w}_0^{(V)} + W^{(V)} \boldsymbol{X}_u \right) \in \mathbb{R}^q,
+\end{aligned}\]</span> with corresponding network weights, biases, and activation functions.</p></li>
+<li><p>This reads in 2D tensor notation as <span class="math display">\[
+\begin{aligned}
+Q &amp;= \boldsymbol{z}^{\text{t-FNN}}_Q(\boldsymbol{X}_{1:t}) = \left[ \boldsymbol{q}_1, \ldots, \boldsymbol{q}_t \right]^\top \in \mathbb{R}^{t \times q}, \\
+K &amp;= \boldsymbol{z}^{\text{t-FNN}}_K(\boldsymbol{X}_{1:t}) = \left[ \boldsymbol{k}_1, \ldots, \boldsymbol{k}_t \right]^\top \in \mathbb{R}^{t \times q}, \\
+V &amp;= \boldsymbol{z}^{\text{t-FNN}}_V(\boldsymbol{X}_{1:t}) = \left[ \boldsymbol{v}_1, \ldots, \boldsymbol{v}_t \right]^\top \in \mathbb{R}^{t \times q}.
+\end{aligned}\]</span></p></li>
+<li><p>This is solely based on the time-series <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span> (<em>self-attention</em>) and every time slice uses the same parameters (time-distributed FNNs).</p></li>
+</ul>
+<p><span class="math inline">\(\qquad \Longrightarrow~\)</span> There is no interaction across time slices, yet!</p>
+<hr>
+<ul>
+<li><p>The <em>attention head</em> received from input <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span> is given by <span class="math display">\[ H = H(\mathbf{X}_{1:t}) = \operatorname{softmax}\left(Q K^\top/\sqrt{q}\right)V \in \mathbb{R}^{t \times q}.\]</span></p></li>
+<li><p>Next, we add a so-called <em>skip connection</em> <span class="math display">\[
+\boldsymbol{z}^{\text{skip}}(\boldsymbol{X}_{1:t}) := \boldsymbol{X}_{1:t} + H(\boldsymbol{X}_{1:t}) \in \mathbb{R}^{t \times q}.\]</span> It’s like a higher order perturbation in a Taylor series.</p></li>
+<li><p>Finally, we layer-normalize, pass through a time-distributed FNN layer and skip-connect again. This defines the <em>Transformer layer</em> <span class="math display">\[
+\boldsymbol{z}^{\text{trans}}(\boldsymbol{X}_{1:t}) = \boldsymbol{z}^{\text{skip}}(\boldsymbol{X}_{1:t}) + \left( \boldsymbol{z}^{\text{t-FNN}} \circ \boldsymbol{z}^{\text{norm}}\right) \left(\boldsymbol{z}^{\text{skip}}(\boldsymbol{X}_{1:t})\right)\in \mathbb{R}^{t \times q}.\]</span></p></li>
+<li><p>The Transformer layer preserves the dimension of the 2D input tensor, but it <em>transforms</em> its elements by the attention mechanism.</p></li>
+</ul>
+</section>
+<section id="illustration-of-a-transformer-layer" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="illustration-of-a-transformer-layer"><span class="header-section-number">2.2</span> Illustration of a Transformer layer</h2>
+<p><img src="transformer.png" id="fig:transformer" class="img-fluid" style="width:90.0%"></p>
+</section>
+<section id="remarks-on-transformer-layers" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="remarks-on-transformer-layers"><span class="header-section-number">2.3</span> Remarks on Transformer layers</h2>
+<ul>
+<li><p>The Transformer layer encodes (transforms) the sequential data <span class="math inline">\(\boldsymbol{X}_{1:t}\in \mathbb{R}^{t \times q}\)</span> into a new 2D tensor <span class="math inline">\(\boldsymbol{z}^{\text{trans}}(\boldsymbol{X}_{1:t})\in \mathbb{R}^{t \times q}\)</span> of the same dimension.</p></li>
+<li><p>One can easily replace the (single) attention head <span class="math inline">\(H\)</span> by a multi-head attention <span class="math inline">\(H_{\text{MH}}\)</span>.</p></li>
+<li><p>Multiple Transformer layers can be stacked (composed). This leads to deep Transformer architectures.</p></li>
+<li><p>There are two critical issues:</p>
+<ol type="1">
+<li><p>The Transformer layer does not have any notion of time.</p></li>
+<li><p>The Transformer layer does not respect time-causality.</p></li>
+</ol></li>
+</ul>
+</section>
+<section id="positional-index" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="positional-index"><span class="header-section-number">2.4</span> Positional index</h2>
+<ul>
+<li><p>To deal with the first issue of notion of time: add <em>positional indices</em> to the time-series data <span class="math inline">\(\boldsymbol{X}_{1:t}\)</span>.</p></li>
+<li><p>A simple way to do so is to extend the time slices to <span class="math display">\[\boldsymbol{X}_{u}=(X_{u,1}, \ldots, X_{u,q}, u/t)^\top \in \mathbb{R}^{q+1}, \]</span> thus, we add an extra channel for the normalized positional encoding.</p></li>
+<li><p>Following <span class="citation" data-cites="vaswani2017attention">Vaswani <em>et al.</em> (<a href="#ref-vaswani2017attention" role="doc-biblioref">2017</a>)</span>, it can be beneficial to add multiple positional encodings in different units. This facilitates learning the right functional forms. E.g., add sine and cosine functions <span class="math display">\[\boldsymbol{X}_{u}=\left(X_{u,1}, \ldots, X_{u,q}, u/t, \sin(2\pi t/u), \cos(2\pi t/u)\right)^\top \in \mathbb{R}^{q+3}, \]</span></p></li>
+<li><p>The latter can be done for different frequencies, also known as <em>Rotary Position Embedding</em> (RoPE).</p></li>
+</ul>
+</section>
+<section id="time-causality" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="time-causality"><span class="header-section-number">2.5</span> Time-causality</h2>
+<ul>
+<li><p>The raw elements <span class="math inline">\(a^\circ_{u,s}\)</span> entering the attention matrix <span class="math inline">\(A\)</span> are given by the dot-product operation <span class="math display">\[
+a^\circ_{u,s}=\boldsymbol{q}_u \cdot \boldsymbol{k}_s/\sqrt{q}.\]</span></p></li>
+<li><p>The attention matrix <span class="math inline">\(A \in \mathbb{R}^{t \times t}\)</span> is obtained by applying the softmax function <em>row-wise</em> to the matrix <span class="math inline">\(A^\circ := QK^\top / \sqrt{q}\)</span>, that is, <span class="math display">\[
+A = \operatorname{softmax}(A^\circ), \qquad \text{with} \quad a_{u,s} = \frac{\exp(a^\circ_{u,s})}{\sum_{k=1}^{t} \exp(a^\circ_{u,k})} \in (0,1). \]</span></p></li>
+<li><p>This allows for interactions between any query <span class="math inline">\(\boldsymbol{q}_u\)</span> and any key <span class="math inline">\(\boldsymbol{k}_s\)</span>.</p></li>
+<li><p>In time-causal situations, the query <span class="math inline">\(\boldsymbol{q}_u\)</span> should not be allowed to access the key <span class="math inline">\(\boldsymbol{k}_s\)</span> if <span class="math inline">\(s&gt;u\)</span> (information after time <span class="math inline">\(u\)</span>).</p></li>
+</ul>
+<hr>
+<ul>
+<li><p>A time-causal Transformer layer is received by <em>masking</em> the attention weights that violate time-causality.</p></li>
+<li><p>Therefore, set <span class="math display">\[a^\circ_{u,s}=\left\{\begin{array}{ll}\boldsymbol{q}_u \cdot \boldsymbol{k}_s/\sqrt{q}&amp; \text{ if $s \le u$},\\ - \infty &amp; \text{ if $s&gt;u$}.\end{array}\right.\]</span></p></li>
+<li><p>This implies <span class="math display">\[a_{u,s}=\exp(-\infty)=0 \qquad \text{ for all $s&gt;u$.}\]</span></p></li>
+<li><p>Therefore, this time-causal version disregards all information <span class="math inline">\(\boldsymbol{X}_{s}\)</span> and <span class="math inline">\(\boldsymbol{v}_{s}\)</span> that occurred after time <span class="math inline">\(u\)</span> (query <span class="math inline">\(\boldsymbol{q}_u\)</span>).</p></li>
+<li><p>Since the attention layer is the only place where time slices interact in the Transformer layer, this does the job for time-causality.</p></li>
+</ul>
+</section>
+<section id="example-of-a-transformer-layer" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="example-of-a-transformer-layer"><span class="header-section-number">2.6</span> Example of a Transformer layer</h2>
+<p>The following code defines a (non-time causal) Transformer layer.</p>
+<p>The <code>transf_layer</code> function takes the following arguments:</p>
+<ul>
+<li><code>seed</code>: to ensure reproducibility of results;<br>
+</li>
+<li><code>input_size</code>: the input dimension of the sequential data (sequence length <span class="math inline">\(t\)</span> and number of channels <span class="math inline">\(q\)</span>).</li>
+</ul>
+<p>The attention layer in <code>keras</code> needs special care because the order of the inputs to <code>layer_attention</code> is (<code>query</code>, <code>value</code>, <code>key</code>).</p>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>transf_layer <span class="ot">&lt;-</span> <span class="cf">function</span>(seed, input_size) {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">k_clear_session</span>(); <span class="fu">set.seed</span>(seed); <span class="fu">set_random_seed</span>(seed)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  q <span class="ot">=</span> input_size[<span class="dv">2</span>]</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  Design <span class="ot">=</span> <span class="fu">layer_input</span>(<span class="at">shape =</span> <span class="fu">c</span>(input_size[<span class="dv">1</span>], q), <span class="at">dtype =</span> <span class="st">'float32'</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Deriving Q, K, V (we drop the initial layer normalization)</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  Q <span class="ot">=</span> Design <span class="sc">%&gt;%</span> <span class="fu">time_distributed</span>(<span class="fu">layer_dense</span>(<span class="at">units =</span> q, <span class="at">activation =</span> <span class="st">"tanh"</span>))  </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  K <span class="ot">=</span> Design <span class="sc">%&gt;%</span> <span class="fu">time_distributed</span>(<span class="fu">layer_dense</span>(<span class="at">units =</span> q, <span class="at">activation =</span> <span class="st">"tanh"</span>)) </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  V <span class="ot">=</span> Design <span class="sc">%&gt;%</span> <span class="fu">time_distributed</span>(<span class="fu">layer_dense</span>(<span class="at">units =</span> q, <span class="at">activation =</span> <span class="st">"tanh"</span>)) </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Attention mechanism</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  Attention <span class="ot">&lt;-</span> <span class="fu">list</span>(Q, V, K) <span class="sc">%&gt;%</span> <span class="fu">layer_attention</span>(<span class="at">use_scale =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># </span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  skip_1 <span class="ot">&lt;-</span> <span class="fu">layer_add</span>(<span class="fu">list</span>(Attention, Design))</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  skip_2 <span class="ot">&lt;-</span> skip_1 <span class="sc">%&gt;%</span> <span class="fu">layer_layer_normalization</span>() <span class="sc">%&gt;%</span> <span class="fu">time_distributed</span>(<span class="fu">layer_dense</span>(<span class="at">units =</span> q))</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="co">#</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  Output <span class="ot">&lt;-</span> <span class="fu">layer_add</span>(<span class="fu">list</span>(skip_1, skip_2))</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">keras_model</span>(<span class="at">inputs =</span> Design, <span class="at">outputs =</span> Output)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  }</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+<ul>
+<li>The next example showcases how to create a single-headed and single-layered Transformer architecture.</li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>model <span class="ot">=</span> <span class="fu">transf_layer</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">100</span>, </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">input_size =</span> <span class="fu">c</span>(<span class="dv">10</span>, <span class="dv">5</span>)    <span class="co"># length t=10 of time-series and q=5 channels</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li><p>This architecture has 130 parameters (this is independent of <span class="math inline">\(t\)</span>!):</p>
+<ul>
+<li>90 to create the query, key and value;</li>
+<li>10 for the layer normalization;</li>
+<li>30 for the time-distributed FNN.</li>
+</ul></li>
+<li><p><code>use_scale = TRUE</code> gives a trainable scaling in the attention scores.</p></li>
+<li><p>The output of this architecture is a 2D tensor of the same dimension <span class="math inline">\((t,q)=(10,5)\)</span> as the input.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output cell-output-stdout">
+<pre><code>Model: "model"
+________________________________________________________________________________
+ Layer (type)           Output Shape            Param   Connected to            
+                                                 #                              
+================================================================================
+ input_1 (InputLayer)   [(None, 10, 5)]         0       []                      
+ time_distributed (Tim  (None, 10, 5)           30      ['input_1[0][0]']       
+ eDistributed)                                                                  
+ time_distributed_2 (T  (None, 10, 5)           30      ['input_1[0][0]']       
+ imeDistributed)                                                                
+ time_distributed_1 (T  (None, 10, 5)           30      ['input_1[0][0]']       
+ imeDistributed)                                                                
+ attention (Attention)  (None, 10, 5)           0       ['time_distributed[0][0]
+                                                        ',                      
+                                                         'time_distributed_2[0][
+                                                        0]',                    
+                                                         'time_distributed_1[0][
+                                                        0]']                    
+ add (Add)              (None, 10, 5)           0       ['attention[0][0]',     
+                                                         'input_1[0][0]']       
+ layer_normalization (  (None, 10, 5)           10      ['add[0][0]']           
+ LayerNormalization)                                                            
+ time_distributed_3 (T  (None, 10, 5)           30      ['layer_normalization[0]
+ imeDistributed)                                        [0]']                   
+ add_1 (Add)            (None, 10, 5)           0       ['add[0][0]',           
+                                                         'time_distributed_3[0][
+                                                        0]']                    
+================================================================================
+Total params: 130 (520.00 Byte)
+Trainable params: 130 (520.00 Byte)
+Non-trainable params: 0 (0.00 Byte)
+________________________________________________________________________________</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="transformers-for-tabular-data" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Transformers for tabular data</h1>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>The excellent predictive performance of Transformers on sequential data motivated modelers to also apply Transformer architectures to tabular input data <span class="math inline">\(\boldsymbol{X}\)</span>.</p></li>
+<li><p>There are several modifications of Transformers to tabular inputs. We focus on the approach proposed by <span class="citation" data-cites="gorishniy2024tabm">Gorishniy, Kotelnikov and Babenko (<a href="#ref-gorishniy2024tabm" role="doc-biblioref">2024</a>)</span>.</p></li>
+<li><p>The key idea lies in <em>feature tokenization</em> which converts all original covariates – both categorical and continuous ones – into the same format resulting in a 2D tensor.</p></li>
+</ul>
+</div>
+</div>
+<section id="input-tensor-construction" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="input-tensor-construction"><span class="header-section-number">3.1</span> Input tensor construction</h2>
+<ul>
+<li><p>Consider the <em>raw</em> tabular (vector) inputs <span class="math inline">\(\boldsymbol{X}=(X_1,\ldots, X_q)^\top\)</span>.</p></li>
+<li><p>Assume this raw input data consists of:</p>
+<ul>
+<li><p><span class="math inline">\(q_c\)</span> categorical covariates <span class="math inline">\((X_j)_{j=1}^{q_c}\)</span>, and</p></li>
+<li><p><span class="math inline">\(q - q_c\)</span> continuous (numerical) covariates <span class="math inline">\((X_j)_{j=q_c+1}^{q}\)</span>.</p></li>
+</ul></li>
+<li><p>We <em>embed</em> both types of covariates into a <span class="math inline">\(b\)</span>-dimensional Euclidean space <span class="math inline">\(\mathbb{R}^b\)</span>, where <span class="math inline">\(b\)</span> is a hyper-parameter selected by the modeler.</p></li>
+<li><p>For categorical variables, this has already been presented in the chapter of <em>entity embedding</em>, and it is frequently used in FNN architectures, but also in large language models (LLMs).</p></li>
+<li><p>For continuous variables, we present an interesting method that is very effective in many problems.</p></li>
+</ul>
+</section>
+<section id="categorical-covariates-entity-embedding-revisited" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="categorical-covariates-entity-embedding-revisited"><span class="header-section-number">3.2</span> Categorical covariates: entity embedding, revisited</h2>
+<ul>
+<li><p>For categorical covariates we use entity embedding.</p></li>
+<li><p>Entity embedding was introduced in the lectures on Wednesday.</p></li>
+<li><p>Assume that the categorical covariate <span class="math inline">\(X_j\)</span> takes the levels in the finite set <span class="math inline">\({\cal A}_j=\{a_1, \ldots, a_{K_j}\}\)</span>.</p></li>
+<li><p>An entity embedding of <span class="math inline">\(X_j\)</span> is given by the mapping <span class="math display">\[
+\text{\color{blue}{$\boldsymbol{e}_j^{\text{EE}}$}}: \mathcal{A}_j \to \mathbb{R}^b, \qquad X_j \mapsto \text{\color{blue}{$\boldsymbol{e}_j^{\text{EE}}$}} := \text{\color{blue}{$\boldsymbol{e}_j^{\text{EE}}(X_j)$}}. \]</span></p></li>
+<li><p>All categorical covariates share the same embedding dimension <span class="math inline">\(b\)</span>.</p></li>
+<li><p>The categorical covariates involve <span class="math inline">\(b \sum_{j=1}^{q_c} K_j\)</span> embedding weights to be learned.</p></li>
+</ul>
+</section>
+<section id="continuous-covariates-and-2d-tensors" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="continuous-covariates-and-2d-tensors"><span class="header-section-number">3.3</span> Continuous covariates and 2D tensors</h2>
+<ul>
+<li><p>For the continuous covariates <span class="math inline">\(X_j\)</span>, <span class="math inline">\(j=q_c + 1, \ldots, q\)</span>, we perform a <span class="math inline">\(b\)</span>-dimensional <em>embedding via FNNs</em> <span class="math display">\[
+\text{\color{teal}{$\boldsymbol{z}^{\rm FNN}_j$}} : \mathbb{R} \to \mathbb{R}^b, \qquad X_j \mapsto \text{\color{teal}{$\boldsymbol{z}_j$}} := \text{\color{teal}{$\boldsymbol{z}^{\rm FNN}_j(X_j)$}},\]</span> e.g., <span class="math inline">\(\text{\color{teal}{$\boldsymbol{z}^{\rm FNN}_j(\cdot)$}}\)</span> can be FNNs of depth 2 for covariate <span class="math inline">\(X_j\)</span>.</p></li>
+<li><p>Similarly to generalized additive models (GAMs), this facilitates marginal modeling of covariates <span class="math inline">\(X_j\)</span> for non-linear structures.</p></li>
+<li><p>I.e., a main difficulty in fitting plain-vanilla FNNs with SGD is to find suitable functional forms for the input components. This <span class="math inline">\(b\)</span>-dimensional embedding is a sort of pre-processing to bring all continuous components into a suitable functional form.</p></li>
+<li><p>Another successful proposal by <span class="citation" data-cites="Gorishniy2022">Gorishniy, Rubachev and Babenko (<a href="#ref-Gorishniy2022" role="doc-biblioref">2022</a>)</span> is called <em>piecewise linear encoding</em> (PLE). In some sense, it can be understood as a continuous version of categorical binning.</p></li>
+</ul>
+<hr>
+<ul>
+<li><p>Collecting all embedded categorical and continuous covariates gives us the 2D tensor <span class="math display">\[
+\boldsymbol{X}^\circ_{1:q} := \left[\text{\color{blue}{$\boldsymbol{e}_1^{\text{EE}}$}}, \dots, \text{\color{blue}{$\boldsymbol{e}_{q_c}^{\text{EE}}$}}, \text{\color{teal}{$\boldsymbol{z}_{q_c + 1}$}}, \dots, \text{\color{teal}{$\boldsymbol{z}_{q}$}}\right]^\top \in \mathbb{R}^{q \times b}.\]</span></p></li>
+<li><p>This 2D tensor has the correct shape to enter a Transformer:</p>
+<ul>
+<li><p><span class="math inline">\(q\)</span> plays the role of the time dimension, and</p></li>
+<li><p><span class="math inline">\(b\)</span> is the number of channels.</p></li>
+</ul></li>
+<li><p>Naturally, there is no time-causal structure here, i.e., covariate components can be arbitrarily permuted before entering the Transformer layer.</p></li>
+</ul>
+</section>
+<section id="cls-token" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="cls-token"><span class="header-section-number">3.4</span> CLS token</h2>
+<ul>
+<li><p>Before processing the 2D tensor <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\)</span> of the embedded covariates through a Transformer layer, we add a special token to the input tensor.</p></li>
+<li><p>This special token is going to be used to <em>encode</em> the input data <span class="math inline">\(\boldsymbol{X}\)</span>.</p></li>
+<li><p>This idea is borrowed from <span class="citation" data-cites="devlin2019bert">Devlin <em>et al.</em> (<a href="#ref-devlin2019bert" role="doc-biblioref">2019</a>)</span> in BERT (bidirectional encoder representations from transformers), which adds a special token – called <em>classify (CLS) token</em> – to the tensor to encode the probabilities of the next word in a text.</p></li>
+<li><p>Our CLS token will not represent a probability but a real number. Nevertheless, we keep the notion <em>CLS token</em> to emphasize its similar role as in BERT.</p></li>
+<li><p>The CLS token <span class="math inline">\(\text{\color{orange}{$\boldsymbol{c}=(c_1,\ldots, c_b)^\top$}}\in \mathbb{R}^b\)</span> is added to every column of the input tensor <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\in \mathbb{R}^{q \times b}\)</span>.</p></li>
+</ul>
+</section>
+<section id="the-augmented-input-tensor" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="the-augmented-input-tensor"><span class="header-section-number">3.5</span> The augmented input tensor</h2>
+<ul>
+<li><p>The <em>augmented input tensor</em> is defined by <span class="math display">\[
+\boldsymbol{X}_{1:q+1} =
+\begin{bmatrix}
+\boldsymbol{X}^\circ_{1:q} \\
+\text{\color{orange}{$\boldsymbol{c}^\top$}}
+\end{bmatrix}
+=
+\left[\text{\color{blue}{$\boldsymbol{e}_1^{\text{EE}}$}}, \dots, \text{\color{blue}{$\boldsymbol{e}_{q_c}^{\text{EE}}$}}, \text{\color{teal}{$\boldsymbol{z}_{q_c + 1}$}}, \dots, \text{\color{teal}{$\boldsymbol{z}_{q}$}}, \text{\color{orange}{$\boldsymbol{c}$}}
+\right]^\top
+\in \mathbb{R}^{(q+1) \times b}.\]</span></p></li>
+<li><p>Scalar <span class="math inline">\(\color{orange}{c_k}\)</span> is used to encode the <span class="math inline">\(k\)</span>-th column of the input tensor <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\)</span>.</p></li>
+</ul>
+<p><img src="AugmentedTensor.png" class="img-fluid" style="width:100.0%"></p>
+<ul>
+<li><span class="math inline">\(q+1\)</span> plays the role of the time dimension, and <span class="math inline">\(b\)</span> is the number of channels; there is no time-causality here.</li>
+</ul>
+</section>
+<section id="the-cls-token-encoding" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="the-cls-token-encoding"><span class="header-section-number">3.6</span> The CLS token encoding</h2>
+<ul>
+<li><p>The CLS token <span class="math inline">\(\boldsymbol{c}\)</span> is randomly initialized not carrying any information <em>before</em> interacting with the other covariate components.</p></li>
+<li><p>We process the augmented input tensor through a Transformer layer <span class="math display">\[
+\boldsymbol{z}^{\text{trans}}: \mathbb{R}^{(q+1) \times b} \to \mathbb{R}^{(q+1) \times b}, \qquad \boldsymbol{X}_{1:q+1} \mapsto \boldsymbol{z}^{\text{trans}}(\boldsymbol{X}_{1:q+1}).\]</span></p></li>
+<li><p>The last row of the Transformer output <span class="math inline">\(\boldsymbol{z}^{\text{trans}}(\boldsymbol{X}_{1:q+1})\)</span> corresponds to the <em>transformed CLS token</em>, and we set <span class="math display">\[
+\boldsymbol{c}^{\text{trans}}(\boldsymbol{X}) := \boldsymbol{z}_{q+1}^{\text{trans}}(\boldsymbol{X}_{1:q+1}) \in \mathbb{R}^b.\]</span></p></li>
+</ul>
+<div class="callout callout-style-default callout-tip no-icon callout-titled" title="Transformed CLS token">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Transformed CLS token
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><em>After</em> interacting with the other covariate components through the attention mechanism, this transformed CLS token <span class="math inline">\(\boldsymbol{c}^{\text{trans}}(\boldsymbol{X})\)</span> has <em>learned an encoded representation</em> of the original covariates <span class="math inline">\(\boldsymbol{X}\)</span>.</p>
+</div>
+</div>
+<hr>
+<ul>
+<li><p>For further processing, only this encoded representation is forwarded <span class="math display">\[
+\boldsymbol{X} \mapsto \boldsymbol{c}^{\text{trans}}(\boldsymbol{X}) \mapsto \cdots.\]</span></p></li>
+<li><p>The final step is to decode the transformed CLS token <span class="math inline">\(\boldsymbol{c}^{\text{trans}}(\boldsymbol{X})\)</span> to a prediction for the response.</p></li>
+<li><p>For example, for insurance claims modeling, one often selects the log-link, and one may set <span class="math display">\[
+\mu^{\text{trans}}(\boldsymbol{X}) = \exp \left( \left(\boldsymbol{z}^{\text{FNN}} \circ \operatorname{tanh} \circ \, \boldsymbol{z}^{\text{norm}}\right)\left(\boldsymbol{c}^{\text{trans}}(\boldsymbol{X}) \right) \right),\]</span> which includes a layer normalization, a hyperbolic tangent activation, and a FNN layer with a one-dimensional output.</p></li>
+<li><p>This architecture is illustrated in the next graph.</p></li>
+</ul>
+<hr>
+<p><img src="transformer_tabular.png" id="fig:transformer_tabular" class="img-fluid" style="width:100.0%"></p>
+</section>
+<section id="remark-positional-encodings" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="remark-positional-encodings"><span class="header-section-number">3.7</span> Remark positional encodings</h2>
+<ul>
+<li><p>For the tabular input data <span class="math inline">\(\boldsymbol{X}=(X_1,\ldots, X_q)^\top\)</span>, position <span class="math inline">\(k=1,\ldots, q\)</span> of covariate component <span class="math inline">\(X_k\)</span> does not have a specific meaning.</p></li>
+<li><p>Nevertheless, adding positional encodings can be beneficial. Empirical evidence has shown that this facilitates learning the interactions between the covariate components.</p></li>
+</ul>
+<p><img src="AugmentedTensor2.png" class="img-fluid" style="width:90.0%"></p>
+</section>
+</section>
+<section id="the-credibility-transformer" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> The credibility Transformer</h1>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p>The predictive performance of the Transformer on tabular data can further be improved by integrating a credibility mechanism.</p></li>
+<li><p>This credibility mechanism is inspired by <em>Bühlmann credibility</em>; <span class="citation" data-cites="BuhlmannCredibility">Bühlmann (<a href="#ref-BuhlmannCredibility" role="doc-biblioref">1967</a>)</span> and <span class="citation" data-cites="buehlmann1970">Bühlmann and Straub (<a href="#ref-buehlmann1970" role="doc-biblioref">1970</a>)</span>. It balances the impact of instance-individual information and global portfolio behavior.</p></li>
+<li><p>This architecture is called <em>credibility Transformer</em> (CT), and it is one of the most powerful network architectures on tabular data nowadays.</p></li>
+</ul>
+</div>
+</div>
+<p>The credibility Transformer was introduced in <span class="citation" data-cites="richman2025credibility">Richman, Scognamiglio and Wüthrich (<a href="#ref-richman2025credibility" role="doc-biblioref">2025</a>)</span>.</p>
+<section id="the-augmented-input-tensor-revisited" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="the-augmented-input-tensor-revisited"><span class="header-section-number">4.1</span> The augmented input tensor, revisited</h2>
+<ul>
+<li><p>We start from the <em>augmented input tensor</em> <span class="math display">\[
+\boldsymbol{X}_{1:q+1} =
+\begin{bmatrix}
+\boldsymbol{X}^\circ_{1:q} \\
+\text{\color{orange}{$\boldsymbol{c}^\top$}}
+\end{bmatrix}
+=
+\left[\text{\color{blue}{$\boldsymbol{e}_1^{\text{EE}}$}}, \dots, \text{\color{blue}{$\boldsymbol{e}_{q_c}^{\text{EE}}$}}, \text{\color{teal}{$\boldsymbol{z}_{q_c + 1}$}}, \dots, \text{\color{teal}{$\boldsymbol{z}_{q}$}}, \text{\color{orange}{$\boldsymbol{c}$}}
+\right]^\top
+\in \mathbb{R}^{(q+1) \times b}.\]</span></p></li>
+<li><p>Recall: the CLS token <span class="math inline">\(\color{orange}{\boldsymbol{c}}\)</span> with components <span class="math inline">\(\color{orange}{c_k}\)</span> are used to encode the columns <span class="math inline">\(k\)</span> of the input tensor <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\)</span>.</p></li>
+</ul>
+<p><img src="AugmentedTensor.png" class="img-fluid" style="width:100.0%"></p>
+<ul>
+<li><span class="math inline">\(q+1\)</span> reflects the time direction <span class="math inline">\(t\)</span>, and there are <span class="math inline">\(b\)</span> channels; the above shows the transposed 2D tensor <span class="math inline">\(\boldsymbol{X}_{1:q+1}^\top\)</span>.</li>
+</ul>
+</section>
+<section id="transformer-layer-and-cls-token-encoding" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="transformer-layer-and-cls-token-encoding"><span class="header-section-number">4.2</span> Transformer layer and CLS token encoding</h2>
+<ul>
+<li><p>The augmented input tensor <span class="math inline">\(\boldsymbol{X}_{1:q+1}\)</span> is processed through the Transformer layer <span class="math display">\[
+\boldsymbol{z}^{\text{trans}}: \mathbb{R}^{(q+1) \times b} \to \mathbb{R}^{(q+1) \times b}, \qquad \boldsymbol{X}_{1:q+1} \mapsto \boldsymbol{z}^{\text{trans}}(\boldsymbol{X}_{1:q+1}), \]</span> taking the structure as introduced above: <span class="math display">\[ \boldsymbol{z}^{\text{trans}}(\boldsymbol{X}_{1:q+1})=\boldsymbol{z}^{\text{skip}}(\boldsymbol{X}_{1:q+1})+\left(\boldsymbol{z}^{\text{t-FNN}} \circ \boldsymbol{z}^{\text{norm}}\right)\left(\boldsymbol{z}^{\text{skip}}\left(\boldsymbol{X}_{1:q+1}\right)\right).\]</span></p></li>
+<li><p>Note, <span class="citation" data-cites="richman2025credibility">Richman, Scognamiglio and Wüthrich (<a href="#ref-richman2025credibility" role="doc-biblioref">2025</a>)</span> consider a more complicated architecture which, in essence, serves the same purpose.</p></li>
+<li><p>For further processing, we only read-out the transformed CLS token <span class="math display">\[
+\boldsymbol{c}^{\text{trans}}(\boldsymbol{X}) = \boldsymbol{z}_{q+1}^{\text{trans}}(\boldsymbol{X}_{1:q+1}) ~\in~ \mathbb{R}^b.\]</span></p></li>
+<li><p>This CLS token is <em>fully data driven</em>, as it encodes the tensor <span class="math inline">\(\boldsymbol{X}_{1:q+1}\)</span>.</p></li>
+</ul>
+</section>
+<section id="prior-cls-token" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="prior-cls-token"><span class="header-section-number">4.3</span> Prior CLS token</h2>
+<ul>
+<li><p>The above CLS token <span class="math inline">\(\boldsymbol{c}^{\text{trans}}(\boldsymbol{X})\)</span> is fully data driven.</p></li>
+<li><p>We define its prior counterpart (not considering the covariates <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\)</span>).</p></li>
+<li><p>For this, we take the value <span class="math inline">\(\boldsymbol{v}_{q+1}\)</span> of the CLS token <span class="math inline">\(\boldsymbol{c}\)</span> <em>before interacting</em> with the covariates <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\)</span>.</p></li>
+<li><p>This prior value of the CLS token is given by <span class="math display">\[
+\boldsymbol{v}_{q+1} = \boldsymbol{z}^{\text{FNN}}_V(\boldsymbol{X}_{q+1}) = \boldsymbol{z}^{\text{FNN}}_V(\boldsymbol{c}) \in \mathbb{R}^b.\]</span> One could still add the skip connections, but it has turned out to not be necessary.</p></li>
+<li><p>The <em>prior token</em> is obtained by running the value <span class="math inline">\(\boldsymbol{v}_{q+1}\)</span> through the same chain of transformation (with identical parameters as the Transformer) to bring it into the <em>CLS token space</em> <span class="math display">\[
+\boldsymbol{c}^{\text{prior}} =
+\left(\boldsymbol{z}^{\text{FNN}} \circ \boldsymbol{z}^{\text{norm}} \right)(\boldsymbol{v}_{q+1}) \in \mathbb{R}^{b}.\]</span></p></li>
+</ul>
+</section>
+<section id="credibility-inspired-mechanism" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="credibility-inspired-mechanism"><span class="header-section-number">4.4</span> Credibility-inspired mechanism</h2>
+<ul>
+<li><p>In the credibility Transformer, both tokens <span class="math inline">\(\boldsymbol{c}^{\rm prior}\)</span> and <span class="math inline">\(\boldsymbol{c}^{\rm trans}(\boldsymbol{X})\)</span> are used for prediction.</p></li>
+<li><p>During SGD training, we randomly select between the <em>prior token</em> <span class="math inline">\(\boldsymbol{c}^{\rm prior}\)</span> and the <em>data driven token</em> <span class="math inline">\(\boldsymbol{c}^{\rm trans}(\boldsymbol{X})\)</span>.</p></li>
+<li><p>Select a fixed probability weight <span class="math inline">\(\alpha \in [0,1]\)</span>.</p></li>
+<li><p>During each SGD iteration, sample new i.i.d. Bernoulli random variables <span class="math inline">\(Z \sim\text{Bernoulli}(\alpha)\)</span>.</p></li>
+<li><p>Set during SGD training <span class="math display">\[
+\boldsymbol{c}^{\text{cred}} = Z \, \boldsymbol{c}^{\text{trans}}(\boldsymbol{X}) + (1 - Z) \, \boldsymbol{c}^{\text{prior}} \in \mathbb{R}^{b}.\]</span></p></li>
+<li><p>Thus, we randomly select the prior or the data driven token, allowing to train both of them simultaneously.</p></li>
+</ul>
+<hr>
+<p><img src="transformer_credibility.png" id="fig:transformer_credibility" class="img-fluid" style="width:100.0%"></p>
+<hr>
+<ul>
+<li><p>The last step of the credibility Transformer is the readout (decoder).</p></li>
+<li><p>For this, we run the credibility token <span class="math inline">\(\boldsymbol{c}^{\text{cred}}(\boldsymbol{X})\)</span> through a FNN decoder. E.g., we may consider <span class="math display">\[
+\boldsymbol{X} \mapsto \mu^{\text{cred}}(\boldsymbol{X}) = g^{-1} \left\langle \boldsymbol{w}, \boldsymbol{z}^{\text{FNN}}(\boldsymbol{c}^{\text{cred}}(\boldsymbol{X})) \right\rangle.\]</span></p></li>
+<li><p>For the implementation of all these modules we refer to our website <span class="citation" data-cites="AITools">Wüthrich <em>et al.</em> (<a href="#ref-AITools" role="doc-biblioref">2025</a>)</span>, where a full implementation of the credibility Transformer is available.</p></li>
+</ul>
+</section>
+<section id="remarks-on-the-credibility-transformer" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="remarks-on-the-credibility-transformer"><span class="header-section-number">4.5</span> Remarks on the credibility Transformer</h2>
+<ul>
+<li><p>The random weighting scheme is only applied during SGD training; this acts like drop-out. It helps to stabilize the training procedure.</p></li>
+<li><p>For each iteration of the SGD algorithm, the i.i.d. Bernoulli random variables are re-sampled.</p></li>
+<li><p>For prediction, set <span class="math inline">\(Z=1\)</span> and <span class="math inline">\(\alpha=1\)</span>, respectively.</p></li>
+<li><p>One can verify by setting <span class="math inline">\(Z=0\)</span> in the prediction, that the prior token <span class="math inline">\(\boldsymbol{c}^{\text{prior}}\)</span> learns the null model not including any covariates. Thus, it learns the <em>global mean</em>.</p></li>
+<li><p>As a result, we receive a weighted average between a prior model (null model) and a data driven model (covariates regression model).</p></li>
+<li><p>Probability <span class="math inline">\(\alpha\)</span> is a hyper-parameter that needs to be selected by the modeler (by cross-validation). In our case, <span class="math inline">\(\alpha=0.95\)</span> provided good results.</p></li>
+</ul>
+</section>
+<section id="example-credibility-transformer" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="example-credibility-transformer"><span class="header-section-number">4.6</span> Example: Credibility Transformer</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 34%">
+<col style="width: 17%">
+<col style="width: 23%">
+<col style="width: 24%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;"><em>model</em></th>
+<th style="text-align: center;"><em>in-sample</em></th>
+<th style="text-align: center;"><em>out-of-sample</em></th>
+<th style="text-align: center;"><em>balance (in %)</em></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">null model</td>
+<td style="text-align: center;">47.722</td>
+<td style="text-align: center;">47.967</td>
+<td style="text-align: center;">7.36</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GLM</td>
+<td style="text-align: center;">45.585</td>
+<td style="text-align: center;">45.435</td>
+<td style="text-align: center;">7.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">FNN (embedding)</td>
+<td style="text-align: center;">45.030</td>
+<td style="text-align: center;">44.948</td>
+<td style="text-align: center;">7.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ensembling FNN</td>
+<td style="text-align: center;">44.636</td>
+<td style="text-align: center;"><strong>44.864</strong></td>
+<td style="text-align: center;">7.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">credibility Transformer</td>
+<td style="text-align: center;">44.710</td>
+<td style="text-align: center;">44.716</td>
+<td style="text-align: center;">7.45</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ensembling CT</td>
+<td style="text-align: center;">44.577</td>
+<td style="text-align: center;"><strong>44.635</strong></td>
+<td style="text-align: center;">7.24</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p>For the ensembling predictor we use <span class="math inline">\(10\)</span> individual network fits.</p></li>
+<li><p>Out-of-sample standard deviation of the credibility Transformer is 0.071. Thus, improvement is significant.</p></li>
+<li><p>Even a single run of the credibility Transformer outperforms the ensembling predictor of standard FNNs.</p></li>
+</ul>
+</section>
+<section id="the-hidden-credibility-mechanism" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="the-hidden-credibility-mechanism"><span class="header-section-number">4.7</span> The hidden credibility mechanism</h2>
+<ul>
+<li><p>The credibility transformer introduces a second less obvious credibility mechanism which is realized during the dot-product attention.</p></li>
+<li><p>To understand its functioning, consider the last row vector of the attention head <span class="math display">\[
+H_{q+1} = A_{q+1} V ~\in~\mathbb{R}^b.\]</span></p></li>
+<li><p>I.e., the last row of the attention head, <span class="math inline">\(H_{q+1}\)</span>, is obtained by multiplying the row vector <span class="math inline">\(A_{q+1} = (a_{q+1,1}, \dots, a_{q+1, q+1})\)</span> with the corresponding columns of the value matrix <span class="math inline">\(V\)</span>.</p></li>
+<li><p>Furthermore, recall the softmax normalization entering <span class="math inline">\(A_{q+1}\)</span> <span class="math display">\[
+\sum_{j=1}^{q+1} a_{q+1,j} = 1, \qquad \text{with weights} \quad a_{q+1,j} &gt; 0.\]</span></p></li>
+</ul>
+<hr>
+<ul>
+<li><p>This allows us to compute the row vector <span class="math display">\[\begin{eqnarray*}
+H_{q+1} ~=~ A_{q+1} V
+&amp;=&amp; \left(\sum_{j=1}^q a_{q+1,j}V_{j,k} + a_{q+1,q+1}V_{q+1,k}\right)_{k=1}^b
+\\&amp;=&amp; \left(P \sum_{j=1}^q \frac{a_{q+1,j}}{P}\,V_{j,k}+(1-P)\, V_{q+1,k}\right)_{k=1}^b
+\\&amp;=&amp;
+P \, \boldsymbol{v}^{\rm covariate}+(1-P) \, \boldsymbol{v}^\top_{q+1},
+\end{eqnarray*}\]</span> for</p>
+<ul>
+<li><em>credibility weight</em> <span class="math inline">\(1-P:=a_{q+1,q+1} \in(0,1)\)</span>,</li>
+<li><em>observation driven estimate</em> <span class="math inline">\(\boldsymbol{v}^{\rm covariate}\)</span>, and</li>
+<li><em>prior estimate</em> <span class="math inline">\(\boldsymbol{v}_{q+1}\)</span>.</li>
+</ul></li>
+<li><p>This formulation reveals that the attention mechanism for the CLS token can be interpreted as a <em>credibility-weighted average</em> of the covariate-driven information <span class="math inline">\(\boldsymbol{v}^{\rm covariate}\)</span> and a prior value <span class="math inline">\(\boldsymbol{v}_{q+1}\)</span>.</p></li>
+</ul>
+<hr>
+<ul>
+<li><p>This consideration also allows for a variable importance measure.</p></li>
+<li><p>In our examples we allocated roughly a credibility weight of <span class="math inline">\(1-P=7\%\)</span> to the prior and <span class="math inline">\(P=93\%\)</span> to the observation driven part.</p></li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Attention1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%"></p>
+</figure>
+</div>
+<hr>
+<ul>
+<li>Distribution of CLS token attention scores across all instances.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Attention2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
+</figure>
+</div>
+<hr>
+<ul>
+<li>Attention score for <code>BonusMalus</code> colored by <code>log-Density</code>.</li>
+</ul>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Attention3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
+</figure>
+</div>
+</section>
+<section id="conclusions-and-summary" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="conclusions-and-summary"><span class="header-section-number">4.8</span> Conclusions and summary</h2>
+<ul>
+<li>We introduced the Transformer architecture …</li>
+<li>… which we enhanced with dual credibility mechanisms:
+<ul>
+<li>Explicit mechanism through probabilistic CLS token selection during training (<span class="math inline">\(\alpha\)</span> parameter)</li>
+<li>Implicit mechanism through attention weights functioning as learned credibility formula</li>
+</ul></li>
+<li>We demonstrated integration of modern deep learning components:
+<ul>
+<li>Attention mechanism</li>
+<li>Transformer layers</li>
+<li>Tokenization and embedding</li>
+<li>Positional encoding</li>
+</ul></li>
+<li>What lessons can we draw from this work?
+<ul>
+<li>Even in a state-of-the-art deep learning model, applying classical actuarial principles can lead to gains in model performance.</li>
+<li>Actuarial science and modern machine learning aren’t separate disciplines…</li>
+<li>… but rather, classical actuarial principles like credibility still have deep relevance in the age of deep learning.</li>
+</ul></li>
+</ul>
+</section>
+</section>
+<section id="appendix-drop-out-layer" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Appendix: Drop-out layer</h1>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><p><em>Drop-out</em> is a widely used regularization technique in network fitting.</p></li>
+<li><p>We have already mentioned it a couple of times.</p></li>
+<li><p>It randomly removes neurons (units) during model training to enhance the model’s generalization capabilities.</p></li>
+</ul>
+</div>
+</div>
+<p>Drop-out has been introduced by <span class="citation" data-cites="srivastava2014dropout">Srivastava <em>et al.</em> (<a href="#ref-srivastava2014dropout" role="doc-biblioref">2014</a>)</span> and <span class="citation" data-cites="wager2013dropout">Wager, Wang and Liang (<a href="#ref-wager2013dropout" role="doc-biblioref">2013</a>)</span>.</p>
+<hr>
+<ul>
+<li><p>Drop-out is typically implemented by multiplying the output of a specific layer by i.i.d. realizations of Bernoulli random variables with a fixed drop-out rate <span class="math inline">\(\alpha \in (0,1)\)</span> in each step of SGD training.</p></li>
+<li><p>Drop-out is formalized, e.g., in the case of a FNN/tabular output layer by <span class="math display">\[
+\boldsymbol{z}^{\text{drop}} : \mathbb{R}^{q} \to \mathbb{R}^{q}, \qquad  
+\boldsymbol{X} \mapsto \boldsymbol{z}^{\text{drop}}( \boldsymbol{X}) = \boldsymbol{Z} \odot \boldsymbol{X},\]</span> where <span class="math inline">\(\boldsymbol{Z} = (Z_1, Z_2, \ldots, Z_{q})^\top \in \{0, 1\}^{q}\)</span> is a vector of i.i.d. Bernoulli random variables that are re-sampled in each SGD step, and <span class="math inline">\(\odot\)</span> denotes the element-wise Hadamard product.</p></li>
+</ul>
+</section>
+<section id="copyright" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright</h1>
+<ul>
+<li><p>© The Authors</p></li>
+<li><p>This notebook and these slides are part of the project “AI Tools for Actuaries”. The lecture notes can be downloaded from:</p></li>
+</ul>
+<p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a></p>
+<p><span class="math inline">\(\,\)</span></p>
+<ul>
+<li>This material is provided to reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution and credit is given to the original authors and source, and if you indicate if changes were made. This aligns with the Creative Commons Attribution 4.0 International License CC BY-NC.</li>
+</ul>
+</section>
+<section id="references" class="level1 unnumbered allowframebreaks">
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body" role="list">
+<div id="ref-ba2016layer" class="csl-entry" role="listitem">
+Ba, J.L., Kiros, J.R. and Hinton, G.E. (2016) <span>“Layer normalization,”</span> <em>arXiv:1607.06450</em> [Preprint]. Available at: <a href="https://arxiv.org/abs/1607.06450">https://arxiv.org/abs/1607.06450</a>.
+</div>
+<div id="ref-BuhlmannCredibility" class="csl-entry" role="listitem">
+Bühlmann, H. (1967) <span>“Experience rating and credibility,”</span> <em>ASTIN Bulletin - The Journal of the IAA</em>, 4(3), pp. 199–207. Available at: <a href="https://www.cambridge.org/core/product/B9A879CE4A73397C653963B474A7F954">https://www.cambridge.org/core/product/B9A879CE4A73397C653963B474A7F954</a>.
+</div>
+<div id="ref-buehlmann1970" class="csl-entry" role="listitem">
+Bühlmann, H. and Straub, E. (1970) <span>“Glaubwürdigkeit für <span>S</span>chadensätze,”</span> <em>Mitteilungen der Schweizerischen Vereinigung der Versicherungsmathematiker</em>, 1970, pp. 111–131. Available at: <a href="https://www.e-periodica.ch/digbib/view?pid=msa-001%3A1970%3A70%3A%3A115">https://www.e-periodica.ch/digbib/view?pid=msa-001%3A1970%3A70%3A%3A115</a>.
+</div>
+<div id="ref-devlin2019bert" class="csl-entry" role="listitem">
+Devlin, J. <em>et al.</em> (2019) <span>“Bert: Pre-training of deep bidirectional transformers for language understanding,”</span> in <em><span class="nocase">Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers)</span></em>, pp. 4171–4186. Available at: <a href="https://aclanthology.org/N19-1423/">https://aclanthology.org/N19-1423/</a>.
+</div>
+<div id="ref-gorishniy2024tabm" class="csl-entry" role="listitem">
+Gorishniy, Y., Kotelnikov, A. and Babenko, A. (2024) <span>“<span>TabM</span>: Advancing tabular deep learning with parameter-efficient ensembling,”</span> <em>arXiv:2410.24210</em> [Preprint]. Available at: <a href="https://arxiv.org/abs/2410.24210">https://arxiv.org/abs/2410.24210</a>.
+</div>
+<div id="ref-Gorishniy2022" class="csl-entry" role="listitem">
+Gorishniy, Y., Rubachev, I. and Babenko, A. (2022) <span>“On embeddings for numerical features in tabular deep learning,”</span> <em>arXiv preprint arXiv:2203.05556</em> [Preprint]. Available at: <a href="https://arxiv.org/abs/2203.05556">https://arxiv.org/abs/2203.05556</a>.
+</div>
+<div id="ref-ioffe2015" class="csl-entry" role="listitem">
+Ioffe, S. and Szegedy, C. (2015) <span>“Batch normalization: Accelerating deep network training by reducing internal covariate shift,”</span> in <em><span class="nocase">International Conference on Machine Learning</span></em>. PMLR, pp. 448–456. Available at: <a href="https://proceedings.mlr.press/v37/ioffe15.html">https://proceedings.mlr.press/v37/ioffe15.html</a>.
+</div>
+<div id="ref-richman2025credibility" class="csl-entry" role="listitem">
+Richman, R., Scognamiglio, S. and Wüthrich, M.V. (2025) <span>“The credibility transformer,”</span> <em>European Actuarial Journal</em>, pp. 1–35. Available at: <a href="https://link.springer.com/article/10.1007/s13385-025-00413-y">https://link.springer.com/article/10.1007/s13385-025-00413-y</a>.
+</div>
+<div id="ref-srivastava2014dropout" class="csl-entry" role="listitem">
+Srivastava, N. <em>et al.</em> (2014) <span>“Dropout: A simple way to prevent neural networks from overfitting,”</span> <em>The Journal of Machine Learning Research</em>, 15(1), pp. 1929–1958. Available at: <a href="https://www.jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf">https://www.jmlr.org/papers/volume15/srivastava14a/srivastava14a.pdf</a>.
+</div>
+<div id="ref-vaswani2017attention" class="csl-entry" role="listitem">
+Vaswani, A. <em>et al.</em> (2017) <span>“Attention is all you need,”</span> <em>Advances In Neural Information Processing Systems</em>, 30. Available at: <a href="https://proceedings.neurips.cc/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html">https://proceedings.neurips.cc/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html</a>.
+</div>
+<div id="ref-wager2013dropout" class="csl-entry" role="listitem">
+Wager, S., Wang, S. and Liang, P.S. (2013) <span>“Dropout training as adaptive regularization,”</span> <em>Advances in Neural Information Processing Systems</em>, 26. Available at: <a href="https://arxiv.org/abs/1307.1493">https://arxiv.org/abs/1307.1493</a>.
+</div>
+<div id="ref-AITools" class="csl-entry" role="listitem">
+Wüthrich, M.V. <em>et al.</em> (2025) <span>“<span class="nocase">AI Tools for Actuaries</span>,”</span> <em>SSRN Manuscript</em> [Preprint]. Available at: <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a>.
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

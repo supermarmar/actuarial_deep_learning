@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.40">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich">
+<meta name="dcterms.date" content="2026-08-31">
+
+<title>quarto-input6a555b045b287af3</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="Lecture1 Use Case_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Lecture1 Use Case_files/libs/quarto-html/quarto.js"></script>
+<script src="Lecture1 Use Case_files/libs/quarto-html/popper.min.js"></script>
+<script src="Lecture1 Use Case_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Lecture1 Use Case_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Lecture1 Use Case_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Lecture1 Use Case_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Lecture1 Use Case_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Lecture1 Use Case_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Lecture1 Use Case_files/libs/bootstrap/bootstrap-fa5de772639a04fa03a337443d63a7e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#actuarial-modeling-a-pricing-problem" id="toc-actuarial-modeling-a-pricing-problem" class="nav-link active" data-scroll-target="#actuarial-modeling-a-pricing-problem"><span class="header-section-number">1</span> Actuarial modeling – a pricing problem</a>
+  <ul class="collapse">
+  <li><a href="#load-and-illustrate-the-french-mtpl-data" id="toc-load-and-illustrate-the-french-mtpl-data" class="nav-link" data-scroll-target="#load-and-illustrate-the-french-mtpl-data"><span class="header-section-number">1.1</span> Load and illustrate the French MTPL data</a></li>
+  <li><a href="#claims-count-modeling-and-frequencies" id="toc-claims-count-modeling-and-frequencies" class="nav-link" data-scroll-target="#claims-count-modeling-and-frequencies"><span class="header-section-number">1.2</span> Claims count modeling and frequencies</a></li>
+  <li><a href="#regression-modeling" id="toc-regression-modeling" class="nav-link" data-scroll-target="#regression-modeling"><span class="header-section-number">1.3</span> Regression modeling</a></li>
+  </ul></li>
+  <li><a href="#empirical-data-analysis" id="toc-empirical-data-analysis" class="nav-link" data-scroll-target="#empirical-data-analysis"><span class="header-section-number">2</span> Empirical data analysis</a></li>
+  <li><a href="#a-generalized-linear-model-example" id="toc-a-generalized-linear-model-example" class="nav-link" data-scroll-target="#a-generalized-linear-model-example"><span class="header-section-number">3</span> A generalized linear model example</a></li>
+  <li><a href="#gradient-boosting-machine" id="toc-gradient-boosting-machine" class="nav-link" data-scroll-target="#gradient-boosting-machine"><span class="header-section-number">4</span> Gradient boosting machine</a></li>
+  <li><a href="#copyright" id="toc-copyright" class="nav-link" data-scroll-target="#copyright">Copyright</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><div class="line-block">Lecture 1: Introduction and Data Example</div></h1>
+<p class="subtitle lead"></p><div class="line-block">Deep Learning for Actuarial Modeling<br>
+Summer School ‘Lifelong Learning’<br>
+Università Cattolica del Sacro Cuore, Milano</div><p></p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 31, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    We start by introducing a car insurance pricing problem which is the most typical example for applying regression modeling and machine learning tools. This example will serve us as a running example through many of the chapters and lectures.
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="actuarial-modeling-a-pricing-problem" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Actuarial modeling – a pricing problem</h1>
+<ul>
+<li><p>We introduce a car insurance pricing problem.</p></li>
+<li><p>This pricing problem is based on <em>claims frequencies</em>.</p></li>
+<li><p>The analysis in this first lecture will mostly be empirical.</p></li>
+<li><p>It considers the popular French motor third party liability (MTPL) claims dataset <code>freMTPL2freq</code> of <span class="citation" data-cites="Dutang">Dutang, Charpentier and Gallic (<a href="#ref-Dutang" role="doc-biblioref">2024</a>)</span>.</p></li>
+<li><p>Generally, raw data needs <em>data cleaning</em>, e.g., correcting for data errors, inputting missing values, merging partial information, etc.</p></li>
+<li><p>The data presented here has already been cleaned; for the data cleaning applied see Appendix B in <span class="citation" data-cites="WM2023">Wüthrich and Merz (<a href="#ref-WM2023" role="doc-biblioref">2023</a>)</span>.</p></li>
+</ul>
+<section id="load-and-illustrate-the-french-mtpl-data" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="load-and-illustrate-the-french-mtpl-data"><span class="header-section-number">1.1</span> Load and illustrate the French MTPL data</h2>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="at">file=</span><span class="st">"../Data/freMTPL2freqClean.rda"</span>)     <span class="co"># there are other data formats</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> freMTPL2freqClean</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(dat[,<span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">11</span>,<span class="dv">13</span>)])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>The (cleaned) data contains the following variables:
+<ul>
+<li><code>IDpol</code> is a unique policy identifier</li>
+<li><code>Exposure</code> is the time exposure (in yearly units)</li>
+<li><code>Area</code> is an area code (ordinal categorical)</li>
+<li><code>VehPower</code> is the power of the vehicle</li>
+<li><code>VehAge</code> is the age of the vehicle</li>
+<li><code>DrivAge</code> is the age of the policyholder</li>
+<li><code>BonusMalus</code> is the bonus-malus level of the policyholder</li>
+<li><code>VehBrand</code> indicates the vehicle brand (categorical)</li>
+<li><code>VehGas</code> indicates the gasoline type (categorical)</li>
+<li><code>Density</code> is the population density at the living place of the policyholder</li>
+<li><code>Region</code> gives the French department of the license plate (categorical)</li>
+<li><code>ClaimNb</code> gives the observed number of claims</li>
+</ul></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output cell-output-stdout">
+<pre><code>    IDpol Exposure Area VehPower VehAge DrivAge BonusMalus VehBrand  VehGas
+1 4156370     0.06    D        6      6      20        100       B2 Regular
+2 4006798     0.29    E        6      7      29         59      B12  Diesel
+3 6084964     0.46    C        7     10      27         68       B1  Diesel
+4 2228865     0.08    D        4     15      34         50       B2 Regular
+5 4141911     1.00    A        5     22      44         50       B3  Diesel
+6 1103292     0.60    C        5      2      25         90       B5 Regular
+  Density Region ClaimNb
+1     525    R82       0
+2    2498    R72       0
+3     123    R82       0
+4    1109    R24       0
+5      34    R72       0
+6     129    R41       0</code></pre>
+</div>
+</div>
+<ul>
+<li>For simplicity, we focus on the claims counts <code>ClaimNb</code>; there would also be data available with claim amounts.</li>
+</ul>
+</section>
+<section id="claims-count-modeling-and-frequencies" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="claims-count-modeling-and-frequencies"><span class="header-section-number">1.2</span> Claims count modeling and frequencies</h2>
+<ul>
+<li><p>The above portfolio has <span class="math inline">\(n=678,007\)</span> insurance policyholders. We label them by <span class="math inline">\(i \in \{1, \ldots,  n\}\)</span>.</p></li>
+<li><p>These policyholders are characterized by <em>covariates</em> <span class="math inline">\(\boldsymbol{X}_i\)</span> describing their <em>policy features</em> such as the age of the car or the vehicle brand.</p></li>
+<li><p>For each policyholder <span class="math inline">\(i\)</span>, there is an observed <em>number of claims</em> <span class="math inline">\(N_i \ge 0\)</span> within the given calendar year.</p></li>
+<li><p>The <em>time exposures</em> <span class="math inline">\(v_i \in (0, 1]\)</span> give the proportions of the calendar year during which the policies have been active (exposed).</p></li>
+<li><p>To account for the different time exposures, one typically studies and models the <em>claims frequencies</em> <span class="math display">\[
+Y_i = N_i/v_i. \]</span></p></li>
+</ul>
+<hr>
+<ul>
+<li><p>The general task in actuarial pricing is to <em>predict</em> (<em>forecast</em>) the (future) claims frequencies <span class="math inline">\(Y_i\)</span> as accurately as possible.</p></li>
+<li><p>These predictions should take into account all available/relevant policyholder information <span class="math inline">\(\boldsymbol{X}_i\)</span>, as this information may reveal structural differences in their propensity to claims.</p></li>
+<li><p>(Best) predictors are typically computed by conditional means <span class="math display">\[
+\mu(\boldsymbol{X}_i):=\mathbb{E}\left[Y_i \left| \boldsymbol{X}_i\right]\right. .\]</span> This is the expected claim of a policyholder with covariates <span class="math inline">\(\boldsymbol{X}_i\)</span>.</p></li>
+<li><p><em>Actuarial pricing</em> one aims at finding an accurate <em>regression function</em> <span class="math display">\[\boldsymbol{X} \mapsto \mu(\boldsymbol{X}),\]</span> that reflects the expected claim as a function of the covariates <span class="math inline">\(\boldsymbol{X}\)</span>.</p></li>
+</ul>
+</section>
+<section id="regression-modeling" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="regression-modeling"><span class="header-section-number">1.3</span> Regression modeling</h2>
+<ul>
+<li><p>In general, the true data generating mechanism/model is <em>unknown</em>.</p></li>
+<li><p>Therefore, one cannot compute the regression function <span class="math inline">\(\boldsymbol{X} \mapsto \mu(\boldsymbol{X})\)</span>.</p></li>
+<li><p>Thus, one needs to <em>estimate</em> <span class="math inline">\(\mu\)</span> from <em>past data</em> <span class="math display">\[
+{\cal L} = \left(Y_i, \boldsymbol{X}_i, v_i\right)_{i=1}^n.\]</span></p></li>
+<li><p><span class="math inline">\({\cal L}\)</span> is called <em>learning sample</em> because it is used to learn the unknown regression function <span class="math inline">\(\boldsymbol{X} \mapsto \mu(\boldsymbol{X})\)</span>.</p></li>
+<li><p>Before solving this estimation/learning problem, one should always empirically study the available data <span class="math inline">\({\cal L} = (Y_i, \boldsymbol{X}_i, v_i)_{i=1}^n\)</span>.</p></li>
+<li><p>This empirical study is crucial to fully understand the problem and to select a suitable class of <em>candidate regression models</em> <span class="math inline">\({\cal M}=\{\mu\}\)</span>.</p></li>
+</ul>
+</section>
+</section>
+<section id="empirical-data-analysis" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Empirical data analysis</h1>
+<ul>
+<li><p>Before we try to find a suitable regression function <span class="math inline">\(\boldsymbol{X}\mapsto \mu(\boldsymbol{X})\)</span>, we empirically analyze the learning sample <span class="math inline">\({\cal L}\)</span>.</p></li>
+<li><p>Such an empirical analysis of the learning sample <span class="math inline">\({\cal L}\)</span> includes different <em>sample statistics</em> as well as <em>visualizations</em> of the data.</p></li>
+<li><p>For simplicity, we only consider the two covariates <code>DrivAge</code> and <code>Density</code> in this preliminary analysis. Later, all covariates are considered.</p></li>
+<li><p>We start by classifying the policies w.r.t. their numbers of claims.</p></li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(arrow)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>dat <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(ClaimNb) <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="at">Exposure =</span> <span class="fu">sum</span>(Exposure))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output cell-output-stdout">
+<pre><code>  ClaimNb Exposure
+1       0   341090
+2       1    16315
+3       2      909
+4       3       42
+5       4        2
+6       5        1</code></pre>
+</div>
+</div>
+<ul>
+<li><p>The big majority of insurance policies does not suffer any claims.</p></li>
+<li><p>The empirical claims frequency is <span class="math inline">\(\sum_{i=1}^n N_i/\sum_{i=1}^n v_i=7.36\%\)</span>.</p></li>
+<li><p>In machine learning, this is called a <em>class imbalance problem</em>.</p></li>
+<li><p>In actuarial modeling, this is just the typical problem actuaries have to deal with, i.e., insurance claims are rare events.</p></li>
+<li><p>Thus, actuaries try to find <em>systematic structure</em> in data in which claims are rare events.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>(lhs): Class imbalance problem mentioned above.</p></li>
+<li><p>(rhs): Distribution of exposures <span class="math inline">\((v_i)_{i=1}^n\)</span>, roughly 25% of the policies have a full-year exposure <span class="math inline">\(v_i=1\)</span> in this data.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>(lhs): Total exposure <span class="math inline">\(\sum_i v_i \mathbf{1}_{\{{\rm age_i}={\rm age}\}}\)</span> per driver age (<code>DrivAge</code>).</p></li>
+<li><p>(rhs): Empirical frequency <span class="math inline">\(\sum_i N_i \mathbf{1}_{\{{\rm age_i}={\rm age}\}}/\sum_i v_i \mathbf{1}_{\{{\rm age_i}={\rm age}\}}\)</span> per <code>DrivAge</code>; confidence bounds correspond to 2 std in a Poisson model.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>(lhs): Total exposure <span class="math inline">\(\sum_i v_i \mathbf{1}_{\{{\rm LD_i}={\rm LD}\}}\)</span> per log-Density (class LD).</p></li>
+<li><p>(rhs): Empirical frequency <span class="math inline">\(\sum_i N_i \mathbf{1}_{\{{\rm LD_i}={\rm LD}\}}/\sum_i v_i \mathbf{1}_{\{{\rm LD_i}={\rm LD}\}}\)</span> per log-Density; confidence bounds correspond to 2 std in a Poisson model.</p></li>
+</ul>
+<hr>
+<ul>
+<li><p>The previous plots show the <em>marginal distributions</em> of the claims.</p></li>
+<li><p>Generally, covariates <em>interact</em>, and one cannot simply multiply marginal frequencies to receive the correct prices.</p></li>
+<li><p>For example:</p>
+<ul>
+<li>Young drivers may more likely live in the highly populated cities.</li>
+<li>Thus, high frequencies at younger ages and in densely populated areas may be driven by the same risk factor.</li>
+<li>Multiplying marginals will, thus, result in a double penalization of the same risk factor.</li>
+</ul></li>
+<li><p>For this reason, we need to understand the <em>multivariate structure</em> to receive a good pricing functional <span class="math inline">\(\boldsymbol{X}\mapsto \mu(\boldsymbol{X})\)</span>.</p></li>
+<li><p>In other words, we need to estimate <span class="math inline">\(\mu(\boldsymbol{X})\)</span> <em>jointly</em> in the components of <span class="math inline">\(\boldsymbol{X}=(X_1,\ldots, X_q)^\top\)</span>, and <em>not marginally</em>.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+<ul>
+<li><p>The above heatmap shows the empirical frequency as a function of the two covariates <code>DrivAge</code> and <code>log-Density</code>.</p></li>
+<li><p>The empirical data has been smoothed with the kernel smoothing method called <code>loess</code> (locally estimated scatter plot smoothing).</p></li>
+<li><p>The colored dots show the <code>loess</code> results in the covariate combinations that exist in our portfolio, and the white space corresponds to covariate combinations that are not available in our portfolio.</p></li>
+<li><p>The coloring shows quite some non-linear structure in the covariate components, and it does not support the pattern of multiplying marginals.</p></li>
+<li><p>This requires regression modeling or machine learning solutions, e.g.,</p>
+<ul>
+<li>generalized linear models (GLMs)</li>
+<li>neural networks and deep learning</li>
+<li>regression trees</li>
+<li>gradient boosting machines (GBMs)</li>
+</ul></li>
+</ul>
+</section>
+<section id="a-generalized-linear-model-example" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> A generalized linear model example</h1>
+<ul>
+<li><p>We start with <em>generalized linear models</em> (GLMs) for the class <span class="math inline">\({\cal M}\)</span> of the considered regression functionals <span class="math inline">\(\boldsymbol{X}\mapsto \mu(\boldsymbol{X})\)</span>.</p></li>
+<li><p>The underlying mathematical theory is going to be presented in careful detail in the next lecture.</p></li>
+<li><p>The most simple GLM setting considers <span class="math display">\[
+\boldsymbol{X}\mapsto \mu(\boldsymbol{X}) = \exp \left(\beta_0 + \beta_1 X_1+ \beta_2 X_2\right),\]</span> for <span class="math inline">\(\boldsymbol{X}=(X_1,X_2)=(\text{DrivAge}, \text{log-Density})\)</span> and parameter <span class="math inline">\((\beta_0,\beta_1,\beta_2)\)</span>.</p></li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Model GLM 1 (Poisson for counts with offset and canonical log-link)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>d.glm1 <span class="ot">&lt;-</span> <span class="fu">glm</span>(ClaimNb <span class="sc">~</span> DrivAge <span class="sc">+</span> lDensity, </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                        <span class="at">data=</span>dat, <span class="at">offset=</span><span class="fu">log</span>(Exposure), <span class="at">family=</span><span class="fu">poisson</span>())</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>dat<span class="sc">$</span>GLM1 <span class="ot">&lt;-</span> <span class="fu">fitted</span>(d.glm1)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(d.glm1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = ClaimNb ~ DrivAge + lDensity, family = poisson(), 
+    data = dat1, offset = log(Exposure))
+
+Coefficients:
+              Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept) -2.7811529  0.0298084  -93.30   &lt;2e-16 ***
+DrivAge     -0.0097160  0.0004414  -22.01   &lt;2e-16 ***
+lDensity     0.1023950  0.0032929   31.10   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 9169.3  on 5988  degrees of freedom
+Residual deviance: 7647.9  on 5986  degrees of freedom
+AIC: 22487
+
+Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+</div>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>Obviously, the driver’s age variable does not fit the observed data, as this GLM is not able to model a non-monotone structure.</p></li>
+<li><p>The log-Density modeling looks reasonable.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>The heatmap confirms that this GLM is not able to reflect the observed data.</p></li>
+<li><p>Non-monotonicity in <code>DrivAge</code> is an issue.</p></li>
+</ul>
+<hr>
+<ul>
+<li><p>In case of non-monotone behavior, one can build categorical classes.</p></li>
+<li><p>We build the age classes as follows (which are then implemented by dummy coding – explained in the Wednesday lecture).</p></li>
+</ul>
+<div class="cell" data-layout-align="center">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="do">### Model GLM 2</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>dat<span class="sc">$</span>DrivAgeGLM    <span class="ot">&lt;-</span> <span class="fu">as.factor</span>(<span class="fu">cut</span>(dat<span class="sc">$</span>DrivAge, <span class="fu">c</span>(<span class="dv">18</span>,<span class="dv">20</span>,<span class="dv">25</span>,<span class="dv">30</span>,<span class="dv">40</span>,<span class="dv">50</span>,<span class="dv">70</span>,<span class="dv">101</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-70"</span>, <span class="st">"71+"</span>), <span class="at">include.lowest =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Poisson GLM with offset and (canonical) log-link</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>d.glm2 <span class="ot">&lt;-</span> <span class="fu">glm</span>(ClaimNb <span class="sc">~</span> DrivAgeGLM <span class="sc">+</span> lDensity, </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                        <span class="at">data=</span>dat, <span class="at">offset=</span><span class="fu">log</span>(Exposure), <span class="at">family=</span><span class="fu">poisson</span>())</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>dat<span class="sc">$</span>GLM2 <span class="ot">&lt;-</span> <span class="fu">fitted</span>(d.glm2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<ul>
+<li>This estimates an individual regression parameter <span class="math inline">\(\beta_j\)</span> for each age class.</li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = ClaimNb ~ DrivAgeGLM + lDensity, family = poisson(), 
+    data = dat1, offset = log(Exposure))
+
+Coefficients:
+                 Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)     -2.047914   0.044931  -45.58   &lt;2e-16 ***
+DrivAgeGLM21-25 -0.627963   0.046706  -13.45   &lt;2e-16 ***
+DrivAgeGLM26-30 -1.109290   0.045196  -24.54   &lt;2e-16 ***
+DrivAgeGLM31-40 -1.261688   0.042354  -29.79   &lt;2e-16 ***
+DrivAgeGLM41-50 -1.165688   0.042086  -27.70   &lt;2e-16 ***
+DrivAgeGLM51-70 -1.298062   0.041879  -31.00   &lt;2e-16 ***
+DrivAgeGLM71+   -1.380917   0.047348  -29.16   &lt;2e-16 ***
+lDensity         0.104394   0.003301   31.62   &lt;2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 9169.3  on 5988  degrees of freedom
+Residual deviance: 6858.0  on 5981  degrees of freedom
+AIC: 21707
+
+Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+</div>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>This second GLM with categorical age classes fits the data better.</p></li>
+<li><p>Because of the log-link choice, it has a <em>multiplicative structure</em>, see next graph.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>This second GLM reflects the non-monotonicity in <code>DrivAge</code>.</p></li>
+<li><p>However, there is more (diagonal) structure which is a motivation to consider more complex regression models.</p></li>
+</ul>
+</section>
+<section id="gradient-boosting-machine" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Gradient boosting machine</h1>
+<ul>
+<li><p>As a first machine learning regression model, we present a <em>gradient boosting machine</em> (GBM).</p></li>
+<li><p>GBMs belong to the most powerful techniques on tabular data, in particular, the powerful versions like XGBoost, LightGBM or CatBoost.</p></li>
+<li><p>A GBM <em>partitions</em> the covariate space into different (homogeneous) subsets and it estimates the frequency on each subset.</p></li>
+<li><p>We only present the resulting heatmap on the two selected covariates; for technical details we refer to our ‘AI Tools for Actuaries’ homepage.</p></li>
+<li><p>GBMs are not further studied in this summer school.</p></li>
+</ul>
+<hr>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="Lecture1-Use-Case_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<ul>
+<li><p>This result was generated by the LightGBM version.</p></li>
+<li><p>We interpret this as follows.</p></li>
+</ul>
+<hr>
+<ul>
+<li><p>The GBM seems to reflect the observed (smoothed) data very well.</p></li>
+<li><p>The only criticism that one may raise is that the resulting regression function is not smooth and that it cannot easily be extrapolated.</p></li>
+<li><p>A crucial question that one may have is whether this GBM only extracts the structural (systematic) part or whether it also reflects some of the noise in the observed data. The latter would not be good, because the noisy part is not structure that will repeat in the future.</p></li>
+<li><p>The previous issue is known as <em>in-sample over-fitting</em>.</p></li>
+<li><p>In-sample over-fitting is a recurrent question to all statistical and machine learning methods, and it will be discussed in detail below.</p></li>
+<li><p>We are now ready to take off this process of statistical modeling and machine learning: please enjoy!</p></li>
+</ul>
+</section>
+<section id="copyright" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright</h1>
+<ul>
+<li><p>© The Authors</p></li>
+<li><p>This notebook and these slides are part of the project “AI Tools for Actuaries”. The lecture notes can be downloaded from:</p></li>
+</ul>
+<p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a></p>
+<p><span class="math inline">\(\,\)</span></p>
+<ul>
+<li>This material is provided to reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution and credit is given to the original authors and source, and if you indicate if changes were made. This aligns with the Creative Commons Attribution 4.0 International License CC BY-NC.</li>
+</ul>
+</section>
+<section id="references" class="level1 unnumbered allowframebreaks">
+
+
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body" role="list">
+<div id="ref-Dutang" class="csl-entry" role="listitem">
+Dutang, C., Charpentier, A. and Gallic, E. (2024) <span>“Insurance dataset.”</span> Available at: <a href="https://dutangc.github.io/CASdatasets/">https://dutangc.github.io/CASdatasets/</a>.
+</div>
+<div id="ref-WM2023" class="csl-entry" role="listitem">
+Wüthrich, M.V. and Merz, M. (2023) <em>Statistical foundations of actuarial learning and its applications</em>. Springer. Available at: <a href="https://doi.org/10.1007/978-3-031-12409-9">https://doi.org/10.1007/978-3-031-12409-9</a>.
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
