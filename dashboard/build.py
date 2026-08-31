@@ -57,6 +57,37 @@ FONT_FACE = Path(
 )
 
 
+def encode_density(density: np.ndarray) -> np.ndarray:
+    """Encode density as floor(log10(d) * 50), exactly, in one byte.
+
+    At an exact power of ten ``log10`` can land a last-ulp below the integer,
+    which drops the value into the bucket beneath the one it belongs in. That
+    misplaced 16 policies sitting on density 1,000. So the naive code is
+    repaired against the true thresholds and then asserted against a
+    ``searchsorted`` over the half-decade edges, which involves no logarithm
+    at all.
+    """
+    d = density.astype(np.float64)
+    code = np.floor(np.log10(d) * DENSITY_LOG_SCALE).astype(np.int64)
+    code = np.where(d >= np.power(10.0, (code + 1) / DENSITY_LOG_SCALE), code + 1, code)
+    code = np.where(d < np.power(10.0, code / DENSITY_LOG_SCALE), code - 1, code)
+
+    # The panel buckets by half-decade, so that is what has to come out right.
+    edges = np.power(10.0, np.arange(1, 9) / 2.0)
+    expected = np.searchsorted(edges, d, side="right")
+    actual = np.minimum(code // 25, 8)
+    if not np.array_equal(actual, expected):
+        bad = int((actual != expected).sum())
+        raise SystemExit(f"density encoding misplaces {bad} policies across a bucket edge")
+
+    if code.min() < 0 or code.max() > 255:
+        raise SystemExit(
+            f"Density log codes run {code.min()} to {code.max()}, outside uint8. "
+            "Lower DENSITY_LOG_SCALE."
+        )
+    return code.astype(np.uint8)
+
+
 def encode(df: pl.DataFrame) -> tuple[dict, bytes]:
     """Encode a sorted frame into a JSON header and one binary blob."""
     n = df.height
@@ -66,6 +97,11 @@ def encode(df: pl.DataFrame) -> tuple[dict, bytes]:
     # Exposure takes only 106 distinct values, so a byte code into a lookup
     # table holds it exactly rather than approximately.
     exposure_levels = sorted(df["Exposure"].unique().to_list())
+    if len(exposure_levels) > 256:
+        raise SystemExit(
+            f"Exposure has {len(exposure_levels)} distinct values, more than a byte code "
+            "can address. Widen the column to uint16 in both build.py and template.html."
+        )
     exposure_index = {v: i for i, v in enumerate(exposure_levels)}
     columns["Exposure"] = np.array(
         [exposure_index[v] for v in df["Exposure"].to_list()], dtype=np.uint8
@@ -76,15 +112,24 @@ def encode(df: pl.DataFrame) -> tuple[dict, bytes]:
     for name in CATEGORICAL:
         values = df[name].cast(pl.Utf8).to_list()
         levels[name] = sorted(set(values))
+        if len(levels[name]) > 256:
+            raise SystemExit(f"{name} has {len(levels[name])} levels, more than a byte code can address.")
         lookup = {v: i for i, v in enumerate(levels[name])}
         columns[name] = np.array([lookup[v] for v in values], dtype=np.uint8)
 
+    # Every one of these is Int32 in the source and must survive a uint8 cast.
+    # A bonus-malus of 260 would otherwise wrap to 4 and land a heavily loaded
+    # policy in the lowest bin, which is the most misleading failure available.
     for name in ["VehPower", "VehAge", "DrivAge", "BonusMalus"]:
-        columns[name] = df[name].to_numpy().astype(np.uint8)
+        values = df[name].to_numpy()
+        if values.min() < 0 or values.max() > 255:
+            raise SystemExit(
+                f"{name} runs {values.min()} to {values.max()}, outside the uint8 range. "
+                "Widen the encoding rather than clipping, or the panel will mislead."
+            )
+        columns[name] = values.astype(np.uint8)
 
-    columns["DensityLog"] = np.floor(
-        np.log10(df["Density"].to_numpy()) * DENSITY_LOG_SCALE
-    ).astype(np.uint8)
+    columns["DensityLog"] = encode_density(df["Density"].to_numpy())
 
     # Severity is sparse: 24,938 of 678,007 policies carry a claim amount, so
     # a dense float column would cost 2.7 MB to say nothing 96 per cent of the

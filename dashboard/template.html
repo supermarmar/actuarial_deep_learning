@@ -93,7 +93,8 @@ code{font-family:var(--font-mono);color:var(--accent-deep)}
 svg text{font-family:var(--font)}
 .ax{font-size:var(--text-floor);fill:var(--muted)}
 .axk{font-size:var(--text-floor);fill:var(--ink);font-weight:600}
-.val{font-size:var(--text-floor);fill:var(--ink);font-variant-numeric:tabular-nums}
+.val{font-size:var(--text-floor);fill:var(--ink);font-variant-numeric:tabular-nums;
+  stroke:var(--white);stroke-width:3;paint-order:stroke fill}
 .ref{stroke:var(--accent-deep);stroke-width:1;stroke-dasharray:4 3}
 .reftx{font-size:var(--text-floor);fill:var(--accent-deep)}
 .hmv{font-size:var(--text-floor);font-variant-numeric:tabular-nums}
@@ -130,8 +131,12 @@ svg text{font-family:var(--font)}
      as a position relative to the portfolio. Bins holding less than the exposure floor are
      drawn hollow and excluded from the vertical scale, because a frequency measured on a few
      exposure-years is noise. Severity is dominated by a handful of very large claims (the
-     largest single loss is &euro;4.08m against a book mean near &euro;2.4k), so read the
-     severity and burning-cost views with that in mind.</p>
+     largest single loss is &euro;4.08m against a book mean near &euro;2.4k). The exposure
+     floor counts exposure-years and so cannot see that, and a bin holding 3,000
+     exposure-years may still rest on two claims. The severity view therefore applies its own
+     minimum of 30 claims per bin on top of the floor. Burning cost keeps the exposure floor
+     alone, since it is a cost per exposure-year, but the same large losses drive it, so read
+     a narrow selection with that in mind.</p>
   <p>Density is bucketed by half-decade and stored as floor(log&#8321;&#8320;(density) &times; 50) in
      one byte. Because a half-decade is exactly 25 codes wide, that reproduces every bucket
      boundary exactly, so no policy sits in the wrong bucket. Every other field is exact and
@@ -178,6 +183,20 @@ const METRICS = {
   policies:  {label:'Policies',        fmt:v => fmtInt(v),                 of:(e,c,a,n) => n},
 };
 const RATIO_METRICS = new Set(['frequency','severity','burning']);
+
+/* A mean severity resting on a handful of claims is one large loss wearing an
+ * average's clothing, and the exposure floor cannot see that: it counts
+ * exposure-years, not claims. Severity carries its own minimum. */
+const CLAIM_FLOOR = 30;
+function isTrusted(e, c) {
+  if (e < state.floor) return false;
+  return state.metric === 'severity' ? c >= CLAIM_FLOOR : true;
+}
+function untrustedReason(e, c) {
+  if (e < state.floor) return `Below the ${fmtInt(state.floor)}-year exposure floor`;
+  if (state.metric === 'severity' && c < CLAIM_FLOOR) return `Only ${fmtInt(c)} claims, under the ${CLAIM_FLOOR}-claim minimum for a mean severity`;
+  return '';
+}
 
 const state = {
   metric: 'frequency',
@@ -352,7 +371,7 @@ function drawPanel(d, A, width) {
   let maxExp = 0;
   for (let b = 0; b < nb; b++) {
     vals[b] = metricOf(A, b);
-    trusted[b] = A.e[b] >= state.floor;
+    trusted[b] = isTrusted(A.e[b], A.c[b]);
     if (A.e[b] > maxExp) maxExp = A.e[b];
   }
   let vmax = 0;
@@ -382,7 +401,7 @@ function drawPanel(d, A, width) {
 
     const tip = `${dm.label} ${binLabel(d, b)}\n${m.label}: ${isFinite(v) ? m.fmt(v) : 'n/a'}`
       + `\nExposure: ${fmtInt(A.e[b])} yrs · Policies: ${fmtInt(A.k[b])} · Claims: ${fmtInt(A.c[b])}`
-      + (trusted[b] ? '' : `\nBelow the ${fmtInt(state.floor)}-year exposure floor`);
+      + (trusted[b] ? '' : '\n' + untrustedReason(A.e[b], A.c[b]));
 
     s += `<g class="bar" data-d="${d}" data-b="${b}"><title>${esc(tip)}</title>`;
     s += `<rect class="hit" x="${(x0 + b * slot).toFixed(1)}" y="${Y_TOP - 8}" width="${slot.toFixed(1)}" height="${LBL_Y - Y_TOP + 8}" fill="transparent"/>`;
@@ -440,7 +459,7 @@ function drawHeatmap(R, width) {
   const v = new Float64Array(nx * ny), ok = new Uint8Array(nx * ny);
   for (let i = 0; i < nx * ny; i++) {
     v[i] = m.of(hm.e[i], hm.c[i], hm.a[i], hm.k[i]);
-    ok[i] = (hm.e[i] >= state.floor && isFinite(v[i])) ? 1 : 0;
+    ok[i] = (isTrusted(hm.e[i], hm.c[i]) && isFinite(v[i])) ? 1 : 0;
     if (ok[i]) { if (v[i] < lo) lo = v[i]; if (v[i] > hi) hi = v[i]; }
   }
   if (!isFinite(lo)) { lo = 0; hi = 1; }
@@ -458,7 +477,7 @@ function drawHeatmap(R, width) {
       const tip = `${DIMS[xd].label} ${binLabel(xd, x)} · ${DIMS[yd].label} ${binLabel(yd, y)}`
         + `\n${m.label}: ${isFinite(v[i]) ? m.fmt(v[i]) : 'n/a'}`
         + `\nExposure: ${fmtInt(hm.e[i])} yrs · Claims: ${fmtInt(hm.c[i])}`
-        + (ok[i] ? '' : `\nBelow the ${fmtInt(state.floor)}-year exposure floor`);
+        + (ok[i] ? '' : '\n' + untrustedReason(hm.e[i], hm.c[i]));
       s += `<g class="bar" data-hx="${x}" data-hy="${y}"><title>${esc(tip)}</title>`;
       s += `<rect x="${xx.toFixed(1)}" y="${yy}" width="${cw.toFixed(1)}" height="${ch}"`
          + (ok[i] ? ` fill="${ramp(t)}"` : ` fill="var(--white)"`)
@@ -605,7 +624,8 @@ function draw() {
   $('hmCap').textContent =
     `${m.label} by ${DIMS.find(x => x.key === state.hmY).label} (rows) and `
     + `${DIMS.find(x => x.key === state.hmX).label} (columns), on one shared colour scale running `
-    + `${m.fmt(hm.lo)} to ${m.fmt(hm.hi)}. Cells holding under ${fmtInt(state.floor)} exposure-years are left blank.`;
+    + `${m.fmt(hm.lo)} to ${m.fmt(hm.hi)}. Cells holding under ${fmtInt(state.floor)} exposure-years are left blank`
+    + (state.metric === 'severity' ? `, as are cells with fewer than ${CLAIM_FLOOR} claims.` : '.');
   const ms = performance.now() - t0;
   $('perf').textContent = `${window.__aggMs !== undefined ? window.__aggMs.toFixed(0) + ' ms scan · ' : ''}`
     + `${ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms draw`;
