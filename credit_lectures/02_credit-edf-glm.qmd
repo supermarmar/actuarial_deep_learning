@@ -1,0 +1,710 @@
+---
+title: "Credit Lecture 2: Exponential Dispersion Family and Generalised Linear Models"
+subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
+author: "Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich"
+date: "2026-08-31"
+abstract: >
+  We develop the distributional machinery behind the PD models of the first
+  credit lecture. The exponential dispersion family and its deviance losses
+  are presented as in Lecture 2 of Deep Learning for Actuarial Modeling, with
+  the Bernoulli member worked through as the running example in place of the
+  Poisson. A logistic GLM is fitted to the Bondora modelling table, validated
+  in-sample and out-of-sample on both a random and an out-of-time split, and
+  the course's offsets-versus-weights equivalence is transplanted to the
+  equivalence between individual Bernoulli and grouped binomial fitting.
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    # Render with scripts/render_credit_lecture.sh, not bare `quarto render`.
+    # The script strips Quarto's Bootstrap and JS assets from the output so the
+    # page has the same effective structure as the authors' lecture documents
+    # (full Quarto markup, no theme assets), which is what lecture.css lays
+    # out. Left in place, Bootstrap's page-columns grid fights the
+    # stylesheet's two-column rail and the TOC overlaps the text.
+    css: ../lectures/lecture.css
+    embed-resources: false
+    fig-width: 9
+    fig-height: 4
+    fig-dpi: 150
+execute:
+  echo: true
+  warning: false
+jupyter: python3
+---
+
+# Introduction
+
+The first credit lecture estimated probabilities of default informally, by
+empirical default rates per covariate band and by two regression models
+whose loss functions we simply asserted. This lecture supplies the
+distributional theory behind those choices. The framework is the
+**exponential dispersion family (EDF)**, the class of distributions for
+which maximum likelihood estimation coincides with the minimisation of an
+associated **deviance loss**. Claim counts led the insurance lectures to the
+Poisson member of this family. The binary default indicator leads us to the
+Bernoulli member, and everything in this lecture works that member through
+the general theory.
+
+Before the theory, we recall what a good credit risk regression model should
+deliver. The original lecture lists eight desirable properties of actuarial
+regression models, and each has a direct credit reading:
+
+- **Accuracy**: the estimated PDs should be close to the true (unknown) default probabilities.
+- **Smoothness**: PDs should vary smoothly in continuous borrower characteristics.
+- **Sparsity**: the model should not carry covariates that do no work.
+- **Explainability**: a declined applicant, a validator and a supervisor will all ask why.
+- **Finite sample properties**: estimates must be reliable at the cell sizes a portfolio actually has.
+- **Quantifiable uncertainty**: a PD without a standard error cannot support a capital number.
+- **Adaptability**: the model must be re-estimable as the book and the economy move.
+- **Regulatory compliance**: rating systems used for capital face use-test and documentation requirements that constrain model form.
+
+Explainability and regulatory compliance carry more weight in credit than
+almost anywhere else in actuarial work, because PD models are embedded in
+individual lending decisions and in regulatory capital. The EDF and GLM
+framework of this lecture scores highly on both, which is one reason
+logistic regression remained the industry standard for decades. The deep
+learning lectures that follow have to earn their extra accuracy against this
+benchmark.
+
+# Exponential dispersion family: a bit of theory
+
+A random variable $Y$ belongs to the exponential dispersion family if its
+density (or probability mass function) can be written as
+
+$$
+Y \sim f_{\theta}(y)
+= \exp\left( \frac{y\theta - \kappa(\theta)}{\varphi / v} + c(y, \varphi/v) \right),
+$$
+
+with **canonical parameter** $\theta \in \boldsymbol{\Theta} \subseteq \mathbb{R}$,
+**cumulant function** $\kappa: \boldsymbol{\Theta} \to \mathbb{R}$,
+**dispersion parameter** $\varphi > 0$ and **weight** (exposure, volume)
+$v > 0$. The cumulant function determines the member of the family, and it
+determines the first two moments,
+
+$$
+\mathbb{E}[Y] = \kappa'(\theta),
+\qquad
+\mathrm{Var}(Y) = \frac{\varphi}{v}\, \kappa''(\theta).
+$$
+
+Since $\kappa$ is strictly convex on the interior of $\boldsymbol{\Theta}$,
+the mean function $\kappa'$ is strictly increasing and therefore invertible.
+Its inverse
+
+$$
+h := (\kappa')^{-1}
+$$
+
+is called the **canonical link**, and it identifies means with canonical
+parameters one to one, $h(\mathbb{E}[Y]) = \theta$.
+
+## The Bernoulli member
+
+The default indicator $D \in \{0, 1\}$ of the first lecture has probability
+mass function $\mathbb{P}(D = y) = \mu^{y} (1 - \mu)^{1-y}$ for
+$y \in \{0,1\}$, where $\mu = \mathrm{PD}$ is the default probability.
+Rewriting,
+
+$$
+\mathbb{P}(D = y)
+= \exp\left( y \log\frac{\mu}{1-\mu} + \log(1 - \mu) \right)
+= \exp\left( y\theta - \log(1 + e^{\theta}) \right),
+$$
+
+which is the EDF form with
+
+$$
+\theta = \log\frac{\mu}{1-\mu},
+\qquad
+\kappa(\theta) = \log\left(1 + e^{\theta}\right),
+\qquad
+\varphi = 1, \quad v = 1.
+$$
+
+The canonical parameter is the **log-odds** of default, an object every
+credit modeller already works with. Differentiating the cumulant function,
+
+$$
+\kappa'(\theta) = \frac{e^{\theta}}{1 + e^{\theta}} = \mu,
+\qquad
+\kappa''(\theta) = \mu (1 - \mu),
+$$
+
+so the mean function is the sigmoid, the variance is $\mu(1-\mu)$, and the
+canonical link is the **logit**, $h(\mu) = \log(\mu/(1-\mu))$. The
+dispersion is fixed at $\varphi = 1$; a single binary observation carries no
+free variance parameter, so overdispersion is a phenomenon of aggregated
+default counts rather than of individual indicators. The weight is $v = 1$
+because the fixed-horizon construction of the first lecture gave every loan
+the same twelve-month window. This is the simplification that credit buys:
+where the insurance lectures carry $v_i$ through every formula as a time
+exposure, our formulas carry $v_i \equiv 1$ and $\varphi = 1$, and the
+general theory specialises accordingly.
+
+## Deviance loss function
+
+For mean estimation within the EDF, the natural loss is the **deviance
+loss**
+
+$$
+L(y, m)
+= 2\, \frac{\varphi}{v} \left( \log f_{h(y)}(y) - \log f_{h(m)}(y) \right)
+\;\geq\; 0,
+$$
+
+which compares the log-likelihood of the observation $y$ under the best
+possible parameter (the saturated model, canonical parameter $h(y)$) with
+its log-likelihood under the estimated mean $m$. The deviance loss is zero
+precisely when $m = y$, and it is **strictly consistent** for mean
+estimation (Gneiting, 2011), which is the minimal requirement for a loss
+that is meant to recover conditional means.
+
+## Examples of deviance losses
+
+Each EDF member has its own deviance loss. The course table carries six
+members; the Bernoulli row is the one this lecture series lives on.
+
+| EDF distribution | cumulant $\kappa(\theta)$ | deviance loss $L(y, m)$ |
+|---|---|---|
+| Gaussian | $\theta^2/2$ | $(y-m)^2$ |
+| gamma | $-\log(-\theta)$ | $2\left((y-m)/m + \log(m/y)\right)$ |
+| inverse Gaussian | $-\sqrt{-2\theta}$ | $(y-m)^2/(m^2 y)$ |
+| Poisson | $e^{\theta}$ | $2\left(m - y - y \log(m/y)\right)$ |
+| Tweedie, $p \in (1,2)$ | $\frac{((1-p)\theta)^{\frac{2-p}{1-p}}}{2-p}$ | $2\left(y\frac{y^{1-p}-m^{1-p}}{1-p} - \frac{y^{2-p}-m^{2-p}}{2-p}\right)$ |
+| **Bernoulli** | $\log(1 + e^{\theta})$ | $2\left(-y \log m - (1-y)\log(1-m)\right)$ |
+
+For the Bernoulli member the saturated log-likelihood vanishes, because at
+$y \in \{0, 1\}$ the best possible model puts probability one on the
+observed outcome. What remains is
+
+$$
+L(y, m) = 2 \left( -y \log m - (1-y) \log(1-m) \right),
+$$
+
+which is twice the **log-loss** (binary cross-entropy). Machine learning
+practice in credit scoring minimises log-loss as a matter of routine, and
+this identity says that doing so is maximum likelihood estimation within the
+Bernoulli EDF. The loss that data scientists reach for on empirical grounds
+and the loss that the EDF theory prescribes are the same object, up to the
+factor two.
+
+## Model fitting on finite samples
+
+The correct deviance loss matters beyond consistency. When the chosen
+deviance loss matches the actual EDF behaviour of the response, the
+resulting estimator is best asymptotic normal (Gourieroux, Monfort and
+Trognon, 1984), so it makes the most of a finite sample. The practical
+instruction is to select the deviance loss that aligns with the EDF
+properties of $Y$. For a binary default indicator there is no modelling
+choice to agonise over; the indicator is Bernoulli by construction, and the
+Bernoulli deviance is the correct loss. The choice becomes genuinely
+delicate later in the credit curriculum, e.g. when modelling loss given
+default, whose observations live on $[0, 1]$ with mass at both endpoints
+and fit no EDF member comfortably.
+
+# Model validation and model selection
+
+Model fitting minimises an **in-sample loss** over a learning sample
+
+$$
+\mathcal{L} = \left( D_i, \boldsymbol{X}_i \right)_{i=1}^{n},
+\qquad
+\widehat{\mu}_{\mathcal{L}} \in \underset{\mu}{\arg\min}
+\sum_{i=1}^{n} L\left(D_i, \mu(\boldsymbol{X}_i)\right),
+$$
+
+where the general theory's weights $v_i/\varphi$ have already been set to
+one. A model can achieve a small in-sample loss by memorising noise, so a
+fair assessment requires a **test sample**
+$\mathcal{T} = (D_t, \boldsymbol{X}_t)_{t=1}^{m}$ that took no part in the
+fitting. The **out-of-sample loss** (generalisation loss)
+
+$$
+\widehat{\mathrm{GL}}\left(\mathcal{T}, \widehat{\mu}_{\mathcal{L}}\right)
+= \frac{1}{m} \sum_{t=1}^{m} L\left(D_t, \widehat{\mu}_{\mathcal{L}}(\boldsymbol{X}_t)\right)
+$$
+
+is the main workhorse for model validation and model selection in machine
+learning, and it is the quantity every model comparison in this lecture
+series reports.
+
+The course partitions the insurance data at random. Credit adds a
+complication that the first lecture already exposed: the Bondora vintage
+default rates run from 7 per cent in 2012 to 37 per cent in 2017, so
+consecutive loans are far from exchangeable in time. A random split places
+loans from every vintage on both sides of the partition, and the test sample
+then resembles the learning sample by construction. Credit validation
+practice therefore prefers an **out-of-time split**, holding out the most
+recent vintages, because the model will only ever be used on business
+written after its development window. We build both partitions below and
+let the numbers make the argument.
+
+```{python}
+import numpy as np
+import polars as pl
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from sklearn.metrics import roc_auc_score
+
+dat = pl.read_parquet("../data/bondora_pd.parquet")
+model_dat = (
+    dat.filter(pl.col("Age").is_not_null() & (pl.col("IncomeTotal") > 0))
+    .with_columns(logIncome=pl.col("IncomeTotal").log())
+    .filter(pl.col("Education") != -1)
+)
+print(f"modelling sample: n = {model_dat.height:,}")
+```
+
+We start from the modelling sample of the first lecture and additionally
+drop the three loans whose education field carries the unknown code $-1$,
+which leaves $n = 148{,}667$ loans. The learning and test samples are then
+constructed twice, once at random and once by origination date.
+
+```{python}
+g = model_dat.select(
+    ["default_12m", "Age", "logIncome", "Country", "Education",
+     "HomeOwnershipType", "NewCreditCustomer", "VerificationType",
+     "EmploymentDurationCurrentEmployer", "LoanDate"]).to_pandas()
+
+# random 80/20 split
+rng = np.random.default_rng(1)
+perm = rng.permutation(len(g))
+n_learn = int(0.8 * len(g))
+g_rand = g.iloc[perm].reset_index(drop=True)
+learn_r, test_r = g_rand.iloc[:n_learn], g_rand.iloc[n_learn:]
+
+# out-of-time split at the 0.8 quantile of origination dates
+cutoff = g["LoanDate"].quantile(0.8)
+learn_t = g[g["LoanDate"] <= cutoff]
+test_t = g[g["LoanDate"] > cutoff]
+
+print(f"random:      learn {len(learn_r):,} (rate {learn_r['default_12m'].mean():.4f}), "
+      f"test {len(test_r):,} (rate {test_r['default_12m'].mean():.4f})")
+print(f"out-of-time: learn {len(learn_t):,} (rate {learn_t['default_12m'].mean():.4f}), "
+      f"test {len(test_t):,} (rate {test_t['default_12m'].mean():.4f})")
+print(f"cutoff date: {cutoff.date()}, "
+      f"test window {test_t['LoanDate'].min().date()} to {test_t['LoanDate'].max().date()}")
+```
+
+The two partitions have nearly identical sizes and completely different
+characters. Under the random split, the learning and test default rates
+agree to three decimal places, 28.9 against 29.2 per cent. Under the
+out-of-time split, the learning window defaults at 30.5 per cent while the
+held-out window, November 2019 to July 2020, defaults at 22.8 per cent.
+That window covers the onset of the COVID-19 pandemic, during which the
+platform's origination volumes and lending standards shifted markedly, so
+the drop reflects a changed book as much as a changed economy. This is
+precisely the situation an out-of-time split exists to simulate.
+
+One remark on metrics before we fit anything. The deviance losses of this
+lecture judge the **level** of the predicted PDs, so they are calibration
+measures in the sense of the later calibration lecture. Credit practice
+leads its validation reports with the **AUC** (equivalently the Gini
+coefficient, ${\rm Gini} = 2\,{\rm AUC} - 1$), which judges only the
+**ranking** of borrowers by predicted risk and is blind to the level. The
+two views can disagree, and below they will. We report AUC alongside every
+deviance and defer the systematic treatment of calibration to the
+companion of lecture 7.
+
+# GLM regression function
+
+A **generalised linear model** couples the EDF response with a regression
+structure. For a smooth and strictly increasing **link function** $g$, the
+GLM regression function is
+
+$$
+\boldsymbol{X} \mapsto g\left(\mu_{\vartheta}(\boldsymbol{X})\right)
+= \vartheta_0 + \sum_{j=1}^{q} \vartheta_j X_j
+=: \langle \vartheta, \boldsymbol{X} \rangle,
+$$
+
+with regression parameter
+$\vartheta = (\vartheta_0, \ldots, \vartheta_q)^\top \in \mathbb{R}^{q+1}$.
+The conditional mean is linear in the covariates up to the link
+transformation,
+$\mu_{\vartheta}(\boldsymbol{X}) = \mathbb{E}[D \,|\, \boldsymbol{X}] = g^{-1}\langle \vartheta, \boldsymbol{X} \rangle$,
+which in credit is the PD functional
+$\mathrm{PD}(\boldsymbol{X}) = \mu_{\vartheta}(\boldsymbol{X})$ of the first
+lecture.
+
+## Logit-link example
+
+The insurance lectures favour the log-link, under which the mean is a
+product of factors $e^{\vartheta_j X_j}$ that pricing actuaries read as
+price relativities. The credit analogue uses the logit link
+$g(\mu) = \log(\mu / (1 - \mu))$, under which the **odds** of default are
+multiplicative,
+
+$$
+\frac{\mu_{\vartheta}(\boldsymbol{X})}{1 - \mu_{\vartheta}(\boldsymbol{X})}
+= e^{\vartheta_0} \prod_{j=1}^{q} e^{\vartheta_j X_j}.
+$$
+
+Each covariate contributes its own **odds ratio** $e^{\vartheta_j}$ per unit
+of $X_j$, and the intercept $\vartheta_0$ calibrates the overall level, in
+exact parallel to the bias parameter of the log-link example. Odds ratios
+are the credit scorer's price relativities. They also explain the industry's
+**scorecard points**. A traditional scorecard reports
+$\mathrm{score} = A - B \,\langle \vartheta, \boldsymbol{X} \rangle$ for
+display constants $A$ and $B$, so the score is an affine transformation of
+the GLM's linear predictor, and the familiar "points to double the odds" is
+$B \log 2$. A scorecard is a logistic GLM wearing different units.
+
+```{python}
+#| fig-cap: "Logit-link GLM with q = 2 illustrative covariates: PD against borrower age for a repeat customer (lower curve) and a new customer (upper curve), using illustrative parameters. The age effect is a common factor on the odds scale, so the two curves are parallel in the log-odds and squeeze together as the PD approaches 0 or 1 on the probability scale."
+ages = np.arange(18, 91)
+b0, b1, b2 = 1.2, -0.045, 0.55
+for x2, colour, lab in [(0, "#3B4A75", "repeat customer"),
+                        (1, "#8C2F1E", "new customer")]:
+    lin = b0 + b1 * ages + b2 * x2
+    plt.plot(ages, 1 / (1 + np.exp(-lin)), color=colour, label=lab)
+plt.xlabel("age of borrower"); plt.ylabel("PD"); plt.legend()
+plt.tight_layout(); plt.show()
+```
+
+## EDF and the (special) canonical link choice
+
+Any smooth and strictly increasing $g$ produces a valid GLM. Choosing the
+**canonical link** of the response's EDF member, $g = h = (\kappa')^{-1}$,
+makes the canonical parameter itself linear in the covariates,
+$\theta = \langle \vartheta, \boldsymbol{X} \rangle$, and buys two
+structural properties:
+
+- the maximum likelihood estimator of the GLM is unique (when it exists; see the separation remark in the fitting section below), and
+- the fitted GLM fulfils the **balance property**.
+
+| EDF distribution | canonical link $h(\mu)$ | support of $\theta$ | mean parameter space |
+|---|---|---|---|
+| Gaussian | $\mu$ | $\mathbb{R}$ | $\mathbb{R}$ |
+| gamma | $-1/\mu$ | $(-\infty, 0)$ | $(0, \infty)$ |
+| inverse Gaussian | $-1/(2\mu^2)$ | $(-\infty, 0]$ | $(0, \infty)$ |
+| Poisson | $\log(\mu)$ | $\mathbb{R}$ | $(0, \infty)$ |
+| Tweedie, $p \in (1,2)$ | $\mu^{1-p}/(1-p)$ | $(-\infty, 0)$ | $(0, \infty)$ |
+| **Bernoulli** | $\log\left(\mu/(1-\mu)\right)$ | $\mathbb{R}$ | $(0, 1)$ |
+
+The insurance lectures note that the canonical link is sometimes
+inconvenient (the gamma's canonical link violates positivity of the mean,
+so the log-link is used instead) and sometimes exactly right (the log-link
+is the Poisson's canonical link). Credit sits in the comfortable case. The
+logit is the Bernoulli's canonical link, its canonical parameter space is
+all of $\mathbb{R}$, and its mean parameter space is $(0,1)$, so predicted
+PDs respect their natural range automatically. Logistic regression
+therefore enjoys both structural properties above without giving anything
+up.
+
+The balance property deserves its credit translation. Under the canonical
+link, the maximum likelihood score equations include, through the intercept,
+
+$$
+\sum_{i=1}^{n} \widehat{\mu}(\boldsymbol{X}_i) = \sum_{i=1}^{n} D_i,
+$$
+
+so the fitted PDs sum exactly to the observed number of defaults on the
+learning sample. Credit modellers call this **calibration in the large**:
+the model reproduces the portfolio's central tendency on its development
+data. In insurance the same identity guarantees that the estimated prices
+collect the right total premium. The theorem holds on $\mathcal{L}$, as an
+algebraic consequence of the score equations, and it is silent about every
+other sample. The out-of-time exercise below shows how hard that limitation
+bites.
+
+# GLM fitting and examples
+
+The GLM parameter is estimated by maximum likelihood. For our Bernoulli
+responses the log-likelihood of the learning sample is
+
+$$
+\vartheta \mapsto \ell(\vartheta)
+= \sum_{i=1}^{n}
+D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
++ (1 - D_i) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right),
+$$
+
+and $\widehat{\vartheta}^{\rm MLE} \in \arg\max_{\vartheta} \ell(\vartheta)$
+has no closed form. It is computed by Fisher's scoring method, equivalently
+iteratively reweighted least squares (IRLS), exactly as in Nelder and
+Wedderburn (1972); `statsmodels` reports the iteration count with every
+fit.
+
+## Relationship to deviance losses
+
+Maximising this log-likelihood is the same problem as minimising the
+Bernoulli deviance loss over the learning sample,
+
+$$
+\widehat{\vartheta}^{\rm MLE}
+\in \underset{\vartheta}{\arg\min}
+\sum_{i=1}^{n} 2 \left( -D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
+- (1 - D_i) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right) \right),
+$$
+
+because the two objectives differ by the saturated log-likelihood, which is
+zero for binary data, and by the factor $-2$. In-sample loss minimisation,
+maximum likelihood and log-loss minimisation are one estimation problem
+seen from three angles, and by the finite-sample result quoted earlier this
+common estimator is also the one that uses the data best.
+
+## GLM example: Bondora data
+
+We now fit a logistic GLM whose scope mirrors the seven-covariate French
+MTPL fit of the course. The first lecture's covariates `AgeClass`,
+`logIncome` and `Country` are joined by five further application-time
+variables: education, home ownership, the new-customer flag, income
+verification and employment duration.
+
+Two data points force small engineering decisions, and both are worth
+stating openly. First, `HomeOwnershipType` is missing for 1,604 loans and
+`EmploymentDurationCurrentEmployer` for 820. In credit data, missingness is
+routinely informative (an applicant who skips a field differs from one who
+fills it in), so we assign each an explicit `missing` category rather than
+dropping rows or imputing values, and we let the model estimate what
+missingness is worth. Second, the first lecture's oldest age class `71+`
+contains 13 loans and zero defaults. In a logistic GLM a covariate class
+with no defaults drives its coefficient to $-\infty$; the likelihood keeps
+improving as the fitted PD of the class falls to zero, IRLS runs until it
+hits its iteration cap, and the reported coefficient and standard error are
+numerical artefacts. This is **quasi-complete separation**, the standard
+failure mode of maximum likelihood in sparse categorical data, and it is
+the fine print behind "the MLE is unique when it exists". The practical
+remedy at these volumes is coarser classes, so we merge the two oldest
+bands into `61+`.
+
+```{python}
+g["AgeClass"] = pd.cut(
+    g["Age"], [18, 20, 25, 30, 40, 50, 60, 101],
+    labels=["18-20", "21-25", "26-30", "31-40", "41-50", "51-60", "61+"],
+    include_lowest=True)
+ho = g["HomeOwnershipType"]
+g["HomeOwnership"] = np.where(ho.isna() | (ho == -1), "missing",
+                              ho.fillna(-1).astype(int).astype(str))
+g["EmploymentDuration"] = g["EmploymentDurationCurrentEmployer"].fillna("missing")
+
+# rebuild the splits so they carry the engineered columns
+g_rand = g.iloc[perm].reset_index(drop=True)
+learn_r, test_r = g_rand.iloc[:n_learn], g_rand.iloc[n_learn:]
+learn_t, test_t = g[g["LoanDate"] <= cutoff], g[g["LoanDate"] > cutoff]
+
+FORMULA = ("default_12m ~ AgeClass + logIncome + Country + C(Education)"
+           " + C(HomeOwnership) + NewCreditCustomer + C(VerificationType)"
+           " + C(EmploymentDuration)")
+
+glm_r = smf.glm(FORMULA, data=learn_r, family=sm.families.Binomial()).fit()
+print(glm_r.summary())
+```
+
+The fit estimates 39 regression parameters and converges in five IRLS
+iterations. A few coefficients read as odds ratios illustrate the logit
+link's interpretability. A Spanish borrower carries
+$e^{1.963} \approx 7.1$ times the default odds of an otherwise identical
+Estonian borrower, which quantifies the country effect that resolved the
+first lecture's Simpson's paradox. A new customer carries
+$e^{0.301} \approx 1.35$ times the odds of a repeat customer. Higher
+education (level 5) multiplies the odds by $e^{-0.430} \approx 0.65$
+relative to primary education. Meanwhile the income coefficient sits at
+$-0.031$: once country and the other application variables are controlled,
+declared income has almost no residual work left to do, continuing its
+demotion from the confounded $+0.255$ of the first lecture's GLM1.
+
+Because the logit is the canonical link, the balance property must hold on
+the learning sample to machine precision, and it does:
+
+```{python}
+print(f"sum of fitted PDs:       {glm_r.fittedvalues.sum():,.4f}")
+print(f"observed defaults in L:  {learn_r['default_12m'].sum():,}")
+```
+
+## Bernoulli deviance loss: in-sample and out-of-sample
+
+We evaluate the fitted GLM with the scaled Bernoulli deviance loss, in
+$10^{-2}$ units as the course does for its Poisson losses, and we report
+the AUC alongside. For each test sample we also report the deviance of the
+**null model** that predicts that sample's own mean default rate for every
+loan, because Bernoulli deviance levels depend on the base rate and are
+comparable across samples only relative to such a floor.
+
+```{python}
+def bernoulli_deviance(pred, obs):
+    p = np.asarray(pred, float)
+    y = np.asarray(obs, float)
+    return 100 * 2 * np.mean(-y * np.log(p) - (1 - y) * np.log(1 - p))
+
+def report(label, pred, obs):
+    null = np.full(len(obs), np.asarray(obs, float).mean())
+    print(f"{label}: deviance {bernoulli_deviance(pred, obs):7.3f}   "
+          f"null {bernoulli_deviance(null, obs):7.3f}   "
+          f"AUC {roc_auc_score(obs, pred):.4f}")
+
+report("random fit, in-sample      ", glm_r.fittedvalues, learn_r["default_12m"])
+report("random fit, random test    ", glm_r.predict(test_r), test_r["default_12m"])
+print(f"mean predicted PD on random test: {glm_r.predict(test_r).mean():.4f}   "
+      f"observed rate: {test_r['default_12m'].mean():.4f}")
+```
+
+On the random split the picture is exactly the course's. The out-of-sample
+deviance, 108.197, sits just above the in-sample 106.641, so the model
+generalises with a small gap, and the AUC declines only from 0.726 to
+0.718. The mean predicted PD on the test sample, 28.9 per cent, agrees with
+the observed 29.2 per cent, so the balance property transfers to the test
+sample almost perfectly. It transfers because a random split makes the two
+samples statistically identical, and that is the flattering assumption the
+out-of-time split now removes.
+
+```{python}
+glm_t = smf.glm(FORMULA, data=learn_t, family=sm.families.Binomial()).fit()
+report("oot fit, in-sample         ", glm_t.fittedvalues, learn_t["default_12m"])
+report("oot fit, out-of-time test  ", glm_t.predict(test_t), test_t["default_12m"])
+print(f"mean predicted PD on oot test: {glm_t.predict(test_t).mean():.4f}   "
+      f"observed rate: {test_t['default_12m'].mean():.4f}")
+```
+
+Read these numbers carefully, because the naive reading gets them backwards.
+The out-of-time test deviance, 100.400, is **lower** than the random-split
+test deviance, and a careless comparison would conclude the model performs
+better out of time. The null deviances expose the mechanics. The out-of-time
+window's base rate of 22.8 per cent makes its null deviance 107.4, against
+120.8 on the random test sample, so the entire apparent improvement is the
+lower entropy of a lower base rate. Relative to its own null, the model
+explains far less out of time. The calibration failure is where the drift
+actually lands. The refit predicts a mean PD of 30.7 per cent on the
+held-out window against an observed 22.8 per cent, an overstatement of
+nearly eight percentage points from a model whose fitted PDs summed exactly
+to the observed defaults on its own development window. The balance
+property is an in-sample identity, and the out-of-time split is what
+reveals that.
+
+The AUC tells the complementary story. It falls only to 0.716 on the
+out-of-time window, so the model still ranks borrowers nearly as well as it
+ever did, while its level is badly off. This combination, ranking that
+survives the drift and a level that does not, is the routine experience of
+credit scorecards, and it explains the industry's standing practice of
+keeping a scorecard's coefficients while recalibrating its intercept to the
+current central tendency. The calibration lecture's companion takes this up
+properly.
+
+```{python}
+#| fig-cap: "Monthly observed default rate (dots) against the mean predicted PD of the out-of-time fit (line). Left of the dashed cutoff is the development window, where the fit tracks the vintage cycle it was estimated on; right of it, prediction and outcome part company as the pandemic-era book departs from the development experience. Months are plotted from 2013 onward; the sparse 2009 to 2012 vintages are omitted from the display only."
+g_oot = g.copy()
+g_oot["pred"] = glm_t.predict(g_oot)
+g_oot["month"] = g_oot["LoanDate"].dt.to_period("M").dt.to_timestamp()
+monthly = (g_oot[g_oot["month"] >= "2013-01-01"]
+           .groupby("month")[["default_12m", "pred"]].mean())
+
+fig, ax = plt.subplots(figsize=(6.5, 3.6))
+ax.plot(monthly.index, monthly["default_12m"], "o", ms=3,
+        color="#8A8377", label="observed")
+ax.plot(monthly.index, monthly["pred"], color="#8C2F1E", label="predicted")
+ax.axvline(cutoff, color="#3B4A75", ls="--", lw=1, label="oot cutoff")
+ax.set_xlabel("origination month"); ax.set_ylabel("12-month default rate")
+ax.legend(); plt.tight_layout(); plt.show()
+```
+
+## Individual Bernoulli versus grouped binomial
+
+The course closes its GLM lecture by showing that two formulations of the
+Poisson GLM coincide: regressing claim counts with $\log v_i$ as an offset,
+and regressing claim frequencies with $v_i$ as weights. The weights
+mechanism has an exact Bernoulli counterpart. Borrowers who share one
+covariate cell contribute a product of identical Bernoulli likelihood terms,
+and that product depends on the cell's data only through its number of
+loans and its number of defaults. Consequently, fitting the GLM on one row
+per loan and fitting it on one row per covariate cell, with the cell's
+default rate as response and its loan count as weight, are the same
+likelihood and must return the same estimate. Aggregation over identical
+covariate rows plays the role that aggregation over exposure plays for
+counts.
+
+We verify this on a purely categorical sub-model, since exact aggregation
+needs discrete cells.
+
+```{python}
+SUB = "default_12m ~ AgeClass + Country + C(Education)"
+glm_ind = smf.glm(SUB, data=learn_r, family=sm.families.Binomial()).fit()
+
+cells = (learn_r
+         .groupby(["AgeClass", "Country", "Education"], observed=True)
+         .agg(n=("default_12m", "size"), defaults=("default_12m", "sum"))
+         .reset_index())
+cells["rate"] = cells["defaults"] / cells["n"]
+glm_grp = smf.glm("rate ~ AgeClass + Country + C(Education)", data=cells,
+                  family=sm.families.Binomial(), var_weights=cells["n"]).fit()
+
+print(f"rows: {len(learn_r):,} individual  ->  {len(cells):,} cells")
+print(f"max |coefficient difference|: "
+      f"{np.abs(glm_ind.params.values - glm_grp.params.values).max():.2e}")
+```
+
+The learning sample of 118,933 loans collapses to 124 cells, and the two
+coefficient vectors agree to $10^{-12}$, which is IRLS convergence
+tolerance rather than approximation. The reported deviances differ, because
+the saturated model changes when the data are grouped, and the coefficient
+estimates are unaffected. In practice the grouped form is how logistic
+GLMs are fitted on aggregated cohort data, e.g. historical default-rate
+tables where loan-level records no longer exist, and it is also a
+substantial computational saving whenever the covariates are categorical.
+
+# Takeaways and outlook {.unnumbered}
+
+The Bernoulli member of the EDF hands credit modelling its complete
+toolkit. The canonical parameter is the log-odds, the canonical link is the
+logit, the deviance loss is twice the log-loss, maximum likelihood is
+deviance minimisation, and the balance property is calibration in the
+large on the development sample. The out-of-time exercise added the caveat
+that theory attaches to all of it: every guarantee is an in-sample
+guarantee, and a drifting book collects the difference.
+
+The GLM regression function is linear in the covariates up to the link,
+
+$$
+\boldsymbol{X} \mapsto g\left(\mu_{\vartheta}(\boldsymbol{X})\right)
+= \vartheta_0 + \sum_{j=1}^{q} \vartheta_j X_j
+= \langle \vartheta, \boldsymbol{X} \rangle.
+$$
+
+The networks of the coming lectures keep every piece of this lecture's
+machinery (the Bernoulli deviance as loss, the sigmoid as output
+activation, the out-of-sample loss as arbiter) and change exactly one
+thing, replacing the covariates with learned features,
+
+$$
+\boldsymbol{X} \mapsto g\left(\mu_{\vartheta}(\boldsymbol{X})\right)
+= w_0^{(d+1)} + \sum_{j=1}^{q_d} w_j^{(d+1)}\, z_j^{(d:1)}(\boldsymbol{X})
+= \langle \boldsymbol{w}^{(d+1)}, \boldsymbol{z}^{(d:1)}(\boldsymbol{X}) \rangle,
+$$
+
+where $\boldsymbol{z}^{(d:1)}: \mathbb{R}^q \to \mathbb{R}^{q_d}$ is a
+feature extractor learned from the data. A neural network PD model is a
+logistic GLM on features the model builds for itself, which is why
+everything proved here survives into deep learning.
+
+# Copyright and attribution {.unnumbered}
+
+This document adapts the storyline, structure and notation of *Lecture 2:
+Exponential Dispersion Family and Generalized Linear Models* from the
+summer school **Deep Learning for Actuarial Modeling** (Scognamiglio, Maggi
+and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of
+the project *AI Tools for Actuaries*, used under CC BY-NC 4.0. Changes
+made: the Poisson claim-frequency thread is recast as the Bernoulli default
+thread on the public Bondora loan book, the code is Python rather than R,
+the out-of-time validation contrast, the quasi-complete separation remark,
+the scorecard points aside and the grouped binomial equivalence are new,
+and the offsets-versus-weights section is replaced by its Bernoulli
+counterpart. The original lecture notes are available at
+<https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304>.
+
+# References {.unnumbered}
+
+- Gneiting, T. (2011). Making and evaluating point forecasts. *Journal of
+  the American Statistical Association* 106(494), 746-762.
+- Gourieroux, C., Monfort, A. and Trognon, A. (1984). Pseudo maximum
+  likelihood methods: theory. *Econometrica* 52(3), 681-700.
+- Nelder, J.A. and Wedderburn, R.W.M. (1972). Generalized linear models.
+  *Journal of the Royal Statistical Society, Series A* 135(3), 370-384.
+- Wüthrich, M.V. and Merz, M. (2023). *Statistical Foundations of Actuarial
+  Learning and its Applications*. Springer.
+- Scognamiglio, S., Maggi, M. and Wüthrich, M.V. (2026). *Deep Learning for
+  Actuarial Modeling*, SSRN 5162304.
