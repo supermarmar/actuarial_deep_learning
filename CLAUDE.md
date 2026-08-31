@@ -98,9 +98,14 @@ about.
 `lectures/`, `exercises/` and `reference/` hold files exactly as issued, so a formatter must
 never touch them. A VS Code format-on-save rewrote 1,164 lines of `lectures/01_use-case.html`
 on 31 August 2026, which buries any real change in a whitespace diff. Two guards are in place:
-`.prettierignore` covers all three directories (exempting our own `lectures/lecture.css`), and
+`.prettierignore` covers `lectures/*.html`, `exercises/` and `reference/`, and
 `.vscode/settings.json` turns off format-on-save for HTML in this workspace. If a thousand-line
 diff ever appears on a lecture file, that is what happened; `git checkout --` the file.
+
+The `.prettierignore` rule names `lectures/*.html` rather than `lectures/`, so that our own
+`lectures/lecture.css` stays formattable. A directory exclusion would not allow it back:
+Prettier reads gitignore semantics, where excluding a directory stops the walk and a later
+`!lectures/lecture.css` is inert.
 
 ## Repo versus vault
 
