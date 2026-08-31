@@ -25,7 +25,7 @@ models and in-context learning.
 |---|---|
 | `lectures/` | Seven Quarto-rendered lecture documents (`.html`), downloaded from the course site, plus `lecture.css`, the shared presentation layer. Figures are gitignored, see below |
 | `scripts/` | Repo utilities. Currently the lecture figure fetcher |
-| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, adapting each course lecture to the Bondora PD problem. Render with `QUARTO_PYTHON="$PWD/.venv/bin/python" quarto render credit_lectures/<file>.qmd` |
+| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, adapting each course lecture to the Bondora PD problem. Render with `bash scripts/render_credit_lecture.sh`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
 | `reference/` | Four Python notebooks from the `wueth/AITools4Actuaries` GitHub repo |
