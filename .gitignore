@@ -4,6 +4,13 @@
 # Course data, downloaded from the summer school site. See CLAUDE.md.
 data/
 
+# Lecture figures, downloaded from the same site: 50 files and 5.6 MB of the
+# course authors' plots and diagrams. Ignored for the reason data/ is, and one
+# command away:
+#   bash scripts/fetch_lecture_figures.sh
+lectures/*.png
+lectures/*_files/
+
 # Python
 __pycache__/
 *.py[cod]
