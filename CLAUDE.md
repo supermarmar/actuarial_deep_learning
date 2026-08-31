@@ -29,6 +29,7 @@ models and in-context learning.
 | `reference/` | Four Python notebooks from the `wueth/AITools4Actuaries` GitHub repo |
 | `data/` | Course data, unpacked from `Data.zip`. Gitignored, see below |
 | `notes/` | Notes per lecture, in markdown |
+| `dashboard/` | Builder for the self-contained portfolio explorer. Output is gitignored, see below |
 
 ## Tech stack
 
@@ -70,6 +71,32 @@ has used openly for years. No client data is involved.
 The directory is gitignored all the same, since a 34 MB binary blob has no business in git
 history and the file is one `curl` away. Redownload it from
 `https://people.math.ethz.ch/~wueth/Lecture/SummerSchool2026/Data/Data.zip`.
+
+## Portfolio dashboard
+
+`dashboard/build.py` renders `data/freMTPL2freq.parquet` into a single self-contained
+`dashboard/dashboard.html`, roughly 2.4 MB, which opens straight from disk with no server and
+no kernel:
+
+```bash
+.venv/bin/python dashboard/build.py && open dashboard/dashboard.html
+```
+
+All 678,007 policies travel inside the page as column-major `uint8` arrays, gzipped and
+base64-encoded, so the cross-filter aggregates the whole book rather than a sample. Rows are
+sorted on a composite key before encoding, which is what takes the payload from 3.6 MB to
+1.6 MB. `dashboard/template.html` holds the markup, CSS and JavaScript with three
+placeholders that the builder fills.
+
+Two things to keep in mind when editing it. The page needs JavaScript, so it deliberately
+departs from the "no JavaScript" line in `~/.claude/rules/html-design.md`; every other rule in
+that file still applies, above all the 14px floor and the flat treatment. Separately, density
+is encoded as `floor(log10(density) * 50)` rather than `round(...)`, because the panel buckets
+by half-decade and those edges fall on exact multiples of 25 codes. Rounding put 11,752
+policies into the neighbouring bucket.
+
+The output is gitignored, since it is a 2.4 MB derived artefact and `data/` is gitignored
+anyway. Commit the builder and the template, never the render.
 
 ## Repo versus vault
 

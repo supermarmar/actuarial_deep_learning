@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>freMTPL2freq portfolio explorer</title>
+<style>
+__FONTFACE__
+:root {
+  --white:#FFFFFF; --surface:#F7F7F7; --ink:#1A1A1A; --ink-2:#232323;
+  --body:#5C5C5C; --muted:#6E6E6E; --accent:#B18559; --accent-deep:#9C5E1F;
+  --sand:#D0BAA4; --charcoal:#323232; --rule:#E4E4E4;
+  --warn:#8A3A2D; --caution:#7A4E1A; --positive:#2D6B40;
+  --font:'Google Sans Flex','Google Sans',Calibri,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'SF Mono','Fira Code','Courier New',monospace;
+  --text-floor:0.875rem; --text-table:0.9375rem; --text-body:1rem;
+  --text-lead:1.25rem; --text-h3:1.5rem; --text-h1:2.9375rem;
+  --sp-0:0.25rem; --sp-1:0.5rem; --sp-2:0.75rem; --sp-3:1rem;
+  --sp-4:1.5rem; --sp-5:2rem; --sp-6:3rem;
+}
+*{box-sizing:border-box}
+html,body{overflow-x:clip}
+body{
+  font-family:var(--font); font-size:var(--text-body); line-height:1.7;
+  color:var(--body); background:var(--surface); margin:0;
+  padding:var(--sp-5) var(--sp-5) var(--sp-6);
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+}
+h1{font-size:var(--text-h3);line-height:1.2;color:var(--ink-2);font-weight:500;margin:0}
+h2{font-size:var(--text-lead);line-height:1.2;color:var(--ink);font-weight:500;margin:0 0 var(--sp-2)}
+.label{font-size:var(--text-floor);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* ---- masthead ------------------------------------------------------- */
+.masthead{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--sp-3);
+  border-bottom:2px solid var(--ink);padding-bottom:var(--sp-2);margin-bottom:var(--sp-4)}
+.masthead .sub{font-size:var(--text-floor);color:var(--muted);line-height:1.4}
+
+/* ---- totals strip --------------------------------------------------- */
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:var(--sp-1) var(--sp-4);background:var(--white);padding:var(--sp-3) var(--sp-4);
+  margin-bottom:var(--sp-4);border-left:4px solid var(--accent)}
+.total-v{font-size:var(--text-h3);line-height:1.15;color:var(--ink);font-variant-numeric:tabular-nums}
+.total-d{font-size:var(--text-floor);line-height:1.4;color:var(--muted);min-height:1.4em}
+.total-d.up{color:var(--warn)} .total-d.down{color:var(--positive)}
+
+/* ---- controls ------------------------------------------------------- */
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-1) var(--sp-4);
+  background:var(--white);padding:var(--sp-2) var(--sp-4);margin-bottom:var(--sp-3)}
+.ctl{display:flex;align-items:center;gap:var(--sp-1)}
+.seg{display:flex;border:1px solid var(--rule)}
+.seg button{font:inherit;font-size:var(--text-floor);background:var(--white);color:var(--body);
+  border:0;border-right:1px solid var(--rule);padding:var(--sp-0) var(--sp-2);cursor:pointer;white-space:nowrap}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--white);font-weight:600}
+select,input[type=range]{font:inherit;font-size:var(--text-floor);color:var(--ink);
+  background:var(--white);border:1px solid var(--rule);padding:2px var(--sp-0);accent-color:var(--accent-deep)}
+input[type=range]{padding:0;width:130px;border:0}
+button.text{font:inherit;font-size:var(--text-floor);background:none;border:0;color:var(--accent-deep);
+  cursor:pointer;padding:0;text-decoration:underline}
+
+/* ---- filter chips --------------------------------------------------- */
+.chips{display:flex;flex-wrap:wrap;gap:var(--sp-1);margin-bottom:var(--sp-3);min-height:1.9rem;align-items:center}
+.chip{font-size:var(--text-floor);line-height:1.4;background:var(--white);border:1px solid var(--accent);
+  color:var(--ink);padding:2px var(--sp-1);border-radius:9999px;cursor:pointer;white-space:nowrap}
+.chip::after{content:" \00d7";color:var(--accent-deep);font-weight:700}
+.chips .none{font-size:var(--text-floor);color:var(--muted)}
+
+/* ---- panels --------------------------------------------------------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:var(--sp-3)}
+.panel{background:var(--white);padding:var(--sp-3) var(--sp-3) var(--sp-2)}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--sp-2);margin-bottom:var(--sp-1)}
+.panel-head .t{font-size:var(--text-floor);font-weight:600;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--ink)}
+.panel-head .r{font-size:var(--text-floor);color:var(--muted);white-space:nowrap}
+.panel svg{display:block;width:100%;height:auto;overflow:visible}
+.panel .cap{font-size:var(--text-floor);line-height:1.4;color:var(--muted);margin-top:var(--sp-0)}
+.bar{cursor:pointer}
+.bar:hover .hit{fill:var(--ink);fill-opacity:.06}
+.wide{grid-column:1/-1}
+
+.hm-controls{display:flex;flex-wrap:wrap;gap:var(--sp-1) var(--sp-3);align-items:center;margin-bottom:var(--sp-2)}
+.legend{display:flex;align-items:center;gap:var(--sp-1);font-size:var(--text-floor);color:var(--muted)}
+.legend .ramp{display:flex}
+.legend .ramp span{width:22px;height:10px;display:block}
+
+footer{margin-top:var(--sp-5);padding-top:var(--sp-2);border-top:1px solid var(--rule);
+  font-size:var(--text-floor);line-height:1.5;color:var(--muted);max-width:70rem}
+footer p{margin:0 0 var(--sp-1)}
+code{font-family:var(--font-mono);color:var(--accent-deep)}
+:focus-visible{outline:2px solid var(--accent-deep);outline-offset:2px}
+.panel .svg{overflow-x:auto}
+svg text{font-family:var(--font)}
+.ax{font-size:var(--text-floor);fill:var(--muted)}
+.axk{font-size:var(--text-floor);fill:var(--ink);font-weight:600}
+.val{font-size:var(--text-floor);fill:var(--ink);font-variant-numeric:tabular-nums}
+.ref{stroke:var(--accent-deep);stroke-width:1;stroke-dasharray:4 3}
+.reftx{font-size:var(--text-floor);fill:var(--accent-deep)}
+.hmv{font-size:var(--text-floor);font-variant-numeric:tabular-nums}
+.cap{font-size:var(--text-floor);line-height:1.4;color:var(--muted)}
+#perf{font-size:var(--text-floor);color:var(--muted);font-variant-numeric:tabular-nums}
+#boot{padding:var(--sp-5) 0;font-size:var(--text-lead);color:var(--muted)}
+#boot.err{color:var(--warn)}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="masthead">
+  <h1>freMTPL2freq portfolio explorer</h1>
+  <span class="sub">French motor third-party liability &middot; 678,007 policies &middot; click any bar to filter</span>
+</div>
+
+<div id="boot">Decoding 678,007 policies&hellip;</div>
+<div id="app" hidden>
+  <div class="totals" id="totals"></div>
+  <div class="controls" id="controls"></div>
+  <div class="chips" id="chips"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<footer>
+  <p><span class="label">Source</span></p>
+  <p>Freely available French motor third-party liability data (<code>freMTPL2freq.parquet</code>),
+     as issued for the Deep Learning for Actuarial Modeling summer school, Milan, 2026. All
+     678,007 policies are held in the page at full precision; nothing is sampled.</p>
+  <p>Frequency is &Sigma;ClaimNb / &Sigma;Exposure, severity is &Sigma;ClaimTotal / &Sigma;ClaimNb,
+     and burning cost is &Sigma;ClaimTotal / &Sigma;Exposure. Every panel aggregates under all
+     active filters <em>except its own</em>, so a filtered panel keeps the context you selected
+     it from. The dashed line is the whole-book value with no filters applied, so each bar reads
+     as a position relative to the portfolio. Bins holding less than the exposure floor are
+     drawn hollow and excluded from the vertical scale, because a frequency measured on a few
+     exposure-years is noise. Severity is dominated by a handful of very large claims (the
+     largest single loss is &euro;4.08m against a book mean near &euro;2.4k), so read the
+     severity and burning-cost views with that in mind.</p>
+  <p>Density is bucketed by half-decade and stored as floor(log&#8321;&#8320;(density) &times; 50) in
+     one byte. Because a half-decade is exactly 25 codes wide, that reproduces every bucket
+     boundary exactly, so no policy sits in the wrong bucket. Every other field is exact and
+     no row is aggregated, sampled or rounded. Rebuild this file with
+     <code>.venv/bin/python dashboard/build.py</code>.</p>
+</footer>
+
+<script>
+const HEADER = __HEADER__;
+const PAYLOAD = "__PAYLOAD__";
+
+/* ===================================================================== *
+ * Dimensions.
+ *
+ * `cap` folds the long tail into a single top bin, so one 100-year-old
+ * vehicle cannot stretch an axis across 50 empty bins. `binws` are the
+ * widths offered in the panel's own control.
+ * ===================================================================== */
+const DIMS = [
+  {key:'DrivAge',    label:'Driver age',     col:'DrivAge',    kind:'num', min:18, cap:88,  binw:5,  binws:[1,2,5,10], unit:'years'},
+  {key:'VehAge',     label:'Vehicle age',    col:'VehAge',     kind:'num', min:0,  cap:30,  binw:2,  binws:[1,2,5,10], unit:'years'},
+  {key:'BonusMalus', label:'Bonus-malus',    col:'BonusMalus', kind:'num', min:50, cap:150, binw:10, binws:[5,10,20,25], unit:'level'},
+  {key:'VehPower',   label:'Vehicle power',  col:'VehPower',   kind:'num', min:4,  cap:15,  binw:1,  binws:[1,2], unit:''},
+  {key:'Density',    label:'Population density', col:'DensityLog', kind:'dens', unit:'per km²'},
+  {key:'Area',       label:'Area code',      col:'Area',       kind:'cat'},
+  {key:'VehBrand',   label:'Vehicle brand',  col:'VehBrand',   kind:'cat'},
+  {key:'VehGas',     label:'Fuel',           col:'VehGas',     kind:'cat'},
+  {key:'Region',     label:'Region',         col:'Region',     kind:'cat', wide:true},
+  {key:'LearnTest',  label:'Learn / test split', col:'LearnTest', kind:'cat'},
+];
+const D = DIMS.length;
+
+/* Density is bucketed by half-decade, which gives nine readable bins across
+ * the 1 to 27,000 range. Edges are printed in inhabitants per km², never in
+ * the stored log code. */
+const DENS_BINS = 9;
+const densEdge = i => Math.pow(10, i / 2);
+
+const METRICS = {
+  frequency: {label:'Claim frequency', fmt:v => (v*100).toFixed(2)+'%',    of:(e,c,a,n) => e > 0 ? c/e : NaN},
+  severity:  {label:'Mean severity',   fmt:v => '€'+fmtInt(Math.round(v)), of:(e,c,a,n) => c > 0 ? a/c : NaN},
+  burning:   {label:'Burning cost',    fmt:v => '€'+fmtInt(Math.round(v)), of:(e,c,a,n) => e > 0 ? a/e : NaN},
+  exposure:  {label:'Exposure',        fmt:v => fmtInt(Math.round(v)),     of:(e,c,a,n) => e},
+  policies:  {label:'Policies',        fmt:v => fmtInt(v),                 of:(e,c,a,n) => n},
+};
+const RATIO_METRICS = new Set(['frequency','severity','burning']);
+
+const state = {
+  metric: 'frequency',
+  floor: 250,          // minimum exposure-years for a bin to be trusted
+  hmX: 'DrivAge',
+  hmY: 'BonusMalus',
+};
+
+const fmtInt = n => Math.round(n).toLocaleString('en-GB');
+const fmtSig = n => n >= 1000 ? Math.round(n/1000)+'k' : (n >= 10 ? Math.round(n) : n.toFixed(1));
+
+/* ===================================================================== *
+ * Decode.
+ * ===================================================================== */
+let n = 0, COL = {}, EXPO = null, AMT = null, BIN = [], NB = [], MASK = [], ACTIVE = [];
+
+function b64ToBytes(s) {
+  const bin = atob(s), out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function decode() {
+  if (typeof DecompressionStream === 'undefined')
+    throw new Error('This browser has no DecompressionStream. Use a current Chrome, Safari or Firefox.');
+  const gz = b64ToBytes(PAYLOAD);
+  const buf = await new Response(
+    new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))
+  ).arrayBuffer();
+
+  n = HEADER.n;
+  const bytes = new Uint8Array(buf);
+  for (const name of HEADER.columns) {
+    const o = HEADER.offsets[name];
+    COL[name] = bytes.subarray(o, o + n);
+  }
+
+  // Exposure rides as a byte code into a 106-value lookup, so unpack it once
+  // into a float array rather than dereferencing inside the hot loop.
+  const levels = HEADER.exposureLevels;
+  EXPO = new Float64Array(n);
+  const eCode = COL.Exposure;
+  for (let i = 0; i < n; i++) EXPO[i] = levels[eCode[i]];
+
+  // Severity arrives sparse and is scattered into a dense array, which costs
+  // 2.7 MB of memory but nothing in file size and keeps the hot loop branchless.
+  AMT = new Float32Array(n);
+  const sev = HEADER.severity;
+  const idx = new Uint32Array(buf.slice(sev.indexOffset, sev.indexOffset + sev.count * 4));
+  const amt = new Float32Array(buf.slice(sev.amountOffset, sev.amountOffset + sev.count * 4));
+  for (let i = 0; i < sev.count; i++) AMT[idx[i]] = amt[i];
+}
+
+/* ===================================================================== *
+ * Binning. Rebuilt for a dimension only when its bin width changes.
+ * ===================================================================== */
+function nbinsOf(d) {
+  const dm = DIMS[d];
+  if (dm.kind === 'cat')  return HEADER.levels[dm.col].length;
+  if (dm.kind === 'dens') return DENS_BINS;
+  return Math.floor((dm.cap - dm.min) / dm.binw) + 1;
+}
+
+function buildBins(d, keepFilter) {
+  const dm = DIMS[d], nb = nbinsOf(d), col = COL[dm.col], out = new Uint8Array(n);
+  if (dm.kind === 'cat') {
+    out.set(col);
+  } else if (dm.kind === 'dens') {
+    for (let i = 0; i < n; i++) { const b = (col[i] / 25) | 0; out[i] = b >= nb ? nb - 1 : b; }
+  } else {
+    const min = dm.min, w = dm.binw, last = nb - 1;
+    for (let i = 0; i < n; i++) {
+      let b = ((col[i] - min) / w) | 0;
+      if (b > last) b = last; else if (b < 0) b = 0;
+      out[i] = b;
+    }
+  }
+  BIN[d] = out; NB[d] = nb;
+  // A change of bin width invalidates any selection made against the old bins.
+  if (!keepFilter) { MASK[d] = new Uint8Array(nb).fill(1); ACTIVE[d] = false; }
+}
+
+function binLabel(d, b) {
+  const dm = DIMS[d];
+  if (dm.kind === 'cat')  return HEADER.levels[dm.col][b];
+  if (dm.kind === 'dens') return b === DENS_BINS - 1
+    ? fmtSig(densEdge(b)) + '+'
+    : fmtSig(densEdge(b)) + '–' + fmtSig(densEdge(b + 1));
+  const lo = dm.min + b * dm.binw;
+  if (b === NB[d] - 1) return lo + '+';
+  return dm.binw === 1 ? String(lo) : lo + '–' + (lo + dm.binw - 1);
+}
+
+/* ===================================================================== *
+ * Aggregation.
+ *
+ * One pass serves every panel, the heatmap and the totals. For each row we
+ * count how many active filters it fails. A row failing none contributes
+ * everywhere; a row failing exactly one contributes only to that
+ * dimension's own panel, which is what keeps a filtered panel showing its
+ * full range instead of collapsing to the single bar you clicked.
+ * ===================================================================== */
+function aggregate() {
+  const acc = [];
+  for (let d = 0; d < D; d++) acc.push({
+    e: new Float64Array(NB[d]), c: new Float64Array(NB[d]),
+    a: new Float64Array(NB[d]), k: new Float64Array(NB[d]),
+  });
+
+  const xd = DIMS.findIndex(x => x.key === state.hmX);
+  const yd = DIMS.findIndex(x => x.key === state.hmY);
+  const nx = NB[xd], ny = NB[yd];
+  const hm = {
+    e: new Float64Array(nx * ny), c: new Float64Array(nx * ny),
+    a: new Float64Array(nx * ny), k: new Float64Array(nx * ny),
+  };
+  const tot = {e: 0, c: 0, a: 0, k: 0};
+
+  const act = [];
+  for (let d = 0; d < D; d++) if (ACTIVE[d]) act.push(d);
+  const na = act.length, claims = COL.ClaimNb;
+  const bx = BIN[xd], by = BIN[yd];
+
+  for (let i = 0; i < n; i++) {
+    let nFail = 0, failDim = -1;
+    for (let k = 0; k < na; k++) {
+      const d = act[k];
+      if (!MASK[d][BIN[d][i]]) { nFail++; if (nFail > 1) break; failDim = d; }
+    }
+    if (nFail > 1) continue;
+
+    const e = EXPO[i], c = claims[i], a = AMT[i];
+    if (nFail === 1) {
+      const A = acc[failDim], b = BIN[failDim][i];
+      A.e[b] += e; A.c[b] += c; A.a[b] += a; A.k[b] += 1;
+    } else {
+      for (let d = 0; d < D; d++) {
+        const A = acc[d], b = BIN[d][i];
+        A.e[b] += e; A.c[b] += c; A.a[b] += a; A.k[b] += 1;
+      }
+      tot.e += e; tot.c += c; tot.a += a; tot.k += 1;
+      const h = bx[i] * ny + by[i];
+      hm.e[h] += e; hm.c[h] += c; hm.a[h] += a; hm.k[h] += 1;
+    }
+  }
+  return {acc, hm, tot, nx, ny, xd, yd};
+}
+
+/* ===================================================================== *
+ * Rendering.
+ *
+ * SVGs are drawn at their measured pixel width rather than scaled from a
+ * viewBox, so every label lands at a true 14px and nothing renders below
+ * the floor on a narrow panel.
+ * ===================================================================== */
+const H = 176, Y_TOP = 24, Y_BASE = 128, STRIP_Y = 136, STRIP_H = 12, LBL_Y = 164;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let BASE = {};   // whole-book metric values, for the reference lines
+
+function metricOf(A, b) {
+  const m = METRICS[state.metric];
+  return m.of(A.e[b], A.c[b], A.a[b], A.k[b]);
+}
+
+function drawPanel(d, A, width) {
+  const dm = DIMS[d], nb = NB[d], m = METRICS[state.metric];
+  const W = Math.max(240, width), x0 = 4, x1 = W - 4, slot = (x1 - x0) / nb;
+  const bw = Math.max(1.5, slot * 0.84), off = (slot - bw) / 2;
+
+  const vals = [], trusted = [];
+  let maxExp = 0;
+  for (let b = 0; b < nb; b++) {
+    vals[b] = metricOf(A, b);
+    trusted[b] = A.e[b] >= state.floor;
+    if (A.e[b] > maxExp) maxExp = A.e[b];
+  }
+  let vmax = 0;
+  for (let b = 0; b < nb; b++) if (trusted[b] && isFinite(vals[b]) && vals[b] > vmax) vmax = vals[b];
+  if (vmax === 0) for (let b = 0; b < nb; b++) if (isFinite(vals[b]) && vals[b] > vmax) vmax = vals[b];
+  if (vmax === 0) vmax = 1;
+
+  const plotH = Y_BASE - Y_TOP;
+  const yOf = v => Y_BASE - Math.min(1, Math.max(0, v / vmax)) * plotH;
+  const showVals = nb <= 12 && slot >= 48;
+
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="${esc(dm.label)}">`;
+
+  // Reference line: the whole book, unfiltered. Only intensive metrics have one.
+  const ref = BASE[state.metric];
+  if (RATIO_METRICS.has(state.metric) && isFinite(ref) && ref <= vmax) {
+    const y = yOf(ref);
+    s += `<line class="ref" x1="${x0}" y1="${y.toFixed(1)}" x2="${x1}" y2="${y.toFixed(1)}"/>`;
+  }
+
+  for (let b = 0; b < nb; b++) {
+    const bx = x0 + b * slot + off, v = vals[b];
+    const sel = ACTIVE[d] && MASK[d][b];
+    const dim  = ACTIVE[d] && !MASK[d][b];
+    const y = isFinite(v) ? yOf(v) : Y_BASE;
+    const h = Math.max(isFinite(v) && v > 0 ? 1 : 0, Y_BASE - y);
+
+    const tip = `${dm.label} ${binLabel(d, b)}\n${m.label}: ${isFinite(v) ? m.fmt(v) : 'n/a'}`
+      + `\nExposure: ${fmtInt(A.e[b])} yrs · Policies: ${fmtInt(A.k[b])} · Claims: ${fmtInt(A.c[b])}`
+      + (trusted[b] ? '' : `\nBelow the ${fmtInt(state.floor)}-year exposure floor`);
+
+    s += `<g class="bar" data-d="${d}" data-b="${b}"><title>${esc(tip)}</title>`;
+    s += `<rect class="hit" x="${(x0 + b * slot).toFixed(1)}" y="${Y_TOP - 8}" width="${slot.toFixed(1)}" height="${LBL_Y - Y_TOP + 8}" fill="transparent"/>`;
+    if (trusted[b]) {
+      s += `<rect x="${bx.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}"`
+         + ` fill="${sel ? 'var(--accent)' : 'var(--muted)'}"${dim ? ' fill-opacity="0.28"' : ''}/>`;
+    } else {
+      s += `<rect x="${bx.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}"`
+         + ` fill="var(--white)" stroke="${sel ? 'var(--accent)' : 'var(--rule)'}" stroke-width="1"/>`;
+    }
+    if (showVals && isFinite(v) && trusted[b]) {
+      s += `<text class="val" x="${(bx + bw / 2).toFixed(1)}" y="${(y - 5).toFixed(1)}" text-anchor="middle">${esc(m.fmt(v))}</text>`;
+    }
+    // Exposure, as its own band beneath the axis. Frequency on a thin bin is
+    // noise, and this is what tells you which bins are thin.
+    if (maxExp > 0 && A.e[b] > 0) {
+      const eh = Math.max(0.8, (A.e[b] / maxExp) * STRIP_H);
+      s += `<rect x="${bx.toFixed(1)}" y="${(STRIP_Y + STRIP_H - eh).toFixed(1)}" width="${bw.toFixed(1)}"`
+         + ` height="${eh.toFixed(1)}" fill="var(--sand)"/>`;
+    }
+    s += `</g>`;
+  }
+
+  s += `<line x1="${x0}" y1="${Y_BASE}" x2="${x1}" y2="${Y_BASE}" stroke="var(--ink)" stroke-width="1"/>`;
+
+  // Thin the tick labels until they fit, and always keep the first and last.
+  let maxChars = 0;
+  for (let b = 0; b < nb; b++) maxChars = Math.max(maxChars, binLabel(d, b).length);
+  const step = Math.max(1, Math.ceil((maxChars * 7.4 + 8) / slot));
+  for (let b = 0; b < nb; b++) {
+    if (b % step !== 0 && b !== nb - 1) continue;
+    if (b !== 0 && b === nb - 1 && (nb - 1) % step !== 0 && step > 1 && slot * ((nb - 1) % step) < maxChars * 7.4) continue;
+    const cls = (ACTIVE[d] && MASK[d][b]) ? 'axk' : 'ax';
+    s += `<text class="${cls}" x="${(x0 + b * slot + slot / 2).toFixed(1)}" y="${LBL_Y}" text-anchor="middle">${esc(binLabel(d, b))}</text>`;
+  }
+  s += `</svg>`;
+  return s;
+}
+
+/* ---- heatmap: any two covariates on one shared scale ------------------ */
+const RAMP_A = [246, 241, 235], RAMP_B = [107, 62, 18];
+function ramp(t) {
+  t = Math.min(1, Math.max(0, t));
+  const c = i => Math.round(RAMP_A[i] + (RAMP_B[i] - RAMP_A[i]) * t);
+  return `rgb(${c(0)},${c(1)},${c(2)})`;
+}
+
+function drawHeatmap(R, width) {
+  const {hm, nx, ny, xd, yd} = R, m = METRICS[state.metric];
+  const W = Math.max(420, width), padL = 96, padB = 26, padT = 4, padR = 8;
+  const cw = (W - padL - padR) / nx, ch = 24;
+  const Hh = padT + ny * ch + padB;
+
+  let lo = Infinity, hi = -Infinity;
+  const v = new Float64Array(nx * ny), ok = new Uint8Array(nx * ny);
+  for (let i = 0; i < nx * ny; i++) {
+    v[i] = m.of(hm.e[i], hm.c[i], hm.a[i], hm.k[i]);
+    ok[i] = (hm.e[i] >= state.floor && isFinite(v[i])) ? 1 : 0;
+    if (ok[i]) { if (v[i] < lo) lo = v[i]; if (v[i] > hi) hi = v[i]; }
+  }
+  if (!isFinite(lo)) { lo = 0; hi = 1; }
+  if (hi === lo) hi = lo + 1;
+
+  let s = `<svg width="${W}" height="${Hh}" role="img" aria-label="${esc(DIMS[xd].label)} by ${esc(DIMS[yd].label)}">`;
+  const showText = cw >= 46;
+
+  for (let y = 0; y < ny; y++) {
+    const yy = padT + y * ch;
+    s += `<text class="ax" x="${padL - 8}" y="${yy + ch / 2 + 5}" text-anchor="end">${esc(binLabel(yd, y))}</text>`;
+    for (let x = 0; x < nx; x++) {
+      const i = x * ny + y, xx = padL + x * cw;
+      const t = ok[i] ? (v[i] - lo) / (hi - lo) : 0;
+      const tip = `${DIMS[xd].label} ${binLabel(xd, x)} · ${DIMS[yd].label} ${binLabel(yd, y)}`
+        + `\n${m.label}: ${isFinite(v[i]) ? m.fmt(v[i]) : 'n/a'}`
+        + `\nExposure: ${fmtInt(hm.e[i])} yrs · Claims: ${fmtInt(hm.c[i])}`
+        + (ok[i] ? '' : `\nBelow the ${fmtInt(state.floor)}-year exposure floor`);
+      s += `<g class="bar" data-hx="${x}" data-hy="${y}"><title>${esc(tip)}</title>`;
+      s += `<rect x="${xx.toFixed(1)}" y="${yy}" width="${cw.toFixed(1)}" height="${ch}"`
+         + (ok[i] ? ` fill="${ramp(t)}"` : ` fill="var(--white)"`)
+         + ` stroke="var(--surface)" stroke-width="1"/>`;
+      if (ok[i] && showText) {
+        s += `<text class="hmv" x="${(xx + cw / 2).toFixed(1)}" y="${yy + ch / 2 + 5}" text-anchor="middle"`
+           + ` fill="${t > 0.55 ? 'var(--white)' : 'var(--ink)'}">${esc(m.fmt(v[i]))}</text>`;
+      }
+      s += `</g>`;
+    }
+  }
+  for (let x = 0; x < nx; x++) {
+    if (cw < 40 && x % Math.ceil(40 / cw) !== 0) continue;
+    s += `<text class="ax" x="${(padL + x * cw + cw / 2).toFixed(1)}" y="${padT + ny * ch + 18}" text-anchor="middle">${esc(binLabel(xd, x))}</text>`;
+  }
+  s += `</svg>`;
+  return {svg: s, lo, hi};
+}
+
+/* ===================================================================== *
+ * Shell and controls.
+ * ===================================================================== */
+const $ = id => document.getElementById(id);
+
+function buildShell() {
+  $('controls').innerHTML =
+    `<div class="ctl"><span class="label">Metric</span><span class="seg" id="segMetric">` +
+    Object.entries(METRICS).map(([k, m]) =>
+      `<button type="button" data-m="${k}" aria-pressed="${k === state.metric}">${esc(m.label)}</button>`).join('') +
+    `</span></div>` +
+    `<div class="ctl"><span class="label">Exposure floor</span>` +
+    `<input type="range" id="floor" min="0" max="2000" step="50" value="${state.floor}">` +
+    `<span class="tnum" id="floorV" style="font-size:var(--text-floor);min-width:6.5ch">${fmtInt(state.floor)} yrs</span></div>` +
+    `<div class="ctl"><span id="refKey" class="cap"></span></div>` +
+    `<div class="ctl"><button class="text" id="reset" type="button">Clear all filters</button>` +
+    `<span id="perf"></span></div>`;
+
+  const dimOpts = sel => DIMS.map(d =>
+    `<option value="${d.key}"${d.key === sel ? ' selected' : ''}>${esc(d.label)}</option>`).join('');
+
+  $('grid').innerHTML = DIMS.map((dm, d) =>
+    `<div class="panel${dm.wide ? ' wide' : ''}" data-panel="${d}">
+       <div class="panel-head"><span class="t">${esc(dm.label)}</span><span class="r" id="ph${d}"></span></div>
+       <div class="svg" id="sv${d}"></div>
+     </div>`).join('') +
+    `<div class="panel wide" id="hmPanel">
+       <div class="panel-head"><span class="t">Two-way view</span>
+         <span class="r legend"><span id="hmLo"></span><span class="ramp" id="hmRamp"></span><span id="hmHi"></span></span></div>
+       <div class="hm-controls">
+         <span class="label">Rows</span><select id="hmY">${dimOpts(state.hmY)}</select>
+         <span class="label">Columns</span><select id="hmX">${dimOpts(state.hmX)}</select>
+         <span class="cap">Click a cell to filter both covariates at once.</span>
+       </div>
+       <div class="svg" id="svHM"></div>
+       <p class="cap" id="hmCap"></p>
+     </div>`;
+
+  $('hmRamp').innerHTML = Array.from({length: 7}, (_, i) =>
+    `<span style="background:${ramp(i / 6)}"></span>`).join('');
+}
+
+function panelHead(d) {
+  const dm = DIMS[d];
+  let h = '';
+  if (dm.kind === 'num') {
+    h += `<span class="label">bin</span> <select data-binw="${d}">` + dm.binws.map(w =>
+      `<option value="${w}"${w === dm.binw ? ' selected' : ''}>${w}</option>`).join('') + `</select> `;
+  }
+  if (ACTIVE[d]) {
+    const k = MASK[d].reduce((a, b) => a + b, 0);
+    h += `<button class="text" data-clear="${d}" type="button">clear ${k}</button>`;
+  }
+  return h;
+}
+
+function renderChips() {
+  const parts = [];
+  for (let d = 0; d < D; d++) {
+    if (!ACTIVE[d]) continue;
+    const picks = [];
+    for (let b = 0; b < NB[d]; b++) if (MASK[d][b]) picks.push(binLabel(d, b));
+    const shown = picks.length > 3 ? picks.slice(0, 3).join(', ') + ' +' + (picks.length - 3) : picks.join(', ');
+    parts.push(`<button class="chip" data-clear="${d}" type="button">${esc(DIMS[d].label)}: ${esc(shown)}</button>`);
+  }
+  $('chips').innerHTML = parts.length ? parts.join('')
+    : `<span class="none">No filters active. Showing all 678,007 policies.</span>`;
+}
+
+/* ---- totals strip ---------------------------------------------------- */
+function renderTotals(t) {
+  const freq = t.e > 0 ? t.c / t.e : NaN;
+  const sev  = t.c > 0 ? t.a / t.c : NaN;
+  const burn = t.e > 0 ? t.a / t.e : NaN;
+  const share = (v, w) => w > 0 ? (v / w * 100).toFixed(1) + '% of book' : '';
+  const vs = (v, b) => {
+    if (!isFinite(v) || !isFinite(b) || b === 0) return '';
+    const p = (v / b - 1) * 100;
+    if (Math.abs(p) < 0.05) return 'level with book';
+    return (p > 0 ? '▲ ' : '▼ ') + Math.abs(p).toFixed(1) + '% vs book';
+  };
+  const T = HEADER.totals;
+  const items = [
+    ['Policies',      fmtInt(t.k),                              share(t.k, T.policies)],
+    ['Exposure yrs',  fmtInt(t.e),                              share(t.e, T.exposure)],
+    ['Claims',        fmtInt(t.c),                              share(t.c, T.claims)],
+    ['Frequency',     isFinite(freq) ? (freq * 100).toFixed(2) + '%' : '–', vs(freq, BASE.frequency)],
+    ['Mean severity', isFinite(sev) ? '€' + fmtInt(sev) : '–',   vs(sev, BASE.severity)],
+    ['Burning cost',  isFinite(burn) ? '€' + fmtInt(burn) : '–', vs(burn, BASE.burning)],
+  ];
+  $('totals').innerHTML = items.map(([k, v, d]) =>
+    `<div><div class="label">${esc(k)}</div><div class="total-v">${esc(v)}</div><div class="total-d">${esc(d)}</div></div>`
+  ).join('');
+}
+
+/* ===================================================================== *
+ * Draw and recompute.
+ *
+ * Metric and exposure floor are display-only, so they redraw from the
+ * cached aggregation. Only a filter, a bin width or a heatmap axis needs
+ * the data pass to run again.
+ * ===================================================================== */
+let LAST_R = null;
+
+function draw() {
+  const t0 = performance.now();
+  const R = LAST_R;
+  renderTotals(R.tot);
+  renderChips();
+  for (let d = 0; d < D; d++) {
+    $('ph' + d).innerHTML = panelHead(d);
+    const host = $('sv' + d);
+    host.innerHTML = drawPanel(d, R.acc[d], host.clientWidth);
+  }
+  const host = $('svHM');
+  const hm = drawHeatmap(R, host.clientWidth);
+  host.innerHTML = hm.svg;
+  const m = METRICS[state.metric];
+  $('refKey').innerHTML = RATIO_METRICS.has(state.metric) && isFinite(BASE[state.metric])
+    ? `<svg width="26" height="8" style="vertical-align:middle"><line class="ref" x1="0" y1="4" x2="26" y2="4"/></svg>`
+      + ` whole book ${esc(m.fmt(BASE[state.metric]))}`
+    : '';
+  $('hmLo').textContent = m.fmt(hm.lo);
+  $('hmHi').textContent = m.fmt(hm.hi);
+  $('hmCap').textContent =
+    `${m.label} by ${DIMS.find(x => x.key === state.hmY).label} (rows) and `
+    + `${DIMS.find(x => x.key === state.hmX).label} (columns), on one shared colour scale running `
+    + `${m.fmt(hm.lo)} to ${m.fmt(hm.hi)}. Cells holding under ${fmtInt(state.floor)} exposure-years are left blank.`;
+  const ms = performance.now() - t0;
+  $('perf').textContent = `${window.__aggMs !== undefined ? window.__aggMs.toFixed(0) + ' ms scan · ' : ''}`
+    + `${ms < 10 ? ms.toFixed(1) : Math.round(ms)} ms draw`;
+}
+
+function recompute() {
+  const t0 = performance.now();
+  LAST_R = aggregate();
+  window.__aggMs = performance.now() - t0;
+  draw();
+}
+
+/* ---- interaction ------------------------------------------------------ */
+function toggleBin(d, b) {
+  if (!ACTIVE[d]) { MASK[d].fill(0); MASK[d][b] = 1; ACTIVE[d] = true; return; }
+  MASK[d][b] = MASK[d][b] ? 0 : 1;
+  let k = 0;
+  for (let i = 0; i < NB[d]; i++) k += MASK[d][i];
+  if (k === 0 || k === NB[d]) { MASK[d].fill(1); ACTIVE[d] = false; }
+}
+
+function setSingle(d, b) {
+  let only = ACTIVE[d] && MASK[d][b] === 1;
+  if (only) for (let i = 0; i < NB[d]; i++) if (i !== b && MASK[d][i]) { only = false; break; }
+  if (only) { MASK[d].fill(1); ACTIVE[d] = false; return; }
+  MASK[d].fill(0); MASK[d][b] = 1; ACTIVE[d] = true;
+}
+
+function clearDim(d) { MASK[d].fill(1); ACTIVE[d] = false; }
+
+document.addEventListener('click', e => {
+  const seg = e.target.closest('#segMetric button');
+  if (seg) {
+    state.metric = seg.dataset.m;
+    document.querySelectorAll('#segMetric button').forEach(b =>
+      b.setAttribute('aria-pressed', String(b === seg)));
+    draw();
+    return;
+  }
+  if (e.target.id === 'reset') { for (let d = 0; d < D; d++) clearDim(d); recompute(); return; }
+  const clr = e.target.closest('[data-clear]');
+  if (clr) { clearDim(+clr.dataset.clear); recompute(); return; }
+  const bar = e.target.closest('.bar');
+  if (!bar) return;
+  if (bar.dataset.hx !== undefined) {
+    setSingle(DIMS.findIndex(x => x.key === state.hmX), +bar.dataset.hx);
+    setSingle(DIMS.findIndex(x => x.key === state.hmY), +bar.dataset.hy);
+  } else {
+    toggleBin(+bar.dataset.d, +bar.dataset.b);
+  }
+  recompute();
+});
+
+document.addEventListener('input', e => {
+  if (e.target.id !== 'floor') return;
+  state.floor = +e.target.value;
+  $('floorV').textContent = fmtInt(state.floor) + ' yrs';
+  draw();
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'hmX' || t.id === 'hmY') { state[t.id] = t.value; recompute(); }
+  else if (t.dataset.binw !== undefined) {
+    const d = +t.dataset.binw;
+    DIMS[d].binw = +t.value;
+    buildBins(d, false);
+    recompute();
+  }
+});
+
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (LAST_R) draw(); }, 140);
+});
+
+/* ---- boot ------------------------------------------------------------- */
+(async () => {
+  try {
+    await decode();
+    for (let d = 0; d < D; d++) buildBins(d, false);
+
+    // Assert the decode against the totals the builder computed in polars.
+    let se = 0, sc = 0, sa = 0;
+    for (let i = 0; i < n; i++) { se += EXPO[i]; sc += COL.ClaimNb[i]; sa += AMT[i]; }
+    const T = HEADER.totals;
+    const off = (x, y) => Math.abs(x - y) / Math.max(1, Math.abs(y));
+    if (off(se, T.exposure) > 1e-9 || off(sc, T.claims) > 1e-9 || off(sa, T.claimTotal) > 1e-5)
+      throw new Error('decoded totals do not match the source parquet');
+    window.__selfCheck = 'ok';
+
+    BASE = {
+      frequency: T.claims / T.exposure,
+      severity:  T.claimTotal / T.claims,
+      burning:   T.claimTotal / T.exposure,
+      exposure:  T.exposure,
+      policies:  T.policies,
+    };
+
+    buildShell();
+    $('boot').hidden = true;
+    $('app').hidden = false;
+    recompute();
+    window.__ready = true;
+  } catch (err) {
+    const b = $('boot');
+    b.className = 'err';
+    b.textContent = 'Could not load the data: ' + err.message;
+    window.__ready = 'error';
+  }
+})();
+</script>
+</body>
+</html>
