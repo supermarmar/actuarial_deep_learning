@@ -519,8 +519,12 @@ pre.sourceCode code > span > a:first-child { text-decoration: none; }
 /* ==========================================================================
    11. Figures
 
-   The `figure-html/` directories are among the missing assets, so these rules
-   describe the frame the plots will land in once they are downloaded.
+   Two kinds of image arrive here. The R plots under `figure-html/` are all
+   white-ground with no alpha channel, so multiplying them into the page drops
+   the white plate and leaves only the plot's own ink on the paper. The 20
+   hand-drawn diagrams carry their own alpha, and some (Murphy.png) a dark
+   ground, so they are deliberately left alone: multiplying those would turn a
+   dark figure to mud. Checked against all 50 files.
    ========================================================================== */
 
 .quarto-figure { margin: var(--sp-6) 0; }
@@ -535,6 +539,10 @@ img, .img-fluid, .figure-img {
   display: block;
   margin: 0 auto;
 }
+
+/* Blend the plate away, plots only. A no-op in print, where the ground is
+   already white. */
+img[src*="figure-html"] { mix-blend-mode: multiply; }
 
 figcaption, .figure-caption {
   margin-top: var(--sp-3);
