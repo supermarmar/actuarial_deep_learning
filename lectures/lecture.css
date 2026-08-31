@@ -1,0 +1,766 @@
+/* ==========================================================================
+   Deep Learning for Actuarial Modeling, Milano 2026
+   Shared presentation layer for the seven Quarto lecture documents.
+
+   The course site ships each lecture with a `<name>_files/` directory holding
+   Bootstrap, the Quarto scroll-spy JS and the syntax-highlighting CSS. Those
+   directories were never downloaded, so the pages render unstyled. This sheet
+   replaces all of it, keyed to Quarto's own class names, and is loaded last in
+   `<head>` so it still wins if the original assets are ever restored.
+
+   Everything is driven from the token block below. Change a token here and all
+   seven lectures follow. House style deliberately does not apply: this is a
+   warm-paper, oxblood-accent reading layout in the Tufte register, chosen for
+   long-form study rather than for client delivery.
+   ========================================================================== */
+
+:root {
+
+  /* ---- Colour: ground and ink -------------------------------------------- */
+  --paper:        #FDFBF6;  /* page ground, warm off-white                   */
+  --paper-sunk:   #F6F2E9;  /* code and callout grounds, one step down       */
+  --paper-raised: #FFFDF9;  /* the reading column, one step up               */
+  --ink:          #1B1A17;  /* body prose                          15.9:1   */
+  --ink-strong:   #100F0D;  /* display headings                    18.4:1   */
+  --ink-soft:     #5A554B;  /* captions, metadata, output listings   6.8:1  */
+  --ink-faint:    #8A8377;  /* comments, disabled, TOC numerals      3.6:1  */
+
+  /* ---- Colour: accent and signals ---------------------------------------- */
+  --accent:       #8C2F1E;  /* oxblood. Links, numerals, marks       6.9:1  */
+  --accent-lit:   #B4472F;  /* hover only, never body text                  */
+  --accent-wash:  #F7EDE8;  /* oxblood tint for callout grounds              */
+  --olive:        #4F6333;  /* strings, tip callouts                 5.9:1  */
+  --olive-wash:   #EFF2E8;
+  --indigo:       #3B4A75;  /* numerals and constants in code        7.7:1  */
+  --indigo-wash:  #EDEEF4;
+  --amber:        #8A5A12;  /* argument names, warning callouts      6.1:1  */
+  --amber-wash:   #F8F1E4;
+
+  /* ---- Colour: rules ----------------------------------------------------- */
+  --rule:         #DCD5C7;  /* hairlines that should be seen                 */
+  --rule-faint:   #ECE6DA;  /* hairlines that should barely register         */
+
+  /* ---- Type -------------------------------------------------------------- */
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
+                Charter, 'Bitstream Charter', Georgia, serif;
+  --font-sans:  'Avenir Next', Avenir, 'Helvetica Neue', 'Segoe UI', system-ui,
+                -apple-system, sans-serif;
+  --font-mono:  'SF Mono', ui-monospace, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --fw-normal: 400;
+  --fw-medium: 500;
+  --fw-bold:   700;
+
+  /* Type scale. Root is 16px, so 1rem is 16px throughout.                    */
+  --t-micro:  0.8125rem;  /* 13px  TOC, sidenote-weight metadata             */
+  --t-small:  0.875rem;   /* 14px  captions, code, table cells               */
+  --t-body:   1.0625rem;  /* 17px  body prose, serif needs the extra point   */
+  --t-lead:   1.1875rem;  /* 19px  abstract                                  */
+  --t-h3:     1.375rem;   /* 22px                                            */
+  --t-h2:     1.625rem;   /* 26px                                            */
+  --t-h1:     2.125rem;   /* 34px  section openers                           */
+  --t-title:  2.75rem;    /* 44px  document title                            */
+
+  --lh-tight:   1.25;
+  --lh-heading: 1.3;
+  --lh-body:    1.62;
+  --lh-code:    1.5;
+
+  --tracking-caps: 0.09em;
+
+  /* ---- Spacing. 4px unit, 8px rhythm. ------------------------------------ */
+  --sp-1: 0.25rem;  --sp-2: 0.5rem;   --sp-3: 0.75rem;  --sp-4: 1rem;
+  --sp-5: 1.5rem;   --sp-6: 2rem;     --sp-7: 3rem;     --sp-8: 4.5rem;
+  --sp-9: 7rem;
+
+  /* ---- Layout ------------------------------------------------------------ */
+  --measure: 46rem;   /* the reading column                                  */
+  --rail:    14rem;   /* the table-of-contents rail                          */
+  --rail-gap: 3.5rem;
+  --hang:    3.25rem; /* room for section numerals in the left margin        */
+
+  /* The two breakpoints are 68rem, where the rail stacks above the prose, and
+     34rem, where the tables start to scroll. Both are written literally in
+     section 16, since a media query cannot read a custom property. Change them
+     there, not here. */
+}
+
+/* ==========================================================================
+   1. Reset and page ground
+   ========================================================================== */
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-normal);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ==========================================================================
+   2. Two-column shell
+
+   Quarto emits `#quarto-content > #quarto-margin-sidebar + main.content`, in
+   that source order, so a plain grid needs no reordering.
+   ========================================================================== */
+
+#quarto-content {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  column-gap: var(--rail-gap);
+  align-items: start;
+  max-width: calc(var(--rail) + var(--rail-gap) + var(--measure) + var(--hang) + var(--sp-7));
+  margin: 0 auto;
+  padding: var(--sp-8) var(--sp-6) var(--sp-9);
+}
+
+main.content {
+  min-width: 0;
+  max-width: calc(var(--measure) + var(--hang));
+  padding-left: var(--hang);
+}
+
+/* ==========================================================================
+   3. Table of contents rail
+
+   `quarto.js` is absent, so nothing updates the scroll position. The `active`
+   class is frozen on whichever entry was current when the file was rendered,
+   which is why it gets no distinctive styling: a permanent highlight on
+   section 1 would read as a defect. The rail is marked by space, not by a box.
+
+   `ul.collapse` is a Bootstrap class meaning "hidden". Bootstrap is absent so
+   the sub-lists show, but the override is stated explicitly so they keep
+   showing if it ever returns.
+   ========================================================================== */
+
+#quarto-margin-sidebar {
+  position: sticky;
+  top: var(--sp-6);
+  max-height: calc(100vh - var(--sp-9));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-sans);
+  font-size: var(--t-micro);
+  line-height: var(--lh-tight);
+  scrollbar-width: thin;
+}
+
+#TOC h2#toc-title {
+  margin: 0 0 var(--sp-4);
+  font-family: var(--font-sans);
+  font-size: var(--t-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+#TOC ul { list-style: none; margin: 0; padding: 0; }
+#TOC .collapse { display: block; }
+#TOC ul ul { margin: var(--sp-2) 0 var(--sp-3) var(--sp-4); }
+#TOC li { margin: 0 0 var(--sp-3); }
+#TOC ul ul li { margin-bottom: var(--sp-2); }
+
+#TOC li::before { display: none; }
+
+#TOC a.nav-link,
+#TOC a.nav-link.active {
+  display: flex;
+  gap: var(--sp-2);
+  color: var(--ink-soft);
+  text-decoration: none;
+  border-left: 2px solid transparent;
+  padding-left: var(--sp-3);
+  margin-left: calc(var(--sp-3) * -1);
+  transition: color 120ms ease, border-color 120ms ease;
+}
+
+#TOC a.nav-link:hover,
+#TOC a.nav-link:focus-visible {
+  color: var(--accent);
+  border-left-color: var(--accent);
+}
+
+#TOC .header-section-number {
+  flex: 0 0 1.8em;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   4. Title block
+   ========================================================================== */
+
+#title-block-header {
+  margin: 0 0 var(--sp-8);
+  padding-bottom: var(--sp-6);
+  border-bottom: 1px solid var(--rule);
+}
+
+h1.title {
+  margin: 0;
+  font-size: var(--t-title);
+  line-height: var(--lh-tight);
+  font-weight: var(--fw-normal);
+  letter-spacing: -0.012em;
+  color: var(--ink-strong);
+  text-wrap: balance;
+}
+
+h1.title .line-block { display: block; }
+
+/* Quarto emits an empty `<p class="subtitle lead">` before the real subtitle. */
+p.subtitle:empty { display: none; }
+
+.quarto-title .line-block:not(h1 .line-block) {
+  margin-top: var(--sp-4);
+  font-family: var(--font-sans);
+  font-size: var(--t-small);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.quarto-title-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-6);
+  margin-top: var(--sp-6);
+}
+
+.quarto-title-meta-heading {
+  font-family: var(--font-sans);
+  font-size: var(--t-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-bottom: var(--sp-1);
+}
+
+.quarto-title-meta-contents,
+.quarto-title-meta-contents p {
+  margin: 0;
+  font-size: var(--t-small);
+  color: var(--ink-soft);
+}
+
+.quarto-title-meta-contents p.date { font-variant-numeric: tabular-nums; }
+
+/* ==========================================================================
+   5. Abstract
+
+   Set as an epigraph: no panel, no fill, opened and closed by a hairline.
+   ========================================================================== */
+
+.abstract {
+  margin: var(--sp-6) 0 0;
+  padding: var(--sp-5) 0 0;
+  border-top: 1px solid var(--rule-faint);
+  font-size: var(--t-lead);
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.abstract .block-title {
+  font-family: var(--font-sans);
+  font-size: var(--t-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--sp-3);
+}
+
+/* ==========================================================================
+   6. Headings
+
+   Hierarchy comes from size, weight and space. The section numeral hangs in
+   the left margin so the prose keeps one clean left edge all the way down.
+   ========================================================================== */
+
+h1, h2, h3, h4, h5, h6 {
+  position: relative;
+  color: var(--ink-strong);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-heading);
+  letter-spacing: -0.006em;
+  text-wrap: balance;
+}
+
+section.level1 > h1 {
+  margin: var(--sp-9) 0 var(--sp-5);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--t-h1);
+  font-weight: var(--fw-normal);
+}
+
+section.level1:first-of-type > h1 { margin-top: var(--sp-6); }
+
+section.level2 > h2 { margin: var(--sp-8) 0 var(--sp-4); font-size: var(--t-h2); }
+section.level3 > h3 { margin: var(--sp-7) 0 var(--sp-4); font-size: var(--t-h3); }
+h4, h5, h6 {
+  margin: var(--sp-6) 0 var(--sp-3);
+  font-size: var(--t-body);
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+}
+
+h1 > .header-section-number,
+h2 > .header-section-number,
+h3 > .header-section-number {
+  position: absolute;
+  right: 100%;
+  width: var(--hang);
+  padding-right: var(--sp-4);
+  text-align: right;
+  color: var(--accent);
+  font-family: var(--font-sans);
+  font-size: var(--t-small);
+  font-weight: var(--fw-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: inherit;
+  padding-top: 0.28em;
+}
+
+h2.anchored.quarto-appendix-heading {
+  margin: 0 0 var(--sp-5);
+  font-size: var(--t-h2);
+  font-weight: var(--fw-normal);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ==========================================================================
+   7. Prose, lists and links
+   ========================================================================== */
+
+p { margin: 0 0 var(--sp-4); }
+
+ul, ol { margin: 0 0 var(--sp-4); padding-left: var(--sp-5); }
+li { margin-bottom: var(--sp-2); }
+li > ul, li > ol { margin-top: var(--sp-2); margin-bottom: var(--sp-2); }
+li > p:last-child { margin-bottom: 0; }
+
+ul { list-style: none; }
+ul > li { position: relative; }
+ul > li::before {
+  content: '';
+  position: absolute;
+  left: -0.95rem;
+  top: 0.66em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+ul ul > li::before { background: none; border: 1px solid var(--ink-faint); }
+ul.task-list > li::before { display: none; }
+
+em { font-style: italic; }
+strong { font-weight: var(--fw-bold); color: var(--ink-strong); }
+
+a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+  text-decoration-color: var(--rule);
+  transition: color 120ms ease, text-decoration-color 120ms ease;
+}
+a:hover, a:focus-visible {
+  color: var(--accent-lit);
+  text-decoration-color: currentColor;
+}
+
+/* Bare URLs, in the copyright block and the bibliography, are single unbroken
+   words. Measured at 320px, the SSRN link alone scrolls the page sideways. */
+a { overflow-wrap: break-word; }
+a.uri, .csl-entry a, .sources a { overflow-wrap: anywhere; }
+
+blockquote {
+  margin: var(--sp-5) 0;
+  padding-left: var(--sp-5);
+  border-left: 2px solid var(--rule);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* Citations recede: the year is the link, the names are prose. */
+.citation a[role="doc-biblioref"] {
+  color: var(--ink-soft);
+  text-decoration-color: var(--rule-faint);
+  font-variant-numeric: tabular-nums;
+}
+.citation a[role="doc-biblioref"]:hover { color: var(--accent); }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* ==========================================================================
+   8. Slide breaks
+
+   Every `<hr>` is a Beamer frame break, and there are between six and
+   thirty-seven of them per lecture. A visible rule that often is a great deal
+   of ink for something that only means "the slide ended", so the break is
+   carried by whitespace with a hairline just legible enough to read as a
+   pause.
+   ========================================================================== */
+
+hr {
+  width: 2.5rem;
+  height: 0;
+  margin: var(--sp-8) auto;
+  border: 0;
+  border-top: 1px solid var(--rule-faint);
+}
+
+/* ==========================================================================
+   9. Code
+
+   The syntax-highlighting stylesheet is one of the missing assets, so the
+   token classes below are defined here. They are exactly the thirteen Pandoc
+   emits in these seven files, and no more.
+
+   Colour is spent sparingly and semantically. Comments recede to grey, string
+   and numeric literals take a hue, and function calls (496 of them across the
+   set) are marked by weight rather than by colour, since colouring the most
+   frequent token turns a pipeline into confetti.
+   ========================================================================== */
+
+code, pre, kbd, samp { font-family: var(--font-mono); font-variant-ligatures: none; }
+
+/* Inline code stays in ink so it does not compete with links. */
+p > code, li > code, td > code, th > code, h1 code, h2 code, h3 code, h4 code {
+  font-size: 0.88em;
+  padding: 0.1em 0.32em;
+  background: var(--paper-sunk);
+  border-radius: 2px;
+  color: var(--ink-strong);
+  word-break: break-word;
+}
+
+div.sourceCode {
+  margin: var(--sp-5) 0;
+  background: var(--paper-sunk);
+  border-left: 2px solid var(--rule);
+}
+
+pre.sourceCode {
+  margin: 0;
+  padding: var(--sp-4) var(--sp-5);
+  overflow-x: auto;
+  font-size: var(--t-small);
+  line-height: var(--lh-code);
+  color: var(--ink);
+  tab-size: 2;
+}
+
+pre.sourceCode code { background: none; padding: 0; font-size: inherit; }
+
+/* The empty per-line anchors Quarto emits for line linking. */
+pre.sourceCode code > span > a:first-child { text-decoration: none; }
+
+/* clipboard.js is absent, so the copy button is dead UI. Bootstrap Icons are
+   absent too, so it would render as an empty box. Remove it. */
+.code-copy-button, pre.sourceCode > button { display: none !important; }
+
+/* Pandoc token classes, in descending order of frequency in these files. */
+.sourceCode .fu { color: var(--ink-strong); font-weight: var(--fw-medium); } /* function calls  */
+.sourceCode .sc { color: var(--ink-soft); }                                  /* special chars   */
+.sourceCode .ot { color: var(--ink-soft); }                                  /* other, `<-`     */
+.sourceCode .at { color: var(--amber); }                                     /* argument names  */
+.sourceCode .dv { color: var(--indigo); }                                    /* decimal values  */
+.sourceCode .fl { color: var(--indigo); }                                    /* float values    */
+.sourceCode .cn { color: var(--indigo); }                                    /* constants       */
+.sourceCode .st { color: var(--olive); }                                     /* strings         */
+.sourceCode .co { color: var(--ink-faint); font-style: italic; }             /* comments        */
+.sourceCode .cf { color: var(--ink-strong); font-weight: var(--fw-bold); }   /* control flow    */
+.sourceCode .do { color: var(--ink-faint); font-style: italic; }             /* documentation   */
+.sourceCode .uri { color: var(--indigo); text-decoration: underline; }       /* URIs            */
+.sourceCode .er { color: var(--accent); font-weight: var(--fw-bold); }       /* errors          */
+
+/* ==========================================================================
+   10. Computed output
+
+   Output is evidence, not instruction, so it is set apart from source by
+   removing its ground rather than by adding one. Tabular numerals keep the R
+   console's column alignment intact.
+   ========================================================================== */
+
+.cell { margin: var(--sp-5) 0; }
+.cell > .sourceCode:first-child { margin-top: 0; }
+
+.cell-output > pre {
+  margin: 0;
+  padding: var(--sp-3) var(--sp-5);
+  background: none;
+  border-left: 2px solid var(--rule-faint);
+  overflow-x: auto;
+  font-size: var(--t-small);
+  line-height: var(--lh-code);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cell-output > pre > code { background: none; padding: 0; font-size: inherit; }
+
+.cell-output-display { margin: var(--sp-5) 0; }
+
+/* ==========================================================================
+   11. Figures
+
+   Two kinds of image arrive here. The R plots under `figure-html/` are all
+   white-ground with no alpha channel, so multiplying them into the page drops
+   the white plate and leaves only the plot's own ink on the paper. The 20
+   hand-drawn diagrams carry their own alpha, and some (Murphy.png) a dark
+   ground, so they are deliberately left alone: multiplying those would turn a
+   dark figure to mud. Checked against all 50 files.
+   ========================================================================== */
+
+.quarto-figure { margin: var(--sp-6) 0; }
+.quarto-figure > figure.figure, figure.figure { margin: 0; }
+.quarto-figure-center figure, .quarto-figure-center p { text-align: center; }
+
+figure.figure p { margin: 0; }
+
+img, .img-fluid, .figure-img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Blend the plate away, plots only. A no-op in print, where the ground is
+   already white. */
+img[src*="figure-html"] { mix-blend-mode: multiply; }
+
+figcaption, .figure-caption {
+  margin-top: var(--sp-3);
+  font-family: var(--font-sans);
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--ink-soft);
+  text-align: left;
+}
+
+/* ==========================================================================
+   12. Tables
+
+   Publication typesetting: rules only where they separate, never a grid. No
+   zebra striping, so `tr.odd` and `tr.even` are deliberately left unstyled.
+   The authors' inline `text-align` and `<colgroup>` widths are their editorial
+   choice and are not overridden.
+   ========================================================================== */
+
+table, table.table {
+  width: 100%;
+  margin: var(--sp-6) 0;
+  border-collapse: collapse;
+  font-size: var(--t-small);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+table th, table td {
+  padding: var(--sp-2) var(--sp-3);
+  border: 0;
+  vertical-align: top;
+}
+
+table thead th {
+  color: var(--ink-strong);
+  font-family: var(--font-sans);
+  font-weight: var(--fw-bold);
+  font-size: var(--t-micro);
+  letter-spacing: 0.02em;
+  border-top: 1px solid var(--ink-soft);
+  border-bottom: 1px solid var(--ink-soft);
+}
+
+table tbody tr:last-child td { border-bottom: 1px solid var(--ink-soft); }
+table tbody tr.odd, table tbody tr.even { background: none; }
+table tbody td { color: var(--ink); }
+
+table caption {
+  caption-side: top;
+  text-align: left;
+  padding-bottom: var(--sp-3);
+  font-family: var(--font-sans);
+  font-size: var(--t-small);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ==========================================================================
+   13. Callouts
+
+   A callout is marked by a left rule and the faintest tint that still reads as
+   a change of ground. Note, warning and tip take three distinct hues because
+   the distinction is semantic. The icon containers are empty, since Bootstrap
+   Icons are among the missing assets.
+   ========================================================================== */
+
+.callout {
+  margin: var(--sp-6) 0;
+  padding: var(--sp-4) var(--sp-5);
+  border-left: 2px solid var(--rule);
+  background: var(--paper-sunk);
+}
+
+.callout-header {
+  display: block;
+  margin-bottom: var(--sp-3);
+  font-family: var(--font-sans);
+  font-size: var(--t-micro);
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.callout-icon-container, .callout-icon { display: none; }
+.callout-title-container { display: block; }
+
+.callout-body > :first-child { margin-top: 0; }
+.callout-body > :last-child { margin-bottom: 0; }
+.callout-body { font-size: var(--t-body); }
+
+.callout-note    { border-left-color: var(--indigo); background: var(--indigo-wash); }
+.callout-note    > .callout-header { color: var(--indigo); }
+.callout-warning { border-left-color: var(--accent); background: var(--accent-wash); }
+.callout-warning > .callout-header { color: var(--accent); }
+.callout-tip     { border-left-color: var(--olive);  background: var(--olive-wash); }
+.callout-tip     > .callout-header { color: var(--olive); }
+.callout-important { border-left-color: var(--amber); background: var(--amber-wash); }
+.callout-important > .callout-header { color: var(--amber); }
+
+/* ==========================================================================
+   14. Mathematics
+
+   MathJax loads from CDN and sets its own faces and metrics, so nothing here
+   touches the type inside a container. Display equations get a scroll box:
+   several in the transformer lectures are wider than the reading column.
+   ========================================================================== */
+
+.math.display, mjx-container[display="true"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: var(--sp-1) 0;
+  max-width: 100%;
+}
+
+mjx-container { min-width: 0 !important; }
+
+/* ==========================================================================
+   15. Bibliography
+   ========================================================================== */
+
+#quarto-appendix {
+  margin-top: var(--sp-9);
+  padding-top: var(--sp-6);
+  border-top: 1px solid var(--rule);
+}
+
+.csl-bib-body { font-size: var(--t-small); line-height: 1.55; color: var(--ink-soft); }
+
+.csl-entry {
+  clear: both;
+  margin-bottom: var(--sp-4);
+  padding-left: var(--sp-5);
+  text-indent: calc(var(--sp-5) * -1);
+}
+
+.csl-entry em { color: var(--ink); }
+.hanging-indent div.csl-entry { margin-left: 0; text-indent: calc(var(--sp-5) * -1); }
+.csl-left-margin { min-width: 2em; float: left; }
+.csl-right-inline { margin-left: 2em; padding-left: 1em; }
+.csl-indent { margin-left: 2em; }
+
+/* ==========================================================================
+   16. Narrow viewports
+
+   Below 68rem the rail has nowhere to go, so it stacks above the
+   prose and stops being sticky. The measure is kept, and the hanging numerals
+   fold back inline so nothing is clipped off the left edge.
+   ========================================================================== */
+
+@media (max-width: 68rem) {
+
+  #quarto-content {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--sp-7);
+    padding: var(--sp-6) var(--sp-5) var(--sp-8);
+    max-width: calc(var(--measure) + var(--sp-6));
+  }
+
+  #quarto-margin-sidebar {
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-bottom: var(--sp-5);
+    border-bottom: 1px solid var(--rule-faint);
+  }
+
+  #TOC ul ul { margin-left: var(--sp-3); }
+
+  main.content { padding-left: 0; max-width: 100%; }
+
+  h1 > .header-section-number,
+  h2 > .header-section-number,
+  h3 > .header-section-number {
+    position: static;
+    width: auto;
+    padding-right: var(--sp-3);
+    text-align: left;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: inherit;
+  }
+
+  h1.title { font-size: 2.25rem; }
+  .quarto-title-meta { gap: var(--sp-5); }
+}
+
+@media (max-width: 34rem) {
+  #quarto-content { padding: var(--sp-5) var(--sp-4) var(--sp-7); }
+
+  table, table.table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table caption { display: block; }
+  h1.title { font-size: 1.875rem; }
+  pre.sourceCode, .cell-output > pre { padding-left: var(--sp-3); padding-right: var(--sp-3); }
+  .callout { padding-left: var(--sp-4); padding-right: var(--sp-4); }
+}
+
+/* ==========================================================================
+   17. Print
+   ========================================================================== */
+
+@media print {
+  :root { --paper: #FFFFFF; --paper-sunk: #F4F4F4; }
+  #quarto-margin-sidebar { display: none; }
+  #quarto-content { display: block; max-width: none; padding: 0; }
+  main.content { padding-left: 0; max-width: none; }
+  a { color: var(--ink); text-decoration-color: var(--rule); }
+  hr { margin: var(--sp-6) auto; }
+  section.level1 > h1, section.level2 > h2 { break-after: avoid; }
+  .cell, .callout, table, figure { break-inside: avoid; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

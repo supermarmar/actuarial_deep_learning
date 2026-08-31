@@ -1,0 +1,12 @@
+# The lecture documents, the issued exercise notebooks and the reference
+# notebooks are the course authors' files, held exactly as downloaded. Never
+# reformat them. A format-on-save rewrote 1,164 lines of
+# lectures/01_use-case.html on 31 August 2026, which buries any real change in a
+# whitespace diff and destroys the byte-for-byte comparison against the original.
+#
+# Scoped to the HTML rather than to lectures/ as a whole, because Prettier reads
+# gitignore semantics: excluding a directory stops the walk, so a later
+# `!lectures/lecture.css` would never re-include our own stylesheet.
+lectures/*.html
+exercises/
+reference/
