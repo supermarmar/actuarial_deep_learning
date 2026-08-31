@@ -25,6 +25,7 @@ models and in-context learning.
 |---|---|
 | `lectures/` | Seven Quarto-rendered lecture documents (`.html`), downloaded from the course site, plus `lecture.css`, the shared presentation layer. Figures are gitignored, see below |
 | `scripts/` | Repo utilities. Currently the lecture figure fetcher |
+| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, adapting each course lecture to the Bondora PD problem. Render with `QUARTO_PYTHON="$PWD/.venv/bin/python" quarto render credit_lectures/<file>.qmd` |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
 | `reference/` | Four Python notebooks from the `wueth/AITools4Actuaries` GitHub repo |
@@ -71,6 +72,31 @@ has used openly for years. No client data is involved.
 The directory is gitignored all the same, since a 34 MB binary blob has no business in git
 history and the file is one `curl` away. Redownload it from
 `https://people.math.ethz.ch/~wueth/Lecture/SummerSchool2026/Data/Data.zip`.
+
+### Credit risk data
+
+`data/` also holds two credit risk datasets, added 31 August 2026 for the
+`credit_lectures/` series and profiled in `notes/credit-datasets.md`:
+
+- `LoanData_Bondora.csv` (150 MB): the public Bondora P2P loan book, extract dated
+  2021-07-20, from `https://www.bondora.com/en/public-reports`.
+- `Dev_data_to_be_shared.csv` and `validation_data_to_be_shared.csv` (420 MB): an
+  anonymised credit card portfolio distributed as a dev/validation pair; the validation
+  file carries no `bad_flag`. Local files only; source to be confirmed.
+
+Rebuild the derived parquets (`bondora_raw`, `bondora_pd`, `credit_card_dev`,
+`credit_card_validation`) with:
+
+```bash
+.venv/bin/python scripts/convert_credit_data.py
+```
+
+Rendering the credit lectures needs the quarto CLI (installed user-space at
+`~/.local/bin/quarto`, since the Homebrew cask wants sudo) plus three render-only
+packages (`pyyaml`, `nbformat`, `nbclient`) installed into `.venv` on top of the course
+requirements. They add nothing to `requirements.txt`, which stays byte-for-byte the
+course's own file, and they upgrade none of its pins; a venv rebuilt from scratch needs
+`uv pip install --python .venv pyyaml nbformat nbclient` before rendering.
 
 ### Lecture figures
 
