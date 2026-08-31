@@ -8,8 +8,7 @@ data/
 # course authors' plots and diagrams. Ignored for the reason data/ is, and one
 # command away:
 #   bash scripts/fetch_lecture_figures.sh
-lectures/*.png
-lectures/*_files/
+lectures/figures/
 
 # Generated dashboard. Derived from the gitignored data/, 2.4 MB per rebuild,
 # and one command away: .venv/bin/python dashboard/build.py

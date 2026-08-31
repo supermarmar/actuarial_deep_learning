@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Fetch the lecture figures from the summer school site into lectures/.
+# Fetch the lecture figures from the summer school site into lectures/figures/.
 #
 # The seven lecture documents were downloaded as bare HTML, without the image
 # files they reference. This script pulls those images so the plots and diagrams
@@ -71,8 +71,10 @@ for entry in "${MAP[@]}"; do
 
   while IFS= read -r rel; do
     [ -z "$rel" ] && continue
+    # The HTML references figures under lectures/figures/, but the course site
+    # has no such directory, so the prefix comes off before the URL is built.
     dest="$LECTURES/$rel"
-    url="$(printf '%s' "$BASE/$remote_dir/$rel" | sed 's/ /%20/g')"
+    url="$(printf '%s' "$BASE/$remote_dir/${rel#figures/}" | sed 's/ /%20/g')"
 
     # A second lecture wanting the same path: fetch to a temporary file and
     # compare, so a genuine difference surfaces instead of one copy winning.

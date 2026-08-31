@@ -246,7 +246,7 @@ Overview
 </div>
 </div>
 <hr>
-<p><img src="Vaswani.png" class="img-fluid" style="width:90.0%"></p>
+<p><img src="figures/Vaswani.png" class="img-fluid" style="width:90.0%"></p>
 <ul>
 <li>Transformers and attention layers were introduced in the celebrated work of <span class="citation" data-cites="vaswani2017attention">Vaswani <em>et al.</em> (<a href="#ref-vaswani2017attention" role="doc-biblioref">2017</a>)</span>.</li>
 <li>People say that this is the most important deep learning paper of the last decade.</li>
@@ -258,7 +258,7 @@ Overview
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="transformer_capsule.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:45.0%"></p>
+<p><img src="figures/transformer_capsule.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:45.0%"></p>
 </figure>
 </div>
 </div>
@@ -516,7 +516,7 @@ a^\circ_{u,s} = \frac{1}{\sqrt{q}}\, \boldsymbol{q}_u^\top \boldsymbol{k}_s
 <li><p>Each entry of the attention head <span class="math inline">\(H=A\,V\)</span> is a weighted average of the columns of the value matrix <span class="math inline">\(V\)</span>. The weights <span class="math inline">\(a_{u,s}\)</span> determine the <em>importance</em> of each row vector <span class="math inline">\(\boldsymbol{v}_s\)</span> of <span class="math inline">\(V\)</span>.</p></li>
 </ul>
 <hr>
-<p><img src="querykey0.png" class="img-fluid" style="width:105.0%"></p>
+<p><img src="figures/querykey0.png" class="img-fluid" style="width:105.0%"></p>
 <ul>
 <li><p>If the query <span class="math inline">\(\boldsymbol{q}_u\)</span> points into the same direction as the key <span class="math inline">\(\boldsymbol{k}_s\)</span>, we receive a large attention weight <span class="math inline">\(a_{u,s}\)</span> (supposed all vectors have roughly the same length).</p></li>
 <li><p>This implies that the corresponding entry <span class="math inline">\(\boldsymbol{v}_s\)</span> on the <span class="math inline">\(s\)</span>-th row of the value matrix <span class="math inline">\(V\)</span> receives a big attention, i.e., the information <span class="math inline">\(\boldsymbol{v}_s\)</span> at time <span class="math inline">\(s\)</span> is important for period <span class="math inline">\(u\)</span> (the query <span class="math inline">\(\boldsymbol{q}_u\)</span> at time <span class="math inline">\(u\)</span>).</p></li>
@@ -578,7 +578,7 @@ Overview
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="transformer_capsule.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
+<p><img src="figures/transformer_capsule.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
 </figure>
 </div>
 </div>
@@ -622,7 +622,7 @@ V &amp;= \boldsymbol{z}^{\text{t-FNN}}_V(\boldsymbol{X}_{1:t}) = \left[ \boldsym
 </section>
 <section id="illustration-of-a-transformer-layer" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="illustration-of-a-transformer-layer"><span class="header-section-number">2.2</span> Illustration of a Transformer layer</h2>
-<p><img src="transformer.png" id="fig:transformer" class="img-fluid" style="width:90.0%"></p>
+<p><img src="figures/transformer.png" id="fig:transformer" class="img-fluid" style="width:90.0%"></p>
 </section>
 <section id="remarks-on-transformer-layers" class="level2" data-number="2.3">
 <h2 data-number="2.3" class="anchored" data-anchor-id="remarks-on-transformer-layers"><span class="header-section-number">2.3</span> Remarks on Transformer layers</h2>
@@ -848,7 +848,7 @@ Overview
 \in \mathbb{R}^{(q+1) \times b}.\]</span></p></li>
 <li><p>Scalar <span class="math inline">\(\color{orange}{c_k}\)</span> is used to encode the <span class="math inline">\(k\)</span>-th column of the input tensor <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\)</span>.</p></li>
 </ul>
-<p><img src="AugmentedTensor.png" class="img-fluid" style="width:100.0%"></p>
+<p><img src="figures/AugmentedTensor.png" class="img-fluid" style="width:100.0%"></p>
 <ul>
 <li><span class="math inline">\(q+1\)</span> plays the role of the time dimension, and <span class="math inline">\(b\)</span> is the number of channels; there is no time-causality here.</li>
 </ul>
@@ -885,7 +885,7 @@ Transformed CLS token
 <li><p>This architecture is illustrated in the next graph.</p></li>
 </ul>
 <hr>
-<p><img src="transformer_tabular.png" id="fig:transformer_tabular" class="img-fluid" style="width:100.0%"></p>
+<p><img src="figures/transformer_tabular.png" id="fig:transformer_tabular" class="img-fluid" style="width:100.0%"></p>
 </section>
 <section id="remark-positional-encodings" class="level2" data-number="3.7">
 <h2 data-number="3.7" class="anchored" data-anchor-id="remark-positional-encodings"><span class="header-section-number">3.7</span> Remark positional encodings</h2>
@@ -893,7 +893,7 @@ Transformed CLS token
 <li><p>For the tabular input data <span class="math inline">\(\boldsymbol{X}=(X_1,\ldots, X_q)^\top\)</span>, position <span class="math inline">\(k=1,\ldots, q\)</span> of covariate component <span class="math inline">\(X_k\)</span> does not have a specific meaning.</p></li>
 <li><p>Nevertheless, adding positional encodings can be beneficial. Empirical evidence has shown that this facilitates learning the interactions between the covariate components.</p></li>
 </ul>
-<p><img src="AugmentedTensor2.png" class="img-fluid" style="width:90.0%"></p>
+<p><img src="figures/AugmentedTensor2.png" class="img-fluid" style="width:90.0%"></p>
 </section>
 </section>
 <section id="the-credibility-transformer" class="level1" data-number="4">
@@ -931,7 +931,7 @@ Overview
 \in \mathbb{R}^{(q+1) \times b}.\]</span></p></li>
 <li><p>Recall: the CLS token <span class="math inline">\(\color{orange}{\boldsymbol{c}}\)</span> with components <span class="math inline">\(\color{orange}{c_k}\)</span> are used to encode the columns <span class="math inline">\(k\)</span> of the input tensor <span class="math inline">\(\boldsymbol{X}^\circ_{1:q}\)</span>.</p></li>
 </ul>
-<p><img src="AugmentedTensor.png" class="img-fluid" style="width:100.0%"></p>
+<p><img src="figures/AugmentedTensor.png" class="img-fluid" style="width:100.0%"></p>
 <ul>
 <li><span class="math inline">\(q+1\)</span> reflects the time direction <span class="math inline">\(t\)</span>, and there are <span class="math inline">\(b\)</span> channels; the above shows the transposed 2D tensor <span class="math inline">\(\boldsymbol{X}_{1:q+1}^\top\)</span>.</li>
 </ul>
@@ -972,7 +972,7 @@ Overview
 <li><p>Thus, we randomly select the prior or the data driven token, allowing to train both of them simultaneously.</p></li>
 </ul>
 <hr>
-<p><img src="transformer_credibility.png" id="fig:transformer_credibility" class="img-fluid" style="width:100.0%"></p>
+<p><img src="figures/transformer_credibility.png" id="fig:transformer_credibility" class="img-fluid" style="width:100.0%"></p>
 <hr>
 <ul>
 <li><p>The last step of the credibility Transformer is the readout (decoder).</p></li>
@@ -1087,7 +1087,7 @@ P \, \boldsymbol{v}^{\rm covariate}+(1-P) \, \boldsymbol{v}^\top_{q+1},
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="Attention1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%"></p>
+<p><img src="figures/Attention1.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:70.0%"></p>
 </figure>
 </div>
 <hr>
@@ -1096,7 +1096,7 @@ P \, \boldsymbol{v}^{\rm covariate}+(1-P) \, \boldsymbol{v}^\top_{q+1},
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="Attention2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
+<p><img src="figures/Attention2.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
 </figure>
 </div>
 <hr>
@@ -1105,7 +1105,7 @@ P \, \boldsymbol{v}^{\rm covariate}+(1-P) \, \boldsymbol{v}^\top_{q+1},
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="Attention3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
+<p><img src="figures/Attention3.png" class="img-fluid quarto-figure quarto-figure-center figure-img" style="width:80.0%"></p>
 </figure>
 </div>
 </section>
