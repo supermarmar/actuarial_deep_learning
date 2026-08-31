@@ -1,0 +1,635 @@
+---
+title: "Credit Lecture 1: Introduction and Data Example"
+subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
+author: "Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich"
+date: "2026-08-31"
+abstract: >
+  We introduce a consumer credit probability of default (PD) problem, which will
+  serve as the running example for a credit risk reading of the summer school
+  lectures. The storyline and notation follow Lecture 1 of Deep Learning for
+  Actuarial Modeling; the French motor insurance portfolio is replaced by the
+  Bondora peer-to-peer loan book, and claim frequency modelling becomes default
+  modelling. The analysis in this first lecture is mostly empirical.
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    css: ../lectures/lecture.css
+    embed-resources: false
+    fig-width: 9
+    fig-height: 4
+    fig-dpi: 150
+execute:
+  echo: true
+  warning: false
+jupyter: python3
+---
+
+# Credit risk modelling: a PD problem
+
+We introduce a consumer credit modelling problem. This problem is based on
+**probabilities of default (PDs)**, the credit analogue of the claims
+frequencies that drive the insurance pricing problem of the original lecture.
+The analysis in this first lecture will mostly be empirical. It considers the
+loan book of Bondora, an Estonian peer-to-peer lending platform, whose full
+origination history is public. The book covers 179,235 loans originated
+between February 2009 and July 2021 in four countries, with Estonia, Finland
+and Spain carrying nearly all of the volume.
+
+Generally, raw data needs **data cleaning**, e.g., correcting for data errors,
+inputting missing values, merging partial information, etc. The Bondora
+extract is raw in exactly this sense. Missing values arrive as empty strings,
+decimals are written like `.6800`, and 53 loans carry a borrower age below 18,
+Bondora's contractual minimum. The cleaning applied here lives in
+`scripts/convert_credit_data.py`, which also selects the columns a lender
+would hold **at application time** and derives the default outcome defined
+below. Post-origination columns (payment histories, recoveries, balances and
+the platform's own loss estimates) are excluded from the modelling table by
+construction, because they leak the outcome into the covariates.
+
+## Load and illustrate the Bondora data
+
+```{python}
+import numpy as np
+import polars as pl
+import matplotlib.pyplot as plt
+
+dat = pl.read_parquet("../data/bondora_pd.parquet")
+dat.select(
+    ["LoanNumber", "LoanDate", "Age", "Country", "Amount", "Interest",
+     "LoanDuration", "Education", "IncomeTotal", "DebtToIncome", "Rating",
+     "default_12m"]
+).head(6)
+```
+
+The modelling table contains 49 columns. The variables used in this lecture
+are the following:
+
+- `LoanNumber` is a unique loan identifier
+- `LoanDate` is the origination date, which defines the vintage
+- `Age` is the age of the borrower at application
+- `Country` is the borrower's country of residence (categorical)
+- `Amount` is the funded loan amount in EUR
+- `Interest` is the contractual interest rate in per cent per annum
+- `LoanDuration` is the scheduled term in months
+- `Education` is the borrower's education level (ordinal categorical)
+- `IncomeTotal` is the borrower's total declared monthly income in EUR
+- `DebtToIncome` is the declared debt-to-income ratio
+- `Rating` is Bondora's own credit grade assigned at listing (categorical)
+- `default_12m` indicates default within twelve months of origination
+
+The remaining columns describe employment, the income decomposition,
+liabilities and the borrower's history on the platform. They enter the story
+in the later lectures. For simplicity, we focus on the binary default
+indicator `default_12m`; the raw extract would also support loss given
+default and exposure at default modelling through its recovery columns.
+
+### The definition of default
+
+In insurance, a claim is a claim. In credit, the event we model is a matter
+of definition, and the definition is regulated. Article 178 of the Capital
+Requirements Regulation sets the objective backstop for regulatory capital
+models. An obligor is in default once they are more than 90 days past due on
+a material credit obligation, and earlier if the lender judges them unlikely
+to pay. The PRA's supervisory statement SS3/24 adds expectations on how the
+materiality threshold must be applied, so that threshold choices do not
+artificially suppress observed default rates in the calibration data.
+
+Bondora records its own event instead. The field `DefaultDate` marks the date
+a loan entered the platform's defaulted state and the collection process
+started. We therefore work with a **platform definition of default** and note
+that a bank building a regulatory model would rebuild the flag from payment
+arrears under Article 178. For a first lecture the distinction changes
+nothing methodologically; every model below applies verbatim to a 90-days-past-due
+flag.
+
+A second issue has no insurance counterpart in this form: **censoring**. At
+the extract date, 57,774 loans were still current. A loan originated three
+months before the extract has had no time to default, and treating it as a
+non-default would bias every estimate downwards. We resolve this with a
+**fixed-horizon** outcome, the standard device of application scorecards:
+
+$$
+D_i = \mathbf{1}\{\text{loan } i \text{ defaults within 365 days of origination}\},
+$$
+
+and we keep only loans originated at least 365 days before the newest
+origination in the file, so that every retained loan has a complete
+twelve-month observation window. This leaves $n = 148{,}733$ loans.
+
+## Default modelling and PDs
+
+The portfolio has $n = 148{,}733$ loans. We label them by
+$i \in \{1, \ldots, n\}$. Each loan is characterised by covariates
+$\boldsymbol{X}_i$ describing the borrower and the contract at application
+time, such as the age of the borrower or the loan amount.
+
+The original lecture models claim counts $N_i \geq 0$ observed over a time
+exposure $v_i \in (0, 1]$, and studies the claims frequencies
+$Y_i = N_i / v_i$. That notation carries over to credit almost unchanged.
+Within the observation window, loan $i$ produces a number of default events
+$N_i$, and the window itself plays the role of the exposure $v_i$. Two
+features of credit then simplify the picture. Default is an absorbing state,
+so $N_i \in \{0, 1\}$ rather than $N_i \in \{0, 1, 2, \ldots\}$. And the
+fixed-horizon construction gives every loan the same window, $v_i \equiv 1$
+year. The frequency collapses to the indicator itself,
+
+$$
+Y_i = N_i / v_i = D_i \in \{0, 1\}.
+$$
+
+The insurance view survives in credit wherever the window is allowed to vary
+again. Survival and hazard-rate models treat default as an event arriving at
+some intensity over time on book, and the IFRS 9 lifetime PD term structure
+is built exactly this way. For this lecture series we stay with the
+fixed-horizon indicator, which is how application scorecards are built in
+practice.
+
+The general task is to predict (forecast) the default behaviour as accurately
+as possible, taking into account all available borrower information
+$\boldsymbol{X}_i$. (Best) predictors are typically computed by conditional
+means
+
+$$
+\mu(\boldsymbol{X}_i) := \mathbb{E}\left[ D_i \,\middle|\, \boldsymbol{X}_i \right]
+= \mathbb{P}\left( D_i = 1 \,\middle|\, \boldsymbol{X}_i \right)
+= \mathrm{PD}(\boldsymbol{X}_i).
+$$
+
+For a binary response, the conditional mean **is** the probability of
+default. The pricing functional of the insurance lecture becomes the PD
+functional
+
+$$
+\boldsymbol{X} \mapsto \mu(\boldsymbol{X}) = \mathrm{PD}(\boldsymbol{X}),
+$$
+
+and everything the lectures develop for estimating regression functions
+applies to it. The distributional consequence is taken up in the next
+lecture. Claim counts led to the Poisson member of the exponential dispersion
+family; a binary indicator leads to the Bernoulli member, whose canonical
+link is the logit. Deviance losses, maximum likelihood estimation and the
+balance property all carry over.
+
+## Regression modelling
+
+In general, the true data generating mechanism is unknown. Therefore, one
+cannot compute the regression function
+$\boldsymbol{X} \mapsto \mu(\boldsymbol{X})$, and one needs to estimate it
+from past data
+
+$$
+{\cal L} = \left( D_i, \boldsymbol{X}_i \right)_{i=1}^{n}.
+$$
+
+${\cal L}$ is called the **learning sample**. Before solving this estimation
+problem, one should always empirically study the available data. This
+empirical study is crucial to fully understand the problem and to select a
+suitable class of candidate regression models ${\cal M} = \{\mu\}$.
+
+# Empirical data analysis
+
+We start by classifying the loans w.r.t. their default outcome.
+
+```{python}
+dat.group_by("default_12m").agg(pl.len().alias("loans")).sort("default_12m")
+```
+
+```{python}
+print(f"empirical default rate: {dat['default_12m'].mean():.2%}")
+```
+
+The empirical twelve-month default rate is 28.95 per cent. Here the credit
+example diverges from the insurance one on purpose. The French MTPL portfolio
+has an empirical claims frequency of 7.36 per cent, and the original lecture
+frames this as a **class imbalance problem**, i.e., insurance claims are rare
+events. Bondora is a subprime peer-to-peer book, and at this default rate the
+event is anything but rare. Rarity is a property of the portfolio rather
+than of credit risk as such. A prime credit card book behaves like the
+insurance case; the companion dataset `credit_card_dev.parquet` in this
+repository, an anonymised bank-grade card portfolio, has a bad rate of 1.42
+per cent. Class imbalance will therefore return with force when that dataset
+takes the stage in a later lecture.
+
+A second structural feature deserves a look before any covariate does. The
+book grew by two orders of magnitude over its life, and the default rate
+moved with it.
+
+```{python}
+#| fig-cap: "(lhs): Loans originated per vintage year. (rhs): Empirical twelve-month default rate per vintage year. The portfolio is strongly non-stationary in both volume and risk."
+vint = (
+    dat.with_columns(vintage=pl.col("LoanDate").dt.year())
+    .group_by("vintage")
+    .agg(pl.len().alias("loans"), pl.col("default_12m").mean().alias("rate"))
+    .sort("vintage")
+)
+fig, axs = plt.subplots(1, 2)
+axs[0].bar(vint["vintage"], vint["loans"], color="#8C2F1E")
+axs[0].set_xlabel("vintage year"); axs[0].set_ylabel("loans originated")
+axs[1].plot(vint["vintage"], vint["rate"], "o-", color="#8C2F1E")
+axs[1].set_xlabel("vintage year"); axs[1].set_ylabel("default rate")
+axs[1].set_ylim(0, None)
+plt.tight_layout(); plt.show()
+```
+
+The default rate runs from 7 per cent in the 2012 vintage to 37 per cent in
+2017. Insurance portfolios drift too, but rarely this violently; the drift
+here mixes platform growth, underwriting changes and country expansion. We
+ignore the time dimension for the rest of this lecture and model the pooled
+book, as the original lecture pools its single accident year. The vintage
+axis returns when we need an honest out-of-time validation split.
+
+For the covariate analysis we consider two covariates, `Age` and
+log-`IncomeTotal`, playing the roles that `DrivAge` and log-`Density` play in
+the insurance lecture. Later, all covariates are considered. We remove the 53
+loans with a cleaned age of null and the 63 loans declaring zero income,
+which leaves the modelling sample used from here on.
+
+```{python}
+model_dat = (
+    dat.filter(pl.col("Age").is_not_null() & (pl.col("IncomeTotal") > 0))
+    .with_columns(logIncome=pl.col("IncomeTotal").log())
+)
+print(f"modelling sample: n = {model_dat.height:,}")
+```
+
+```{python}
+#| fig-cap: "(lhs): Number of loans per borrower age. (rhs): Empirical default rate per borrower age; the bounds correspond to 2 standard deviations in a Bernoulli model. Ages with fewer than 200 loans are pooled into their neighbours by the eye; the bounds widen accordingly."
+def rate_by(df, col):
+    g = (
+        df.group_by(col)
+        .agg(pl.len().alias("n"), pl.col("default_12m").mean().alias("rate"))
+        .sort(col)
+    )
+    se = (g["rate"] * (1 - g["rate"]) / g["n"]).sqrt()
+    return g["n"], g[col], g["rate"], se
+
+n_a, age, r_a, se_a = rate_by(model_dat, "Age")
+fig, axs = plt.subplots(1, 2)
+axs[0].bar(age, n_a, color="#8C2F1E")
+axs[0].set_xlabel("age of borrower"); axs[0].set_ylabel("number of loans")
+axs[1].plot(age, r_a, "o", ms=3, color="#8C2F1E")
+axs[1].fill_between(age, r_a - 2 * se_a, r_a + 2 * se_a,
+                    color="#8C2F1E", alpha=0.2, linewidth=0)
+axs[1].set_xlabel("age of borrower"); axs[1].set_ylabel("default rate")
+plt.tight_layout(); plt.show()
+```
+
+The age profile is **non-monotone**. Default risk peaks around the
+mid-twenties at roughly 32 per cent, eases to about 27 per cent through
+middle age, and climbs again beyond 65, where declared pension income
+replaces salary. The same shape, a hump for the young and a deterioration at
+the old end, drove the insurance lecture's discussion of `DrivAge`, and it
+will defeat the same naive model below.
+
+```{python}
+#| fig-cap: "(lhs): Number of loans per log-income band. (rhs): Empirical default rate per log-income band; the bounds correspond to 2 standard deviations in a Bernoulli model."
+model_dat = model_dat.with_columns(
+    incBand=(pl.col("logIncome") * 4).round(0) / 4
+)
+n_b, band, r_b, se_b = rate_by(model_dat.filter(
+    pl.col("logIncome").is_between(5.5, 9.0)), "incBand")
+fig, axs = plt.subplots(1, 2)
+axs[0].bar(band, n_b, width=0.2, color="#8C2F1E")
+axs[0].set_xlabel("log-income"); axs[0].set_ylabel("number of loans")
+axs[1].plot(band, r_b, "o", ms=4, color="#8C2F1E")
+axs[1].fill_between(band, r_b - 2 * se_b, r_b + 2 * se_b,
+                    color="#8C2F1E", alpha=0.2, linewidth=0)
+axs[1].set_xlabel("log-income"); axs[1].set_ylabel("default rate")
+plt.tight_layout(); plt.show()
+```
+
+The income profile should worry any credit risk modeller on sight. Default
+risk **rises** with declared income across most of the range, from below 20
+per cent at the bottom to peaks above 34 per cent, before easing at the very
+top. No underwriter believes that richer borrowers are intrinsically worse
+risks, so something else must be driving the marginal curve. We hold that
+thought for a moment and look at one more covariate first.
+
+**An aside on the price of risk.** The contractual interest rate is the
+platform's own answer to this prediction problem, set at listing from its
+rating model. Its marginal profile is brutally clean.
+
+```{python}
+#| fig-cap: "Empirical default rate per contractual interest band. Interest is the platform's price of risk, so its gradient is the platform's own PD model echoed back."
+ib = (
+    model_dat.with_columns(band=pl.col("Interest").cut([10, 15, 20, 30, 50, 100]))
+    .group_by("band").agg(pl.len().alias("n"), pl.col("default_12m").mean().alias("rate"))
+    .sort("band")
+)
+fig, ax = plt.subplots(figsize=(6, 3.2))
+ax.bar([str(b) for b in ib["band"]], ib["rate"], color="#8C2F1E")
+ax.set_xlabel("interest rate band (% p.a.)"); ax.set_ylabel("default rate")
+plt.tight_layout(); plt.show()
+```
+
+The gradient runs from 9 per cent below a 10 per cent coupon to 78 per cent
+above a 100 per cent coupon. As a covariate in a PD model, however, `Interest`
+is **endogenous**. It is an output of the lender's previous risk assessment
+rather than a property of the borrower, and a model built on it mostly
+recovers the incumbent model. We therefore leave it out of the regressions
+below and keep it as a benchmark of how much structure a good model should
+find.
+
+## Covariates interact
+
+Generally, covariates **interact**, and one cannot simply combine marginal
+default rates to obtain a correct PD. The insurance lecture argues this with
+a hypothetical, i.e., young drivers may cluster in dense cities, so the two
+marginal penalties may double-count one risk factor. The Bondora book turns
+the hypothetical into a demonstration. The three main countries have very
+different income levels and very different risk levels, and the composition
+generates the rising marginal income curve above.
+
+```{python}
+#| fig-cap: "Empirical default rate per within-country income quintile (Q1 low to Q5 high), by country and marginally. Within every country the rate falls with income; marginally it rises. The marginal curve is composition, i.e., Simpson's paradox in the raw data."
+countries = {"EE": "Estonia", "FI": "Finland", "ES": "Spain"}
+fig, ax = plt.subplots(figsize=(6.5, 3.6))
+for code, colour in zip(countries, ["#8C2F1E", "#4F6333", "#3B4A75"]):
+    sub = model_dat.filter(pl.col("Country") == code)
+    qs = np.quantile(sub["logIncome"], [0.2, 0.4, 0.6, 0.8])
+    banded = sub.with_columns(
+        q=pl.col("logIncome").cut(list(qs), labels=["Q1", "Q2", "Q3", "Q4", "Q5"])
+    )
+    curve = banded.group_by("q").agg(pl.col("default_12m").mean()).sort("q")
+    ax.plot(curve["q"], curve["default_12m"], "o-", label=countries[code], color=colour)
+qs = np.quantile(model_dat["logIncome"], [0.2, 0.4, 0.6, 0.8])
+marg = (
+    model_dat.with_columns(
+        q=pl.col("logIncome").cut(list(qs), labels=["Q1", "Q2", "Q3", "Q4", "Q5"]))
+    .group_by("q").agg(pl.col("default_12m").mean()).sort("q")
+)
+ax.plot(marg["q"], marg["default_12m"], "s--", color="#1B1A17", label="marginal (pooled)")
+ax.set_xlabel("income quintile"); ax.set_ylabel("default rate"); ax.legend()
+plt.tight_layout(); plt.show()
+```
+
+Within Estonia, Finland and Spain separately, default risk **falls** with
+income, exactly as underwriting intuition demands. Pooled, it rises, because
+Finland and Spain combine higher nominal incomes with default rates of 38 and
+55 per cent against Estonia's 17. The marginal income effect is a country
+effect wearing a disguise. Multiplying marginal profiles would price this
+book absurdly, and the same mechanism, in gentler form, is why the insurance
+lecture insists on estimating $\mu(\boldsymbol{X})$ **jointly** in the
+components of $\boldsymbol{X} = (X_1, \ldots, X_q)^\top$ rather than
+marginally.
+
+```{python}
+#| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income. White space marks covariate combinations too thin in the portfolio to estimate. The vertical banding reflects the income effect, the hump at young ages and the deterioration at old ages are visible along the age axis."
+from scipy.ndimage import gaussian_filter
+
+x = model_dat["Age"].to_numpy().astype(float)
+y = model_dat["logIncome"].to_numpy()
+d = model_dat["default_12m"].to_numpy().astype(float)
+
+x_edges = np.linspace(18, 76, 59)
+y_edges = np.linspace(5.5, 9.0, 71)
+cnt, _, _ = np.histogram2d(x, y, bins=[x_edges, y_edges])
+dft, _, _ = np.histogram2d(x, y, bins=[x_edges, y_edges], weights=d)
+cnt_s = gaussian_filter(cnt, sigma=2.0)
+dft_s = gaussian_filter(dft, sigma=2.0)
+rate = np.where(cnt_s > 8, dft_s / np.maximum(cnt_s, 1e-9), np.nan)
+
+fig, ax = plt.subplots(figsize=(6.5, 4.2))
+im = ax.imshow(
+    rate.T, origin="lower", aspect="auto",
+    extent=(18, 76, 5.5, 9.0), cmap="RdYlBu_r", vmin=0.1, vmax=0.5)
+ax.set_xlabel("age of borrower"); ax.set_ylabel("log-income")
+fig.colorbar(im, label="smoothed default rate")
+plt.tight_layout(); plt.show()
+```
+
+The heatmap shows the empirical default rate as a function of the two
+covariates jointly, smoothed with a Gaussian kernel; the original lecture
+uses loess smoothing for the same purpose. The colouring shows quite some
+non-linear structure, and it does not support any simple combination of the
+two marginal profiles. This requires regression modelling or machine
+learning solutions, e.g.,
+
+- generalised linear models (GLMs)
+- neural networks and deep learning
+- regression trees
+- gradient boosting machines (GBMs)
+
+# A generalised linear model example
+
+We start with generalised linear models (GLMs) for the class ${\cal M}$ of
+considered regression functionals
+$\boldsymbol{X} \mapsto \mu(\boldsymbol{X})$. The underlying mathematical
+theory is presented in careful detail in the next lecture. For a binary
+response, the canonical choice is the **Bernoulli GLM with logit link**,
+i.e., logistic regression, the workhorse of credit scoring. The simplest
+setting considers
+
+$$
+\boldsymbol{X} \mapsto \mu(\boldsymbol{X})
+= \frac{1}{1 + \exp\left( -\beta_0 - \beta_1 X_1 - \beta_2 X_2 \right)},
+$$
+
+for $\boldsymbol{X} = (X_1, X_2) = (\text{Age}, \text{log-Income})$ and
+parameter $(\beta_0, \beta_1, \beta_2)$. Where the insurance lecture's
+log-link produced a model multiplicative in the **frequency**, the logit
+link produces a model multiplicative in the **odds**
+$\mu / (1 - \mu)$; each covariate scales the odds of default by a constant
+factor per unit.
+
+### Model GLM1 (Bernoulli with canonical logit link)
+
+```{python}
+import pandas as pd
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
+
+glm_dat = model_dat.select(
+    ["default_12m", "Age", "logIncome", "Country"]).to_pandas()
+
+glm1 = smf.glm("default_12m ~ Age + logIncome",
+               data=glm_dat, family=sm.families.Binomial()).fit()
+print(glm1.summary())
+```
+
+Both coefficients are highly significant, and both should be distrusted. The
+income coefficient is **positive**, faithfully reproducing the confounded
+marginal curve of the previous section, and the single linear age term
+cannot represent a hump at 25 together with a deterioration after 65. In
+case of non-monotone behaviour, one can build categorical classes. We build
+the age classes as follows (implemented by dummy coding, explained in the
+Wednesday lecture); relative to the insurance lecture's cuts we split the
+51 to 70 band, because our non-monotonicity also sits at the old end.
+
+### Model GLM2 (categorical age classes)
+
+```{python}
+glm_dat["AgeClass"] = pd.cut(
+    glm_dat["Age"], [18, 20, 25, 30, 40, 50, 60, 70, 101],
+    labels=["18-20", "21-25", "26-30", "31-40", "41-50",
+            "51-60", "61-70", "71+"],
+    include_lowest=True)
+
+glm2 = smf.glm("default_12m ~ AgeClass + logIncome",
+               data=glm_dat, family=sm.families.Binomial()).fit()
+print(glm2.summary())
+```
+
+This estimates an individual regression parameter $\beta_j$ for each age
+class, and the fit improves accordingly. Because of the logit link, the
+model has a multiplicative structure in the odds; e.g., a borrower in the
+`71+` class carries the same income effect as every other borrower, scaled
+by their own age-class odds factor.
+
+```{python}
+#| fig-cap: "Empirical default rate per age (dots) against the GLM1 and GLM2 age profiles, both evaluated at the median log-income. GLM1 forces monotonicity; GLM2 recovers the hump at young ages and the rise after 65."
+li_med = float(np.median(glm_dat["logIncome"]))
+grid = pd.DataFrame({"Age": np.arange(18, 76), "logIncome": li_med})
+grid["AgeClass"] = pd.cut(
+    grid["Age"], [18, 20, 25, 30, 40, 50, 60, 70, 101],
+    labels=["18-20", "21-25", "26-30", "31-40", "41-50",
+            "51-60", "61-70", "71+"],
+    include_lowest=True)
+
+fig, ax = plt.subplots(figsize=(6.5, 3.6))
+ax.plot(age, r_a, "o", ms=3, color="#8A8377", label="empirical")
+ax.plot(grid["Age"], glm1.predict(grid), color="#3B4A75", label="GLM1")
+ax.step(grid["Age"], glm2.predict(grid), color="#8C2F1E", label="GLM2", where="mid")
+ax.set_xlabel("age of borrower"); ax.set_ylabel("default rate"); ax.legend()
+plt.tight_layout(); plt.show()
+```
+
+GLM2 reflects the non-monotonicity in age. However, the income coefficient
+still carries the wrong sign, because neither model has been told about the
+country composition. The insurance lecture stops at two covariates and lets
+the remaining structure motivate richer models; we allow ourselves one more
+step, because it lands the interaction argument of the previous section.
+
+### Model GLM3 (adding the confounder)
+
+```{python}
+glm3 = smf.glm("default_12m ~ AgeClass + logIncome + Country",
+               data=glm_dat, family=sm.families.Binomial()).fit()
+print(glm3.summary().tables[1])
+```
+
+```{python}
+comparison = pd.DataFrame({
+    "deviance": [glm1.deviance, glm2.deviance, glm3.deviance],
+    "AIC": [glm1.aic, glm2.aic, glm3.aic],
+    "income coefficient": [
+        glm1.params["logIncome"], glm2.params["logIncome"],
+        glm3.params["logIncome"]],
+}, index=["GLM1", "GLM2", "GLM3"])
+comparison.round(3)
+```
+
+Conditioning on country flips the income coefficient negative, i.e., within
+a country, higher income now reduces the odds of default, exactly as the
+quintile curves showed and as underwriting intuition demands. The wrongly
+signed coefficient was evidence about the portfolio's composition all
+along, and it had to be explained before the model could be believed.
+This is worth carrying
+through the whole lecture series, because deep learning models absorb such
+composition effects silently, and in credit they must be found and explained
+before a model is used.
+
+```{python}
+#| fig-cap: "Fitted default rate of GLM2 over the (age, log-income) grid, masked to the covariate combinations present in the portfolio. The multiplicative odds structure produces smooth vertical and horizontal banding and, by construction, no interaction between the two axes."
+gx = (x_edges[:-1] + x_edges[1:]) / 2
+gy = (y_edges[:-1] + y_edges[1:]) / 2
+gxx, gyy = np.meshgrid(gx, gy, indexing="ij")
+gframe = pd.DataFrame({"Age": gxx.ravel(), "logIncome": gyy.ravel()})
+gframe["AgeClass"] = pd.cut(
+    gframe["Age"], [18, 20, 25, 30, 40, 50, 60, 70, 101],
+    labels=["18-20", "21-25", "26-30", "31-40", "41-50",
+            "51-60", "61-70", "71+"],
+    include_lowest=True)
+glm2_surface = np.where(
+    np.isnan(rate), np.nan,
+    glm2.predict(gframe).to_numpy().reshape(gxx.shape))
+
+fig, ax = plt.subplots(figsize=(6.5, 4.2))
+im = ax.imshow(glm2_surface.T, origin="lower", aspect="auto",
+               extent=(18, 76, 5.5, 9.0), cmap="RdYlBu_r", vmin=0.1, vmax=0.5)
+ax.set_xlabel("age of borrower"); ax.set_ylabel("log-income")
+fig.colorbar(im, label="GLM2 fitted default rate")
+plt.tight_layout(); plt.show()
+```
+
+Comparing this surface with the empirical heatmap, the GLM reproduces the
+main gradients but none of the diagonal structure, which is a motivation to
+consider more complex regression models.
+
+# Gradient boosting machine
+
+As a first machine learning regression model, we present a gradient boosting
+machine (GBM). GBMs belong to the most powerful techniques on tabular data,
+in particular the powerful versions like XGBoost, LightGBM or CatBoost; on
+credit bureau data they remain the benchmark to beat in most published
+comparisons. A GBM partitions the covariate space into different
+(homogeneous) subsets and estimates the default rate on each subset. We fit
+scikit-learn's histogram-based implementation on the two selected
+covariates and only present the resulting heatmap; GBMs are not further
+studied in this series.
+
+```{python}
+#| fig-cap: "Fitted default rate of the GBM over the (age, log-income) grid, same masking and colour scale as before. The GBM recovers the diagonal structure of the empirical heatmap, at the price of a piecewise-constant, non-smooth surface."
+from sklearn.ensemble import HistGradientBoostingClassifier
+
+gbm = HistGradientBoostingClassifier(
+    max_iter=300, learning_rate=0.05, max_leaf_nodes=15, random_state=1)
+gbm.fit(np.column_stack([x, y]), d)
+
+gbm_surface = np.where(
+    np.isnan(rate), np.nan,
+    gbm.predict_proba(np.column_stack([gxx.ravel(), gyy.ravel()]))[:, 1]
+    .reshape(gxx.shape))
+
+fig, ax = plt.subplots(figsize=(6.5, 4.2))
+im = ax.imshow(gbm_surface.T, origin="lower", aspect="auto",
+               extent=(18, 76, 5.5, 9.0), cmap="RdYlBu_r", vmin=0.1, vmax=0.5)
+ax.set_xlabel("age of borrower"); ax.set_ylabel("log-income")
+fig.colorbar(im, label="GBM fitted default rate")
+plt.tight_layout(); plt.show()
+```
+
+The GBM seems to reflect the observed (smoothed) data very well. The
+criticisms one may raise are that the resulting regression function is not
+smooth and that it cannot easily be extrapolated, e.g., to incomes beyond
+the observed range. A crucial question is whether this GBM only extracts the
+structural (systematic) part or whether it also reflects some of the noise
+in the observed data. The latter would be harmful, because the noisy part is
+not structure that will repeat in the future. This issue is known as
+**in-sample over-fitting**. It is a recurrent question for all statistical
+and machine learning methods, and in credit it acquires a regulatory edge,
+since a PD model that has memorised its development sample will fail its
+out-of-time monitoring. It will be discussed in detail in the lectures that
+follow.
+
+We are now ready to take off on this process of statistical modelling and
+machine learning applied to credit risk: please enjoy!
+
+# Copyright and attribution {.unnumbered}
+
+This document adapts the storyline, structure and notation of *Lecture 1:
+Introduction and Data Example* from the summer school **Deep Learning for
+Actuarial Modeling** (Scognamiglio, Maggi and Wüthrich, Università Cattolica
+del Sacro Cuore, Milano, 2026), part of the project *AI Tools for
+Actuaries*, used under CC BY-NC 4.0. Changes made: the French MTPL insurance
+portfolio is replaced throughout by the public Bondora loan book, claim
+frequency modelling is recast as probability of default modelling, the code
+is Python rather than R, and the sections on the definition of default,
+censoring, endogenous pricing covariates and Simpson's paradox are new. The
+original lecture notes are available at
+<https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304>.
+
+# References {.unnumbered}
+
+- Bondora AS. *Loan dataset (public reports)*. <https://www.bondora.com/en/public-reports>
+- European Parliament and Council. *Regulation (EU) No 575/2013 (Capital
+  Requirements Regulation)*, Article 178: default of an obligor, as amended
+  by Regulation (EU) 2024/1623 (CRR3).
+- Prudential Regulation Authority (2024). *SS3/24: Credit risk, definition
+  of default*.
+- Wüthrich, M.V. and Merz, M. (2023). *Statistical Foundations of Actuarial
+  Learning and its Applications*. Springer.
+- Scognamiglio, S., Maggi, M. and Wüthrich, M.V. (2026). *Deep Learning for
+  Actuarial Modeling*, SSRN 5162304.
