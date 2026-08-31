@@ -8,8 +8,7 @@ data/
 # course authors' plots and diagrams. Ignored for the reason data/ is, and one
 # command away:
 #   bash scripts/fetch_lecture_figures.sh
-lectures/*.png
-lectures/*_files/
+lectures/figures/
 
 # Python
 __pycache__/

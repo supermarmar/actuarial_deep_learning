@@ -23,7 +23,7 @@ models and in-context learning.
 
 | Path | Purpose |
 |---|---|
-| `lectures/` | Seven Quarto-rendered lecture documents (`.html`), downloaded from the course site, plus `lecture.css`, the shared presentation layer. Figures are gitignored, see below |
+| `lectures/` | Seven Quarto-rendered lecture documents (`.html`), downloaded from the course site, plus `lecture.css`, the shared presentation layer. Their figures live in `lectures/figures/`, gitignored, see below |
 | `scripts/` | Repo utilities. Currently the lecture figure fetcher |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
@@ -77,7 +77,9 @@ history and the file is one `curl` away. Redownload it from
 The seven lecture documents were downloaded as bare HTML, without the images they reference, so
 every plot and diagram was blank until 31 August 2026. Those 50 files, 5.6 MB in all, are the
 course authors' own plots and diagrams, and they are gitignored for the same reason `data/` is.
-Rebuild them with:
+They live in `lectures/figures/`, moved there on 31 August 2026 to keep the lecture documents
+legible in a listing; the `src` paths inside the HTML were rewritten to match, and the fetch
+script strips the `figures/` prefix before building each URL. Rebuild them with:
 
 ```bash
 bash scripts/fetch_lecture_figures.sh          # fetch what is missing
@@ -89,7 +91,7 @@ correct if a lecture is re-downloaded. Adding a lecture means adding one line to
 Note two traps it handles: the remote directories carry spaces (`Lecture 1_Use Case`) while the
 figure directories inside them are hyphenated (`Lecture1-Use-Case_files`), so neither name can
 be derived from the other; and `frMTPLNN3.png` is referenced by both lecture 4/5 and lecture 6,
-which the flat `lectures/` layout collapses onto one path. The two copies are byte-identical
+which the flat `figures/` layout collapses onto one path. The two copies are byte-identical
 today, and the script compares rather than overwrites, so a future divergence gets shouted
 about.
 
