@@ -21,3 +21,6 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Lecture figures fetched into the figures/ subdirectory by the same script.
+lectures/figures/

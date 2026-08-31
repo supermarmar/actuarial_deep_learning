@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich">
+<meta name="dcterms.date" content="2026-08-31">
+
+<title>Credit Lecture 3: Feed-Forward Neural Networks</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#feed-forward-neural-networks" id="toc-feed-forward-neural-networks" class="nav-link" data-scroll-target="#feed-forward-neural-networks"><span class="header-section-number">1</span> Feed-forward neural networks</a>
+  <ul class="collapse">
+  <li><a href="#feature-extractor-and-glm-readout" id="toc-feature-extractor-and-glm-readout" class="nav-link" data-scroll-target="#feature-extractor-and-glm-readout"><span class="header-section-number">1.1</span> Feature extractor and GLM readout</a></li>
+  <li><a href="#network-layers-and-the-feature-extractor" id="toc-network-layers-and-the-feature-extractor" class="nav-link" data-scroll-target="#network-layers-and-the-feature-extractor"><span class="header-section-number">1.2</span> Network layers and the feature extractor</a></li>
+  <li><a href="#activation-functions" id="toc-activation-functions" class="nav-link" data-scroll-target="#activation-functions"><span class="header-section-number">1.3</span> Activation functions</a></li>
+  <li><a href="#dimension-of-the-network-parameter" id="toc-dimension-of-the-network-parameter" class="nav-link" data-scroll-target="#dimension-of-the-network-parameter"><span class="header-section-number">1.4</span> Dimension of the network parameter</a></li>
+  </ul></li>
+  <li><a href="#universality-theorems" id="toc-universality-theorems" class="nav-link" data-scroll-target="#universality-theorems"><span class="header-section-number">2</span> Universality theorems</a></li>
+  <li><a href="#gradient-descent-algorithm" id="toc-gradient-descent-algorithm" class="nav-link" data-scroll-target="#gradient-descent-algorithm"><span class="header-section-number">3</span> Gradient descent algorithm</a>
+  <ul class="collapse">
+  <li><a href="#objective-function" id="toc-objective-function" class="nav-link" data-scroll-target="#objective-function"><span class="header-section-number">3.1</span> Objective function</a></li>
+  <li><a href="#covariate-pre-processing" id="toc-covariate-pre-processing" class="nav-link" data-scroll-target="#covariate-pre-processing"><span class="header-section-number">3.2</span> Covariate pre-processing</a></li>
+  <li><a href="#early-stopping-the-most-critical-part" id="toc-early-stopping-the-most-critical-part" class="nav-link" data-scroll-target="#early-stopping-the-most-critical-part"><span class="header-section-number">3.3</span> Early stopping: the most critical part</a></li>
+  <li><a href="#stochastic-gradient-descent-and-optimisers" id="toc-stochastic-gradient-descent-and-optimisers" class="nav-link" data-scroll-target="#stochastic-gradient-descent-and-optimisers"><span class="header-section-number">3.4</span> Stochastic gradient descent and optimisers</a></li>
+  </ul></li>
+  <li><a href="#fnn-example-bondora-pd-data" id="toc-fnn-example-bondora-pd-data" class="nav-link" data-scroll-target="#fnn-example-bondora-pd-data"><span class="header-section-number">4</span> FNN example: Bondora PD data</a>
+  <ul class="collapse">
+  <li><a href="#modelling-table-and-design-matrix" id="toc-modelling-table-and-design-matrix" class="nav-link" data-scroll-target="#modelling-table-and-design-matrix"><span class="header-section-number">4.1</span> Modelling table and design matrix</a></li>
+  <li><a href="#splits-and-benchmark-glms" id="toc-splits-and-benchmark-glms" class="nav-link" data-scroll-target="#splits-and-benchmark-glms"><span class="header-section-number">4.2</span> Splits and benchmark GLMs</a></li>
+  <li><a href="#training-the-network" id="toc-training-the-network" class="nav-link" data-scroll-target="#training-the-network"><span class="header-section-number">4.3</span> Training the network</a></li>
+  <li><a href="#results-on-the-random-split" id="toc-results-on-the-random-split" class="nav-link" data-scroll-target="#results-on-the-random-split"><span class="header-section-number">4.4</span> Results on the random split</a></li>
+  <li><a href="#the-balance-property-is-the-first-casualty" id="toc-the-balance-property-is-the-first-casualty" class="nav-link" data-scroll-target="#the-balance-property-is-the-first-casualty"><span class="header-section-number">4.5</span> The balance property is the first casualty</a></li>
+  <li><a href="#the-learned-age-effect" id="toc-the-learned-age-effect" class="nav-link" data-scroll-target="#the-learned-age-effect"><span class="header-section-number">4.6</span> The learned age effect</a></li>
+  <li><a href="#does-the-advantage-survive-the-out-of-time-split" id="toc-does-the-advantage-survive-the-out-of-time-split" class="nav-link" data-scroll-target="#does-the-advantage-survive-the-out-of-time-split"><span class="header-section-number">4.7</span> Does the advantage survive the out-of-time split?</a></li>
+  </ul></li>
+  <li><a href="#takeaways-and-outlook" id="toc-takeaways-and-outlook" class="nav-link" data-scroll-target="#takeaways-and-outlook">Takeaways and outlook</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture 3: Feed-Forward Neural Networks</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">August 31, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>We move from the logistic GLM of the second credit lecture to its first deep learning successor. The feed-forward neural network is presented as in Lectures 4 and 5 of Deep Learning for Actuarial Modeling: a learned feature extractor composed with a GLM readout, trained by stochastic gradient descent with early stopping. A network is fitted to the Bondora modelling table in PyTorch, compared against the GLM benchmark on both the random and the out-of-time split, and the balance property of the canonical-link GLM is shown to be the first casualty of leaving it.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="introduction" class="level1 unnumbered">
+<h1 class="unnumbered">Introduction</h1>
+<p>The second credit lecture closed with a promise. The GLM regression function is linear in the covariates up to the link, and the networks to come would keep every other piece of the machinery (the Bernoulli deviance as loss, the sigmoid as output activation, the out-of-sample loss as arbiter) while replacing the covariates <span class="math inline">\(\boldsymbol{X}\)</span> with learned features <span class="math inline">\(\boldsymbol{z}^{(d:1)}(\boldsymbol{X})\)</span>. This lecture keeps that promise. It adapts Lectures 4 and 5 of the course, on feed-forward neural networks, to the Bondora PD problem; the credit series numbers it 3 because it is the third companion document.</p>
+<p>The plan mirrors the course. We first define the feed-forward network architecture and its parameter count, then state the universality theorems that justify the architecture, then work through gradient descent training, whose critical ingredient is early stopping. The example section fits a network to the Bondora modelling table of the second lecture and asks the questions that lecture taught us to ask, i.e.&nbsp;how the network compares with the GLM on the random split, whether its advantage survives the out-of-time split, and what happens to calibration in the large once the canonical-link score equations are gone.</p>
+</section>
+<section id="feed-forward-neural-networks" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Feed-forward neural networks</h1>
+<section id="feature-extractor-and-glm-readout" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="feature-extractor-and-glm-readout"><span class="header-section-number">1.1</span> Feature extractor and GLM readout</h2>
+<p>A feed-forward neural network (FNN) generalises the GLM in one specific place. The GLM regression function of the second lecture reads</p>
+<p><span class="math display">\[
+\boldsymbol{X} \mapsto g\left(\mu_{\vartheta}(\boldsymbol{X})\right)
+= \langle \vartheta, \boldsymbol{X} \rangle,
+\]</span></p>
+<p>and its weakness is that the modeller must supply the right covariates by hand: the age bands, the interactions, the transformations. The FNN keeps the GLM structure as its final layer, the <strong>readout</strong>, and prepends a <strong>feature extractor</strong> <span class="math inline">\(\boldsymbol{z}^{(d:1)}: \mathbb{R}^{q_0} \to \mathbb{R}^{q_d}\)</span> that is itself learned from the data,</p>
+<p><span class="math display">\[
+\boldsymbol{X} \mapsto \mu(\boldsymbol{X})
+= g^{-1} \left\langle \boldsymbol{w}^{(d+1)},
+\boldsymbol{z}^{(d:1)}(\boldsymbol{X}) \right\rangle.
+\]</span></p>
+<p>For our Bernoulli responses the inverse link <span class="math inline">\(g^{-1}\)</span> is the sigmoid, so the readout is exactly the logistic GLM of the second lecture, applied to learned features in place of raw covariates. A scorecard reader can take this as the definition of a neural network PD model: a logistic regression whose covariates were engineered by the optimiser rather than by the analyst.</p>
+</section>
+<section id="network-layers-and-the-feature-extractor" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="network-layers-and-the-feature-extractor"><span class="header-section-number">1.2</span> Network layers and the feature extractor</h2>
+<p>The feature extractor is a composition of <span class="math inline">\(d\)</span> <strong>FNN layers</strong>. Layer <span class="math inline">\(m\)</span> is a map</p>
+<p><span class="math display">\[
+\boldsymbol{z}^{(m)}: \mathbb{R}^{q_{m-1}} \to \mathbb{R}^{q_m},
+\qquad
+\boldsymbol{x} \mapsto \boldsymbol{z}^{(m)}(\boldsymbol{x})
+= \left( \phi\langle \boldsymbol{w}^{(m)}_1, \boldsymbol{x} \rangle,
+\ldots,
+\phi\langle \boldsymbol{w}^{(m)}_{q_m}, \boldsymbol{x} \rangle \right)^\top,
+\]</span></p>
+<p>whose <span class="math inline">\(j\)</span>-th component, the <span class="math inline">\(j\)</span>-th <strong>neuron</strong>, applies a non-linear <strong>activation function</strong> <span class="math inline">\(\phi\)</span> to an affine function <span class="math inline">\(\langle \boldsymbol{w}^{(m)}_j, \boldsymbol{x} \rangle
+= w^{(m)}_{j,0} + \sum_{k=1}^{q_{m-1}} w^{(m)}_{j,k} x_k\)</span> of the previous layer’s output. The full feature extractor of <strong>depth</strong> <span class="math inline">\(d\)</span> is the composition</p>
+<p><span class="math display">\[
+\boldsymbol{z}^{(d:1)}
+:= \boldsymbol{z}^{(d)} \circ \cdots \circ \boldsymbol{z}^{(1)}
+: \mathbb{R}^{q_0} \to \mathbb{R}^{q_d},
+\]</span></p>
+<p>with <span class="math inline">\(q_0 = q\)</span> the number of (pre-processed) covariates and <span class="math inline">\(q_1, \ldots, q_d\)</span> the numbers of neurons in the hidden layers. Every neuron is therefore a small GLM whose output feeds the GLMs of the next layer, and the network is a hierarchy of GLMs terminating in the readout.</p>
+</section>
+<section id="activation-functions" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="activation-functions"><span class="header-section-number">1.3</span> Activation functions</h2>
+<p>The activation <span class="math inline">\(\phi\)</span> supplies the non-linearity; with a linear <span class="math inline">\(\phi\)</span> the composition would collapse back to one linear map and the network would be an overparametrised GLM. The course table of common choices carries over unchanged.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>activation</th>
+<th><span class="math inline">\(\phi(x)\)</span></th>
+<th>derivative <span class="math inline">\(\phi'(x)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>sigmoid (logistic)</td>
+<td><span class="math inline">\(\sigma(x) = (1 + e^{-x})^{-1}\)</span></td>
+<td><span class="math inline">\(\phi(x)(1 - \phi(x))\)</span></td>
+</tr>
+<tr class="even">
+<td>hyperbolic tangent</td>
+<td><span class="math inline">\(\tanh(x) = 2\sigma(2x) - 1\)</span></td>
+<td><span class="math inline">\(1 - \phi(x)^2\)</span></td>
+</tr>
+<tr class="odd">
+<td>rectified linear unit (ReLU)</td>
+<td><span class="math inline">\(x\, \mathbb{1}_{x \geq 0}\)</span></td>
+<td><span class="math inline">\(\mathbb{1}_{x &gt; 0}\)</span></td>
+</tr>
+<tr class="even">
+<td>sigmoid linear unit (SiLU)</td>
+<td><span class="math inline">\(x\, \sigma(x)\)</span></td>
+<td><span class="math inline">\(\sigma(x)(1 - \phi(x)) + \phi(x)\)</span></td>
+</tr>
+<tr class="odd">
+<td>Gaussian error linear unit (GELU)</td>
+<td><span class="math inline">\(x\, \Phi(x)\)</span></td>
+<td><span class="math inline">\(\Phi(x) + x\, \Phi'(x)\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>In this lecture the sigmoid does double duty. As a candidate hidden activation it is one row of this table, and as the inverse canonical link of the Bernoulli member it is the fixed output activation of every PD network we build. The two roles are independent; following the course examples, our hidden layers use the hyperbolic tangent, and the sigmoid appears only in the readout.</p>
+</section>
+<section id="dimension-of-the-network-parameter" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="dimension-of-the-network-parameter"><span class="header-section-number">1.4</span> Dimension of the network parameter</h2>
+<p>Collecting all weights into one parameter <span class="math inline">\(\vartheta = (\boldsymbol{w}^{(1)}_1, \ldots, \boldsymbol{w}^{(d+1)})
+\in \mathbb{R}^r\)</span>, each layer contributes <span class="math inline">\(q_m\)</span> neurons with <span class="math inline">\(q_{m-1} + 1\)</span> weights each, and the readout contributes <span class="math inline">\(q_d + 1\)</span> more,</p>
+<p><span class="math display">\[
+r = \sum_{m=1}^{d} q_m \left(q_{m-1} + 1\right) + \left(q_d + 1\right).
+\]</span></p>
+<p>The course illustrates the formula on a small architecture with <span class="math inline">\(q_0 = 16\)</span> covariates and two hidden layers of <span class="math inline">\(q_1 = q_2 = 8\)</span> neurons, giving <span class="math inline">\(r = 8 \cdot 17 + 8 \cdot 9 + 9 = 217\)</span>. The same architecture in PyTorch, with the sigmoid readout of a PD model:</p>
+<div id="d072c0dc" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_fnn(q0, widths, seed):</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""FNN of depth len(widths) with tanh activations and sigmoid readout."""</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(seed)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    layers, q_prev <span class="op">=</span> [], q0</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> q_m <span class="kw">in</span> widths:</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>        layers <span class="op">+=</span> [torch.nn.Linear(q_prev, q_m), torch.nn.Tanh()]</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        q_prev <span class="op">=</span> q_m</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    layers <span class="op">+=</span> [torch.nn.Linear(q_prev, <span class="dv">1</span>), torch.nn.Sigmoid()]</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>toy <span class="op">=</span> make_fnn(q0<span class="op">=</span><span class="dv">16</span>, widths<span class="op">=</span>(<span class="dv">8</span>, <span class="dv">8</span>), seed<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(toy)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"trainable parameters:"</span>, <span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> toy.parameters()))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Sequential(
+  (0): Linear(in_features=16, out_features=8, bias=True)
+  (1): Tanh()
+  (2): Linear(in_features=8, out_features=8, bias=True)
+  (3): Tanh()
+  (4): Linear(in_features=8, out_features=1, bias=True)
+  (5): Sigmoid()
+)
+trainable parameters: 217</code></pre>
+</div>
+</div>
+<p>The count agrees with the formula. Two structural facts follow from the architecture and shape everything below. First, <span class="math inline">\(\mu_{\vartheta}\)</span> is no longer linear in <span class="math inline">\(\vartheta\)</span> in any reparametrisation, so the likelihood is non-concave and nothing guarantees a unique maximiser. Second, the network is heavily overparametrised relative to a GLM, so fitting it to the in-sample optimum would memorise noise. Both facts are addressed by the training procedure of the gradient descent section rather than by the architecture itself.</p>
+</section>
+</section>
+<section id="universality-theorems" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Universality theorems</h1>
+<p>The justification for the architecture is that it can represent essentially anything. The classical universality theorems (Cybenko, 1989; Hornik, Stinchcombe and White, 1989; Hornik, 1991) state that a network with a single hidden layer and a sigmoidal activation can approximate any continuous function on a compact set to any prescribed accuracy, provided the hidden layer is wide enough. Leshno et al.&nbsp;(1993) sharpened the requirement on the activation: universality holds precisely when <span class="math inline">\(\phi\)</span> is non-polynomial. Depth is therefore never needed for expressiveness in principle; in practice deep and narrow networks reach a given accuracy with far fewer parameters than shallow and wide ones, which is why the working architectures of this course have two to four hidden layers.</p>
+<p>For credit modelling the theorems cut both ways. They promise that the true PD functional <span class="math inline">\(\boldsymbol{X} \mapsto \mathrm{PD}(\boldsymbol{X})\)</span>, whatever its shape, lies within reach of the architecture, including every interaction the second lecture had to add by hand. Nevertheless, they promise this on the approximation side only. On finite samples an expressive enough network can also fit the noise perfectly, so the theorems make regularisation a necessity rather than an optional refinement. Moreover, the approximating network is far from unique, so two training runs will land on different parameters of similar quality. Both consequences are visible in the example section.</p>
+</section>
+<section id="gradient-descent-algorithm" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Gradient descent algorithm</h1>
+<section id="objective-function" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="objective-function"><span class="header-section-number">3.1</span> Objective function</h2>
+<p>Training minimises the in-sample Bernoulli deviance of the second lecture over the network parameter. With unit weights and dispersion (<span class="math inline">\(v_i \equiv 1\)</span>, <span class="math inline">\(\varphi = 1\)</span>), the objective on a sample <span class="math inline">\(\mathcal{S}\)</span> of size <span class="math inline">\(n\)</span> is</p>
+<p><span class="math display">\[
+\mathcal{L}(\vartheta; \mathcal{S})
+= \frac{1}{n} \sum_{i \in \mathcal{S}}
+2 \left( -D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
+- (1 - D_i) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right) \right),
+\]</span></p>
+<p>twice the binary cross-entropy that every deep learning library ships as <code>BCELoss</code>. For the GLM this objective was smooth and convex and IRLS solved it exactly. For the FNN it is non-convex, and the workhorse is <strong>gradient descent</strong>: from a random initial value <span class="math inline">\(\vartheta^{[0]}\)</span>, iterate</p>
+<p><span class="math display">\[
+\vartheta^{[t]} \;\mapsto\; \vartheta^{[t+1]}
+= \vartheta^{[t]} - \rho_{t+1}\,
+\nabla_{\vartheta}\, \mathcal{L}\left(\vartheta^{[t]}; \mathcal{S}\right),
+\]</span></p>
+<p>with <strong>learning rates</strong> <span class="math inline">\(\rho_t &gt; 0\)</span>, taking a small step against the gradient at every iteration. The gradient of the composition is computed layer by layer with the chain rule, the <strong>back-propagation</strong> algorithm of Rumelhart, Hinton and Williams (1986), and automatic differentiation frameworks such as PyTorch make its implementation invisible to the modeller.</p>
+</section>
+<section id="covariate-pre-processing" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="covariate-pre-processing"><span class="header-section-number">3.2</span> Covariate pre-processing</h2>
+<p>Gradient descent imposes a requirement that IRLS never did. The GLM estimate is equivariant to affine rescaling of the covariates (rescaling a covariate rescales its coefficient and changes nothing else), so the second lecture could feed raw ages and log-incomes without a thought. Gradient descent shares one learning rate across all components of <span class="math inline">\(\vartheta\)</span>, and a covariate living on <span class="math inline">\([1{,}000, 10{,}000]\)</span> next to one living on <span class="math inline">\([0, 1]\)</span> produces gradients of hopelessly different sizes on the two coordinates. The course therefore pre-processes every covariate, and we adopt its pipeline:</p>
+<ul>
+<li>continuous covariates are <strong>standardised</strong> to mean zero and unit variance, <span class="math inline">\(X \mapsto (X - \hat{m}) / \hat{s}\)</span>, with <span class="math inline">\(\hat{m}\)</span> and <span class="math inline">\(\hat{s}\)</span> estimated on the training data;</li>
+<li>rare tails of continuous covariates are <strong>censored</strong> before standardisation, because a handful of extreme values otherwise dominates the scale;</li>
+<li>categorical covariates are <strong>one-hot encoded</strong>, one indicator column per level. The redundancy of the full encoding (the columns sum to one) matters for the GLM’s design matrix rank; the network’s non-convex fit carries no such rank condition, so the full encoding is standard.</li>
+</ul>
+<p>Entity embeddings, the network-native treatment of high-cardinality categoricals, are the subject of the next lecture; our categoricals have at most twelve levels, so one-hot encoding is adequate here.</p>
+</section>
+<section id="early-stopping-the-most-critical-part" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="early-stopping-the-most-critical-part"><span class="header-section-number">3.3</span> Early stopping: the most critical part</h2>
+<p>The course flags early stopping as the most important element of network training, and the reason is the overparametrisation noted above. Run to convergence, gradient descent drives the in-sample deviance towards its minimum and the network towards memorising the learning sample. The remedy is to track generalisation during training and stop when it stops improving. Concretely, the learning sample <span class="math inline">\(\mathcal{L}\)</span> is partitioned into a <strong>training sample</strong> <span class="math inline">\(\mathcal{U}\)</span> and a <strong>validation sample</strong> <span class="math inline">\(\mathcal{V}\)</span>; gradient steps use <span class="math inline">\(\mathcal{U}\)</span> only, while <span class="math inline">\(\mathcal{L}(\vartheta^{[t]}; \mathcal{V})\)</span> is evaluated after every epoch. Training deviance falls monotonically, validation deviance falls and then turns upward, and the parameter retained is the one with the smallest validation deviance ever seen, a scheme called checkpointing. The <strong>test sample</strong> <span class="math inline">\(\mathcal{T}\)</span> takes no part in any of this and is touched once, for the final model comparison. Early stopping is thus a form of implicit regularisation, limiting the network’s capacity by how far from initialisation the parameter is allowed to travel rather than by an explicit penalty term. Explicit alternatives exist, above all <strong>dropout</strong> (Srivastava et al., 2014), which disables a random subset of neurons at every gradient step, and classical ridge or LASSO penalties on the weights; the course, and this lecture, get by with early stopping alone.</p>
+</section>
+<section id="stochastic-gradient-descent-and-optimisers" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="stochastic-gradient-descent-and-optimisers"><span class="header-section-number">3.4</span> Stochastic gradient descent and optimisers</h2>
+<p>Two refinements make gradient descent practical at portfolio scale. First, computing the exact gradient means a pass over the full training sample per step, which is wasteful when a small random subset already points in roughly the right direction. <strong>Stochastic gradient descent</strong> (SGD) therefore partitions each <strong>epoch</strong> into random <strong>mini-batches</strong> and takes one gradient step per batch. The steps are noisier, and the noise is useful, since it lets the iteration escape shallow local optima of the non-convex objective. Second, the plain update above is sensitive to the learning-rate schedule. Momentum-based optimisers smooth the trajectory by accumulating past gradients (Nesterov, 2007), and the adaptive family around <strong>Adam</strong> (Kingma and Ba, 2017) additionally maintains a per-coordinate learning rate. We use NAdam, the Nesterov-accelerated variant that the course’s Keras examples call <code>nadam</code>, with its default learning rate.</p>
+</section>
+</section>
+<section id="fnn-example-bondora-pd-data" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> FNN example: Bondora PD data</h1>
+<section id="modelling-table-and-design-matrix" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="modelling-table-and-design-matrix"><span class="header-section-number">4.1</span> Modelling table and design matrix</h2>
+<p>We reuse the modelling frame of the second lecture without change: loans with a recorded age and positive income, the unknown education code dropped, log-income as the income scale, and explicit <code>missing</code> categories for home ownership and employment duration.</p>
+<div id="111c24c1" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"Education"</span>) <span class="op">!=</span> <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> model_dat.select(</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"Education"</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>     <span class="st">"HomeOwnershipType"</span>, <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>,</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>     <span class="st">"EmploymentDurationCurrentEmployer"</span>, <span class="st">"LoanDate"</span>]).to_pandas()</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    g[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">101</span>],</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61+"</span>],</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>ho <span class="op">=</span> g[<span class="st">"HomeOwnershipType"</span>]</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"HomeOwnership"</span>] <span class="op">=</span> np.where(ho.isna() <span class="op">|</span> (ho <span class="op">==</span> <span class="op">-</span><span class="dv">1</span>), <span class="st">"missing"</span>,</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>                              ho.fillna(<span class="op">-</span><span class="dv">1</span>).astype(<span class="bu">int</span>).astype(<span class="bu">str</span>))</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"EmploymentDuration"</span>] <span class="op">=</span> g[<span class="st">"EmploymentDurationCurrentEmployer"</span>].fillna(<span class="st">"missing"</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"modelling sample: n = </span><span class="sc">{</span><span class="bu">len</span>(g)<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>modelling sample: n = 148,667</code></pre>
+</div>
+</div>
+<p>The GLM benchmark keeps the second lecture’s banded design, with <code>AgeClass</code> cut at the seven hand-chosen boundaries. The network receives the same information in the course’s pre-processed form instead: age and log-income as standardised continuous covariates, and the five categoricals one-hot encoded. The contrast is deliberate and mirrors the course’s own comparison, where the GLM works on hand-banded covariates and the network is left to learn the shapes itself. Following the course’s censoring of rare tails (driver age at 90, bonus-malus at 150), we censor age at 70; only 13 loans are older, with a maximum of 77, and those few observations should not stretch the standardised scale.</p>
+<div id="f27544a4" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeCens"</span>] <span class="op">=</span> g[<span class="st">"Age"</span>].clip(upper<span class="op">=</span><span class="dv">70</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>onehot <span class="op">=</span> pd.get_dummies(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    pd.DataFrame({</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Country"</span>: g[<span class="st">"Country"</span>],</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Education"</span>: g[<span class="st">"Education"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>        <span class="st">"HomeOwnership"</span>: g[<span class="st">"HomeOwnership"</span>],</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>        <span class="st">"VerificationType"</span>: g[<span class="st">"VerificationType"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>),</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        <span class="st">"EmploymentDuration"</span>: g[<span class="st">"EmploymentDuration"</span>],</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    }), prefix_sep<span class="op">=</span><span class="st">":"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>X_all <span class="op">=</span> pd.concat([</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    g[[<span class="st">"AgeCens"</span>, <span class="st">"logIncome"</span>]],</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    g[<span class="st">"NewCreditCustomer"</span>].astype(<span class="bu">float</span>),</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    onehot.astype(<span class="bu">float</span>),</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"design matrix: q0 = </span><span class="sc">{</span>X_all<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">}</span><span class="ss"> columns"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>design matrix: q0 = 38 columns</code></pre>
+</div>
+</div>
+<p>The design matrix carries <span class="math inline">\(q_0 = 38\)</span> pre-processed covariates, a close parallel to the course’s 40 for the French MTPL data. Standardisation is deferred to the training function below, because <span class="math inline">\(\hat{m}\)</span> and <span class="math inline">\(\hat{s}\)</span> must be estimated on training data only; estimating them on the full sample would leak the test set’s location and scale into the fit.</p>
+</section>
+<section id="splits-and-benchmark-glms" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="splits-and-benchmark-glms"><span class="header-section-number">4.2</span> Splits and benchmark GLMs</h2>
+<p>The learning and test samples are rebuilt exactly as in the second lecture, with the same seeds: an 80/20 random split, and an out-of-time split at the 0.8 quantile of origination dates.</p>
+<div id="31560ca2" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>perm <span class="op">=</span> rng.permutation(<span class="bu">len</span>(g))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>n_learn <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> <span class="bu">len</span>(g))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>idx_learn_r, idx_test_r <span class="op">=</span> perm[:n_learn], perm[n_learn:]</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>learn_r, test_r <span class="op">=</span> g.iloc[idx_learn_r], g.iloc[idx_test_r]</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>cutoff <span class="op">=</span> g[<span class="st">"LoanDate"</span>].quantile(<span class="fl">0.8</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>mask_t <span class="op">=</span> (g[<span class="st">"LoanDate"</span>] <span class="op">&lt;=</span> cutoff).to_numpy()</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>learn_t, test_t <span class="op">=</span> g[mask_t], g[<span class="op">~</span>mask_t]</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"random: learn </span><span class="sc">{</span><span class="bu">len</span>(learn_r)<span class="sc">:,}</span><span class="ss"> / test </span><span class="sc">{</span><span class="bu">len</span>(test_r)<span class="sc">:,}</span><span class="ss">;   "</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"out-of-time: learn </span><span class="sc">{</span><span class="bu">len</span>(learn_t)<span class="sc">:,}</span><span class="ss"> / test </span><span class="sc">{</span><span class="bu">len</span>(test_t)<span class="sc">:,}</span><span class="ss"> "</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(cutoff </span><span class="sc">{</span>cutoff<span class="sc">.</span>date()<span class="sc">}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>random: learn 118,933 / test 29,734;   out-of-time: learn 118,998 / test 29,669 (cutoff 2019-11-04)</code></pre>
+</div>
+</div>
+<p>The two benchmark GLMs refit the second lecture’s formula on each learning sample, and the evaluation helpers carry over unchanged, including the null-model deviance that makes cross-sample comparisons honest.</p>
+<div id="aa3eecbe" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>FORMULA <span class="op">=</span> (<span class="st">"default_12m ~ AgeClass + logIncome + Country + C(Education)"</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(HomeOwnership) + NewCreditCustomer + C(VerificationType)"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(EmploymentDuration)"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>glm_r <span class="op">=</span> smf.glm(FORMULA, data<span class="op">=</span>learn_r, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>glm_t <span class="op">=</span> smf.glm(FORMULA, data<span class="op">=</span>learn_t, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bernoulli_deviance(pred, obs):</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-12</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.clip(np.asarray(pred, <span class="bu">float</span>), eps, <span class="dv">1</span> <span class="op">-</span> eps)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.asarray(obs, <span class="bu">float</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">*</span> np.mean(<span class="op">-</span>y <span class="op">*</span> np.log(p) <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> y) <span class="op">*</span> np.log(<span class="dv">1</span> <span class="op">-</span> p))</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> report(label, pred, obs):</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    null <span class="op">=</span> np.full(<span class="bu">len</span>(obs), np.asarray(obs, <span class="bu">float</span>).mean())</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: deviance </span><span class="sc">{</span>bernoulli_deviance(pred, obs)<span class="sc">:7.3f}</span><span class="ss">   "</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"null </span><span class="sc">{</span>bernoulli_deviance(null, obs)<span class="sc">:7.3f}</span><span class="ss">   "</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"AUC </span><span class="sc">{</span>roc_auc_score(obs, pred)<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"mean PD </span><span class="sc">{</span>np<span class="sc">.</span>mean(pred)<span class="sc">:.4f}</span><span class="ss"> vs observed </span><span class="sc">{</span>np<span class="sc">.</span>mean(obs)<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="training-the-network" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="training-the-network"><span class="header-section-number">4.3</span> Training the network</h2>
+<p>The training function implements the full recipe of the gradient descent section: a 90/10 partition of the learning sample into <span class="math inline">\(\mathcal{U}\)</span> and <span class="math inline">\(\mathcal{V}\)</span>, standardisation fitted on <span class="math inline">\(\mathcal{U}\)</span>, NAdam over mini-batches of 5,000 loans, and early stopping by checkpointing on the validation deviance, abandoning training once fifty epochs pass without improvement. All seeds are fixed and training runs on the CPU, so the numbers below reproduce on re-render; on this machine’s Apple silicon <code>torch.backends.mps.is_available()</code> is true, and the model is small enough that the GPU would win nothing.</p>
+<div id="b8894a95" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_fnn(X_learn, y_learn, seed<span class="op">=</span><span class="dv">7</span>, epochs<span class="op">=</span><span class="dv">500</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">50</span>):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.random.default_rng(seed).permutation(<span class="bu">len</span>(X_learn))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    tr, va <span class="op">=</span> p[:<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p))], p[<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p)):]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    m_hat, s_hat <span class="op">=</span> X_learn.iloc[tr].mean(), X_learn.iloc[tr].std()</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    s_hat <span class="op">=</span> s_hat.replace(<span class="dv">0</span>, <span class="fl">1.0</span>)  <span class="co"># a one-hot level can be absent from U</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> prep(df):</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> torch.tensor(((df <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).to_numpy(dtype<span class="op">=</span>np.float32))</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    Xtr, Xva <span class="op">=</span> prep(X_learn.iloc[tr]), prep(X_learn.iloc[va])</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    ytr <span class="op">=</span> torch.tensor(y_learn.iloc[tr].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    yva <span class="op">=</span> torch.tensor(y_learn.iloc[va].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> make_fnn(X_learn.shape[<span class="dv">1</span>], widths<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">10</span>), seed<span class="op">=</span>seed)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.NAdam(model.parameters())</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> torch.nn.BCELoss()</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    gen <span class="op">=</span> torch.Generator().manual_seed(seed)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    best, best_epoch, best_state, hist <span class="op">=</span> np.inf, <span class="dv">0</span>, <span class="va">None</span>, []</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, epochs <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>        model.train()</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> chunk <span class="kw">in</span> torch.randperm(<span class="bu">len</span>(Xtr), generator<span class="op">=</span>gen).split(batch):</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>            loss <span class="op">=</span> bce(model(Xtr[chunk]), ytr[chunk])</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>            loss.backward()</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">eval</span>()</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>            hist.append((<span class="dv">200</span> <span class="op">*</span> bce(model(Xtr), ytr).item(),</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>                         <span class="dv">200</span> <span class="op">*</span> bce(model(Xva), yva).item()))</span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> hist[<span class="op">-</span><span class="dv">1</span>][<span class="dv">1</span>] <span class="op">&lt;</span> best:</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>            best, best_epoch <span class="op">=</span> hist[<span class="op">-</span><span class="dv">1</span>][<span class="dv">1</span>], epoch</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>            best_state <span class="op">=</span> {k: v.clone() <span class="cf">for</span> k, v <span class="kw">in</span> model.state_dict().items()}</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">-</span> best_epoch <span class="op">&gt;=</span> patience:</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    model.load_state_dict(best_state)</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, (m_hat, s_hat), np.array(hist), best_epoch</span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fnn_predict(model, scaler, X):</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>    m_hat, s_hat <span class="op">=</span> scaler</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> model(torch.tensor(</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>            ((X <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).to_numpy(dtype<span class="op">=</span>np.float32))).squeeze(<span class="dv">1</span>).numpy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>We fit the network on the random split’s learning sample. The chosen architecture copies the course’s French MTPL network, depth <span class="math inline">\(d = 3\)</span> with <span class="math inline">\((q_1, q_2, q_3) = (20, 15, 10)\)</span> neurons, which on <span class="math inline">\(q_0 = 38\)</span> inputs gives <span class="math inline">\(r = 20 \cdot 39 + 15 \cdot 21 + 10 \cdot 16 + 11 = 1{,}266\)</span> trainable parameters against the course’s 1,306.</p>
+<div id="b4a008c6" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>X_learn_r, y_all <span class="op">=</span> X_all.iloc[idx_learn_r], g[<span class="st">"default_12m"</span>].astype(<span class="bu">float</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>fnn_r, sc_r, hist_r, stop_r <span class="op">=</span> train_fnn(X_learn_r, y_all.iloc[idx_learn_r])</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"parameters: </span><span class="sc">{</span><span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> fnn_r.parameters())<span class="sc">:,}</span><span class="ss">; "</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"validation optimum at epoch </span><span class="sc">{</span>stop_r<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(hist_r)<span class="sc">}</span><span class="ss"> run"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>parameters: 1,266; validation optimum at epoch 71 of 121 run</code></pre>
+</div>
+</div>
+<div id="03245546" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>epochs_axis <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="bu">len</span>(hist_r) <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ax.plot(epochs_axis, hist_r[:, <span class="dv">0</span>], color<span class="op">=</span><span class="st">"#3B4A75"</span>, label<span class="op">=</span><span class="st">"training deviance"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ax.plot(epochs_axis, hist_r[:, <span class="dv">1</span>], color<span class="op">=</span><span class="st">"#8C2F1E"</span>, label<span class="op">=</span><span class="st">"validation deviance"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(stop_r, color<span class="op">=</span><span class="st">"#8A8377"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="ss">f"early stop (epoch </span><span class="sc">{</span>stop_r<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"epoch"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"Bernoulli deviance </span><span class="kw">(</span><span class="dv">$</span><span class="vs">10</span><span class="dv">^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="03_credit-fnn_files/figure-html/cell-9-output-1.png" width="955" height="527" class="figure-img"></p>
+<figcaption>Training and validation Bernoulli deviance by epoch on the random split, our computed counterpart of the course’s early-stopping illustration. The training deviance keeps falling; the validation deviance bottoms out at epoch 71 (dashed line) and then drifts upward as the network starts memorising the training sample. The retained parameter is the epoch-71 checkpoint.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="results-on-the-random-split" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="results-on-the-random-split"><span class="header-section-number">4.4</span> Results on the random split</h2>
+<div id="cf2cb711" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"GLM, in-sample "</span>, glm_r.fittedvalues, learn_r[<span class="st">"default_12m"</span>])</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"GLM, test      "</span>, glm_r.predict(test_r), test_r[<span class="st">"default_12m"</span>])</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"FNN, in-sample "</span>, fnn_predict(fnn_r, sc_r, X_learn_r), y_all.iloc[idx_learn_r])</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"FNN, test      "</span>, fnn_predict(fnn_r, sc_r, X_all.iloc[idx_test_r]),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>       y_all.iloc[idx_test_r])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>GLM, in-sample : deviance 106.641   null 120.210   AUC 0.7263   mean PD 0.2888 vs observed 0.2888
+GLM, test      : deviance 108.197   null 120.802   AUC 0.7182   mean PD 0.2888 vs observed 0.2921
+FNN, in-sample : deviance 104.606   null 120.210   AUC 0.7416   mean PD 0.2908 vs observed 0.2888
+FNN, test      : deviance 107.621   null 120.802   AUC 0.7241   mean PD 0.2911 vs observed 0.2921</code></pre>
+</div>
+</div>
+<p>On the random split the network earns its keep. Its out-of-sample deviance of 107.621 improves on the GLM’s 108.197, and its test AUC of 0.724 improves on the GLM’s 0.718, so the learned features find structure that the hand-banded design missed. The in-sample gap tells the same story from the other side. The FNN sits 3.0 deviance points below its own test value where the GLM sits only 1.6 below, which is the extra flexibility showing, held in check by early stopping. The gains are modest in absolute terms, and the course’s MTPL example behaves identically. A well-built GLM is a strong benchmark, and the network’s advantage is real, incremental and bought with 1,266 parameters in place of 39.</p>
+<p>Non-uniqueness deserves its promised demonstration. Retraining the same architecture on the same data from a different random initialisation lands on different weights and, in general, a slightly different out-of-sample performance.</p>
+<div id="abf35137" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fnn_r2, sc_r2, hist_r2, stop_r2 <span class="op">=</span> train_fnn(X_learn_r, y_all.iloc[idx_learn_r],</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>                                            seed<span class="op">=</span><span class="dv">17</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"FNN, test (seed 17)"</span>, fnn_predict(fnn_r2, sc_r2, X_all.iloc[idx_test_r]),</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>       y_all.iloc[idx_test_r])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>FNN, test (seed 17): deviance 107.475   null 120.802   AUC 0.7249   mean PD 0.2905 vs observed 0.2921</code></pre>
+</div>
+</div>
+<p>The second run stops at epoch 83 rather than 71 and lands within 0.15 deviance points of the first, on the favourable side this time. The ordering relative to the GLM is stable across seeds, and the residual run-to-run variation is exactly the estimation noise that the ensembling techniques of the next lecture average away.</p>
+</section>
+<section id="the-balance-property-is-the-first-casualty" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="the-balance-property-is-the-first-casualty"><span class="header-section-number">4.5</span> The balance property is the first casualty</h2>
+<p>The second lecture proved that the canonical-link GLM’s fitted PDs sum to the observed defaults on the learning sample, and called it calibration in the large. That proof ran through the maximum likelihood score equations, which the network no longer solves. Gradient descent stops early, deliberately short of any likelihood optimum.</p>
+<div id="f648ac91" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fit_fnn <span class="op">=</span> fnn_predict(fnn_r, sc_r, X_learn_r)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GLM: sum of fitted PDs </span><span class="sc">{</span>glm_r<span class="sc">.</span>fittedvalues<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,.1f}</span><span class="ss">   "</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"FNN: sum of fitted PDs </span><span class="sc">{</span>fit_fnn<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,.1f}</span><span class="ss">   "</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"observed defaults </span><span class="sc">{</span><span class="bu">int</span>(y_all.iloc[idx_learn_r].<span class="bu">sum</span>())<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>GLM: sum of fitted PDs 34,345.0   FNN: sum of fitted PDs 34,582.2   observed defaults 34,345</code></pre>
+</div>
+</div>
+<p>The GLM reproduces the 34,345 observed defaults to machine precision. The network overshoots them by 237, roughly 0.7 per cent of the portfolio’s defaults, despite having the better deviance. For insurance pricing the analogous failure means collecting the wrong total premium; for a credit portfolio it means a mis-stated expected loss at the aggregate level, which is the level capital planning cares about. The course addresses this with bias regularisation and balance corrections, and the credit series takes it up in the calibration companion; the point to hold on to is that leaving the canonical-link GLM silently forfeits an exactness guarantee that scorecard practice has always taken for granted.</p>
+</section>
+<section id="the-learned-age-effect" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="the-learned-age-effect"><span class="header-section-number">4.6</span> The learned age effect</h2>
+<p>The second lecture’s age bands were hand-crafted, with boundaries chosen by judgement. The network was handed age as a single standardised column and left to find the shape itself. We can inspect what it found by sweeping age across its range for a fixed reference borrower (the learning sample’s modal profile: an Estonian new customer, education level 4, home ownership type 1, income verified to level 4, employed more than five years, at the median log-income) and plotting the predicted PD against the GLM’s step function for the same profile.</p>
+<div id="e5d24396" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>modal <span class="op">=</span> {c: learn_r[c].mode()[<span class="dv">0</span>] <span class="cf">for</span> c <span class="kw">in</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>         [<span class="st">"Country"</span>, <span class="st">"Education"</span>, <span class="st">"HomeOwnership"</span>, <span class="st">"VerificationType"</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>          <span class="st">"EmploymentDuration"</span>, <span class="st">"NewCreditCustomer"</span>]}</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>sweep <span class="op">=</span> pd.DataFrame({<span class="st">"Age"</span>: np.arange(<span class="dv">18</span>, <span class="dv">78</span>),</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"logIncome"</span>: learn_r[<span class="st">"logIncome"</span>].median(), <span class="op">**</span>modal})</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>sweep[<span class="st">"AgeCens"</span>] <span class="op">=</span> sweep[<span class="st">"Age"</span>].clip(upper<span class="op">=</span><span class="dv">70</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>sweep[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    sweep[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">101</span>],</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61+"</span>],</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>sweep_oh <span class="op">=</span> pd.get_dummies(</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    pd.DataFrame({</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Country"</span>: sweep[<span class="st">"Country"</span>],</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Education"</span>: sweep[<span class="st">"Education"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>),</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">"HomeOwnership"</span>: sweep[<span class="st">"HomeOwnership"</span>],</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"VerificationType"</span>: sweep[<span class="st">"VerificationType"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>),</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"EmploymentDuration"</span>: sweep[<span class="st">"EmploymentDuration"</span>],</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    }), prefix_sep<span class="op">=</span><span class="st">":"</span>).astype(<span class="bu">float</span>)</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>sweep_X <span class="op">=</span> pd.concat([sweep[[<span class="st">"AgeCens"</span>, <span class="st">"logIncome"</span>]],</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>                     sweep[<span class="st">"NewCreditCustomer"</span>].astype(<span class="bu">float</span>), sweep_oh],</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>                    axis<span class="op">=</span><span class="dv">1</span>).reindex(columns<span class="op">=</span>X_all.columns, fill_value<span class="op">=</span><span class="fl">0.0</span>)</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>ax.plot(sweep[<span class="st">"Age"</span>], fnn_predict(fnn_r, sc_r, sweep_X),</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"#8C2F1E"</span>, label<span class="op">=</span><span class="st">"FNN"</span>)</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>ax.plot(sweep[<span class="st">"Age"</span>], glm_r.predict(sweep), color<span class="op">=</span><span class="st">"#3B4A75"</span>,</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>        drawstyle<span class="op">=</span><span class="st">"steps-post"</span>, label<span class="op">=</span><span class="st">"GLM (age bands)"</span>)</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"predicted PD"</span>)</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="03_credit-fnn_files/figure-html/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
+<figcaption>Predicted PD against borrower age for the reference profile, network against GLM, fitted on the random split’s learning sample. The GLM is constant within each hand-chosen age band; the network traces a smooth curve through the same territory, steep to age 40, flat at the bottom through the 40s and 50s, and rising gently into old age. Above the censoring point of 70 the network’s input is constant, so its curve is flat by construction.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The two models agree on the qualitative story, a strong decline in PD from 18 to about 40 followed by a shallow trough and a mild rise for the oldest borrowers. They disagree instructively on the details. The network starts higher for the youngest borrowers (25.3 per cent at age 18 against the GLM’s 20.8) and dips lower at the trough (9.3 per cent around age 40 against 13.6), so the banded GLM was averaging away real variation within its widest bands. This figure is the feature extractor made visible. Without being told where the boundaries were, <span class="math inline">\(\boldsymbol{z}^{(d:1)}\)</span> has rebuilt the age banding as a smooth function.</p>
+</section>
+<section id="does-the-advantage-survive-the-out-of-time-split" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="does-the-advantage-survive-the-out-of-time-split"><span class="header-section-number">4.7</span> Does the advantage survive the out-of-time split?</h2>
+<p>The second lecture’s out-of-time exercise found the GLM’s ranking intact and its level about eight percentage points too high on the pandemic-era test window. The network now takes the same examination: fitted on the out-of-time learning window, evaluated on the held-out final vintages.</p>
+<div id="7bbd7e38" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>X_learn_t <span class="op">=</span> X_all[mask_t]</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>fnn_t, sc_t, hist_t, stop_t <span class="op">=</span> train_fnn(X_learn_t, y_all[mask_t])</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"validation optimum at epoch </span><span class="sc">{</span>stop_t<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(hist_t)<span class="sc">}</span><span class="ss"> run"</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"GLM, in-sample "</span>, glm_t.fittedvalues, learn_t[<span class="st">"default_12m"</span>])</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"GLM, oot test  "</span>, glm_t.predict(test_t), test_t[<span class="st">"default_12m"</span>])</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"FNN, in-sample "</span>, fnn_predict(fnn_t, sc_t, X_learn_t), y_all[mask_t])</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"FNN, oot test  "</span>, fnn_predict(fnn_t, sc_t, X_all[<span class="op">~</span>mask_t]), y_all[<span class="op">~</span>mask_t])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>validation optimum at epoch 154 of 204 run
+GLM, in-sample : deviance 108.873   null 122.969   AUC 0.7274   mean PD 0.3048 vs observed 0.3048
+GLM, oot test  : deviance 100.400   null 107.365   AUC 0.7158   mean PD 0.3072 vs observed 0.2280
+FNN, in-sample : deviance 106.014   null 122.969   AUC 0.7481   mean PD 0.3057 vs observed 0.3048
+FNN, oot test  : deviance 101.329   null 107.365   AUC 0.7146   mean PD 0.3156 vs observed 0.2280</code></pre>
+</div>
+</div>
+<p>The answer is no, and the numbers are worth reading slowly. In-sample, the network repeats its random-split advantage, 106.014 against the GLM’s 108.873. Out of time, the advantage reverses: the network’s test deviance of 101.329 sits above the GLM’s 100.400, its AUC of 0.715 sits marginally below the GLM’s 0.716, and its mean predicted PD of 31.6 per cent overshoots the observed 22.8 per cent by nearly nine percentage points, where the GLM predicted 30.7. Every quality that made the network better on exchangeable data made it at best equal on drifted data, because the structure it so faithfully extracted from the development window is precisely what the pandemic-era book departed from.</p>
+<p>For credit modelling, the vintage drift of this portfolio matters more than the choice of model class. Moving from 39 GLM parameters to 1,266 network parameters shifts the out-of-time deviance by under one point, while the drift itself costs both models an eight-to-nine point calibration miss. Consequently, a modeller with an hour to spend on this book should spend it on the stability problem before the flexibility problem. The monthly picture makes the diagnosis visible.</p>
+<div id="8d2c8c4e" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>g2 <span class="op">=</span> g.copy()</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>g2[<span class="st">"GLM"</span>] <span class="op">=</span> glm_t.predict(g2)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>g2[<span class="st">"FNN"</span>] <span class="op">=</span> fnn_predict(fnn_t, sc_t, X_all)</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>g2[<span class="st">"month"</span>] <span class="op">=</span> g2[<span class="st">"LoanDate"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp()</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>monthly <span class="op">=</span> (g2[g2[<span class="st">"month"</span>] <span class="op">&gt;=</span> <span class="st">"2013-01-01"</span>]</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>           .groupby(<span class="st">"month"</span>)[[<span class="st">"default_12m"</span>, <span class="st">"GLM"</span>, <span class="st">"FNN"</span>]].mean())</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>ax.plot(monthly.index, monthly[<span class="st">"default_12m"</span>], <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">3</span>,</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span><span class="st">"#8A8377"</span>, label<span class="op">=</span><span class="st">"observed"</span>)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>ax.plot(monthly.index, monthly[<span class="st">"GLM"</span>], color<span class="op">=</span><span class="st">"#3B4A75"</span>, label<span class="op">=</span><span class="st">"GLM predicted"</span>)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>ax.plot(monthly.index, monthly[<span class="st">"FNN"</span>], color<span class="op">=</span><span class="st">"#8C2F1E"</span>, label<span class="op">=</span><span class="st">"FNN predicted"</span>)</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>ax.axvline(cutoff, color<span class="op">=</span><span class="st">"#8A8377"</span>, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="st">"oot cutoff"</span>)</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"origination month"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"12-month default rate"</span>)</span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="03_credit-fnn_files/figure-html/cell-15-output-1.png" width="961" height="527" class="figure-img"></p>
+<figcaption>Monthly observed default rate (dots) against the mean predicted PD of the out-of-time GLM and FNN. The two models are nearly indistinguishable at monthly resolution, inside and outside the development window alike; right of the dashed cutoff both track the vintage cycle they were fitted on while the observed rates fall away beneath them. Months from 2013 onward are shown, as in the second lecture.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="takeaways-and-outlook" class="level1 unnumbered">
+<h1 class="unnumbered">Takeaways and outlook</h1>
+<p>A feed-forward network is a parametrised class of regression functions, fixed by the depth <span class="math inline">\(d\)</span>, the neuron counts <span class="math inline">\(q_1, \ldots, q_d\)</span>, the activation <span class="math inline">\(\phi\)</span> and the output activation <span class="math inline">\(g^{-1}\)</span>, and trained by stochastic gradient descent on the same Bernoulli deviance the GLM minimised. The universality theorems guarantee the class is rich enough for any continuous PD functional; the price of that richness is a non-convex fit with no unique optimum, held away from memorisation by early stopping on a validation sample.</p>
+<p>On the Bondora book the network delivered what the theory suggests. It beat the GLM out-of-sample on exchangeable data, it recovered the hand-crafted age structure as a smooth learned feature, and it gave up the balance property, missing the observed default count by 0.7 per cent where the canonical-link GLM was exact. Out of time, the vintage drift swamped the model-class difference entirely, and the network’s calibration miss exceeded the GLM’s. Hence the deep learning agenda for credit turns on the surrounding discipline of calibration repair, stability across vintages, and honest uncertainty about a non-unique fit, at least as much as on raw accuracy.</p>
+<p>The next lecture takes up two of those threads directly. Ensembling (nagging) averages away the run-to-run randomness the seed experiment exposed, and entity embeddings replace one-hot encoding for categorical covariates, learning a low-dimensional representation per level. Both are mechanical extensions of the architecture built here.</p>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+<p>This document adapts the storyline, structure and notation of <em>Lectures 4 and 5: Feed-Forward Neural Networks</em> from the summer school <strong>Deep Learning for Actuarial Modeling</strong> (Scognamiglio, Maggi and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of the project <em>AI Tools for Actuaries</em>, used under CC BY-NC 4.0. Changes made: the Poisson claim-frequency thread is recast as the Bernoulli default thread on the public Bondora loan book, the code is Python with PyTorch rather than R with Keras, the out-of-time contrast, the balance-property demonstration, the seed-stability experiment, the learned age-effect figure and the monthly drift figure are new, and the numerical results concern the credit data throughout. The original lecture notes are available at <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a>.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<ul>
+<li>Cybenko, G. (1989). Approximation by superpositions of a sigmoidal function. <em>Mathematics of Control, Signals and Systems</em> 2(4), 303-314.</li>
+<li>Hornik, K. (1991). Approximation capabilities of multilayer feedforward networks. <em>Neural Networks</em> 4(2), 251-257.</li>
+<li>Hornik, K., Stinchcombe, M. and White, H. (1989). Multilayer feedforward networks are universal approximators. <em>Neural Networks</em> 2(5), 359-366.</li>
+<li>Kingma, D.P. and Ba, J. (2017). Adam: a method for stochastic optimization. arXiv:1412.6980.</li>
+<li>Leshno, M., Lin, V.Y., Pinkus, A. and Schocken, S. (1993). Multilayer feedforward networks with a nonpolynomial activation function can approximate any function. <em>Neural Networks</em> 6(6), 861-867.</li>
+<li>Nesterov, Y. (2007). Gradient methods for minimizing composite objective function. CORE Discussion Paper 2007/76.</li>
+<li>Rumelhart, D.E., Hinton, G.E. and Williams, R.J. (1986). Learning representations by back-propagating errors. <em>Nature</em> 323, 533-536.</li>
+<li>Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I. and Salakhutdinov, R. (2014). Dropout: a simple way to prevent neural networks from overfitting. <em>Journal of Machine Learning Research</em> 15(56), 1929-1958.</li>
+<li>Wüthrich, M.V. and Merz, M. (2023). <em>Statistical Foundations of Actuarial Learning and its Applications</em>. Springer.</li>
+<li>Scognamiglio, S., Maggi, M. and Wüthrich, M.V. (2026). <em>Deep Learning for Actuarial Modeling</em>, SSRN 5162304.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

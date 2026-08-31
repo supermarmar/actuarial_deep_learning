@@ -1,0 +1,13 @@
+# Pyrefly runs as a language server inside the IDE (the meta.pyrefly extension,
+# `pyrefly lsp`), where it does not inherit the interpreter the notebook kernel
+# uses. Without this file it queried the system framework 3.14 and reported
+# every course import as missing: statsmodels.api, statsmodels.formula.api,
+# model_diagnostics.scoring. The repo venv is the environment, see CLAUDE.md.
+#
+# site-package-path is set as well as python-interpreter, because pyrefly
+# queries the interpreter only for values the config leaves missing, so an
+# interpreter handed to it by the editor would otherwise win. The path carries
+# the minor version, so it needs editing if .python-version moves off 3.14.
+python-interpreter = ".venv/bin/python"
+python-version = "3.14"
+site-package-path = [".venv/lib/python3.14/site-packages"]
