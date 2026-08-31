@@ -75,7 +75,7 @@ history and the file is one `curl` away. Redownload it from
 
 ### Credit risk data
 
-`data/` also holds two credit risk datasets, added 31 August 2026 for the
+`data/` also holds three credit risk datasets, added from 31 August 2026 for the
 `credit_lectures/` series and profiled in `notes/credit-datasets.md`:
 
 - `LoanData_Bondora.csv` (150 MB): the public Bondora P2P loan book, extract dated
@@ -83,12 +83,19 @@ history and the file is one `curl` away. Redownload it from
 - `Dev_data_to_be_shared.csv` and `validation_data_to_be_shared.csv` (420 MB): an
   anonymised credit card portfolio distributed as a dev/validation pair; the validation
   file carries no `bad_flag`. Local files only; source to be confirmed.
+- `amex-default-prediction/train_data.csv` and `train_labels.csv` (15 GB, 29 MB): the
+  Kaggle "American Express Default Prediction" competition data
+  (`https://www.kaggle.com/competitions/amex-default-prediction`), a genuine
+  customer-month panel rather than a cross-section. `test_data.csv` and
+  `sample_submission.csv` (32 GB, 59 MB) are also present but unconverted: the
+  competition never released test labels, so the file gives 924,621 unscoreable
+  customers.
 
-Rebuild the derived parquets (`bondora_raw`, `bondora_pd`, `credit_card_dev`,
-`credit_card_validation`) with:
+Rebuild the derived parquets with:
 
 ```bash
-.venv/bin/python scripts/convert_credit_data.py
+.venv/bin/python scripts/convert_credit_data.py                    # bondora + credit card (default)
+.venv/bin/python scripts/convert_credit_data.py --datasets amex    # amex_panel, amex_cross_section; streams 15 GB
 ```
 
 Rendering the credit lectures needs the quarto CLI (installed user-space at
