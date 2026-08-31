@@ -1,0 +1,12 @@
+{
+  // The lecture HTML is the course authors' material, held exactly as
+  // downloaded. A format-on-save rewrote 1,164 lines of 01_use-case.html on
+  // 31 August 2026. .prettierignore stops Prettier; this stops the built-in
+  // HTML formatter, which was the more likely culprit.
+  "[html]": {
+    "editor.formatOnSave": false
+  },
+
+  // The pinned in-repo environment. See CLAUDE.md: never a system python3.
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python"
+}

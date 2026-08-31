@@ -23,7 +23,8 @@ models and in-context learning.
 
 | Path | Purpose |
 |---|---|
-| `lectures/` | Seven Quarto-rendered lecture documents (`.html`), downloaded from the course site |
+| `lectures/` | Seven Quarto-rendered lecture documents (`.html`), downloaded from the course site, plus `lecture.css`, the shared presentation layer. Figures are gitignored, see below |
+| `scripts/` | Repo utilities. Currently the lecture figure fetcher |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
 | `reference/` | Four Python notebooks from the `wueth/AITools4Actuaries` GitHub repo |
@@ -70,6 +71,41 @@ has used openly for years. No client data is involved.
 The directory is gitignored all the same, since a 34 MB binary blob has no business in git
 history and the file is one `curl` away. Redownload it from
 `https://people.math.ethz.ch/~wueth/Lecture/SummerSchool2026/Data/Data.zip`.
+
+### Lecture figures
+
+The seven lecture documents were downloaded as bare HTML, without the images they reference, so
+every plot and diagram was blank until 31 August 2026. Those 50 files, 5.6 MB in all, are the
+course authors' own plots and diagrams, and they are gitignored for the same reason `data/` is.
+Rebuild them with:
+
+```bash
+bash scripts/fetch_lecture_figures.sh          # fetch what is missing
+bash scripts/fetch_lecture_figures.sh --force  # re-fetch everything
+```
+
+The script reads the image list out of the HTML rather than carrying its own, so it stays
+correct if a lecture is re-downloaded. Adding a lecture means adding one line to its `MAP`.
+Note two traps it handles: the remote directories carry spaces (`Lecture 1_Use Case`) while the
+figure directories inside them are hyphenated (`Lecture1-Use-Case_files`), so neither name can
+be derived from the other; and `frMTPLNN3.png` is referenced by both lecture 4/5 and lecture 6,
+which the flat `lectures/` layout collapses onto one path. The two copies are byte-identical
+today, and the script compares rather than overwrites, so a future divergence gets shouted
+about.
+
+### Never reformat the authors' files
+
+`lectures/`, `exercises/` and `reference/` hold files exactly as issued, so a formatter must
+never touch them. A VS Code format-on-save rewrote 1,164 lines of `lectures/01_use-case.html`
+on 31 August 2026, which buries any real change in a whitespace diff. Two guards are in place:
+`.prettierignore` covers `lectures/*.html`, `exercises/` and `reference/`, and
+`.vscode/settings.json` turns off format-on-save for HTML in this workspace. If a thousand-line
+diff ever appears on a lecture file, that is what happened; `git checkout --` the file.
+
+The `.prettierignore` rule names `lectures/*.html` rather than `lectures/`, so that our own
+`lectures/lecture.css` stays formattable. A directory exclusion would not allow it back:
+Prettier reads gitignore semantics, where excluding a directory stops the walk and a later
+`!lectures/lecture.css` is inert.
 
 ## Repo versus vault
 
