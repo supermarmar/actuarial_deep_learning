@@ -11,6 +11,10 @@ data/
 lectures/*.png
 lectures/*_files/
 
+# Generated dashboard. Derived from the gitignored data/, 2.4 MB per rebuild,
+# and one command away: .venv/bin/python dashboard/build.py
+dashboard/dashboard.html
+
 # Python
 __pycache__/
 *.py[cod]
