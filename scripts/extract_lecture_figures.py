@@ -40,13 +40,16 @@ class Figure:
     beamer overlays make several pages share a frame. ``top`` and ``bottom`` are
     the fractions of page height to discard before the white margins are trimmed,
     which is how the frame title above the plot and the caption below it are
-    removed.
+    removed. ``left`` and ``right`` do the same horizontally, for the two-column
+    frames whose diagram sits beside a block of bullets.
     """
 
     page: int
     name: str
     top: float = 0.13
     bottom: float = 0.04
+    left: float = 0.0
+    right: float = 0.0
 
 
 DECKS: dict[str, tuple[str, tuple[Figure, ...]]] = {
@@ -58,6 +61,15 @@ DECKS: dict[str, tuple[str, tuple[Figure, ...]]] = {
             Figure(33, "icenet-pdp", top=0.16, bottom=0.15),
             Figure(34, "icenet-ice-plots", top=0.16, bottom=0.15),
             Figure(35, "icenet-pdp-constraint-parameters", top=0.16, bottom=0.15),
+        ),
+    ),
+    "12": (
+        "Lecture-12.pdf",
+        (
+            Figure(25, "icl-ct-architecture", top=0.17, bottom=0.30),
+            Figure(27, "context-retrieval", top=0.12, bottom=0.27, left=0.56),
+            Figure(38, "pca-cls-tokens", top=0.13, bottom=0.05),
+            Figure(39, "pca-training-phases", top=0.13, bottom=0.05),
         ),
     ),
 }
@@ -125,9 +137,9 @@ def extract(lecture: str) -> list[Path]:
             page = mask_page_number(render_page(pdf, figure.page, workdir))
             height = page.height
             body = page.crop((
-                0,
+                int(page.width * figure.left),
                 int(height * figure.top),
-                page.width,
+                int(page.width * (1 - figure.right)),
                 int(height * (1 - figure.bottom)),
             ))
             out = OUT_DIR / f"lecture{int(lecture):02d}-{figure.name}.png"
