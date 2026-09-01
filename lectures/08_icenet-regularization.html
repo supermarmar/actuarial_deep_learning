@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Ronald Richman, Salvatore Scognamiglio, Mario V. Wüthrich, Marco Maggi">
+<meta name="dcterms.date" content="2026-07-21">
+
+<title>Lecture 8: ICEnet and Regularization</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#regularization" id="toc-regularization" class="nav-link active" data-scroll-target="#regularization"><span class="header-section-number">1</span> Regularization</a>
+  <ul class="collapse">
+  <li><a href="#regularization-introduction" id="toc-regularization-introduction" class="nav-link" data-scroll-target="#regularization-introduction"><span class="header-section-number">1.1</span> Regularization: introduction</a></li>
+  <li><a href="#regularization-techniques" id="toc-regularization-techniques" class="nav-link" data-scroll-target="#regularization-techniques"><span class="header-section-number">1.2</span> Regularization techniques</a></li>
+  <li><a href="#regularization-preparation" id="toc-regularization-preparation" class="nav-link" data-scroll-target="#regularization-preparation"><span class="header-section-number">1.3</span> Regularization preparation</a></li>
+  <li><a href="#regularization-penalty-function" id="toc-regularization-penalty-function" class="nav-link" data-scroll-target="#regularization-penalty-function"><span class="header-section-number">1.4</span> Regularization: penalty function</a></li>
+  <li><a href="#ridge-regularizationregression" id="toc-ridge-regularizationregression" class="nav-link" data-scroll-target="#ridge-regularizationregression"><span class="header-section-number">1.5</span> Ridge regularization/regression</a></li>
+  <li><a href="#lasso-regularizationregression" id="toc-lasso-regularizationregression" class="nav-link" data-scroll-target="#lasso-regularizationregression"><span class="header-section-number">1.6</span> LASSO regularization/regression</a></li>
+  <li><a href="#geometric-interpretation-of-ridge-vs.-lasso" id="toc-geometric-interpretation-of-ridge-vs.-lasso" class="nav-link" data-scroll-target="#geometric-interpretation-of-ridge-vs.-lasso"><span class="header-section-number">1.7</span> Geometric interpretation of ridge vs.&nbsp;LASSO</a></li>
+  <li><a href="#best-subset-selection-regularization" id="toc-best-subset-selection-regularization" class="nav-link" data-scroll-target="#best-subset-selection-regularization"><span class="header-section-number">1.8</span> Best-subset selection regularization</a></li>
+  <li><a href="#elastic-regularization" id="toc-elastic-regularization" class="nav-link" data-scroll-target="#elastic-regularization"><span class="header-section-number">1.9</span> Elastic regularization</a></li>
+  <li><a href="#grouped-covariates" id="toc-grouped-covariates" class="nav-link" data-scroll-target="#grouped-covariates"><span class="header-section-number">1.10</span> Grouped covariates</a></li>
+  <li><a href="#group-lasso-regularization" id="toc-group-lasso-regularization" class="nav-link" data-scroll-target="#group-lasso-regularization"><span class="header-section-number">1.11</span> Group LASSO regularization</a></li>
+  <li><a href="#fused-lasso-regularization" id="toc-fused-lasso-regularization" class="nav-link" data-scroll-target="#fused-lasso-regularization"><span class="header-section-number">1.12</span> Fused LASSO regularization</a></li>
+  <li><a href="#positivity-and-monotonicity-regularization" id="toc-positivity-and-monotonicity-regularization" class="nav-link" data-scroll-target="#positivity-and-monotonicity-regularization"><span class="header-section-number">1.13</span> Positivity and monotonicity regularization</a></li>
+  </ul></li>
+  <li><a href="#icenet-smoothness-and-monotonicity-constraints-for-neural-networks" id="toc-icenet-smoothness-and-monotonicity-constraints-for-neural-networks" class="nav-link" data-scroll-target="#icenet-smoothness-and-monotonicity-constraints-for-neural-networks"><span class="header-section-number">2</span> ICEnet: smoothness and monotonicity constraints for neural networks</a>
+  <ul class="collapse">
+  <li><a href="#actuarial-motivation" id="toc-actuarial-motivation" class="nav-link" data-scroll-target="#actuarial-motivation"><span class="header-section-number">2.1</span> Actuarial motivation</a></li>
+  <li><a href="#ice-and-pdp-interpretability-ingredients" id="toc-ice-and-pdp-interpretability-ingredients" class="nav-link" data-scroll-target="#ice-and-pdp-interpretability-ingredients"><span class="header-section-number">2.2</span> ICE and PDP: interpretability ingredients</a></li>
+  <li><a href="#key-idea-of-icenet" id="toc-key-idea-of-icenet" class="nav-link" data-scroll-target="#key-idea-of-icenet"><span class="header-section-number">2.3</span> Key idea of ICEnet</a></li>
+  <li><a href="#compound-icenet-loss" id="toc-compound-icenet-loss" class="nav-link" data-scroll-target="#compound-icenet-loss"><span class="header-section-number">2.4</span> Compound ICEnet loss</a></li>
+  <li><a href="#smoothness-penalty" id="toc-smoothness-penalty" class="nav-link" data-scroll-target="#smoothness-penalty"><span class="header-section-number">2.5</span> Smoothness penalty</a></li>
+  <li><a href="#monotonicity-penalty" id="toc-monotonicity-penalty" class="nav-link" data-scroll-target="#monotonicity-penalty"><span class="header-section-number">2.6</span> Monotonicity penalty</a></li>
+  </ul></li>
+  <li><a href="#icenet-example-french-mtpl-data" id="toc-icenet-example-french-mtpl-data" class="nav-link" data-scroll-target="#icenet-example-french-mtpl-data"><span class="header-section-number">3</span> ICEnet example: French MTPL data</a>
+  <ul class="collapse">
+  <li><a href="#main-predictive-results" id="toc-main-predictive-results" class="nav-link" data-scroll-target="#main-predictive-results"><span class="header-section-number">3.1</span> Main predictive results</a></li>
+  <li><a href="#partial-dependence-plot" id="toc-partial-dependence-plot" class="nav-link" data-scroll-target="#partial-dependence-plot"><span class="header-section-number">3.2</span> Partial dependence plot</a></li>
+  <li><a href="#ice-plots" id="toc-ice-plots" class="nav-link" data-scroll-target="#ice-plots"><span class="header-section-number">3.3</span> ICE plots</a></li>
+  <li><a href="#pdps-under-different-constraint-parameter-values" id="toc-pdps-under-different-constraint-parameter-values" class="nav-link" data-scroll-target="#pdps-under-different-constraint-parameter-values"><span class="header-section-number">3.4</span> PDPs under different constraint-parameter values</a></li>
+  </ul></li>
+  <li><a href="#copyright" id="toc-copyright" class="nav-link" data-scroll-target="#copyright">Copyright</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lecture 8: ICEnet and Regularization</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modeling<br>
+Summer School ‘Lifelong Learning’<br>
+Università Cattolica del Sacro Cuore, Milano</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Ronald Richman, Salvatore Scognamiglio, Mario V. Wüthrich, Marco Maggi </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 21, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Regularization is a model fitting technique that aims at variable shrinkage and variable selection during their estimation procedure. This can be achieved by penalizing extreme parameter values, making models generally more smooth (in some sense). This lecture discusses different regularization methods, and then presents the ICEnet architecture of Richman and Wüthrich (2024), which constrains neural-network predictions so that they are smooth and monotone with respect to selected risk factors, while keeping the deep-learning framework.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="regularization" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Regularization</h1>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Regularization is a model fitting technique that aims at variable shrinkage and variable selection during their estimation procedure. This can be achieved by penalizing extreme parameter values, making models generally more smooth (in some sense). This section discusses different regularization methods.</p>
+</div>
+</div>
+<section id="regularization-introduction" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="regularization-introduction"><span class="header-section-number">1.1</span> Regularization: introduction</h2>
+<ul>
+<li><p>Generally speaking, a regression model <span class="math inline">\(\boldsymbol{X} \mapsto \mu(\boldsymbol{X})\)</span> is correctly specified if it integrates all relevant covariates in the correct form, and if there is no redundant, missing or wrong covariate in the regression function:</p>
+<ul>
+<li><p><em>redundant</em> means that we include multiple covariates that essentially present the same information (e.g., being collinear);</p></li>
+<li><p><em>missing</em> means that we have forgotten important covariate information that would be available; and</p></li>
+<li><p><em>wrong</em> means that the covariate does not impact the response.</p></li>
+</ul></li>
+<li><p>In real world problems, with unknown regression functions, this is part of covariate pre-processing, model selection and covariate selection.</p></li>
+<li><p>One might be tempted to include any available information into the regression model, to ensure that nothing gets forgotten. However, fitting on finite samples, this is usually not a good strategy, because one may easily run into over-fitting issues, difficulties with collinearity in covariates, in identifiability issues, and, generally, in a poor predictive model because model fitting has not been successful.</p></li>
+<li><p>Model complexity control is crucial in a successful model fitting and predictive modeling procedure. Typically, one aims for a <em>sparse</em> model, meaning that one aims for <em>parsimony</em> having the fewest necessary variables but still providing accurate predictions.</p></li>
+<li><p>In practice, neither knowing the true model nor the (causal) regression structure and the factors that impact the responses, one often starts with slightly too large models, that one tries to shrink by regularization. Regularization penalizes model complexity and/or extreme regression coefficients.</p></li>
+</ul>
+</section>
+<section id="regularization-techniques" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="regularization-techniques"><span class="header-section-number">1.2</span> Regularization techniques</h2>
+<p>We describe the most popular regularization techniques in this section; see Hastie, Tibshirani and Wainwright (2015).</p>
+<ul>
+<li><p><em>Ridge regularization</em> (also known as Tikhonov (1943) regularization or <span class="math inline">\(L^2\)</span>-regularization);</p></li>
+<li><p><em>LASSO regularization</em> of Tibshirani (1996) (<span class="math inline">\(L^1\)</span>-regularization);</p></li>
+<li><p><em>Elastic net regularization</em> of Zou and Hastie (2005);</p></li>
+<li><p><em>Fused LASSO regularization</em> of Tibshirani <em>et al.</em> (2005);</p></li>
+<li><p><em>Group LASSO regularization</em> of Yuan and Lin (2006);</p></li>
+<li><p><em>Smoothly clipped absolute deviation (SCAD) regularization</em> of Fan and Li (2001); we skip the details of SCAD in this notebook.</p></li>
+</ul>
+</section>
+<section id="regularization-preparation" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="regularization-preparation"><span class="header-section-number">1.3</span> Regularization preparation</h2>
+<ul>
+<li><p>Consider a parametric regression estimation <span class="math inline">\(\mu_{\widehat{\vartheta}}(\cdot)\)</span> by selecting from a class of candidate models <span class="math inline">\(\mathcal{M} = \{\mu_\vartheta\}_\vartheta\)</span> being parametrized by <span class="math inline">\(\vartheta\)</span>.</p></li>
+<li><p>The parameter <span class="math inline">\(\vartheta\)</span> is assumed to be a <span class="math inline">\((r+1)\)</span>-dimensional vector <span class="math display">\[\vartheta = (\vartheta_0, \vartheta_1, \ldots, \vartheta_r)^\top \in \mathbb{R}^{r+1}.\]</span> Typically, <span class="math inline">\((\vartheta_k)_{k=1}^r\)</span> parametrizes the terms in <span class="math inline">\(\mu_\vartheta(\boldsymbol{X})\)</span> involving the covariates <span class="math inline">\(\boldsymbol{X}\)</span>, and <span class="math inline">\(\vartheta_0\)</span> is a parameter for the covariate-free part of the regression function determining the overall level of the regression function; <span class="math inline">\(\vartheta_0\)</span> is the <em>intercept/bias term</em>, see GLM above.</p></li>
+<li><p>This bias term <span class="math inline">\(\vartheta_0\)</span> needs to be excluded from regularization to be able to calibrate the overall level of the model.</p></li>
+<li><p>Denote by <span class="math inline">\(\vartheta_{\backslash 0} = (\vartheta_1, \ldots, \vartheta_r)^\top \in \mathbb{R}^r\)</span> the parameter vector excluding the bias term <span class="math inline">\(\vartheta_0\)</span>.</p></li>
+</ul>
+</section>
+<section id="regularization-penalty-function" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="regularization-penalty-function"><span class="header-section-number">1.4</span> Regularization: penalty function</h2>
+<ul>
+<li><p>Regularized parameter estimation is achieved by <span class="math display">\[\widehat{\vartheta} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \lambda\, R(\vartheta_{\backslash 0}) \right),\]</span> where <span class="math inline">\(R : \mathbb{R}^r \to \mathbb{R}_+\)</span> is a <em>penalty function</em> and <span class="math inline">\(\lambda \geq 0\)</span> is the <em>regularization parameter</em>.</p></li>
+<li><p>We give the most common examples of penalty functions, below.</p></li>
+<li><p>Noteworthy, we do not consider any scaling <span class="math inline">\(1/n\)</span> in front of the sum. This scaling does not affect the optimal solution in the non-regularized case, but it makes the regularization parameter <span class="math inline">\(\lambda\)</span> sample size independent.</p></li>
+</ul>
+</section>
+<section id="ridge-regularizationregression" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="ridge-regularizationregression"><span class="header-section-number">1.5</span> Ridge regularization/regression</h2>
+<ul>
+<li><p>Ridge regression selects a squared <span class="math inline">\(L^2\)</span>-norm penalty function for <span class="math inline">\(R\)</span> <span class="math display">\[\widehat{\vartheta}^{\,\rm ridge} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \lambda\, \|\vartheta_{\backslash 0}\|_2^2 \right).\]</span></p></li>
+<li><p>Ridge regularization generally punishes large values in <span class="math inline">\((\vartheta_k)_{k=1}^r\)</span>, this is called <em>shrinkage</em>.</p></li>
+<li><p>The level of shrinkage is determined by the regularization parameter <span class="math inline">\(\lambda \geq 0\)</span>, and an optimal choice is determined, e.g., by cross-validation.</p></li>
+<li><p>This intuition of shrinkage indicates why we exclude the bias term <span class="math inline">\(\vartheta_0\)</span> from regularization. Otherwise, we receive a statistically biased model.</p></li>
+</ul>
+</section>
+<section id="lasso-regularizationregression" class="level2" data-number="1.6">
+<h2 data-number="1.6" class="anchored" data-anchor-id="lasso-regularizationregression"><span class="header-section-number">1.6</span> LASSO regularization/regression</h2>
+<ul>
+<li><p>LASSO regularization (least absolute shrinkage and selection operator regularization) selects an <span class="math inline">\(L^1\)</span>-norm penalty function for <span class="math inline">\(R\)</span> <span class="math display">\[\widehat{\vartheta}^{\,\rm LASSO} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \lambda\, \|\vartheta_{\backslash 0}\|_1 \right).\]</span></p></li>
+<li><p>The behavior of LASSO regularization is fundamentally different from ridge regularization. This difference results from the fact that the <span class="math inline">\(L^2\)</span>-norm is differentiable in the origin and the <span class="math inline">\(L^1\)</span>-norm is not.</p></li>
+</ul>
+<div id="fig-ridge-lasso" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ridge-lasso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture08-ridge-vs-lasso-penalisation.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ridge-lasso-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Ridge versus LASSO penalization.
+</figcaption>
+</figure>
+</div>
+<ul>
+<li><p>The consequence of this degeneracy of the <span class="math inline">\(L^1\)</span>-norm in the origin is that some of the components of <span class="math inline">\((\vartheta_k)_{k=1}^r\)</span> may be optimal in LASSO regularization if they are <em>exactly</em> equal to zero.</p></li>
+<li><p>The more we increase the regularization parameter <span class="math inline">\(\lambda \uparrow \infty\)</span>, the more components of <span class="math inline">\((\vartheta_k)_{k=1}^r\)</span> are optimal in precisely setting them to zero.</p></li>
+<li><p>Increasing the regularization parameter <span class="math inline">\(\lambda\)</span> leads to sparsity of non-zero values in <span class="math inline">\((\vartheta_k)_{k=1}^r\)</span>, and, consequently, there results a <em>sparse regression model</em> for large regularization parameters <span class="math inline">\(\lambda \gg 0\)</span>.</p></li>
+<li><p>This can be interpreted as <em>variable importance</em>, i.e., for large <span class="math inline">\(\lambda\)</span> only important covariate components survive.</p></li>
+<li><p>Often, one performs variable selection with LASSO regularization, and then one fits a non-regularized model on the selected components.</p></li>
+</ul>
+</section>
+<section id="geometric-interpretation-of-ridge-vs.-lasso" class="level2" data-number="1.7">
+<h2 data-number="1.7" class="anchored" data-anchor-id="geometric-interpretation-of-ridge-vs.-lasso"><span class="header-section-number">1.7</span> Geometric interpretation of ridge vs.&nbsp;LASSO</h2>
+<ul>
+<li><p>Generally, these regularized regression problems can be interpreted geometrically using the method of Lagrange:</p>
+<ul>
+<li><p>the feasible set of solutions in the ridge regression case is a <span class="math inline">\(L^2\)</span>-ball, and</p></li>
+<li><p>in the LASSO regression case a <span class="math inline">\(L^1\)</span>-cube;</p></li>
+</ul>
+<p>we refer to the next graph.</p></li>
+<li><p>This geometric difference (having corners or not) precisely distinguishes sparsity of LASSO from shrinkage of ridge regression, i.e., this is related to the difference of these convex geometric sets having differentiable boundaries or not.</p></li>
+<li><p>In fact, one considers orthogonal projections to the ball and cube, respectively, and sparsity in LASSO results from corner solutions in the cube case.</p></li>
+</ul>
+<div id="fig-feasible-set" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-feasible-set-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture08-feasible-set-of-solutions.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-feasible-set-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Feasible set of solutions: the <span class="math inline">\(L^2\)</span>-ball of ridge regression and the <span class="math inline">\(L^1\)</span>-cube of LASSO regression.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="best-subset-selection-regularization" class="level2" data-number="1.8">
+<h2 data-number="1.8" class="anchored" data-anchor-id="best-subset-selection-regularization"><span class="header-section-number">1.8</span> Best-subset selection regularization</h2>
+<ul>
+<li><p><em>Best-subset selection regularization</em> selects a <span class="math inline">\(L^0\)</span>-norm penalty function for <span class="math inline">\(R\)</span> <span class="math display">\[\widehat{\vartheta}^{\,\rm BSS} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \lambda \sum_{k=1}^r \mathbf{1}_{\{\vartheta_k \neq 0\}} \right).\]</span></p></li>
+<li><p>This version is not used very often in applications mainly because optimizing the above is difficult, in fact, LASSO regularization is considered as a tractable version instead.</p></li>
+</ul>
+</section>
+<section id="elastic-regularization" class="level2" data-number="1.9">
+<h2 data-number="1.9" class="anchored" data-anchor-id="elastic-regularization"><span class="header-section-number">1.9</span> Elastic regularization</h2>
+<ul>
+<li><p><em>Elastic net regularization</em> combines LASSO and ridge regularization <span class="math display">\[\widehat{\vartheta}^{\,\rm net} \in \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi} L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \lambda \left( \alpha \|\vartheta_{\backslash 0}\|_1 + (1-\alpha) \|\vartheta_{\backslash 0}\|_2^2 \right) \right),\]</span> with <span class="math inline">\(\alpha \in [0,1]\)</span>.</p></li>
+<li><p>Elastic net regularization overcomes some issues of LASSO, e.g., LASSO has the tendency to group effects by assigning similar weights to correlated covariate components.</p></li>
+</ul>
+</section>
+<section id="grouped-covariates" class="level2" data-number="1.10">
+<h2 data-number="1.10" class="anchored" data-anchor-id="grouped-covariates"><span class="header-section-number">1.10</span> Grouped covariates</h2>
+<ul>
+<li><p>The previous regularization proposals have been focusing on shrinking the regression parameters <span class="math inline">\((\vartheta_k)_{k=1}^r\)</span> and/or to make regression models sparse by setting some of these parameters <span class="math inline">\(\vartheta_k\)</span> exactly to zero.</p></li>
+<li><p>In these regularization methods all terms and parameters <span class="math inline">\((\vartheta_k)_{k=1}^r\)</span> are considered individually.</p></li>
+<li><p>If we want to treat some of them jointly in a group, e.g., for a dummy coded categorical covariate, regularization should act simultaneously on all parameters that belong to that group.</p></li>
+<li><p>We group the (categorical) covariates. Assume we have <span class="math inline">\(G\)</span> groups <span class="math display">\[\vartheta_{\backslash 0} = \left( \vartheta^{(1)}, \ldots, \vartheta^{(G)} \right)^\top \in \mathbb{R}^{d_1 + \cdots + d_G} = \mathbb{R}^r,\]</span> where each group <span class="math inline">\(\vartheta^{(k)} \in \mathbb{R}^{d_k}\)</span> contains <span class="math inline">\(d_k\)</span> components of <span class="math inline">\(\vartheta_{\backslash 0}\)</span>.</p></li>
+</ul>
+</section>
+<section id="group-lasso-regularization" class="level2" data-number="1.11">
+<h2 data-number="1.11" class="anchored" data-anchor-id="group-lasso-regularization"><span class="header-section-number">1.11</span> Group LASSO regularization</h2>
+<ul>
+<li><p><em>Group LASSO regularization</em> is obtained by solving <span class="math display">\[\widehat{\vartheta} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \sum_{k=1}^G \lambda_k\, \|\vartheta^{(k)}\|_2 \right),\]</span> for regularization parameters <span class="math inline">\(\lambda_k \geq 0\)</span>.</p></li>
+<li><p>For increasing regularization parameters <span class="math inline">\(\lambda_k\)</span>, group LASSO regularization leads to sparsity in setting the entire block of covariates <span class="math inline">\(\vartheta^{(k)} \in \mathbb{R}^{d_k}\)</span> simultaneously equal to zero.</p></li>
+</ul>
+</section>
+<section id="fused-lasso-regularization" class="level2" data-number="1.12">
+<h2 data-number="1.12" class="anchored" data-anchor-id="fused-lasso-regularization"><span class="header-section-number">1.12</span> Fused LASSO regularization</h2>
+<ul>
+<li><p>Assume there is an adjacency relation on the covariate components, i.e., the covariate component <span class="math inline">\(X_j\)</span> is naturally embedded between the components <span class="math inline">\(X_{j-1}\)</span> and <span class="math inline">\(X_{j+1}\)</span>, and we try to achieve a certain smoothness of the regression parameters for these covariates.</p></li>
+<li><p><em>Fused LASSO regularization</em> is obtained by solving <span class="math display">\[\widehat{\vartheta} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \sum_{j=2}^r \lambda_j\, |\vartheta_j - \vartheta_{j-1}| \right),\]</span> for regularization parameters <span class="math inline">\(\lambda_j \geq 0\)</span>.</p></li>
+<li><p>The fused LASSO proposal enforces sparsity in the non-zero components, but also sparsity in the different regression parameter values for adjacent variables. It considers first order differences, and one could also consider second (or higher) order differences.</p></li>
+</ul>
+</section>
+<section id="positivity-and-monotonicity-regularization" class="level2" data-number="1.13">
+<h2 data-number="1.13" class="anchored" data-anchor-id="positivity-and-monotonicity-regularization"><span class="header-section-number">1.13</span> Positivity and monotonicity regularization</h2>
+<ul>
+<li><p>One may want to enforce that the parameters are positive <span class="math display">\[\widehat{\vartheta} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \sum_{j=1}^r \lambda_j\, (0 - \vartheta_j)_+ \right).\]</span></p></li>
+<li><p>Enforcement of a monotone increasing property <span class="math display">\[\widehat{\vartheta} ~\in~ \arg\min_\vartheta \left( \sum_{i=1}^n \frac{v_i}{\varphi}\, L(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + \sum_{j=1}^r \lambda_j\, (\vartheta_{j-1} - \vartheta_j)_+ \right),\]</span> with <em>rectified linear unit (ReLU) function</em> <span class="math display">\[u \mapsto (u)_+ = \max\{u, 0\} = u\, \mathbf{1}_{\{u &gt; 0\}}.\]</span></p></li>
+<li><p>The above regularizes parameters <span class="math inline">\(\vartheta_{\backslash 0}\)</span>, but one could also enforce smoothness and monotonicity in the regression function components (e.g., mortality graduation); see Richman and Wüthrich (2024).</p></li>
+</ul>
+</section>
+</section>
+<section id="icenet-smoothness-and-monotonicity-constraints-for-neural-networks" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> ICEnet: smoothness and monotonicity constraints for neural networks</h1>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This section presents the ICEnet architecture introduced by Richman and Wüthrich (2024). The central idea is to constrain neural-network predictions so that they are smooth and monotone with respect to selected risk factors, while keeping the deep-learning framework.</p>
+</div>
+</div>
+<p>The contribution is directly connected to regularization: instead of penalizing only the parameters, ICEnet penalizes the behavior of the predictive function on <em>Individual Conditional Expectations</em> (ICE).</p>
+<section id="actuarial-motivation" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="actuarial-motivation"><span class="header-section-number">2.1</span> Actuarial motivation</h2>
+<ul>
+<li><p>In actuarial pricing, tariff curves are often expected to satisfy structural requirements:</p>
+<ul>
+<li><p><em>smoothness</em>, to prevent abrupt premium changes that are difficult to justify to policyholders;</p></li>
+<li><p><em>monotonicity</em>, when actuarial knowledge implies a clear direction of risk.</p></li>
+</ul></li>
+<li><p>In GLMs, these constraints can be imposed by directly modifying the model coefficients.</p></li>
+<li><p>In neural networks, operating directly on the model coefficients or architecture to impose these constraints is less feasible.</p></li>
+<li><p>ICEnet overcomes this limitation by imposing constraints on the model predictions, rather than on the network parameters themselves.</p></li>
+</ul>
+</section>
+<section id="ice-and-pdp-interpretability-ingredients" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="ice-and-pdp-interpretability-ingredients"><span class="header-section-number">2.2</span> ICE and PDP: interpretability ingredients</h2>
+<ul>
+<li><p>Consider the fitted regression function <span class="math display">\[\boldsymbol{X} = (X_1, \ldots, X_q)^\top ~\longmapsto~ \mu_{\widehat{\vartheta}}(\boldsymbol{X}),\]</span> where <span class="math inline">\(q\)</span> is the number of covariates.</p></li>
+<li><p>For covariate <span class="math inline">\(j\)</span>, define the set of values <span class="math display">\[\mathcal{A}_j = \left\{ a^j_1, \ldots, a^j_{K_j} \right\}.\]</span></p>
+<ul>
+<li><p>If <span class="math inline">\(X_j\)</span> is <strong>categorical</strong>, <span class="math inline">\(\mathcal{A}_j\)</span> contains all its <span class="math inline">\(K_j\)</span> possible levels.</p></li>
+<li><p>If <span class="math inline">\(X_j\)</span> is <strong>continuous</strong>, <span class="math inline">\(\mathcal{A}_j\)</span> contains <span class="math inline">\(K_j\)</span> representative values selected over its observed range, for example using quantile binning. These values are typically ordered as <span class="math inline">\(a^j_1 &lt; \cdots &lt; a^j_{K_j}\)</span>.</p></li>
+</ul></li>
+<li><p>For each observation <span class="math inline">\(i\)</span>, define the pseudo-input <span class="math display">\[\widetilde{\boldsymbol{X}}^{[j]}_i(u) = \left( X_{i,1}, \ldots, X_{i,j-1}, a^j_u, X_{i,j+1}, \ldots, X_{i,q} \right)^\top, \qquad u = 1, \ldots, K_j.\]</span></p></li>
+<li><p>The ICE curve for observation <span class="math inline">\(i\)</span> and covariate <span class="math inline">\(j\)</span> is <span class="math display">\[\mathrm{ICE}^{[j]}_i = \left[ \mu_{\widehat{\vartheta}}\left( \widetilde{\boldsymbol{X}}^{[j]}_i(1) \right), \ldots, \mu_{\widehat{\vartheta}}\left( \widetilde{\boldsymbol{X}}^{[j]}_i(K_j) \right) \right]^\top.\]</span></p></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="Note">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The corresponding Partial Dependence Plot (PDP) is the empirical average of the ICE curves: <span class="math display">\[\mathrm{PDP}^{[j]} = \frac{1}{n} \sum_{i=1}^n \mathrm{ICE}^{[j]}_i.\]</span></p>
+</div>
+</div>
+</section>
+<section id="key-idea-of-icenet" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="key-idea-of-icenet"><span class="header-section-number">2.3</span> Key idea of ICEnet</h2>
+<ul>
+<li><p>Select the covariates requiring smoothness <span class="math inline">\(\mathcal{S} \subset \{1, \ldots, q\}\)</span> or monotonicity, <span class="math inline">\(\mathcal{M} \subset \{1, \ldots, q\}\)</span>.</p></li>
+<li><p>For each observation <span class="math inline">\(\boldsymbol{X}_i\)</span>, generate pseudo-inputs <span class="math inline">\(\widetilde{\boldsymbol{X}}^{[j]}_i(u)\)</span> by varying the constrained covariates.</p></li>
+<li><p>Apply the same model <span class="math inline">\(\mu_{\widehat{\vartheta}}(\cdot)\)</span> to:</p>
+<ul>
+<li><p>observed inputs, to obtain <span class="math inline">\(\widehat{Y}_i\)</span>;</p></li>
+<li><p>pseudo-inputs, to obtain ICE curves.</p></li>
+</ul></li>
+<li><p>Fit the model using a compound loss:</p>
+<p>predictive loss <span class="math inline">\(+\)</span> smoothness penalty <span class="math inline">\(+\)</span> monotonicity penalty.</p></li>
+</ul>
+</section>
+<section id="compound-icenet-loss" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="compound-icenet-loss"><span class="header-section-number">2.4</span> Compound ICEnet loss</h2>
+<p>For each observation <span class="math inline">\(i\)</span>, the ICEnet uses the compound loss <span class="math display">\[L(\vartheta; i) = L^D(Y_i, \mu_\vartheta(\boldsymbol{X}_i)) + L_2(\mu_\vartheta(\boldsymbol{X}_i)) + L_3(\mu_\vartheta(\boldsymbol{X}_i)),\]</span> where <span class="math inline">\(L^D\)</span> is the deviance loss associated with the considered regression problem.</p>
+<ul>
+<li><p><span class="math inline">\(L_2(\mu_\vartheta(\boldsymbol{X}_i))\)</span> penalizes violations of smoothness for the covariates in <span class="math inline">\(\mathcal{S}\)</span>.</p></li>
+<li><p><span class="math inline">\(L_3(\mu_\vartheta(\boldsymbol{X}_i))\)</span> penalizes violations of monotonicity for the covariates in <span class="math inline">\(\mathcal{M}\)</span>.</p></li>
+<li><p>These penalty terms depend on non-negative regularization parameters <span class="math inline">\(\lambda_{sj}\)</span> and <span class="math inline">\(\lambda_{mj}\)</span>, which control the trade-off between predictive accuracy and the strength of the imposed constraints.</p></li>
+</ul>
+</section>
+<section id="smoothness-penalty" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="smoothness-penalty"><span class="header-section-number">2.5</span> Smoothness penalty</h2>
+<ul>
+<li><p>The ICEnet uses a Whittaker-Henderson type penalty to impose smoothness on the ICE outputs.</p></li>
+<li><p>The first-order difference is defined for <span class="math inline">\(u = 2, \ldots, K_j\)</span> as <span class="math display">\[\Delta^1 \left( \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u) \right) \right) = \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u) \right) - \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u-1) \right).\]</span></p></li>
+<li><p>For <span class="math inline">\(\tau \geq 2\)</span>, the <span class="math inline">\(\tau\)</span>-th order difference is defined recursively for <span class="math inline">\(u = \tau+1, \ldots, K_j\)</span> as <span class="math display">\[\Delta^\tau \left( \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u) \right) \right) = \Delta^{\tau-1} \left( \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u) \right) \right) - \Delta^{\tau-1} \left( \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u-1) \right) \right).\]</span></p></li>
+<li><p>The ICEnet penalizes squared third-order differences: <span class="math display">\[L_2(\mu_\vartheta(\boldsymbol{X}_i)) = \sum_{j \in \mathcal{S}} \sum_{u=4}^{K_j} \lambda_{s,j} \left[ \Delta^3 \left( \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u) \right) \right) \right]^2.\]</span></p></li>
+</ul>
+</section>
+<section id="monotonicity-penalty" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="monotonicity-penalty"><span class="header-section-number">2.6</span> Monotonicity penalty</h2>
+<ul>
+<li><p>Monotonicity is imposed by penalizing first differences with the undesired sign: <span class="math display">\[L_3(\mu_\vartheta(\boldsymbol{X}_i)) = \sum_{j \in \mathcal{M}} \sum_{u=2}^{K_j} \lambda_{m,j} \max \left[ \delta_j \Delta^1 \left( \mu_\vartheta \left( \widetilde{\boldsymbol{X}}^{[j]}_i(u) \right) \right), 0 \right].\]</span></p></li>
+<li><p><span class="math inline">\(\delta_j = -1\)</span> enforces a monotone increasing relationship.</p></li>
+<li><p><span class="math inline">\(\delta_j = +1\)</span> enforces a monotone decreasing relationship.</p></li>
+<li><p>If the ICE curve follows the required direction, the penalty is zero.</p></li>
+</ul>
+</section>
+</section>
+<section id="icenet-example-french-mtpl-data" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> ICEnet example: French MTPL data</h1>
+<ul>
+<li><p>Goal: predict claims frequency.</p></li>
+<li><p>Constrained variables:</p></li>
+</ul>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Covariate</th>
+<th style="text-align: right;">Smoothness</th>
+<th style="text-align: right;">Monotonicity</th>
+<th style="text-align: right;">Direction</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Driver age</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Vehicle age</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bonus-malus</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">increasing</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Density</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">increasing</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Vehicle power</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">increasing</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>Setup: FCN with depth <span class="math inline">\(d = 3\)</span>, layer dimensions <span class="math inline">\((32, 16, 8)\)</span>, ReLU activation, embedding layers for unordered categorical variables and Adam with early stopping.</li>
+</ul>
+<section id="main-predictive-results" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="main-predictive-results"><span class="header-section-number">3.1</span> Main predictive results</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">Learn</th>
+<th style="text-align: right;">Test</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FCN</td>
+<td style="text-align: right;">0.4500 (0.000399)</td>
+<td style="text-align: right;">0.4511 (0.000663)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FCN nagging</td>
+<td style="text-align: right;">0.4491</td>
+<td style="text-align: right;">0.4504</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICEnet</td>
+<td style="text-align: right;">0.4510 (0.000340)</td>
+<td style="text-align: right;">0.4513 (0.000446)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ICEnet nagging</td>
+<td style="text-align: right;">0.4506</td>
+<td style="text-align: right;">0.4508</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p>Adding constraints worsens Poisson deviance only marginally.</p></li>
+<li><p>The learning-test gap is smaller for ICEnet: the constraints also act as a form of regularization.</p></li>
+</ul>
+</section>
+<section id="partial-dependence-plot" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="partial-dependence-plot"><span class="header-section-number">3.2</span> Partial dependence plot</h2>
+<div id="fig-pdp" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pdp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture08-icenet-pdp.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pdp-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Partial dependence plots for the Bonus-Malus, Density, Driver Age, Vehicle Age, and Vehicle Power covariates for different training attempts.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="ice-plots" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="ice-plots"><span class="header-section-number">3.3</span> ICE plots</h2>
+<div id="fig-ice" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-ice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture08-icenet-ice-plots.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-ice-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: ICE plots of the output of the FCN and the ICEnet for instances chosen to be the least monotonic.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="pdps-under-different-constraint-parameter-values" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="pdps-under-different-constraint-parameter-values"><span class="header-section-number">3.4</span> PDPs under different constraint-parameter values</h2>
+<div id="fig-pdp-constraints" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pdp-constraints-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture08-icenet-pdp-constraint-parameters.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pdp-constraints-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: PDPs for constraint parameters ranging from <span class="math inline">\(10^{-5}\)</span> to <span class="math inline">\(10^{5}\)</span>.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="copyright" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright</h1>
+<ul>
+<li><p>© The Authors</p></li>
+<li><p>This notebook and these slides are part of the project “AI Tools for Actuaries”. The lecture notes can be downloaded from:</p></li>
+</ul>
+<p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a></p>
+<p><span class="math inline">\(\,\)</span></p>
+<ul>
+<li>This material is provided to reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution and credit is given to the original authors and source, and if you indicate if changes were made. This aligns with the Creative Commons Attribution 4.0 International License CC BY-NC.</li>
+</ul>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body" role="list">
+<div class="csl-entry" role="listitem">
+Fan, J. and Li, R. (2001) “Variable selection via nonconcave penalized likelihood and its oracle properties,” <em>Journal of the American Statistical Association</em>, 96(456), pp.&nbsp;1348–1360. Available at: <a href="https://doi.org/10.1198/016214501753382273" class="uri">https://doi.org/10.1198/016214501753382273</a>.
+</div>
+<div class="csl-entry" role="listitem">
+Hastie, T., Tibshirani, R. and Wainwright, M. (2015) <em>Statistical learning with sparsity: The LASSO and generalizations</em>. Chapman &amp; Hall/CRC. Available at: <a href="https://doi.org/10.1201/b18401" class="uri">https://doi.org/10.1201/b18401</a>.
+</div>
+<div class="csl-entry" role="listitem">
+Richman, R. and Wüthrich, M.V. (2024) “Smoothness and monotonicity constraints for neural networks using ICEnet,” <em>Annals of Actuarial Science</em>, 18(3), pp.&nbsp;712–739. Available at: <a href="https://www.cambridge.org/core/product/465BBBA65B70D62FEE9CE838C6E88B58" class="uri">https://www.cambridge.org/core/product/465BBBA65B70D62FEE9CE838C6E88B58</a>.
+</div>
+<div class="csl-entry" role="listitem">
+Tibshirani, R. (1996) “Regression shrinkage and selection via the LASSO,” <em>Journal of the Royal Statistical Society. Series B (Methodological)</em>, 58(1), pp.&nbsp;267–288. Available at: <a href="http://www.jstor.org/stable/2346178" class="uri">http://www.jstor.org/stable/2346178</a>.
+</div>
+<div class="csl-entry" role="listitem">
+Tibshirani, R. <em>et al.</em> (2005) “Sparsity and smoothness via the fused LASSO,” <em>Journal of the Royal Statistical Society Series B</em>, 67(1), pp.&nbsp;91–108. Available at: <a href="https://doi.org/10.1111/j.1467-9868.2005.00490.x" class="uri">https://doi.org/10.1111/j.1467-9868.2005.00490.x</a>.
+</div>
+<div class="csl-entry" role="listitem">
+Tikhonov, A.N. (1943) “On the stability of inverse problems,” <em>Doklady Akademii Nauk SSSR</em>, 39(5), pp.&nbsp;195–198.
+</div>
+<div class="csl-entry" role="listitem">
+Yuan, M. and Lin, Y. (2006) “Model selection and estimation in regression with grouped variables,” <em>Journal of the Royal Statistical Society Series B</em>, 68(1), pp.&nbsp;49–67. Available at: <a href="https://doi.org/10.1111/j.1467-9868.2005.00532.x" class="uri">https://doi.org/10.1111/j.1467-9868.2005.00532.x</a>.
+</div>
+<div class="csl-entry" role="listitem">
+Zou, H. and Hastie, T. (2005) “Regularization and variable selection via the elastic net,” <em>Journal of the Royal Statistical Society Series B: Statistical Methodology</em>, 67(2), pp.&nbsp;301–320. Available at: <a href="https://doi.org/10.1111/j.1467-9868.2005.00503.x" class="uri">https://doi.org/10.1111/j.1467-9868.2005.00503.x</a>.
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

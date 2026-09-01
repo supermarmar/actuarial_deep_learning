@@ -15,7 +15,7 @@ format:
     toc: true
     toc-depth: 3
     number-sections: true
-    # Render with scripts/render_credit_lecture.sh, not bare `quarto render`.
+    # Render with scripts/render_lecture.sh, not bare `quarto render`.
     # The script strips Quarto's Bootstrap and JS assets from the output so the
     # page has the same effective structure as the authors' lecture documents
     # (full Quarto markup, no theme assets), which is what lecture.css lays

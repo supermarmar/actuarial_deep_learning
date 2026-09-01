@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich, Ronald Richman">
+<meta name="dcterms.date" content="2026-09-04">
+
+<title>Lecture 12: Foundation Models and In-Context Learning</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#foundation-models" id="toc-foundation-models" class="nav-link active" data-scroll-target="#foundation-models"><span class="header-section-number">1</span> Foundation models</a>
+  <ul class="collapse">
+  <li><a href="#what-are-foundation-models" id="toc-what-are-foundation-models" class="nav-link" data-scroll-target="#what-are-foundation-models"><span class="header-section-number">1.1</span> What are foundation models?</a></li>
+  <li><a href="#architectural-backbone-transformers" id="toc-architectural-backbone-transformers" class="nav-link" data-scroll-target="#architectural-backbone-transformers"><span class="header-section-number">1.2</span> Architectural backbone: transformers</a></li>
+  <li><a href="#data-needs-for-training-foundation-models" id="toc-data-needs-for-training-foundation-models" class="nav-link" data-scroll-target="#data-needs-for-training-foundation-models"><span class="header-section-number">1.3</span> Data needs for training foundation models</a></li>
+  <li><a href="#foundation-models-as-a-model-class" id="toc-foundation-models-as-a-model-class" class="nav-link" data-scroll-target="#foundation-models-as-a-model-class"><span class="header-section-number">1.4</span> Foundation models as a model class</a></li>
+  <li><a href="#pre-training-and-adaptation" id="toc-pre-training-and-adaptation" class="nav-link" data-scroll-target="#pre-training-and-adaptation"><span class="header-section-number">1.5</span> Pre-training and adaptation</a></li>
+  </ul></li>
+  <li><a href="#generative-pre-trained-transformer-gpt-series-advances" id="toc-generative-pre-trained-transformer-gpt-series-advances" class="nav-link" data-scroll-target="#generative-pre-trained-transformer-gpt-series-advances"><span class="header-section-number">2</span> Generative pre-trained transformer (GPT) series advances</a>
+  <ul class="collapse">
+  <li><a href="#from-gpt-1-to-gpt-5" id="toc-from-gpt-1-to-gpt-5" class="nav-link" data-scroll-target="#from-gpt-1-to-gpt-5"><span class="header-section-number">2.1</span> From GPT-1 to GPT-5</a></li>
+  <li><a href="#gpt-features" id="toc-gpt-features" class="nav-link" data-scroll-target="#gpt-features"><span class="header-section-number">2.2</span> GPT features</a></li>
+  </ul></li>
+  <li><a href="#tabular-foundation-models" id="toc-tabular-foundation-models" class="nav-link" data-scroll-target="#tabular-foundation-models"><span class="header-section-number">3</span> Tabular foundation models</a>
+  <ul class="collapse">
+  <li><a href="#why-tabular-is-different" id="toc-why-tabular-is-different" class="nav-link" data-scroll-target="#why-tabular-is-different"><span class="header-section-number">3.1</span> Why tabular is different</a></li>
+  <li><a href="#tabular-landscape-families-and-design" id="toc-tabular-landscape-families-and-design" class="nav-link" data-scroll-target="#tabular-landscape-families-and-design"><span class="header-section-number">3.2</span> Tabular landscape: families and design</a></li>
+  <li><a href="#tabpfn-bayesian-view" id="toc-tabpfn-bayesian-view" class="nav-link" data-scroll-target="#tabpfn-bayesian-view"><span class="header-section-number">3.3</span> TabPFN: Bayesian view</a></li>
+  <li><a href="#tabicl-problem-and-idea" id="toc-tabicl-problem-and-idea" class="nav-link" data-scroll-target="#tabicl-problem-and-idea"><span class="header-section-number">3.4</span> TabICL: problem and idea</a></li>
+  <li><a href="#tabicl-two-stage-computation" id="toc-tabicl-two-stage-computation" class="nav-link" data-scroll-target="#tabicl-two-stage-computation"><span class="header-section-number">3.5</span> TabICL: two-stage computation</a></li>
+  <li><a href="#tabicl-concrete-example" id="toc-tabicl-concrete-example" class="nav-link" data-scroll-target="#tabicl-concrete-example"><span class="header-section-number">3.6</span> TabICL: concrete example</a></li>
+  <li><a href="#tabpfn-vs.-tabicl-when-to-use-which" id="toc-tabpfn-vs.-tabicl-when-to-use-which" class="nav-link" data-scroll-target="#tabpfn-vs.-tabicl-when-to-use-which"><span class="header-section-number">3.7</span> TabPFN vs.&nbsp;TabICL: when to use which</a></li>
+  </ul></li>
+  <li><a href="#in-context-learning-icl-credibility-transformer" id="toc-in-context-learning-icl-credibility-transformer" class="nav-link" data-scroll-target="#in-context-learning-icl-credibility-transformer"><span class="header-section-number">4</span> In-context learning (ICL) credibility transformer</a>
+  <ul class="collapse">
+  <li><a href="#the-challenge-in-actuarial-modeling" id="toc-the-challenge-in-actuarial-modeling" class="nav-link" data-scroll-target="#the-challenge-in-actuarial-modeling"><span class="header-section-number">4.1</span> The challenge in actuarial modeling</a></li>
+  <li><a href="#evolution-from-credibility-to-icl" id="toc-evolution-from-credibility-to-icl" class="nav-link" data-scroll-target="#evolution-from-credibility-to-icl"><span class="header-section-number">4.2</span> Evolution: from credibility to ICL</a></li>
+  <li><a href="#in-context-learning-key-innovation" id="toc-in-context-learning-key-innovation" class="nav-link" data-scroll-target="#in-context-learning-key-innovation"><span class="header-section-number">4.3</span> In-context learning: key innovation</a></li>
+  <li><a href="#icl-ct-architecture-overview" id="toc-icl-ct-architecture-overview" class="nav-link" data-scroll-target="#icl-ct-architecture-overview"><span class="header-section-number">4.4</span> ICL-CT: architecture overview</a></li>
+  <li><a href="#component-0-train-a-base-credibility-transformer" id="toc-component-0-train-a-base-credibility-transformer" class="nav-link" data-scroll-target="#component-0-train-a-base-credibility-transformer"><span class="header-section-number">4.5</span> Component 0: train a base credibility transformer</a></li>
+  <li><a href="#component-1-context-retrieval" id="toc-component-1-context-retrieval" class="nav-link" data-scroll-target="#component-1-context-retrieval"><span class="header-section-number">4.6</span> Component 1: context retrieval</a></li>
+  <li><a href="#component-2-outcome-token-decorator" id="toc-component-2-outcome-token-decorator" class="nav-link" data-scroll-target="#component-2-outcome-token-decorator"><span class="header-section-number">4.7</span> Component 2: outcome token decorator</a></li>
+  <li><a href="#component-3-causal-self-attention" id="toc-component-3-causal-self-attention" class="nav-link" data-scroll-target="#component-3-causal-self-attention"><span class="header-section-number">4.8</span> Component 3: causal self-attention</a></li>
+  <li><a href="#component-4-frozen-decoder-and-output" id="toc-component-4-frozen-decoder-and-output" class="nav-link" data-scroll-target="#component-4-frozen-decoder-and-output"><span class="header-section-number">4.9</span> Component 4: frozen decoder and output</a></li>
+  </ul></li>
+  <li><a href="#theoretical-consideration" id="toc-theoretical-consideration" class="nav-link" data-scroll-target="#theoretical-consideration"><span class="header-section-number">5</span> Theoretical consideration</a>
+  <ul class="collapse">
+  <li><a href="#proposition-credibility-via-attention" id="toc-proposition-credibility-via-attention" class="nav-link" data-scroll-target="#proposition-credibility-via-attention"><span class="header-section-number">5.1</span> Proposition: credibility via attention</a></li>
+  <li><a href="#linearized-icl-variant" id="toc-linearized-icl-variant" class="nav-link" data-scroll-target="#linearized-icl-variant"><span class="header-section-number">5.2</span> Linearized ICL variant</a></li>
+  </ul></li>
+  <li><a href="#learning-procedure" id="toc-learning-procedure" class="nav-link" data-scroll-target="#learning-procedure"><span class="header-section-number">6</span> Learning procedure</a>
+  <ul class="collapse">
+  <li><a href="#three-phase-training" id="toc-three-phase-training" class="nav-link" data-scroll-target="#three-phase-training"><span class="header-section-number">6.1</span> Three-phase training</a></li>
+  <li><a href="#training-procedure" id="toc-training-procedure" class="nav-link" data-scroll-target="#training-procedure"><span class="header-section-number">6.2</span> Training procedure</a></li>
+  <li><a href="#main-results-out-of-sample-losses" id="toc-main-results-out-of-sample-losses" class="nav-link" data-scroll-target="#main-results-out-of-sample-losses"><span class="header-section-number">6.3</span> Main results (out-of-sample losses)</a></li>
+  <li><a href="#pca-analysis-of-cls-tokens" id="toc-pca-analysis-of-cls-tokens" class="nav-link" data-scroll-target="#pca-analysis-of-cls-tokens"><span class="header-section-number">6.4</span> PCA analysis of CLS tokens</a></li>
+  <li><a href="#pca-training-phases" id="toc-pca-training-phases" class="nav-link" data-scroll-target="#pca-training-phases"><span class="header-section-number">6.5</span> PCA training phases</a></li>
+  </ul></li>
+  <li><a href="#zero-shot-capabilities" id="toc-zero-shot-capabilities" class="nav-link" data-scroll-target="#zero-shot-capabilities"><span class="header-section-number">7</span> Zero-shot capabilities</a>
+  <ul class="collapse">
+  <li><a href="#zero-shot-setup" id="toc-zero-shot-setup" class="nav-link" data-scroll-target="#zero-shot-setup"><span class="header-section-number">7.1</span> Zero-shot setup</a></li>
+  <li><a href="#zero-shot-data-split" id="toc-zero-shot-data-split" class="nav-link" data-scroll-target="#zero-shot-data-split"><span class="header-section-number">7.2</span> Zero-shot data split</a></li>
+  <li><a href="#zero-shot-results-unseen-regions" id="toc-zero-shot-results-unseen-regions" class="nav-link" data-scroll-target="#zero-shot-results-unseen-regions"><span class="header-section-number">7.3</span> Zero-shot results (unseen regions)</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary"><span class="header-section-number">8</span> Summary</a>
+  <ul class="collapse">
+  <li><a href="#key-takeaways" id="toc-key-takeaways" class="nav-link" data-scroll-target="#key-takeaways"><span class="header-section-number">8.1</span> Key takeaways</a></li>
+  </ul></li>
+  <li><a href="#copyright" id="toc-copyright" class="nav-link" data-scroll-target="#copyright">Copyright</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lecture 12: Foundation Models and In-Context Learning</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modeling<br>
+Summer School ‘Lifelong Learning’<br>
+Università Cattolica del Sacro Cuore, Milano</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich, Ronald Richman </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 4, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>A foundation model is trained on a broad and diverse corpus of data that transfers across many downstream tasks and domains with minimal task-specific changes. This lecture traces the GPT series, then turns to tabular foundation models such as TabPFN and TabICL, and to the in-context learning credibility transformer (ICL-CT), which integrates Bühlmann credibility with the attention mechanism and generalises to unseen region categories with no retraining.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="foundation-models" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Foundation models</h1>
+<section id="what-are-foundation-models" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="what-are-foundation-models"><span class="header-section-number">1.1</span> What are foundation models?</h2>
+<ul>
+<li><p><strong>Definition:</strong> A Foundation Model is trained on broad and diverse corpus of data that transfer across many downstream tasks (and domains) with minimal task-specific changes</p></li>
+<li><p><strong>Core properties:</strong> Scale (parameters, tokens), general representations, and versatile adaptation (prompting/in-context learning (ICL), retrieval augmented generation (RAG), fine-tuning)</p></li>
+<li><p><strong>Backbone:</strong> Usually Transformers are used with auto-regressive (AR) data generation (Vaswani et al., 2017)</p></li>
+<li><p><strong>Scaling:</strong> Capability follows a “compute-data-parameter” simultaneous power law growth (Kaplan, McCandlish, Henighan, Brown, et al., 2020; Hoffmann, Borgeaud, Mensch, et al., 2022) to get optimal models</p></li>
+</ul>
+</section>
+<section id="architectural-backbone-transformers" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="architectural-backbone-transformers"><span class="header-section-number">1.2</span> Architectural backbone: transformers</h2>
+<ul>
+<li><p>Self-attention replaces recurrent and convolutional structure; parallelizable sequence modeling (Vaswani et al., 2017)</p></li>
+<li><p>Pre-training variants: masked language model (ML) (Devlin, Chang, Lee, &amp; Toutanova, 2019) vs.&nbsp;auto-regressive decoders</p></li>
+<li><p>Inductive biases: weak relation input-output, gives great modeling flexibility through the self-attention mechanism (Geva et al., 2021)</p></li>
+<li><p>Positional encodings and other long-context tricks to adapt to sequential data (e.g., rotary position embedding (RoPE); Su, Lu, Pan, Wen, &amp; Liu, 2021)</p></li>
+<li><p>Previously, we have mentioned scaling laws (Kaplan et al., 2020)</p></li>
+</ul>
+</section>
+<section id="data-needs-for-training-foundation-models" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="data-needs-for-training-foundation-models"><span class="header-section-number">1.3</span> Data needs for training foundation models</h2>
+<ul>
+<li><p><strong>Scale:</strong> Billions to trillions of tokens with a compute-optimal balance of parameters and tokens; budget tokens, not only parameters (Hoffmann et al.,</p>
+<ol start="2022" type="1">
+<li></li>
+</ol></li>
+<li><p><strong>Diversity:</strong> Broad domains, style, language, and modality coverage (range, diversity and completeness) to learn general representations and handle distribution shift</p></li>
+<li><p><strong>Quality:</strong> Rigorous filtering and de-duplication at document and paragraph level; near-duplicate removal; language identification (Italian/German/…); low-quality text removal; test-set decontamination</p></li>
+<li><p><strong>Long-tail coverage:</strong> Upweight rare languages, domains, and entities; mix high-quality curated slices with broad web-scale data to raise signal-to-noise ratio</p></li>
+</ul>
+</section>
+<section id="foundation-models-as-a-model-class" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="foundation-models-as-a-model-class"><span class="header-section-number">1.4</span> Foundation models as a model class</h2>
+<ul>
+<li><p>Input space <span class="math inline">\(\mathcal{X}\)</span> and output space <span class="math inline">\(\mathcal{Y}\)</span></p></li>
+<li><p>Model class: <span class="math display">\[\mathcal{F} = \{ f_\theta : \mathcal{X} \to \mathcal{Y} ~|~ \theta \in \Theta \},\]</span> with parameter set <span class="math inline">\(\Theta \subset \mathbb{R}^r\)</span>, <span class="math inline">\(r \gg 10^8\)</span></p></li>
+<li><p>Probabilistic view, categorical case with <span class="math inline">\(K\)</span> classes <span class="math inline">\(\mathcal{K} = \{1, \ldots, K\}\)</span>, the model <span class="math inline">\(f_\theta(\boldsymbol{x}) \in \mathcal{Y} = \mathbb{R}^K\)</span> parametrizes the probabilities of the next token <span class="math display">\[p_\theta(Y = k \mid \boldsymbol{x}) = \frac{\exp\{f_{k,\theta}(\boldsymbol{x})\}}{\sum_{l=1}^K \exp\{f_{l,\theta}(\boldsymbol{x})\}} \qquad \text{for } k \in \mathcal{K};\]</span> this applies the softmax to the components of <span class="math inline">\(f_\theta(\boldsymbol{x}) = (f_{l,\theta}(\boldsymbol{x}))_{l=1}^K\)</span></p></li>
+<li><p>This allows for next token simulation by AR generation</p></li>
+</ul>
+</section>
+<section id="pre-training-and-adaptation" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="pre-training-and-adaptation"><span class="header-section-number">1.5</span> Pre-training and adaptation</h2>
+<ul>
+<li><p>By a slight abuse of notation, assume <span class="math inline">\(\boldsymbol{x} = \boldsymbol{x}_{1:t} = (x_1, \ldots, x_t)\)</span> is sequential data of tokens, and let the next token <span class="math inline">\(Y = x_{t+1}\)</span> be in the same token space</p></li>
+<li><p>Pre-training (auto-regressive MLE): <span class="math display">\[\theta^\star_{\rm pre} \in \arg\max_{\theta \in \Theta} \sum_t \log p_\theta(Y = x_{t+1} \mid x_{1:t})\]</span> calibrates broad priors</p></li>
+<li><p>Adaptation options: fine-tune, parameter-efficient fine-tuning (PEFT), low-rank adaptation (LoRA), in-context leaning (ICL) via demonstration examples, retrieval augmented generation (RAG)</p></li>
+<li><p>ICL: <span class="math inline">\(f_{\theta^\star_{\rm pre}}([\mathcal{C}, \boldsymbol{x}])\)</span> with prompt demonstration <span class="math inline">\(\mathcal{C}\)</span> (Brown et al., 2020)</p></li>
+</ul>
+</section>
+</section>
+<section id="generative-pre-trained-transformer-gpt-series-advances" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Generative pre-trained transformer (GPT) series advances</h1>
+<section id="from-gpt-1-to-gpt-5" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="from-gpt-1-to-gpt-5"><span class="header-section-number">2.1</span> From GPT-1 to GPT-5</h2>
+<ul>
+<li><p>GPT-1/2: Unsupervised pre-training improves transfer; scaling unlocks fluent generation (Radford, Narasimhan, Salimans, &amp; Sutskever, 2018; Radford et al.,</p>
+<ol start="2019" type="1">
+<li></li>
+</ol></li>
+<li><p>GPT-3: Emergent few-shot learning via prompting; broad task coverage without gradient update fine-tuning (Brown et al., 2020)</p></li>
+<li><p>InstructGPT: Alignment via reinforcement learning with human feedback (RLHF) improves following instructions and safety (Ouyang et al., 2022)</p></li>
+<li><p>GPT-4: Strong reasoning, broader safety/robustness; multimodal variants (OpenAI, 2023)</p></li>
+<li><p>GPT-5: Multi-step problem solving with integrated agents, e.g., GPT-5.6 (July</p>
+<ol start="2026" type="1">
+<li>is strong in mathematical problem solving</li>
+</ol></li>
+</ul>
+</section>
+<section id="gpt-features" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="gpt-features"><span class="header-section-number">2.2</span> GPT features</h2>
+<ul>
+<li><p>Scale: GPT-3 175 billions parameters; GPT-4 2 trillions parameters; GPT-5 multi trillions parameters and 400K tokens window size</p></li>
+<li><p>Zero-shot Chain-of-Thought (CoT); few-shot prompting with demonstration examples; RAG setting a fixed context (e.g., claims manual, solvency legislation); self-consistency by multiple trials and integrated agents</p></li>
+<li><p>Sensitivities: prompt format/order matters; benefits from better instructions and demonstrations; context sensitive meanings may not have been sufficiently represented in the training set</p></li>
+<li><p>No proper mathematical reasoning, but only likely next token simulation (mathematical language Lean):</p>
+<p>Prompt pattern: <span class="math inline">\([(\boldsymbol{x}_1, y_1), \ldots, (\boldsymbol{x}_t, y_t), \boldsymbol{x}_{\rm query}] \mapsto \widehat{y}_{\rm query}\)</span></p></li>
+</ul>
+</section>
+</section>
+<section id="tabular-foundation-models" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Tabular foundation models</h1>
+<section id="why-tabular-is-different" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="why-tabular-is-different"><span class="header-section-number">3.1</span> Why tabular is different</h2>
+<ul>
+<li><p>Heterogeneous features, mixed types, missingness, and no natural order</p></li>
+<li><p>Unclear how to train across tables with different covariates</p></li>
+<li><p>Strong baselines (GBMs) set a high bar</p></li>
+<li><p>Sample sizes often modest</p></li>
+<li><p>Foundation approach: pre-train cross-table priors and reuse across different tasks</p></li>
+</ul>
+</section>
+<section id="tabular-landscape-families-and-design" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="tabular-landscape-families-and-design"><span class="header-section-number">3.2</span> Tabular landscape: families and design</h2>
+<ul>
+<li><p><strong>TabTransformer:</strong> categorical tokenization and attention over these features (Huang, Khetan, Cvitkovic, &amp; Karnin, 2020)</p></li>
+<li><p><strong>FT-Transformer:</strong> feature tokenizer (FT) also acts on continuous features leading to a simplified, strong baseline for tabular DL (Gorishniy, Rubachev, Khrulkov, &amp; Babenko, 2021)</p></li>
+<li><p><strong>TransTab:</strong> cross-table transfer with aligned embeddings (Wang &amp; Sun, 2022)</p></li>
+<li><p><strong>TabPFN:</strong> Prior-data fitted network for tabular classification and beyond. Trained on synthetic tasks sampled from a prior; uses alternating column and row attention to perform ICL in a single forward pass (Hollmann, Müller, Eggensperger, &amp; Hutter, 2022; Müller, Hollmann, Pineda Arango, Grabocka, &amp; Hutter, 2021)</p></li>
+<li><p><strong>TabPFN v2:</strong> Tabular foundation model with wide wins up to <span class="math inline">\(n \approx 10^4\)</span> instances, large speed-ups over classical baselines (Hollmann et al., 2025)</p></li>
+<li><p><strong>TabICL:</strong> Scalable ICL to <span class="math inline">\(n \approx 5 \times 10^5\)</span> instances by a 2-stage architecture: column-then-row embedding to fixed-dimension, then a transformer for ICL on embeddings. Often faster and stronger than TabPFN for large <span class="math inline">\(n\)</span> (Qu, Holzmüller, Varoquaux, &amp; Le Morvan, 2025)</p></li>
+</ul>
+</section>
+<section id="tabpfn-bayesian-view" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="tabpfn-bayesian-view"><span class="header-section-number">3.3</span> TabPFN: Bayesian view</h2>
+<ul>
+<li><p><strong>Prior-data fitted network</strong> learns to approximate the Bayesian posterior given the ICL context <span class="math inline">\(\mathcal{D}\)</span>: <span class="math display">\[p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D}) = \int p(y^\star \mid \boldsymbol{x}^\star, \boldsymbol{\theta})\, p(\boldsymbol{\theta} \mid \mathcal{D})\, d\boldsymbol{\theta}\]</span></p></li>
+<li><p>TabPFN learns a function <span class="math inline">\(f_\psi(\boldsymbol{x}^\star, \mathcal{D}) \approx p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D})\)</span> by minimizing the expected negative log-likelihood over synthetic tasks (Müller et al., 2021)</p></li>
+<li><p>This has structural similarities to variational inference and denoising diffusions, which maximize the evidence lower bound (ELBO) instead of the intractable marginal log-likelihood</p></li>
+<li><p>TabPFN fitting alternates attention over columns and rows to mix feature-wise and record-wise information efficiently. This deals with the missing order in columns, but leads to limitations in sample sizes</p></li>
+</ul>
+</section>
+<section id="tabicl-problem-and-idea" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="tabicl-problem-and-idea"><span class="header-section-number">3.4</span> TabICL: problem and idea</h2>
+<ul>
+<li><p><strong>Challenge.</strong> Alternating full row and column attention becomes expensive when <span class="math inline">\(n\)</span> is large</p></li>
+<li><p><strong>Idea.</strong> Pre-train on synthetic datasets and build <em>fixed-dimension row embeddings</em>, then run ICL over those embeddings for scalability (Qu et al.,</p>
+<ol start="2025" type="1">
+<li></li>
+</ol></li>
+<li><p>Two-stage transformer:</p>
+<ol type="1">
+<li><p>column-then-row to embed row</p></li>
+<li><p>ICL transformer over a compact set of row embeddings</p></li>
+</ol></li>
+<li><p>Can handle up to <span class="math inline">\(5 \times 10^5\)</span> samples at inference on affordable hardware while maintaining ICL benefits</p></li>
+</ul>
+</section>
+<section id="tabicl-two-stage-computation" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="tabicl-two-stage-computation"><span class="header-section-number">3.5</span> TabICL: two-stage computation</h2>
+<p>Let <span class="math inline">\(\boldsymbol{x} \in \mathbb{R}^q\)</span> be a row with mixed types.</p>
+<p><strong>Stage 1</strong> produces a fixed-dimensional row embedding <span class="math display">\[r(\boldsymbol{x}) = \underbrace{\mathrm{RowTransformer}\big( \mathrm{ColEmbed}(\boldsymbol{x}) \big)}_{\text{inter-feature interactions within the row}} \in \mathbb{R}^d,\]</span> where:</p>
+<ul>
+<li><p><strong>ColEmbed</strong> is a distribution-aware column-wise embedding: for each feature <span class="math inline">\(1 \leq j \leq q\)</span>, a Set Transformer operates on that column’s values across rows to produce a per-cell feature embedding for <span class="math inline">\(\boldsymbol{x}_j\)</span>.</p></li>
+<li><p><strong>RowTransformer</strong> is a Transformer <em>across</em> the <span class="math inline">\(q\)</span> feature embeddings of the same row (not across rows), using a small number of learnable CLS tokens and applying RoPE to prevent representation collapse when feature distributions are similar. Concatenated CLS tokens form <span class="math inline">\(r(\boldsymbol{x})\)</span>.</p></li>
+</ul>
+<p><strong>Stage 2 (dataset-wise ICL).</strong> For a support set <span class="math inline">\(S = \{(\boldsymbol{x}_i, y_i)\}_{i=1}^t\)</span> and a query <span class="math inline">\(\boldsymbol{x}^\star\)</span>, <span class="math display">\[\mathcal{S} = \left[\, r(\boldsymbol{x}_1),\, e(y_1),\, \ldots,\, r(\boldsymbol{x}_t),\, e(y_t),\, r(\boldsymbol{x}^\star),\, e(\texttt{[MASK]}) \,\right],\]</span> and a causal-masked transformer outputs the prediction at <code>[MASK]</code>.</p>
+<p>Training minimizes the log-likelihood at the <code>[MASK]</code> position over synthetic tasks (Qu et al., 2025).</p>
+</section>
+<section id="tabicl-concrete-example" class="level2" data-number="3.6">
+<h2 data-number="3.6" class="anchored" data-anchor-id="tabicl-concrete-example"><span class="header-section-number">3.6</span> TabICL: concrete example</h2>
+<p><strong>Target <span class="math inline">\(\boldsymbol{x}^\star\)</span>:</strong> Region=RegionB, Vehicle=SUV, DriverAge=24</p>
+<p><strong>Support set <span class="math inline">\(S\)</span> containing <span class="math inline">\(t = 3\)</span> instances</strong></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: right;">ID</th>
+<th style="text-align: left;">Region</th>
+<th style="text-align: left;">Vehicle</th>
+<th style="text-align: right;">DriverAge</th>
+<th style="text-align: right;">ClaimCount</th>
+<th style="text-align: left;">RowEmbed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">RegionA</td>
+<td style="text-align: left;">SUV</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;"><span class="math inline">\((r(\boldsymbol{x}_1), e(y_1))\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">RegionB</td>
+<td style="text-align: left;">SUV</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;"><span class="math inline">\((r(\boldsymbol{x}_2), e(y_2))\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">RegionA</td>
+<td style="text-align: left;">Crossover</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;"><span class="math inline">\((r(\boldsymbol{x}_3), e(y_3))\)</span></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Step 2:</strong> ICL over <span class="math inline">\(r(\boldsymbol{x}^\star)\)</span> and the RowEmbed context</p>
+</section>
+<section id="tabpfn-vs.-tabicl-when-to-use-which" class="level2" data-number="3.7">
+<h2 data-number="3.7" class="anchored" data-anchor-id="tabpfn-vs.-tabicl-when-to-use-which"><span class="header-section-number">3.7</span> TabPFN vs.&nbsp;TabICL: when to use which</h2>
+<p><strong>If <span class="math inline">\(n \leq 10^4\)</span>:</strong> TabPFN-v2 is a powerful default with excellent calibration and speed (Hollmann et al., 2025)</p>
+<p><strong>If <span class="math inline">\(n &gt; 10^4\)</span>:</strong> TabICL often wins on accuracy and wall time (Qu et al., 2025)</p>
+<p><strong>If distribution shift is a concern:</strong> drift-aware TabPFN can be strong when the shift is encoded in the prior (Helli, Schnurr, Hollmann, Müller, &amp; Hutter, 2024)</p>
+<p><strong>If latency and memory are tight:</strong> TuneTables yields small learned contexts for PFNs with strong results (Feuer et al., 2024)</p>
+<p><strong>Remark:</strong> These TabPFN/TabICL pre-trained architectures are especially strong on small insurance problems where learning a strong model is difficult. They may have some deficiencies on unbalanced data</p>
+</section>
+</section>
+<section id="in-context-learning-icl-credibility-transformer" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> In-context learning (ICL) credibility transformer</h1>
+<section id="the-challenge-in-actuarial-modeling" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="the-challenge-in-actuarial-modeling"><span class="header-section-number">4.1</span> The challenge in actuarial modeling</h2>
+<ul>
+<li><p><strong>Limited data problem:</strong></p>
+<ul>
+<li><p>Small portfolios</p></li>
+<li><p>New products or regions</p></li>
+<li><p>Rare events</p></li>
+<li><p>New vehicle models</p></li>
+</ul></li>
+<li><p><strong>Traditional solution:</strong></p>
+<ul>
+<li><p>Bühlmann credibility Theory (Bühlmann, 1967)</p></li>
+<li><p>Linear combination of individual and collective experience</p></li>
+</ul></li>
+<li><p><strong>Modern challenge:</strong></p>
+<ul>
+<li><p>Complex non-linear patterns</p></li>
+<li><p>High-dimensional feature spaces</p></li>
+<li><p>Need for dynamic adaptation</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="evolution-from-credibility-to-icl" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="evolution-from-credibility-to-icl"><span class="header-section-number">4.2</span> Evolution: from credibility to ICL</h2>
+<ul>
+<li><p><strong>Classical Credibility</strong> (Bühlmann, 1967)</p>
+<ul>
+<li>Linear blend of individual and collective experience</li>
+</ul></li>
+<li><p><strong>Credibility Transformer</strong> (Richman, Scognamiglio, &amp; Wüthrich, 2025)</p>
+<ul>
+<li><p>Embeds credibility idea into the attention mechanism</p></li>
+<li><p>CLS token as learnable prior balancing between individual and collective experience</p></li>
+</ul></li>
+<li><p><strong>ICL-Enhanced Credibility Transformer</strong> (Padayachy, Richman, Scognamiglio, &amp; Wüthrich, 2025)</p>
+<ul>
+<li><p>Dynamic context from similar instances</p></li>
+<li><p>Zero-shot generalization capability</p></li>
+<li><p>No retraining required for ICL</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="in-context-learning-key-innovation" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="in-context-learning-key-innovation"><span class="header-section-number">4.3</span> In-context learning: key innovation</h2>
+<p><strong>ICL in an Actuarial Context</strong></p>
+<ul>
+<li><p>Context <span class="math inline">\(=\)</span> experience on similar insurance policies</p></li>
+<li><p>Adaptation <span class="math inline">\(=\)</span> adjusting predictions based on context</p></li>
+<li><p>Zero-shot generalization <span class="math inline">\(=\)</span> handling new risk profiles</p></li>
+</ul>
+<p><strong>Key questions</strong></p>
+<ul>
+<li><p>Can ICL improve performance on a model that has been pre-trained using supervised learning?</p></li>
+<li><p>If this is the case, what is the explanation for this improvement?</p></li>
+<li><p>Can ICL for tabular data be used to improve the performance of a much smaller pre-trained model focussing only on a single dataset?</p></li>
+</ul>
+</section>
+<section id="icl-ct-architecture-overview" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="icl-ct-architecture-overview"><span class="header-section-number">4.4</span> ICL-CT: architecture overview</h2>
+<div id="fig-icl-ct" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-icl-ct-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture12-icl-ct-architecture.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-icl-ct-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: The in-context learning credibility transformer (ICL-CT). Target and context batches are processed jointly under causal masking, and the context batch experience decorates the CLS token.
+</figcaption>
+</figure>
+</div>
+<p>In-context learning credibility transformer (ICL-CT):</p>
+<ul>
+<li><p>Target and context processed jointly with causal masking</p></li>
+<li><p>Context batch experience is used to decorate the CLS token</p></li>
+</ul>
+</section>
+<section id="component-0-train-a-base-credibility-transformer" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="component-0-train-a-base-credibility-transformer"><span class="header-section-number">4.5</span> Component 0: train a base credibility transformer</h2>
+<ul>
+<li><p>In the initial stage we train the credibility transformer of Richman et al. (2025), call this the “base CT”</p></li>
+<li><p><strong>Purpose 1, encoder:</strong> The credibility transformer is a strong predictive model, and it provides a CLS token embedding of every insurance policy. We use this CLS token space for context retrieval</p></li>
+<li><p><strong>Purpose 2, decoder:</strong> The credibility transformer decoder (mapping from the CLS token space to the output) is kept fixed/frozen (information bottleneck), and the ICL mechanism acts in the CLS token space</p></li>
+</ul>
+</section>
+<section id="component-1-context-retrieval" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="component-1-context-retrieval"><span class="header-section-number">4.6</span> Component 1: context retrieval</h2>
+<ul>
+<li><p><strong>Purpose</strong>: Retrieve similar insurance policies for the context</p></li>
+<li><p><strong>Space</strong>: Base CT CLS token embeddings</p></li>
+<li><p><strong>Metric</strong>: Cosine similarity</p></li>
+<li><p><strong>Retrieval</strong>: <span class="math inline">\(K = 64\)</span> neighbors per target; union across chunk</p></li>
+<li><p><strong>Batching</strong>: Keep top <span class="math inline">\(c = 1000\)</span> context instance; target batch size <span class="math inline">\(m = 200\)</span></p></li>
+</ul>
+<div id="fig-context-retrieval" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-context-retrieval-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture12-context-retrieval.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-context-retrieval-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Context retrieval in CLS token space.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="component-2-outcome-token-decorator" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="component-2-outcome-token-decorator"><span class="header-section-number">4.7</span> Component 2: outcome token decorator</h2>
+<ul>
+<li><p><strong>Purpose</strong>: Inject observed responses on the context batch into their CLS tokens in a credibility-weighted way</p></li>
+<li><p><strong>Decoration</strong> (context instance <span class="math inline">\(j\)</span>): <span class="math display">\[\boldsymbol{c}^{\rm decor}(\boldsymbol{x}_j) = \widehat{\boldsymbol{c}}^{\,\rm cred}(\boldsymbol{x}_j) + \frac{v_j}{v_j + \kappa}\, \boldsymbol{z}^{\rm FNN1}(Y_j)\]</span></p></li>
+<li><p><strong>Notes</strong>:</p>
+<ul>
+<li><p>Applied to context only; targets keep CLS token <span class="math inline">\(\widehat{\boldsymbol{c}}^{\,\rm cred}(\boldsymbol{x}_i)\)</span> (no observed outcomes)</p></li>
+<li><p><span class="math inline">\(\boldsymbol{z}^{\rm FNN1}(\cdot)\)</span> is a learnable embedding of the response; exposures <span class="math inline">\(v\)</span> enter only via <span class="math inline">\(\frac{v}{v+\kappa}\)</span> to avoid information leakage. The credibility coefficient <span class="math inline">\(\kappa &gt; 0\)</span> is a hyper-parameter</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="component-3-causal-self-attention" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="component-3-causal-self-attention"><span class="header-section-number">4.8</span> Component 3: causal self-attention</h2>
+<ul>
+<li><p><strong>Setup</strong>: Concatenate [context | target] and apply a causal mask <span class="math inline">\(\boldsymbol{M}^\infty\)</span> to block target-target interactions</p></li>
+<li><p><strong>Q/K/V</strong>: Time-distributed FNNs on tokens:</p>
+<ul>
+<li><p>Context: from <span class="math inline">\(\boldsymbol{c}^{\rm decor}\)</span> (depends on responses <span class="math inline">\(Y\)</span>)</p></li>
+<li><p>Target: from <span class="math inline">\(\widehat{\boldsymbol{c}}^{\,\rm cred}\)</span> (feature-only, i.e., no responses)</p></li>
+</ul></li>
+<li><p><strong>Causal attention</strong>: <span class="math display">\[\boldsymbol{A} = \mathrm{softmax}\left( \frac{\boldsymbol{Q}\boldsymbol{K}^\top}{\sqrt{2b}} + \boldsymbol{M}^\infty \right), \quad \boldsymbol{H} = \boldsymbol{A}\,\boldsymbol{V}\]</span></p></li>
+<li><p><strong>Effect</strong>: Propagates outcome-enriched context information to target CLS tokens via attention weight mechanism. This transforms the target CLS tokens by the context experience, providing <span class="math inline">\(\boldsymbol{c}^{\rm ICL\text{-}trans}_i\)</span></p></li>
+</ul>
+</section>
+<section id="component-4-frozen-decoder-and-output" class="level2" data-number="4.9">
+<h2 data-number="4.9" class="anchored" data-anchor-id="component-4-frozen-decoder-and-output"><span class="header-section-number">4.9</span> Component 4: frozen decoder and output</h2>
+<ul>
+<li><p><strong>Decoder</strong>: Use frozen decoder from base CT. This acts as an information bottleneck, preserving the CLS token space calibration</p></li>
+<li><p><strong>Prediction on targets</strong>: <span class="math display">\[\widehat{\mu}^{\rm ICL\text{-}CT}(\boldsymbol{x}_i, \mathcal{B}_{\rm context}) = \widehat{\boldsymbol{z}}^{\,\rm decod}\left( \boldsymbol{c}^{\rm ICL\text{-}trans}_i \right), \qquad i \in \mathcal{I}_{\rm target}\]</span></p></li>
+<li><p><strong>Benefits</strong>: Preserves calibration; regularizes ICL adjustments</p></li>
+</ul>
+</section>
+</section>
+<section id="theoretical-consideration" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Theoretical consideration</h1>
+<section id="proposition-credibility-via-attention" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="proposition-credibility-via-attention"><span class="header-section-number">5.1</span> Proposition: credibility via attention</h2>
+<p><strong>Proposition (see our paper):</strong> For target instance <span class="math inline">\(i\)</span>, the causal attention head produces <span class="math display">\[\begin{aligned}
+\boldsymbol{h}_i ~=~ &amp; a_{i,i}\, \boldsymbol{z}^{\rm FNN}_V \left( \widehat{\boldsymbol{c}}^{\,\rm cred}(\boldsymbol{x}_i) \right) \\
+&amp; + \sum_{j \in \mathcal{I}_{\rm context}} a_{i,j}\, \boldsymbol{z}^{\rm FNN}_V \left( \widehat{\boldsymbol{c}}^{\,\rm cred}(\boldsymbol{x}_j) + \tfrac{v_j}{v_j + \kappa}\, \boldsymbol{z}^{\rm FNN1}(Y_j) \right),
+\end{aligned}\]</span> with weights <span class="math inline">\(a_{i,j} \geq 0\)</span> and <span class="math inline">\(a_{i,i} + \sum_{j \in \mathcal{I}_{\rm context}} a_{i,j} = 1\)</span>, and <span class="math inline">\(a_{i,j} = 0\)</span> for <span class="math inline">\(j\)</span> in the other targets (by causal masking).</p>
+<p><strong>Interpretation</strong>: A credibility blend between the target’s own signal and context signals enriched by outcomes with weight <span class="math inline">\(\frac{v}{v+\kappa}\)</span>.</p>
+</section>
+<section id="linearized-icl-variant" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="linearized-icl-variant"><span class="header-section-number">5.2</span> Linearized ICL variant</h2>
+<p><strong>Idea</strong>: Make the attention weights <span class="math inline">\(a_{i,j}\)</span> independent of outcomes <span class="math inline">\(Y_j\)</span> by using feature-only queries/keys <span class="math display">\[\widetilde{\boldsymbol{Q}} = \boldsymbol{z}^{\rm FNN}_Q(\widehat{\boldsymbol{c}}^{\,\rm cred}), \quad \widetilde{\boldsymbol{K}} = \boldsymbol{z}^{\rm FNN}_K(\widehat{\boldsymbol{c}}^{\,\rm cred}), \quad \boldsymbol{V} = \boldsymbol{z}^{\rm FNN}_V(\boldsymbol{c}^{\rm decor}).\]</span></p>
+<ul>
+<li><p><strong>Effect</strong>: Predictions <span class="math inline">\(Y\)</span> only enter the value matrix <span class="math inline">\(\boldsymbol{V}\)</span>, while <span class="math inline">\(\widetilde{\boldsymbol{Q}}, \widetilde{\boldsymbol{K}}\)</span> depend only on features</p></li>
+<li><p><strong>Caveat</strong>: Guarantees hold cleanly for a single ICL layer; deeper stacks may reintroduce non-linearities via intermediate transformations</p></li>
+<li><p><strong>Empirics</strong>: Linearized model slightly under-performs the 2-layer non-linear ICL prior to joint fine-tuning but closes the gap after</p></li>
+</ul>
+</section>
+</section>
+<section id="learning-procedure" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Learning procedure</h1>
+<section id="three-phase-training" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="three-phase-training"><span class="header-section-number">6.1</span> Three-phase training</h2>
+<ol type="1">
+<li><p><strong>Phase 1: Base CT pre-training</strong></p>
+<ul>
+<li><p>AdamW optimizer (LR <span class="math inline">\(10^{-3}\)</span>, WD <span class="math inline">\(10^{-2}\)</span>, <span class="math inline">\(\beta_2 = 0.95\)</span>), batch size 1024</p></li>
+<li><p>Poisson deviance; early stopping (patience 20)</p></li>
+</ul></li>
+<li><p><strong>Phase 2: ICL training</strong></p>
+<ul>
+<li><p>Insert decorator decorator <span class="math inline">\(+\)</span> 2 ICL layers; freeze decoder</p></li>
+<li><p>AdamW optimizer (LR <span class="math inline">\(3 \cdot 10^{-4}\)</span>, WD <span class="math inline">\(10^{-2}\)</span>, <span class="math inline">\(\beta_2 = 0.95\)</span>)</p></li>
+<li><p>Causal mask; loss on target rows only; early stopping (patience 20)</p></li>
+</ul></li>
+<li><p><strong>Phase 3: Joint architecture fine-tuning</strong></p>
+<ul>
+<li><p>Unfreeze all weights; AdamW optimizer (LR <span class="math inline">\(3 \cdot 10^{-5}\)</span>), 20 epochs</p></li>
+<li><p>Early stopping (patience 10)</p></li>
+</ul></li>
+</ol>
+<p>LR: learning rate, WD: weight decay.</p>
+</section>
+<section id="training-procedure" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="training-procedure"><span class="header-section-number">6.2</span> Training procedure</h2>
+<p><strong>ICL-CT training</strong></p>
+<ul>
+<li><p>Form batches as <span class="math inline">\([\mathcal{B}_{\rm context} \,\|\, \mathcal{B}_{\rm target}]\)</span>; causal mask prevents target-target interactions; size 5:1</p></li>
+<li><p>Provide outcomes only for context; decorate tokens; apply ICL layers</p></li>
+<li><p>Loss applied to target rows (Poisson deviance)</p></li>
+<li><p>Inference uses retrieval procedure from Context Retrieval; top 1000 context instance from 64 CLS token nearest neighbors (cosine similarity)</p></li>
+</ul>
+</section>
+<section id="main-results-out-of-sample-losses" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="main-results-out-of-sample-losses"><span class="header-section-number">6.3</span> Main results (out-of-sample losses)</h2>
+<p>Poisson deviance out-of-sample (OOS) losses</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Method</th>
+<th style="text-align: right;">OOS loss</th>
+<th style="text-align: right;">Uncertainty</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Original CT</td>
+<td style="text-align: right;">23.788</td>
+<td style="text-align: right;"><span class="math inline">\(\pm 0.040\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Base CT (single run)</td>
+<td style="text-align: right;">23.743</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICL-CT (decoder frozen)</td>
+<td style="text-align: right;">23.725</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ICL-CT (fine-tuned)</td>
+<td style="text-align: right;">23.710</td>
+<td style="text-align: right;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICL-CT (5-ensemble)</td>
+<td style="text-align: right;">23.676</td>
+<td style="text-align: right;"></td>
+</tr>
+</tbody>
+</table>
+<p>Units: <span class="math inline">\(10^{-2}\)</span> Poisson deviance.</p>
+</section>
+<section id="pca-analysis-of-cls-tokens" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="pca-analysis-of-cls-tokens"><span class="header-section-number">6.4</span> PCA analysis of CLS tokens</h2>
+<div id="fig-pca-cls" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pca-cls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture12-pca-cls-tokens.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pca-cls-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: PCA of the CLS tokens, before fine-tuning (phases 1 and 2) and after fine-tuning (phase 3), coloured by predicted rate on a common scale.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="pca-training-phases" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="pca-training-phases"><span class="header-section-number">6.5</span> PCA training phases</h2>
+<div id="fig-pca-phases" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-pca-phases-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture12-pca-training-phases.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-pca-phases-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: PCA of the training phases 2a, 2b and 2c, with the decision surface coloured by the log CT predicted rate.
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="zero-shot-capabilities" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Zero-shot capabilities</h1>
+<section id="zero-shot-setup" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="zero-shot-setup"><span class="header-section-number">7.1</span> Zero-shot setup</h2>
+<ul>
+<li><p><strong>Goal:</strong> Evaluate generalization to unseen region categories</p></li>
+<li><p><strong>Test set:</strong> Regions totalling 10% exposure remapped to <em>unseen</em></p></li>
+<li><p><strong>Training:</strong> Additional small-exposure regions remapped to <em>unseen</em></p></li>
+<li><p><strong>Mechanism:</strong> Context retrieved from training distribution only</p></li>
+</ul>
+</section>
+<section id="zero-shot-data-split" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="zero-shot-data-split"><span class="header-section-number">7.2</span> Zero-shot data split</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th style="text-align: left;">Characteristic</th>
+<th style="text-align: right;">Training set</th>
+<th style="text-align: right;">Test set</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Number of policies</td>
+<td style="text-align: right;">601,781</td>
+<td style="text-align: right;">76,226</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Number set to unseen</td>
+<td style="text-align: right;">165,200</td>
+<td style="text-align: right;">76,226</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total exposure (years)</td>
+<td style="text-align: right;">323,458</td>
+<td style="text-align: right;">34,900</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Number of claims</td>
+<td style="text-align: right;">24,006</td>
+<td style="text-align: right;">2,377</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Average frequency</td>
+<td style="text-align: right;">7.42%</td>
+<td style="text-align: right;">6.81%</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="zero-shot-results-unseen-regions" class="level2" data-number="7.3">
+<h2 data-number="7.3" class="anchored" data-anchor-id="zero-shot-results-unseen-regions"><span class="header-section-number">7.3</span> Zero-shot results (unseen regions)</h2>
+<ul>
+<li><p><strong>Null model</strong>: OOS 21.091 (baseline)</p></li>
+<li><p><strong>Base CT (phase 1)</strong>: OOS 20.282</p></li>
+<li><p><strong>ICL-CT (2 layers, phase 2, frozen decoder)</strong>: OOS 20.264</p></li>
+<li><p><strong>ICL-CT (2 layers, phase 3, after fine-tuning)</strong>: OOS 20.259 (best)</p></li>
+</ul>
+<p>Units: <span class="math inline">\(10^{-2}\)</span> Poisson deviance.</p>
+</section>
+</section>
+<section id="summary" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Summary</h1>
+<section id="key-takeaways" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="key-takeaways"><span class="header-section-number">8.1</span> Key takeaways</h2>
+<ul>
+<li><p>Foundation Models provide scalable priors; adapt with prompting, RAG and/or fine-tuning</p></li>
+<li><p>GPT series unlocked few-shot and zero-shot CoT; reasoning improves with scale and cues</p></li>
+<li><p>Tabular Foundation Models: TabTransformer, FT-Transformer, TransTab; TabPFN for small <span class="math inline">\(n\)</span> and TabICL for large <span class="math inline">\(n\)</span></p></li>
+<li><p>ICL-CT: integrates credibility with ICL, improves robustness</p></li>
+<li><p>Outlook: Tab-TRM (tabular tiny recursive model) introduces reasoning capabilities by partitioning the CLS token into an answer token and a reasoning scratchpad part (Jolicoeur-Martineau, 2025; Padayachy, Richman, &amp; Wüthrich, 2026)</p></li>
+</ul>
+</section>
+</section>
+<section id="copyright" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright</h1>
+<ul>
+<li><p>© The Authors</p></li>
+<li><p>This notebook and these slides are part of the project “AI Tools for Actuaries”. The lecture notes can be downloaded from:</p></li>
+</ul>
+<p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a></p>
+<p><span class="math inline">\(\,\)</span></p>
+<ul>
+<li>This material is provided to reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution and credit is given to the original authors and source, and if you indicate if changes were made. This aligns with the Creative Commons Attribution 4.0 International License CC BY-NC.</li>
+</ul>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body" role="list">
+<div class="csl-entry" role="listitem">
+Brown, T. B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P., … others (2020). Language models are few-shot learners. In <em>Advances in Neural Information Processing Systems</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Bühlmann, H. (1967). Experience rating and credibility. <em>ASTIN Bulletin - The Journal of the IAA</em>, <em>4</em>(3), 199–207.
+</div>
+<div class="csl-entry" role="listitem">
+Devlin, J., Chang, M., Lee, K., &amp; Toutanova, K. (2019). BERT: Pre-training of deep bidirectional transformers for language understanding. In <em>Proceedings of NAACL-HLT</em>. Retrieved from <a href="https://arxiv.org/abs/1810.04805" class="uri">https://arxiv.org/abs/1810.04805</a>
+</div>
+<div class="csl-entry" role="listitem">
+Feuer, B., Schirrmeister, R. T., Cherepanova, V., Hegde, C., Hutter, F., Goldblum, M., … White, C. (2024). <em>TuneTables: Context optimization for scalable prior-data fitted networks</em>. Retrieved from <a href="https://arxiv.org/abs/2402.11137" class="uri">https://arxiv.org/abs/2402.11137</a> (NeurIPS 2024 Poster)
+</div>
+<div class="csl-entry" role="listitem">
+Geva, M., et al.&nbsp;(2021). Transformer feed-forward layers are key-value memories. <em>arXiv preprint arXiv:2110.02834</em>. Retrieved from <a href="https://arxiv.org/abs/2110.02834" class="uri">https://arxiv.org/abs/2110.02834</a>
+</div>
+<div class="csl-entry" role="listitem">
+Gorishniy, Y., Rubachev, I., Khrulkov, V., &amp; Babenko, A. (2021). Revisiting deep learning models for tabular data. <em>arXiv preprint arXiv:2106.11959</em>. Retrieved from <a href="https://arxiv.org/abs/2106.11959" class="uri">https://arxiv.org/abs/2106.11959</a>
+</div>
+<div class="csl-entry" role="listitem">
+Helli, K., Schnurr, D., Hollmann, N., Müller, S., &amp; Hutter, F. (2024). <em>Drift-resilient TabPFN: In-context learning temporal distribution shifts on tabular data</em>. Retrieved from <a href="https://arxiv.org/abs/2411.10634" class="uri">https://arxiv.org/abs/2411.10634</a> (NeurIPS 2024)
+</div>
+<div class="csl-entry" role="listitem">
+Hoffmann, J., Borgeaud, S., Mensch, A., et al.&nbsp;(2022). Training compute-optimal large language models. <em>arXiv preprint arXiv:2203.15556</em>. Retrieved from <a href="https://arxiv.org/abs/2203.15556" class="uri">https://arxiv.org/abs/2203.15556</a>
+</div>
+<div class="csl-entry" role="listitem">
+Hollmann, N., Müller, S., Eggensperger, K., &amp; Hutter, F. (2022). <em>TabPFN: A transformer that solves small tabular classification problems in a second</em>. Retrieved from <a href="https://arxiv.org/abs/2207.01848" class="uri">https://arxiv.org/abs/2207.01848</a>
+</div>
+<div class="csl-entry" role="listitem">
+Hollmann, N., Müller, S., Purucker, L., Krishnakumar, A., Körfer, M., Hoo, S. B., … Hutter, F. (2025). Accurate predictions on small data with a tabular foundation model. <em>Nature</em>, <em>637</em>(8045), 319–326. doi: 10.1038/s41586-024-08328-6
+</div>
+<div class="csl-entry" role="listitem">
+Huang, X., Khetan, A., Cvitkovic, M., &amp; Karnin, Z. (2020). TabTransformer: Tabular data modeling using contextual embeddings. <em>arXiv preprint arXiv:2012.06678</em>. Retrieved from <a href="https://arxiv.org/abs/2012.06678" class="uri">https://arxiv.org/abs/2012.06678</a>
+</div>
+<div class="csl-entry" role="listitem">
+Jolicoeur-Martineau, A. (2025). <em>Less is more: Recursive reasoning with tiny networks</em>. Retrieved from <a href="https://arxiv.org/abs/2510.04871" class="uri">https://arxiv.org/abs/2510.04871</a>
+</div>
+<div class="csl-entry" role="listitem">
+Kaplan, J., McCandlish, S., Henighan, T., Brown, T. B., et al.&nbsp;(2020). Scaling laws for neural language models. <em>arXiv preprint arXiv:2001.08361</em>. Retrieved from <a href="https://arxiv.org/abs/2001.08361" class="uri">https://arxiv.org/abs/2001.08361</a>
+</div>
+<div class="csl-entry" role="listitem">
+Müller, S., Hollmann, N., Pineda Arango, S., Grabocka, J., &amp; Hutter, F. (2021). <em>Transformers can do Bayesian inference</em>. Retrieved from <a href="https://arxiv.org/abs/2112.10510" class="uri">https://arxiv.org/abs/2112.10510</a>
+</div>
+<div class="csl-entry" role="listitem">
+OpenAI. (2023). GPT-4 technical report. <em>arXiv preprint arXiv:2303.08774</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C., Mishkin, P., et al. (2022). Training language models to follow instructions with human feedback. In <em>Advances in Neural Information Processing Systems</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Padayachy, K., Richman, R., Scognamiglio, S., &amp; Wüthrich, M. V. (2025). <em>In-context learning enhanced credibility transformer</em>. Retrieved from <a href="https://arxiv.org/abs/2509.08122" class="uri">https://arxiv.org/abs/2509.08122</a>
+</div>
+<div class="csl-entry" role="listitem">
+Padayachy, K., Richman, R., &amp; Wüthrich, M. (2026). <em>Tab-TRM: Tiny recursive model for insurance pricing on tabular data</em>. Retrieved from <a href="https://arxiv.org/abs/2601.07675" class="uri">https://arxiv.org/abs/2601.07675</a>
+</div>
+<div class="csl-entry" role="listitem">
+Qu, J., Holzmüller, D., Varoquaux, G., &amp; Le Morvan, M. (2025). <em>TabICL: A tabular foundation model for in-context learning on large data</em>. Retrieved from <a href="https://arxiv.org/abs/2502.05564" class="uri">https://arxiv.org/abs/2502.05564</a> (ICML 2025)
+</div>
+<div class="csl-entry" role="listitem">
+Radford, A., Narasimhan, K., Salimans, T., &amp; Sutskever, I. (2018). <em>Improving language understanding by generative pre-training</em>. OpenAI Technical Report.
+</div>
+<div class="csl-entry" role="listitem">
+Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., &amp; Sutskever, I. (2019). <em>Language models are unsupervised multitask learners</em>. OpenAI Technical Report.
+</div>
+<div class="csl-entry" role="listitem">
+Richman, R., Scognamiglio, S., &amp; Wüthrich, M. V. (2025). The credibility transformer. <em>European Actuarial Journal</em>, 1–35. Retrieved from <a href="https://link.springer.com/article/10.1007/s13385-025-00413-y" class="uri">https://link.springer.com/article/10.1007/s13385-025-00413-y</a>
+</div>
+<div class="csl-entry" role="listitem">
+Su, J., Lu, Y., Pan, S., Wen, B., &amp; Liu, Y. (2021). Roformer: Enhanced transformer with rotary position embedding. <em>arXiv preprint arXiv:2104.09864</em>. Retrieved from <a href="https://arxiv.org/abs/2104.09864" class="uri">https://arxiv.org/abs/2104.09864</a>
+</div>
+<div class="csl-entry" role="listitem">
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., … Polosukhin, I. (2017). Attention is all you need. In <em>Advances in Neural Information Processing Systems</em>. Retrieved from <a href="https://arxiv.org/abs/1706.03762" class="uri">https://arxiv.org/abs/1706.03762</a>
+</div>
+<div class="csl-entry" role="listitem">
+Wang, Z., &amp; Sun, J. (2022). TransTab: Learning transferable tabular transformers across tables. <em>arXiv preprint arXiv:2205.09328</em>. Retrieved from <a href="https://arxiv.org/abs/2205.09328" class="uri">https://arxiv.org/abs/2205.09328</a>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich, Ronald Richman">
+<meta name="dcterms.date" content="2026-09-01">
+
+<title>Lecture 3: Deep Learning: An Overview</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#motivation-and-historical-perspective" id="toc-motivation-and-historical-perspective" class="nav-link active" data-scroll-target="#motivation-and-historical-perspective"><span class="header-section-number">1</span> Motivation and historical perspective</a>
+  <ul class="collapse">
+  <li><a href="#why-deep-learning-in-actuarial-science" id="toc-why-deep-learning-in-actuarial-science" class="nav-link" data-scroll-target="#why-deep-learning-in-actuarial-science"><span class="header-section-number">1.1</span> Why deep learning in actuarial science?</a></li>
+  <li><a href="#historical-perspective-the-evolution" id="toc-historical-perspective-the-evolution" class="nav-link" data-scroll-target="#historical-perspective-the-evolution"><span class="header-section-number">1.2</span> Historical perspective: the evolution</a></li>
+  <li><a href="#scaling-laws" id="toc-scaling-laws" class="nav-link" data-scroll-target="#scaling-laws"><span class="header-section-number">1.3</span> Scaling laws</a></li>
+  <li><a href="#deep-learning-works" id="toc-deep-learning-works" class="nav-link" data-scroll-target="#deep-learning-works"><span class="header-section-number">1.4</span> Deep learning works!</a></li>
+  </ul></li>
+  <li><a href="#representation-learning-the-core-ml-principle" id="toc-representation-learning-the-core-ml-principle" class="nav-link" data-scroll-target="#representation-learning-the-core-ml-principle"><span class="header-section-number">2</span> Representation learning: the core ML principle</a>
+  <ul class="collapse">
+  <li><a href="#the-feature-engineering-problem" id="toc-the-feature-engineering-problem" class="nav-link" data-scroll-target="#the-feature-engineering-problem"><span class="header-section-number">2.1</span> The feature engineering problem</a></li>
+  <li><a href="#representation-learning-automated-feature-construction" id="toc-representation-learning-automated-feature-construction" class="nav-link" data-scroll-target="#representation-learning-automated-feature-construction"><span class="header-section-number">2.2</span> Representation learning: automated feature construction</a></li>
+  <li><a href="#fashion-mnist-example-dataset-overview" id="toc-fashion-mnist-example-dataset-overview" class="nav-link" data-scroll-target="#fashion-mnist-example-dataset-overview"><span class="header-section-number">2.3</span> Fashion-MNIST example: dataset overview</a></li>
+  <li><a href="#fashion-mnist-example-traditional-pca-results" id="toc-fashion-mnist-example-traditional-pca-results" class="nav-link" data-scroll-target="#fashion-mnist-example-traditional-pca-results"><span class="header-section-number">2.4</span> Fashion-MNIST example: traditional PCA results</a></li>
+  <li><a href="#representation-learning" id="toc-representation-learning" class="nav-link" data-scroll-target="#representation-learning"><span class="header-section-number">2.5</span> Representation learning</a></li>
+  <li><a href="#deep-learning" id="toc-deep-learning" class="nav-link" data-scroll-target="#deep-learning"><span class="header-section-number">2.6</span> Deep learning</a></li>
+  <li><a href="#fashion-mnist-example-deep-learning-solution" id="toc-fashion-mnist-example-deep-learning-solution" class="nav-link" data-scroll-target="#fashion-mnist-example-deep-learning-solution"><span class="header-section-number">2.7</span> Fashion-MNIST example: deep learning solution</a></li>
+  <li><a href="#from-representation-to-prediction" id="toc-from-representation-to-prediction" class="nav-link" data-scroll-target="#from-representation-to-prediction"><span class="header-section-number">2.8</span> From representation to prediction</a></li>
+  <li><a href="#why-depth-is-important" id="toc-why-depth-is-important" class="nav-link" data-scroll-target="#why-depth-is-important"><span class="header-section-number">2.9</span> Why depth is important</a></li>
+  </ul></li>
+  <li><a href="#feed-forward-neural-networks" id="toc-feed-forward-neural-networks" class="nav-link" data-scroll-target="#feed-forward-neural-networks"><span class="header-section-number">3</span> Feed-forward neural networks</a>
+  <ul class="collapse">
+  <li><a href="#single-layer-fnn-glm" id="toc-single-layer-fnn-glm" class="nav-link" data-scroll-target="#single-layer-fnn-glm"><span class="header-section-number">3.1</span> Single layer FNN <span class="math inline">\(=\)</span> GLM</a></li>
+  <li><a href="#deep-feed-forward-neural-network" id="toc-deep-feed-forward-neural-network" class="nav-link" data-scroll-target="#deep-feed-forward-neural-network"><span class="header-section-number">3.2</span> Deep feed-forward neural network</a></li>
+  <li><a href="#fnn-generalizes-glm" id="toc-fnn-generalizes-glm" class="nav-link" data-scroll-target="#fnn-generalizes-glm"><span class="header-section-number">3.3</span> FNN generalizes GLM</a></li>
+  <li><a href="#mathematical-formulation-in-brief" id="toc-mathematical-formulation-in-brief" class="nav-link" data-scroll-target="#mathematical-formulation-in-brief"><span class="header-section-number">3.4</span> Mathematical formulation, in brief</a></li>
+  <li><a href="#pre--and-post-activation-in-fnns" id="toc-pre--and-post-activation-in-fnns" class="nav-link" data-scroll-target="#pre--and-post-activation-in-fnns"><span class="header-section-number">3.5</span> Pre- and post-activation in FNNs</a></li>
+  </ul></li>
+  <li><a href="#advanced-architectures-a-deep-dive" id="toc-advanced-architectures-a-deep-dive" class="nav-link" data-scroll-target="#advanced-architectures-a-deep-dive"><span class="header-section-number">4</span> Advanced architectures: a deep dive</a>
+  <ul class="collapse">
+  <li><a href="#from-vectors-to-tensors" id="toc-from-vectors-to-tensors" class="nav-link" data-scroll-target="#from-vectors-to-tensors"><span class="header-section-number">4.1</span> From vectors to tensors</a></li>
+  <li><a href="#convolutional-neural-networks-a-motivation" id="toc-convolutional-neural-networks-a-motivation" class="nav-link" data-scroll-target="#convolutional-neural-networks-a-motivation"><span class="header-section-number">4.2</span> Convolutional neural networks: a motivation</a></li>
+  <li><a href="#d-cnn-mathematical-formulation" id="toc-d-cnn-mathematical-formulation" class="nav-link" data-scroll-target="#d-cnn-mathematical-formulation"><span class="header-section-number">4.3</span> 1D CNN: mathematical formulation</a></li>
+  <li><a href="#d-cnn-intuition-and-2d-cnn-adaption" id="toc-d-cnn-intuition-and-2d-cnn-adaption" class="nav-link" data-scroll-target="#d-cnn-intuition-and-2d-cnn-adaption"><span class="header-section-number">4.4</span> 1D CNN intuition and 2D CNN adaption</a></li>
+  <li><a href="#recurrent-neural-networks-sequential-memory" id="toc-recurrent-neural-networks-sequential-memory" class="nav-link" data-scroll-target="#recurrent-neural-networks-sequential-memory"><span class="header-section-number">4.5</span> Recurrent neural networks: sequential memory</a></li>
+  <li><a href="#lstm-architecture-diagram" id="toc-lstm-architecture-diagram" class="nav-link" data-scroll-target="#lstm-architecture-diagram"><span class="header-section-number">4.6</span> LSTM architecture diagram</a></li>
+  <li><a href="#gru-architecture-diagram" id="toc-gru-architecture-diagram" class="nav-link" data-scroll-target="#gru-architecture-diagram"><span class="header-section-number">4.7</span> GRU architecture diagram</a></li>
+  <li><a href="#cnn-vs.-rnn-when-to-use-which" id="toc-cnn-vs.-rnn-when-to-use-which" class="nav-link" data-scroll-target="#cnn-vs.-rnn-when-to-use-which"><span class="header-section-number">4.8</span> CNN vs.&nbsp;RNN: when to use which?</a></li>
+  <li><a href="#embedding-layer-categorical-covariates" id="toc-embedding-layer-categorical-covariates" class="nav-link" data-scroll-target="#embedding-layer-categorical-covariates"><span class="header-section-number">4.9</span> Embedding layer, categorical covariates</a></li>
+  <li><a href="#autoencoder-unsupervised-learning" id="toc-autoencoder-unsupervised-learning" class="nav-link" data-scroll-target="#autoencoder-unsupervised-learning"><span class="header-section-number">4.10</span> Autoencoder, unsupervised learning</a></li>
+  <li><a href="#transformers-and-attention-vaswani-et-al.-2017" id="toc-transformers-and-attention-vaswani-et-al.-2017" class="nav-link" data-scroll-target="#transformers-and-attention-vaswani-et-al.-2017"><span class="header-section-number">4.11</span> Transformers and attention, Vaswani et al.&nbsp;(2017)</a></li>
+  <li><a href="#localglmnet-interpretability-focus" id="toc-localglmnet-interpretability-focus" class="nav-link" data-scroll-target="#localglmnet-interpretability-focus"><span class="header-section-number">4.12</span> LocalGLMnet: interpretability focus</a></li>
+  </ul></li>
+  <li><a href="#combined-actuarial-neural-network-cann" id="toc-combined-actuarial-neural-network-cann" class="nav-link" data-scroll-target="#combined-actuarial-neural-network-cann"><span class="header-section-number">5</span> Combined actuarial neural network (CANN)</a>
+  <ul class="collapse">
+  <li><a href="#cann-bridging-classical-and-modern-modeling" id="toc-cann-bridging-classical-and-modern-modeling" class="nav-link" data-scroll-target="#cann-bridging-classical-and-modern-modeling"><span class="header-section-number">5.1</span> CANN: bridging classical and modern modeling</a></li>
+  <li><a href="#cann-implementation-details" id="toc-cann-implementation-details" class="nav-link" data-scroll-target="#cann-implementation-details"><span class="header-section-number">5.2</span> CANN: implementation details</a></li>
+  <li><a href="#cann-advantages" id="toc-cann-advantages" class="nav-link" data-scroll-target="#cann-advantages"><span class="header-section-number">5.3</span> CANN: advantages</a></li>
+  </ul></li>
+  <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion"><span class="header-section-number">6</span> Conclusion</a>
+  <ul class="collapse">
+  <li><a href="#key-takeaways" id="toc-key-takeaways" class="nav-link" data-scroll-target="#key-takeaways"><span class="header-section-number">6.1</span> Key takeaways</a></li>
+  </ul></li>
+  <li><a href="#copyright" id="toc-copyright" class="nav-link" data-scroll-target="#copyright">Copyright</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Lecture 3: Deep Learning: An Overview</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modeling<br>
+Summer School ‘Lifelong Learning’<br>
+Università Cattolica del Sacro Cuore, Milano</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Salvatore Scognamiglio, Marco Maggi, Mario V. Wüthrich, Ronald Richman </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 1, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>This overview lecture motivates deep learning for actuarial science and places it in historical perspective, then presents representation learning as the core machine learning principle: rather than hand-crafting features, the actuary provides raw data to the architecture and lets it learn what to extract. From there it builds the feed-forward neural network as a generalisation of the GLM, surveys convolutional, recurrent and attention-based architectures, and closes on the combined actuarial neural network (CANN), which adds a network correction to a fitted GLM baseline.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Course overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Course overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Today’s overview lecture:</strong></p>
+<ul>
+<li><p>Motivation and historical perspective</p></li>
+<li><p><strong>Representation learning</strong> as the core machine learning (ML) principle</p></li>
+<li><p>Feed-forward neural network (FNN)</p></li>
+<li><p>Combined actuarial neural network (CANN)</p></li>
+<li><p>CNNs, RNNs, Transformers (in brief)</p></li>
+<li><p>Applications and future directions</p></li>
+</ul>
+<p><strong>Subsequent lectures:</strong></p>
+<ul>
+<li><p>Detailed discussion of the FNN architecture</p></li>
+<li><p>Transformers and attention mechanism</p></li>
+<li><p>LocalGLMnet for interpretability</p></li>
+<li><p>Network training, stochastic gradient descent (SGD) under strictly consistent scoring</p></li>
+<li><p>Foundation models</p></li>
+</ul>
+</div>
+</div>
+<section id="motivation-and-historical-perspective" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Motivation and historical perspective</h1>
+<section id="why-deep-learning-in-actuarial-science" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="why-deep-learning-in-actuarial-science"><span class="header-section-number">1.1</span> Why deep learning in actuarial science?</h2>
+<ul>
+<li><p><strong>Traditional actuarial approach:</strong> Manual feature engineering and manual model specification</p></li>
+<li><p><strong>Modern challenges:</strong> High-dimensional data, non-linearities, complex interactions between variables, unstructured data</p></li>
+<li><p><strong>Deep learning promises:</strong> Automated feature learning and universal approximation property</p></li>
+<li><p><strong>Actuarial opportunity:</strong> Better risk assessment, improved predictions, novel data sources, new products</p></li>
+</ul>
+<p><span class="math inline">\(\Longrightarrow\)</span> Deep learning allows the actuary to move from hand-crafted features to machine-learned representations.</p>
+</section>
+<section id="historical-perspective-the-evolution" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="historical-perspective-the-evolution"><span class="header-section-number">1.2</span> Historical perspective: the evolution</h2>
+<ul>
+<li><p><strong>1943</strong>: McCulloch-Pitts formalize the first mathematical model of a neuron (McCulloch &amp; Pitts, 1943).</p></li>
+<li><p><strong>1958</strong>: Perceptrons learn weights from data (Rosenblatt, 1958).</p></li>
+<li><p><strong>1969</strong>: Minsky-Papert highlight perceptron limits and help trigger the first AI winter (Minsky &amp; Papert, 1969).</p></li>
+<li><p><strong>1986</strong>: Back-propagation popularized network training (Rumelhart, Hinton, &amp; Williams, 1986).</p></li>
+<li><p><strong>1989-1991</strong>: Universal approximation theorems for network architectures (Cybenko, 1989; Hornik, 1991).</p></li>
+<li><p><strong>1997-1998</strong>: Long short-term memory (LSTM) model for long-range memory modeling (Hochreiter &amp; Schmidhuber, 1997); LeNet-5 (CNN) for digit recognition (LeCun, Bottou, Bengio, &amp; Haffner, 1998).</p></li>
+<li><p><strong>2012</strong>: AlexNet is a CNN that revolutionized computer vision (Krizhevsky, Sutskever, &amp; Hinton, 2012).</p></li>
+<li><p><strong>2014-2016</strong>: Seq2Seq architectures and residual networks (ResNet) extend depth and stability (Sutskever, Vinyals, &amp; Le, 2014; He, Zhang, Ren, &amp; Sun, 2016).</p></li>
+<li><p><strong>2017</strong>: Transformer architecture and scaled dot-product attention layers boost large language models (LLMs) (Vaswani et al., 2017).</p></li>
+</ul>
+<p>The Transformer architecture started off as a clever way to perform Seq2Seq forecast tasks. Decomposing it into an <strong>encoder</strong> and a <strong>decoder</strong> module has led to the standard generative pre-trained Transformer (GPT) architectures within LLMs.</p>
+<ul>
+<li><p><strong>2018+</strong>: Deep learning enters actuarial practice.</p></li>
+<li><p><strong>2020-2022</strong>: Foundation Models as a new modeling paradigm:</p>
+<ul>
+<li><p>GPT-3+: few-shot generalization to new problems (Brown et al., 2020).</p></li>
+<li><p>BERT: CLS token encoding (Devlin, Chang, Lee, &amp; Toutanova, 2018).</p></li>
+<li><p>Foundation Model framing (Bommasani et al., 2021).</p></li>
+<li><p>Instruction following with human feedback (Ouyang et al., 2022).</p></li>
+</ul></li>
+<li><p><strong>2022+</strong>: Reasoning-focused training, prompting and RAG:</p>
+<ul>
+<li><p>Chain-of-thought (CoT), retrieval augmented generation (RAG) (Wei et al., 2022; Kojima, Gu, Reid, Matsuo, &amp; Iwasawa, 2022).</p></li>
+<li><p>Self-consistency (multiple trials) improves multi-step reasoning (Wang et al., 2022).</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="scaling-laws" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="scaling-laws"><span class="header-section-number">1.3</span> Scaling laws</h2>
+<p><strong>Key insight:</strong> Compute (GPUs/TPUs) <span class="math inline">\(+\)</span> data <span class="math inline">\(+\)</span> depth <span class="math inline">\(\to\)</span> predictable scaling laws. Compute-optimal training guides model and dataset sizing having a joint power law (Kaplan et al., 2020; Hoffmann et al., 2022).</p>
+<div id="fig-scaling-laws" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scaling-laws-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-scaling-laws.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scaling-laws-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Language modeling performance improves smoothly as we increase the model size, dataset size, and amount of compute used for training. For optimal performance all three factors must be scaled up in tandem. Empirical performance has a power-law relationship with each individual factor when not bottlenecked by the other two.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="deep-learning-works" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="deep-learning-works"><span class="header-section-number">1.4</span> Deep learning works!</h2>
+<div id="fig-intelligence-age" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-intelligence-age-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-intelligence-age.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-intelligence-age-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: The Intelligence Age, 23 September 2024.
+</figcaption>
+</figure>
+</div>
+<p>The Intelligence Age is a transformative era where AI shifts from being a basic tool to foundational societal infrastructure (Sam Altman).</p>
+</section>
+</section>
+<section id="representation-learning-the-core-ml-principle" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Representation learning: the core ML principle</h1>
+<section id="the-feature-engineering-problem" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="the-feature-engineering-problem"><span class="header-section-number">2.1</span> The feature engineering problem</h2>
+<p><strong>Traditional Actuarial Approach:</strong></p>
+<ul>
+<li><p>Manual variable selection</p></li>
+<li><p>Domain expertise required</p></li>
+<li><p>Interactions specified manually</p></li>
+<li><p>Time-consuming process</p></li>
+</ul>
+<p><strong>Example:</strong> Motor insurance pricing:</p>
+<ul>
+<li><p>Must decide: include Age and Age<span class="math inline">\(^2\)</span>? Age <span class="math inline">\(\times\)</span> Region? Etc.</p></li>
+<li><p>Hundreds of possible interactions</p></li>
+</ul>
+<p><strong>The Curse of Dimensionality:</strong></p>
+<ul>
+<li><p>Increasing feature sets</p></li>
+<li><p>Telematics data: 1000s of variables</p></li>
+<li><p>High-frequency data</p></li>
+<li><p>Text data: unstructured</p></li>
+<li><p>Images: pixel-level data</p></li>
+<li><p>Time series: temporal dependencies</p></li>
+</ul>
+<p><span class="math inline">\(\Longrightarrow\)</span> <em>Manual feature engineering becomes infeasible!</em></p>
+</section>
+<section id="representation-learning-automated-feature-construction" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="representation-learning-automated-feature-construction"><span class="header-section-number">2.2</span> Representation learning: automated feature construction</h2>
+<ul>
+<li><p><strong>Problem:</strong> Learn data transformations that make it easier to extract useful information for predictive modeling</p></li>
+<li><p><strong>Key idea:</strong> Let the model discover the features</p></li>
+<li><p><strong>Traditional examples:</strong> Principal component analysis (PCA) and partial least squares (PLS) method</p></li>
+<li><p><strong>Deep learning approach:</strong> Hierarchical feature learning (layer by layer)</p></li>
+</ul>
+</section>
+<section id="fashion-mnist-example-dataset-overview" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="fashion-mnist-example-dataset-overview"><span class="header-section-number">2.3</span> Fashion-MNIST example: dataset overview</h2>
+<ul>
+<li><p>Fashion-MNIST dataset contains 70,000 grayscale images (28x28 pixels) of clothing items. MNIST stands for Modified National Institute of Standards and Technology.</p></li>
+<li><p>Task: Classify the type of clothing.</p></li>
+<li><p>Ideal for comparing representation learning approaches.</p></li>
+</ul>
+<div id="fig-fashion-mnist" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-fashion-mnist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-fashion-mnist-samples.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-fashion-mnist-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Sample images from the Fashion-MNIST dataset, with their class labels.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="fashion-mnist-example-traditional-pca-results" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="fashion-mnist-example-traditional-pca-results"><span class="header-section-number">2.4</span> Fashion-MNIST example: traditional PCA results</h2>
+<ul>
+<li>Direct PCA does not show much differentiation between classes.</li>
+</ul>
+<div id="fig-mnist-pca" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mnist-pca-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-fashion-mnist-pca.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mnist-pca-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: PCA decomposition of the Fashion-MNIST images, coloured by class.
+</figcaption>
+</figure>
+</div>
+<ul>
+<li><p>Often, linear methods fail to capture the patterns in image data.</p></li>
+<li><p>Manual feature engineering would be required to improve performance.</p></li>
+</ul>
+</section>
+<section id="representation-learning" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="representation-learning"><span class="header-section-number">2.5</span> Representation learning</h2>
+<ul>
+<li><p><strong>Representation Learning</strong> is an ML technique where algorithms automatically design features that are optimal for a particular task.</p></li>
+<li><p>The feature space then comprises the learned features which can be fed into a DL model.</p></li>
+<li><p>BUT: Simple representation learning approaches often fail when applied to high dimensional data.</p></li>
+</ul>
+<p><strong>Representation learning at a glance:</strong> Given inputs <span class="math inline">\(\boldsymbol{X} \in \mathbb{R}^q\)</span> and a response <span class="math inline">\(Y\)</span>, learn a mapping <span class="math inline">\(\phi : \mathbb{R}^q \to \mathbb{R}^p\)</span> with <span class="math inline">\(p \ll q\)</span> so that simple predictors on <span class="math inline">\(\boldsymbol{Z} = \phi(\boldsymbol{X})\)</span> perform well (Bengio, Courville, &amp; Vincent, 2013).</p>
+</section>
+<section id="deep-learning" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="deep-learning"><span class="header-section-number">2.6</span> Deep learning</h2>
+<ul>
+<li><p><strong>Deep Learning</strong> is a representation learning technique that automatically constructs hierarchies of complex features (layer by layer) to represent abstract concepts.</p></li>
+<li><p>Features in higher layers (closer to outputs) are composed of simpler features from lower layers (closer to inputs).</p></li>
+<li><p>A typical example is a feed-forward neural network (FNN).</p></li>
+<li><p><strong>The principle:</strong> Provide raw data to the DL architecture and let it figure out what and how to learn (by a suitable training algorithm).</p></li>
+</ul>
+</section>
+<section id="fashion-mnist-example-deep-learning-solution" class="level2" data-number="2.7">
+<h2 data-number="2.7" class="anchored" data-anchor-id="fashion-mnist-example-deep-learning-solution"><span class="header-section-number">2.7</span> Fashion-MNIST example: deep learning solution</h2>
+<ul>
+<li><p>Apply a deep autoencoder (a type of non-linear PCA) to the same data.</p></li>
+<li><p>Differences between some types of clothing are now much more clearly emphasized.</p></li>
+<li><p>The deep representation automatically captures meaningful differences between the images without much human input.</p></li>
+<li><p>This is an example of automated feature engineering.</p></li>
+<li><p>In contrast to the PCA, it considers non-linear transformations of the inputs.</p></li>
+</ul>
+<div id="fig-mnist-autoencoder" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-mnist-autoencoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-fashion-mnist-autoencoder.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-mnist-autoencoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Autoencoder decomposition of the Fashion-MNIST images, coloured by class.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="from-representation-to-prediction" class="level2" data-number="2.8">
+<h2 data-number="2.8" class="anchored" data-anchor-id="from-representation-to-prediction"><span class="header-section-number">2.8</span> From representation to prediction</h2>
+<ul>
+<li><p><strong>Step 1:</strong> Deep sequential layers learn representations</p></li>
+<li><p><strong>Step 2:</strong> Final layer performs prediction using the learned features</p></li>
+<li><p><strong>Key insight:</strong> Deep network <span class="math inline">\(=\)</span> Feature extractor <span class="math inline">\(+\)</span> Predictor</p></li>
+</ul>
+<div id="fig-rep-to-pred" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rep-to-pred-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-representation-to-prediction.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rep-to-pred-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: The deep layers map the input to a learned representation, and the final layer maps that representation to the output.
+</figcaption>
+</figure>
+</div>
+<ul>
+<li><strong>Paradigm:</strong> Deep network <span class="math inline">\(=\)</span> Encoder <span class="math inline">\(+\)</span> Decoder modules</li>
+</ul>
+</section>
+<section id="why-depth-is-important" class="level2" data-number="2.9">
+<h2 data-number="2.9" class="anchored" data-anchor-id="why-depth-is-important"><span class="header-section-number">2.9</span> Why depth is important</h2>
+<ul>
+<li><p>Depth in neural networks refers to the number of sequential layers, allowing for hierarchical feature construction.</p></li>
+<li><p>Shallow networks only allow for modeling (simple) direct relationships between inputs and outputs. Approximating more complex ones requires very wide shallow networks.</p></li>
+<li><p>Deeper layers build upon lower-level features: early layers detect basic patterns (e.g., edges in images), while deeper layers combine them into complex abstractions (e.g., objects or concepts).</p></li>
+<li><p>This hierarchy enables the network to capture intricate, non-linear interactions and dependencies in data that would require exponentially more parameters in a shallow model. Intuitively, this is similar to approximating a diagonal line by a step function.</p></li>
+<li><p>Theoretical support: Deep networks can approximate complex functions more efficiently than shallow ones (universal approximation theorem extensions).</p></li>
+</ul>
+<div id="fig-cnn-layers-12" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cnn-layers-12-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-cnn-layers-1-2.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cnn-layers-12-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: Visualization of layers 1 and 2 of a CNN (Zeiler &amp; Fergus, 2014).
+</figcaption>
+</figure>
+</div>
+<div id="fig-cnn-layer-5" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cnn-layer-5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-cnn-layer-5.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cnn-layer-5-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;8: Visualization of layer 5 of a CNN (Zeiler &amp; Fergus, 2014).
+</figcaption>
+</figure>
+</div>
+</section>
+</section>
+<section id="feed-forward-neural-networks" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Feed-forward neural networks</h1>
+<section id="single-layer-fnn-glm" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="single-layer-fnn-glm"><span class="header-section-number">3.1</span> Single layer FNN <span class="math inline">\(=\)</span> GLM</h2>
+<ul>
+<li><p><strong>Single layer network</strong></p></li>
+<li><p>Circles <span class="math inline">\(=\)</span> input/output variables</p></li>
+<li><p>Lines <span class="math inline">\(=\)</span> connections (left to right)</p></li>
+<li><p>The input layer holds the input variables (covariates)…</p></li>
+<li><p>…which are multiplied by weights (coefficients) to get the result (output/prediction). This may involve an additional link (activation) function.</p></li>
+<li><p>A single layer neural network is a generalized linear model (GLM)!</p></li>
+</ul>
+<div id="fig-single-layer" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-single-layer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-single-layer-fnn.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-single-layer-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;9: A single layer network: the input layer in <span class="math inline">\(\mathbb{R}^8\)</span> feeding one output neuron.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="deep-feed-forward-neural-network" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="deep-feed-forward-neural-network"><span class="header-section-number">3.2</span> Deep feed-forward neural network</h2>
+<ul>
+<li><p><strong>Deep</strong> <span class="math inline">\(=\)</span> multiple sequential layers</p></li>
+<li><p><strong>Feed-forward</strong> <span class="math inline">\(=\)</span> data/signals travel from left to right</p></li>
+<li><p>More complicated (hierarchical) representations of the input data are learned in the hidden layers.</p></li>
+<li><p>This involves non-linear activations in each neuron.</p></li>
+<li><p>The weights are trained to extract the relevant information for the predictive problem at hand.</p></li>
+</ul>
+<div id="fig-deep-fnn" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-deep-fnn-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-deep-fnn.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-deep-fnn-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;10: A deep feed-forward network: input layer, two hidden layers, and the output layer.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="fnn-generalizes-glm" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="fnn-generalizes-glm"><span class="header-section-number">3.3</span> FNN generalizes GLM</h2>
+<ul>
+<li><p>Intermediate layers perform representation learning.</p></li>
+<li><p>The last layer is a (generalized) linear model, with input variables being the new representation of the data.</p></li>
+<li><p>One can strip off the last layer and use the learned features in other models, like XGBoost.</p></li>
+</ul>
+<div id="fig-fnn-glm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-fnn-glm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-fnn-generalises-glm.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-fnn-glm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;11: The hidden layers act as a feature extractor, and the last layer is a linear model on the learned features.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="mathematical-formulation-in-brief" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="mathematical-formulation-in-brief"><span class="header-section-number">3.4</span> Mathematical formulation, in brief</h2>
+<p><strong>Notation:</strong></p>
+<ul>
+<li><p>Input variable: <span class="math inline">\(\boldsymbol{X} \in \mathbb{R}^{q_0}\)</span></p></li>
+<li><p>Depth: <span class="math inline">\(d \in \mathbb{N}\)</span></p></li>
+<li><p>Hidden layers: <span class="math inline">\(m = 1, \ldots, d\)</span> with <span class="math inline">\(q_m\)</span> neurons each</p></li>
+<li><p>Hidden layer <span class="math inline">\(m\)</span> transformation: <span class="math inline">\(\boldsymbol{z}^{(m)} : \mathbb{R}^{q_{m-1}} \to \mathbb{R}^{q_m}\)</span></p></li>
+<li><p>Composition of hidden layers: <span class="math inline">\(\boldsymbol{z}^{(d:1)} = \boldsymbol{z}^{(d)} \circ \cdots \circ \boldsymbol{z}^{(1)}\)</span></p></li>
+</ul>
+<p><strong>FNN regression function:</strong> <span class="math display">\[\boldsymbol{X} ~\mapsto~ \mu_\vartheta(\boldsymbol{X}) = g^{-1} \left( w^{(d+1)}_0 + \langle \boldsymbol{w}^{(d+1)}, \boldsymbol{z}^{(d:1)}(\boldsymbol{X}) \rangle \right),\]</span> with inverse link <span class="math inline">\(g^{-1}\)</span> and where <span class="math inline">\(\vartheta\)</span> contains all network parameters.</p>
+</section>
+<section id="pre--and-post-activation-in-fnns" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="pre--and-post-activation-in-fnns"><span class="header-section-number">3.5</span> Pre- and post-activation in FNNs</h2>
+<ul>
+<li><p><strong>Pre-activation:</strong> In each layer of a FNN, the inputs are multiplied by the layer’s weights and added to biases (linear regression) <span class="math display">\[\boldsymbol{w}^{(m)}_0 + W^{(m)} \boldsymbol{x} \in \mathbb{R}^{q_m},\]</span> where <span class="math inline">\(\boldsymbol{x} \in \mathbb{R}^{q_{m-1}}\)</span> is the input, <span class="math inline">\(W^{(m)} \in \mathbb{R}^{q_m \times q_{m-1}}\)</span> are the weights, and <span class="math inline">\(\boldsymbol{w}^{(m)}_0 \in \mathbb{R}^{q_m}\)</span> is the bias parameter of the <span class="math inline">\(m\)</span>-th layer.</p></li>
+<li><p><strong>Post-activation:</strong> Select a non-linear activation function <span class="math inline">\(\phi\)</span> <span class="math display">\[\boldsymbol{x} ~\mapsto~ \boldsymbol{z}^{(m)}(\boldsymbol{x}) = \phi \left( \boldsymbol{w}^{(m)}_0 + W^{(m)} \boldsymbol{x} \right) \in \mathbb{R}^{q_m},\]</span> this is understood component-wise <span class="math inline">\(\Longrightarrow\)</span> each neuron is a GLM.</p></li>
+<li><p>The activation introduces non-linearity, enabling the network to model complex patterns. Without it, the network would behave like a single linear model regardless of depth.</p></li>
+</ul>
+</section>
+</section>
+<section id="advanced-architectures-a-deep-dive" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Advanced architectures: a deep dive</h1>
+<section id="from-vectors-to-tensors" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="from-vectors-to-tensors"><span class="header-section-number">4.1</span> From vectors to tensors</h2>
+<p><strong>Traditional tabular data:</strong> Inputs <span class="math inline">\(\boldsymbol{X} \in \mathbb{R}^q\)</span> are vectors (1D tensor)</p>
+<p><strong>Extended tensor structures (time-causal/spatial structure):</strong></p>
+<ul>
+<li><p>Time series data: <span class="math inline">\(\boldsymbol{X}_{1:t} \in \mathbb{R}^{t \times q}\)</span> (2D tensor)</p></li>
+<li><p>Images: <span class="math inline">\(\boldsymbol{X}_{1:t, 1:s} \in \mathbb{R}^{t \times s \times 3}\)</span> (3D tensor with three color channels RGB)</p></li>
+<li><p>[Panel data: Multiple instances over time]</p></li>
+</ul>
+<p><strong>Key challenge:</strong> How to design architectures that respect such structure?</p>
+<ul>
+<li><p>FNNs: Ignore temporal/spatial structure</p></li>
+<li><p>CNNs: Exploit local patterns via convolutions (1D or 2D CNNs)</p></li>
+<li><p>RNNs: Capture sequential/temporal dependencies</p></li>
+</ul>
+</section>
+<section id="convolutional-neural-networks-a-motivation" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="convolutional-neural-networks-a-motivation"><span class="header-section-number">4.2</span> Convolutional neural networks: a motivation</h2>
+<p><strong>Problem with FNNs for spatial/temporal data:</strong></p>
+<ul>
+<li><p>Full connectivity: Every input connects to every neuron</p></li>
+<li><p>Parameter explosion: Image <span class="math inline">\(100 \times 100 \times 3 \to 30{,}000\)</span> inputs!</p></li>
+<li><p>No spatial awareness: Adjacent pixels are treated independently</p></li>
+</ul>
+<p><strong>CNN solution</strong> (LeCun et al., 1998):</p>
+<ul>
+<li><p><strong>Local connectivity:</strong> Neurons only connect to small regions (receptive fields), think of a window</p></li>
+<li><p><strong>Parameter sharing:</strong> Same filter is applied across all positions, think of a rolling window (extracting local structure)</p></li>
+<li><p><strong>Hierarchical learning:</strong> Low-level <span class="math inline">\(\to\)</span> High-level features</p></li>
+</ul>
+<div id="fig-cnn-convolution" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cnn-convolution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-cnn-convolution.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cnn-convolution-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;12: A filter is convolved across the data matrix to produce the feature map.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="d-cnn-mathematical-formulation" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="d-cnn-mathematical-formulation"><span class="header-section-number">4.3</span> 1D CNN: mathematical formulation</h2>
+<p><strong>Input:</strong> Sequential data <span class="math inline">\(\boldsymbol{X}_{1:t} \in \mathbb{R}^{t \times q}\)</span></p>
+<p><strong>1D CNN layer with <span class="math inline">\(q_1\)</span> filters (window parameter sets):</strong> <span class="math display">\[\boldsymbol{z}^{(1)} : \mathbb{R}^{t \times q} \to \mathbb{R}^{t' \times q_1}\]</span> where <span class="math inline">\(t' = \lfloor t - K + 1 \rfloor\)</span>, the number of “convolutions” from the rolling window.</p>
+<p><strong>Finite range convolution</strong> (we could use the <span class="math inline">\(*\)</span>-symbol): <span class="math display">\[z^{(1)}_{u,j} = \phi \left( w^{(1)}_{0,j} + \sum_{k=1}^K \langle \boldsymbol{w}^{(1)}_{k,j}, \boldsymbol{X}_{u-1+k} \rangle \right),\]</span></p>
+<ul>
+<li><p><span class="math inline">\(K\)</span>: Kernel size (window size)</p></li>
+<li><p><span class="math inline">\((\boldsymbol{w}^{(1)}_{k,j})_{k=1}^K \in \mathbb{R}^{K \times q}\)</span>: Filter weights of the <span class="math inline">\(j\)</span>-th convolution, <span class="math inline">\(1 \leq j \leq q_1\)</span></p></li>
+</ul>
+</section>
+<section id="d-cnn-intuition-and-2d-cnn-adaption" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="d-cnn-intuition-and-2d-cnn-adaption"><span class="header-section-number">4.4</span> 1D CNN intuition and 2D CNN adaption</h2>
+<ul>
+<li><p>Algebraically, the 1D CNN architecture has a very similar structure as a FNN, only the scalar product is replaced by a convolutional operation (that acts locally respecting sequential structure).</p></li>
+<li><p>1D CNNs can be composed to a deep 1D CNN architecture.</p></li>
+<li><p>To reduce the dimension, often a deep 1D CNN architecture is followed by a pooling layer, which then constitutes the encoder/feature extractor.</p></li>
+<li><p>A subsequent GLM/FNN decoder maps to the output.</p></li>
+<li><p>There is the obvious 2D CNN extension by having a rolling window across two dimensions to process spatial data such as images.</p></li>
+</ul>
+</section>
+<section id="recurrent-neural-networks-sequential-memory" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="recurrent-neural-networks-sequential-memory"><span class="header-section-number">4.5</span> Recurrent neural networks: sequential memory</h2>
+<p><strong>Motivation:</strong> Process sequences of variable length with memory (construction of filtration that models the relevant information process)</p>
+<p><strong>Recurrent update at time <span class="math inline">\(u\)</span>:</strong> <span class="math display">\[z^{(1)}_{u,j} = \phi \left( w^{(1)}_{0,j} + \langle \boldsymbol{w}^{(1)}_j, \boldsymbol{X}_u \rangle + \langle \boldsymbol{v}^{(1)}_j, \boldsymbol{z}^{(1)}_{u-1} \rangle \right) \qquad \text{for } 1 \leq j \leq q_1,\]</span></p>
+<ul>
+<li><p><span class="math inline">\(\boldsymbol{X}_u \in \mathbb{R}^q\)</span>: Current input at time <span class="math inline">\(u\)</span></p></li>
+<li><p><span class="math inline">\(\boldsymbol{z}^{(1)}_{u-1} \in \mathbb{R}^{q_1}\)</span>: Previous hidden state (memory) from times <span class="math inline">\(\leq u-1\)</span></p></li>
+<li><p>Parameters: <span class="math inline">\(q_1(1 + q + q_1)\)</span> (shared across time)</p></li>
+</ul>
+<p><strong>Key insight:</strong> Same as FNN but with recurrent connection <span class="math inline">\(\boldsymbol{z}^{(1)}_{u-1} \mapsto \boldsymbol{z}^{(1)}_u\)</span></p>
+<div id="fig-rnn" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-rnn-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-rnn-diagram.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-rnn-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;13: The recurrent network in folded and unfolded form. Arrows indicate the direction in which data flows.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="lstm-architecture-diagram" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="lstm-architecture-diagram"><span class="header-section-number">4.6</span> LSTM architecture diagram</h2>
+<p>LSTM architecture is a specialized RNN that allows for long-range dependence by using different “gates” (Hochreiter &amp; Schmidhuber, 1997).</p>
+<div id="fig-lstm" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-lstm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-lstm-cell.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-lstm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;14: LSTM cell structure showing gates and information flow (Zhang, Lipton, Li, &amp; Smola, 2023).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="gru-architecture-diagram" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="gru-architecture-diagram"><span class="header-section-number">4.7</span> GRU architecture diagram</h2>
+<p>GRU is a simplified LSTM alternative that uses less gates and parameters (Cho, van Merriënboer, Bahdanau, &amp; Bengio, 2014).</p>
+<div id="fig-gru" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-gru-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-gru-cell.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-gru-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;15: GRU cell structure showing gates and information flow (Zhang et al., 2023).
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="cnn-vs.-rnn-when-to-use-which" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="cnn-vs.-rnn-when-to-use-which"><span class="header-section-number">4.8</span> CNN vs.&nbsp;RNN: when to use which?</h2>
+<p><strong>Use CNNs when:</strong></p>
+<ul>
+<li><p>Local patterns matter</p></li>
+<li><p>Translation invariance needed</p></li>
+<li><p>Spatial/grid structure exists</p></li>
+<li><p>Parallel processing required</p></li>
+</ul>
+<p><strong>Examples:</strong> Telematics data heatmaps; Geographic risk maps; Fixed-size triangles</p>
+<p><strong>Use RNNs when:</strong></p>
+<ul>
+<li><p>Sequential order crucial</p></li>
+<li><p>Variable lengths common (non-time-distributed output)</p></li>
+<li><p>Long-term dependencies</p></li>
+<li><p>Temporal causality important</p></li>
+</ul>
+<p><strong>Examples:</strong> Policy history modeling; Text processing (claims); Time series forecasting</p>
+<p><em>Hybrid approaches: CNN for feature extraction <span class="math inline">\(\to\)</span> RNN for sequences</em></p>
+</section>
+<section id="embedding-layer-categorical-covariates" class="level2" data-number="4.9">
+<h2 data-number="4.9" class="anchored" data-anchor-id="embedding-layer-categorical-covariates"><span class="header-section-number">4.9</span> Embedding layer, categorical covariates</h2>
+<ul>
+<li><p>One-hot encoding expresses the prior that categories are orthogonal.</p></li>
+<li><p>The traditional actuarial solution is Bühlmann credibility.</p></li>
+<li><p><strong>Embedding layer idea:</strong> Related categories should cluster together.</p>
+<ul>
+<li><p>It learns a dense vector transformation of sparse input vectors and clusters similar categories.</p></li>
+<li><p>Can be regularized by variational inference to receive credible embeddings (Richman &amp; Wüthrich, 2024), especially for high-cardinality categorical covariates, e.g., car models or job profiles</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="autoencoder-unsupervised-learning" class="level2" data-number="4.10">
+<h2 data-number="4.10" class="anchored" data-anchor-id="autoencoder-unsupervised-learning"><span class="header-section-number">4.10</span> Autoencoder, unsupervised learning</h2>
+<ul>
+<li><p>An autoencoder is a network trained to produce an output similar to its input.</p></li>
+<li><p>A “bottleneck” in the middle restricts the dimension of the encoded data.</p></li>
+<li><p>It performs a type of non-linear PCA (without orthonormality constraints).</p></li>
+<li><p>The bottleneck layer expresses the prior that the data can be summarized in only a few dimensions (low-dimensional manifold).</p></li>
+</ul>
+<div id="fig-autoencoder" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-autoencoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-autoencoder.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-autoencoder-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;16: An autoencoder: the bottleneck in the middle restricts the dimension of the encoded data.
+</figcaption>
+</figure>
+</div>
+</section>
+<section id="transformers-and-attention-vaswani-et-al.-2017" class="level2" data-number="4.11">
+<h2 data-number="4.11" class="anchored" data-anchor-id="transformers-and-attention-vaswani-et-al.-2017"><span class="header-section-number">4.11</span> Transformers and attention, Vaswani et al.&nbsp;(2017)</h2>
+<p><strong>Key idea:</strong> Attention mechanism, giving “contextualized embeddings”</p>
+<p><strong>Self-attention formula:</strong> <span class="math display">\[\mathrm{Attention}(Q, K, V) = \mathrm{softmax}\left( \frac{QK^\top}{\sqrt{d}} \right) V,\]</span> where <span class="math inline">\(Q\)</span>, <span class="math inline">\(K\)</span>, <span class="math inline">\(V\)</span> are query, key, value matrices (to communicate with surrounding).</p>
+<p><strong>Advantages:</strong></p>
+<ul>
+<li><p>Parallel processing (unlike RNNs) <span class="math inline">\(=\)</span> efficient computation on GPUs</p></li>
+<li><p>Long-range dependencies</p></li>
+<li><p>Somewhat interpretable attention weights</p></li>
+</ul>
+<p><span class="math inline">\(\Longrightarrow\)</span> <em>Full coverage in dedicated Transformer lecture</em></p>
+</section>
+<section id="localglmnet-interpretability-focus" class="level2" data-number="4.12">
+<h2 data-number="4.12" class="anchored" data-anchor-id="localglmnet-interpretability-focus"><span class="header-section-number">4.12</span> LocalGLMnet: interpretability focus</h2>
+<p><strong>Key idea:</strong> Locally linear models</p>
+<p><strong>Architecture</strong> (Richman &amp; Wüthrich, 2023):</p>
+<ul>
+<li><p>Neural network learns coefficients of local GLMs</p></li>
+<li><p>Each combination of covariates receives its own GLM (parameter)</p></li>
+<li><p>Predicions made as sum over <span class="math inline">\(w_j(\boldsymbol{X}) X_j\)</span></p></li>
+</ul>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li><p>Interpretability for predictions</p></li>
+<li><p>Captures heterogeneity</p></li>
+<li><p>More regulatory compliance friendly than FNNs</p></li>
+</ul>
+<p><span class="math inline">\(\Longrightarrow\)</span> <em>Detailed treatment in LocalGLMnet lecture</em></p>
+</section>
+</section>
+<section id="combined-actuarial-neural-network-cann" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Combined actuarial neural network (CANN)</h1>
+<section id="cann-bridging-classical-and-modern-modeling" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="cann-bridging-classical-and-modern-modeling"><span class="header-section-number">5.1</span> CANN: bridging classical and modern modeling</h2>
+<p><strong>Motivation:</strong></p>
+<ul>
+<li><p>GLMs are interpretable but may miss complex patterns</p></li>
+<li><p>Deep networks are powerful but less interpretable</p></li>
+<li><p>Can we combine the two worlds?</p></li>
+</ul>
+<p><strong>CANN Architecture</strong> (Wüthrich &amp; Merz, 2019): <span class="math display">\[\mu^{\rm CANN}(\boldsymbol{X}) = g^{-1} \left( \underbrace{\langle \widehat{\vartheta}^{\,\rm MLE}, \boldsymbol{X} \rangle}_{\text{GLM baseline}} + \underbrace{\langle \boldsymbol{w}^{(d+1)}, \boldsymbol{z}^{(d:1)}(\boldsymbol{X}) \rangle}_{\text{Network correction}} \right).\]</span></p>
+</section>
+<section id="cann-implementation-details" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="cann-implementation-details"><span class="header-section-number">5.2</span> CANN: implementation details</h2>
+<div id="fig-cann" class="quarto-float quarto-figure quarto-figure-center anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-cann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="figures-reconstructed/lecture03-cann-implementation.png" class="img-fluid figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-cann-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;17: The GLM is fitted first and frozen; the FNN then learns the residual correction, and the two are summed before the inverse link.
+</figcaption>
+</figure>
+</div>
+<p><strong>2-step training procedure:</strong></p>
+<ol type="1">
+<li><p>Fit GLM using MLE, and freeze parameters <span class="math inline">\(\widehat{\vartheta}^{\,\rm MLE}\)</span></p></li>
+<li><p>Train FNN to learn residual patterns (corrections to GLM predictions)</p></li>
+</ol>
+</section>
+<section id="cann-advantages" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="cann-advantages"><span class="header-section-number">5.3</span> CANN: advantages</h2>
+<ul>
+<li><p><strong>Interpretability:</strong> GLM component provides baseline understanding</p></li>
+<li><p><strong>Performance:</strong> FNN captures non-linear patterns and interactions</p></li>
+<li><p><strong>Stability:</strong> GLM ensures reasonable predictions even if FNN fails</p></li>
+<li><p><strong>Diagnostic:</strong> FNN contribution shows where GLM is insufficient</p></li>
+</ul>
+<p><strong>Connection to ResNet</strong> (He et al., 2016):</p>
+<ul>
+<li><p>First term: residual/skip connection (input <span class="math inline">\(\boldsymbol{X}\)</span> maps directly to output)</p></li>
+<li><p>Second term: classic FNN architecture for non-linear corrections</p></li>
+<li><p>Interpretation: Linear GLM term <span class="math inline">\(+\)</span> non-linear FNN for interactions not captured by GLM</p></li>
+</ul>
+</section>
+</section>
+<section id="conclusion" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Conclusion</h1>
+<section id="key-takeaways" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="key-takeaways"><span class="header-section-number">6.1</span> Key takeaways</h2>
+<ul>
+<li><p><strong>Core principle:</strong> Representation learning automates feature engineering</p></li>
+<li><p><strong>Mathematical foundation:</strong> FNNs generalize GLMs through composition of non-linear functions consisting of (GLM) neurons</p></li>
+<li><p><strong>Advanced architectures:</strong> CNNs, RNNs, Transformers for specific data types (temporal and spatial data)</p></li>
+<li><p><strong>Practical approach:</strong> CANN and LocalGLMnet bridge traditional and modern methods being attractive for actuarial modeling</p></li>
+</ul>
+</section>
+</section>
+<section id="copyright" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright</h1>
+<ul>
+<li><p>© The Authors</p></li>
+<li><p>This notebook and these slides are part of the project “AI Tools for Actuaries”. The lecture notes can be downloaded from:</p></li>
+</ul>
+<p><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a></p>
+<p><span class="math inline">\(\,\)</span></p>
+<ul>
+<li>This material is provided to reusers to distribute, remix, adapt, and build upon the material in any medium or format for noncommercial purposes only, and only so long as attribution and credit is given to the original authors and source, and if you indicate if changes were made. This aligns with the Creative Commons Attribution 4.0 International License CC BY-NC.</li>
+</ul>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<div id="refs" class="references csl-bib-body" role="list">
+<div class="csl-entry" role="listitem">
+Bengio, Y., Courville, A., &amp; Vincent, P. (2013). Representation learning: A review and new perspectives. <em>IEEE Transactions on Pattern Analysis and Machine Intelligence</em>, <em>35</em>(8), 1798–1828.
+</div>
+<div class="csl-entry" role="listitem">
+Bommasani, R., Hudson, D. A., Adeli, E., Altman, R., Arora, S., von Arx, S., … others (2021). On the opportunities and risks of foundation models. <em>arXiv preprint arXiv:2108.07258</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Brown, T., Mann, B., Ryder, N., Subbiah, M., Kaplan, J. D., Dhariwal, P., … others (2020). Language models are few-shot learners. <em>Advances in Neural Information Processing Systems</em>, <em>33</em>, 1877–1901.
+</div>
+<div class="csl-entry" role="listitem">
+Cho, K., van Merriënboer, B., Bahdanau, D., &amp; Bengio, Y. (2014). Learning phrase representations using rnn encoder-decoder for statistical machine translation. <em>arXiv preprint arXiv:1406.1078</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Cybenko, G. (1989). Approximation by superpositions of a sigmoidal function. <em>Mathematics of Control, Signals and Systems</em>, <em>2</em>(4), 303–314.
+</div>
+<div class="csl-entry" role="listitem">
+Devlin, J., Chang, M.-W., Lee, K., &amp; Toutanova, K. (2018). Bert: Pre-training of deep bidirectional transformers for language understanding. <em>arXiv preprint arXiv:1810.04805</em>.
+</div>
+<div class="csl-entry" role="listitem">
+He, K., Zhang, X., Ren, S., &amp; Sun, J. (2016). Deep residual learning for image recognition. In <em>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition</em> (pp.&nbsp;770–778).
+</div>
+<div class="csl-entry" role="listitem">
+Hinton, G. E., Osindero, S., &amp; Teh, Y.-W. (2006). A fast learning algorithm for deep belief nets. <em>Neural Computation</em>, <em>18</em>(7), 1527–1554.
+</div>
+<div class="csl-entry" role="listitem">
+Hochreiter, S., &amp; Schmidhuber, J. (1997). Long short-term memory. <em>Neural Computation</em>, <em>9</em>(8), 1735–1780.
+</div>
+<div class="csl-entry" role="listitem">
+Hoffmann, J., Borgeaud, S., Mensch, A., Buchatskaya, E., Cai, T., Rutherford, E., … others (2022). Training compute-optimal large language models. <em>arXiv preprint arXiv:2203.15556</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Hornik, K. (1991). Approximation capabilities of multilayer feedforward networks. <em>Neural Networks</em>, <em>4</em>(2), 251–257.
+</div>
+<div class="csl-entry" role="listitem">
+Kaplan, J., McCandlish, S., Henighan, T., Brown, T. B., Chess, B., Child, R., … Amodei, D. (2020). Scaling laws for neural language models. <em>arXiv preprint arXiv:2001.08361</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Kojima, T., Gu, S. S., Reid, M., Matsuo, Y., &amp; Iwasawa, Y. (2022). Large language models are zero-shot reasoners. <em>Advances in Neural Information Processing Systems</em>, <em>35</em>, 22199–22213.
+</div>
+<div class="csl-entry" role="listitem">
+Krizhevsky, A., Sutskever, I., &amp; Hinton, G. E. (2012). Imagenet classification with deep convolutional neural networks. <em>Advances in Neural Information Processing Systems</em>, <em>25</em>, 1097–1105.
+</div>
+<div class="csl-entry" role="listitem">
+LeCun, Y., Bottou, L., Bengio, Y., &amp; Haffner, P. (1998). Gradient-based learning applied to document recognition. <em>Proceedings of the IEEE</em>, <em>86</em>(11), 2278–2324.
+</div>
+<div class="csl-entry" role="listitem">
+McCulloch, W. S., &amp; Pitts, W. (1943). A logical calculus of the ideas immanent in nervous activity. <em>The Bulletin of Mathematical Biophysics</em>, <em>5</em>(4), 115–133.
+</div>
+<div class="csl-entry" role="listitem">
+Minsky, M., &amp; Papert, S. (1969). <em>Perceptrons: An introduction to computational geometry</em>. MIT Press.
+</div>
+<div class="csl-entry" role="listitem">
+Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C., Mishkin, P., … others (2022). Training language models to follow instructions with human feedback. <em>Advances in Neural Information Processing Systems</em>, <em>35</em>, 27730–27744.
+</div>
+<div class="csl-entry" role="listitem">
+Richman, R., &amp; Wüthrich, M. V. (2023). LocalGLMnet: interpretable deep learning for tabular data. <em>Scandinavian Actuarial Journal</em>, <em>2023</em>(1), 71–95.
+</div>
+<div class="csl-entry" role="listitem">
+Richman, R., &amp; Wüthrich, M. V. (2024). High-cardinality categorical covariates in network regressions. <em>Japanese Journal of Statistics and Data Science</em>, <em>7</em>(2), 921–965.
+</div>
+<div class="csl-entry" role="listitem">
+Rosenblatt, F. (1958). The perceptron: a probabilistic model for information storage and organization in the brain. <em>Psychological Review</em>, <em>65</em>(6), 386.
+</div>
+<div class="csl-entry" role="listitem">
+Rumelhart, D. E., Hinton, G. E., &amp; Williams, R. J. (1986). Learning representations by back-propagating errors. <em>Nature</em>, <em>323</em>(6088), 533–536.
+</div>
+<div class="csl-entry" role="listitem">
+Sutskever, I., Vinyals, O., &amp; Le, Q. V. (2014). Sequence to sequence learning with neural networks. <em>Advances in Neural Information Processing Systems</em>, <em>27</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., … Polosukhin, I. (2017). Attention is all you need. <em>Advances in Neural Information Processing Systems</em>, <em>30</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Wang, X., Wei, J., Schuurmans, D., Le, Q., Chi, E., Sharan, N., … Zhou, D. (2022). Self-consistency improves chain of thought reasoning in language models. <em>arXiv preprint arXiv:2203.11171</em>.
+</div>
+<div class="csl-entry" role="listitem">
+Wei, J., Wang, X., Schuurmans, D., Bosma, M., Xia, F., Chi, E., … others (2022). Chain-of-thought prompting elicits reasoning in large language models. <em>Advances in Neural Information Processing Systems</em>, <em>35</em>, 24824–24837.
+</div>
+<div class="csl-entry" role="listitem">
+Wüthrich, M. V., &amp; Merz, M. (2019). Editorial: Yes, we CANN! <em>ASTIN Bulletin - The Journal of the IAA</em>, <em>49</em>(1), 1–3.
+</div>
+<div class="csl-entry" role="listitem">
+Zeiler, M. D., &amp; Fergus, R. (2014). Visualizing and understanding convolutional networks. In <em>Computer Vision – ECCV 2014</em> (pp.&nbsp;818–833). Springer.
+</div>
+<div class="csl-entry" role="listitem">
+Zhang, A., Lipton, Z. C., Li, M., &amp; Smola, A. J. (2023). <em>Dive into deep learning</em>. Cambridge University Press.
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>
