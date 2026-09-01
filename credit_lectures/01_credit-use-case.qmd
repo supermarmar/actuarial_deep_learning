@@ -447,7 +447,8 @@ The first convention is how application scorecards are built, and it is what
 this lecture uses. The second is a discrete hazard, and it is the door into
 survival analysis: survival and hazard-rate models treat default as an event
 arriving at some intensity over time on book, and the IFRS 9 lifetime PD term
-structure is built exactly that way.
+structure is built exactly that way. Lecture S1 walks through that door,
+starting from the exposure $v_i = \min(T_i, k)$ defined here.
 
 The general task is to predict (forecast) the default behaviour as accurately
 as possible, taking into account all available borrower information
