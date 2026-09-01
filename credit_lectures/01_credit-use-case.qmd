@@ -91,7 +91,9 @@ in the later lectures. For simplicity, we focus on the binary default
 indicator `default_12m`; the raw extract would also support loss given
 default and exposure at default modelling through its recovery columns.
 
-### The definition of default
+# The outcome: default, windows and cohorts
+
+## The definition of default
 
 In insurance, a claim is a claim. In credit, the event we model is a matter
 of definition, and the definition is regulated. Article 178 of the Capital
@@ -110,19 +112,297 @@ arrears under Article 178. For a first lecture the distinction changes
 nothing methodologically; every model below applies verbatim to a 90-days-past-due
 flag.
 
-A second issue has no insurance counterpart in this form: **censoring**. At
-the extract date, 57,774 loans were still current. A loan originated three
-months before the extract has had no time to default, and treating it as a
-non-default would bias every estimate downwards. We resolve this with a
-**fixed-horizon** outcome, the standard device of application scorecards:
+::: {.callout-important icon=false title="The default definition as a design choice"}
+Article 178 fixes a regulatory floor and the platform fixes its own flag, but a modeller building
+a behavioural or IFRS 9 model chooses. Botha, Oberholzer, Larney and de Jongh (2023) formalise
+that choice with three parameters. Let $g_0(t)$ measure a loan's delinquency at month $t$, counted
+in payments in arrears. A preliminary event is declared at $t$ when
 
 $$
-D_i = \mathbf{1}\{\text{loan } i \text{ defaults within 365 days of origination}\},
+\mathcal{G}(d, s, t) = \left[ \sum_{v = t - (s - 1)}^{t} \left[ g_0(v) \ge d \right] = s \right],
 $$
 
-and we keep only loans originated at least 365 days before the newest
-origination in the file, so that every retained loan has a complete
-twelve-month observation window. This leaves $n = 148{,}733$ loans.
+writing $[\,\cdot\,]$ for Iverson brackets, so the event fires only where delinquency holds at or
+above the threshold $d$ for $s$ consecutive months. The modelling outcome at $t$ then reads that
+status $k$ months ahead, $y_t = \mathcal{G}(d, s, t + k)$.
+
+Three dials, therefore: the delinquency threshold $d$, the stickiness $s$, and the outcome period
+$k$. Their study sweeps $d \in \{1, 2\}$, $s \in \{1, 2, 3\}$ and $k \in \{3, 6, 9, 12\}$, and
+treats three payments in arrears, $g_0(t) \ge 3$, as default itself. Read against Bondora:
+
+| Dial | Meaning | Bondora's choice |
+|---|---|---|
+| $d$ | delinquency threshold | roughly two payments, since the platform flags at 60 days past due |
+| $s$ | consecutive months tested | $s = 1$, since one `DefaultDate` fires the flag with no persistence test |
+| $k$ | outcome period | twelve months here, and free to vary from the next section on |
+
+The severity dial is where the two traditions meet. Three payments in arrears sits at roughly
+ninety days, which is where Article 178 sits, so the regulatory definition and the academic one
+agree on $d$ and differ over whether the modeller may touch $s$ and $k$ at all.
+:::
+
+## Deriving the twelve-month flag
+
+::: {.callout-note icon=false title="How default_12m is built"}
+Three steps, all of them in `scripts/convert_credit_data.py`.
+
+1. **Fix the horizon.** The newest origination in the extract is 19 July 2021, so keep only loans
+   originated on or before 19 July 2020. Every retained loan then has a full twelve months of
+   observation behind it.
+2. **Flag the event.** Set `default_12m` to 1 where `DefaultDate` falls within 365 days of
+   `LoanDate`.
+3. **Fill the rest.** A loan carrying no `DefaultDate` never entered the platform's defaulted
+   state, so it scores 0.
+
+Three loans make the mechanics concrete.
+
+| Loan | `LoanDate` | `DefaultDate` | Retained | `default_12m` |
+|---|---|---|---|---|
+| A | 2019-03-14 | 2019-11-02 | yes | 1 |
+| B | 2019-06-08 | 2021-02-17 | yes | 0 |
+| C | 2020-11-30 | 2021-06-05 | no | not scored |
+
+Loan B is the one to sit with. It defaulted, and the flag still records a zero, because the
+default arrived twenty months after origination while the window closed at twelve. Loan C
+defaulted inside its first twelve months, but only eight of those months had elapsed by the
+extract date, so the loan is dropped rather than scored. Both outcomes are deliberate. The next
+two sections are about what they cost.
+:::
+
+## Censoring
+
+A second issue arrives with the outcome rather than with the covariates, and general insurance
+offers no counterpart to it in this form. The reason is worth setting out, because it points at
+where credit's actuarial cousins actually live.
+
+::: {.callout-note icon=false title="Censoring, and why credit borrows it from life rather than from general insurance"}
+At the extract date 57,774 loans were still current. A loan originated three months earlier has
+had no time to default, and scoring it a non-default would bias every estimate downwards. The
+event time exists; we have simply not waited long enough to see it. That is **right-censoring**.
+
+Life insurance meets the identical problem whenever a mortality rate is calibrated. A life
+observed from entry to a census date, still alive at the census, tells you it survived that far
+and nothing more. The denominator of $q_x$ therefore counts time actually at risk rather than
+lives, and the central exposed to risk is precisely that denominator. Lives entering part-way
+through the rate year contribute part-years, and lives withdrawing contribute only up to
+withdrawal.
+
+General insurance escapes the problem. The exposure $v_i$ is the earned policy period, which is
+measured and complete once the period has run, so no latent event date waits beyond the edge of
+the data. Incompleteness in general insurance sits instead in claim reporting and development,
+i.e. IBNR and IBNER, and that is a question about the size and timing of claims arising on a
+known exposure. Life and credit share right-censoring because both wait on an absorbing event
+whose date may fall outside the observation window; general insurance counts events inside a
+window it has already observed in full.
+
+```{python}
+#| fig-cap: "Right-censoring in two settings, drawn on illustrative cases rather than portfolio data. (lhs): six loans between origination and the snapshot $\\tau$ = 20 July 2021, dashed. The grey tick on each bar marks $g_i + 12$ months, the close of the outcome window; grey bars are loans the fixed-horizon filter drops for insufficient seasoning. (rhs): five lives inside one rate year $[x, x+1)$, on which the central exposed to risk for $q_x$ is computed. Circles mark the event of interest (default, death), crosses a competing exit (repayment, withdrawal) and arrowheads an observation still open at the boundary."
+import datetime as dt
+import matplotlib.dates as mdates
+
+OX, GREY, RULE = "#8C2F1E", "#B0B0B0", "#444444"
+tau_d = dt.date(2021, 7, 20)
+
+# label, origination, exit date, exit kind, retained by the k = 12 filter
+loans = [
+    ("A", dt.date(2019, 3, 14), dt.date(2019, 11, 2), "default", True),
+    ("B", dt.date(2019, 6, 8), dt.date(2021, 2, 17), "default", True),
+    ("C", dt.date(2019, 9, 20), dt.date(2021, 5, 3), "repaid", True),
+    ("D", dt.date(2020, 2, 11), None, "open", True),
+    ("F", dt.date(2020, 11, 30), dt.date(2021, 6, 5), "default", False),
+    ("E", dt.date(2021, 1, 25), None, "open", False),
+]
+
+fig, axs = plt.subplots(1, 2)
+
+ax = axs[0]
+for j, (lab, g, out, kind, kept) in enumerate(loans):
+    y = len(loans) - j
+    col = OX if kept else GREY
+    end = out or tau_d
+    ax.plot([g, end], [y, y], color=col, lw=2, solid_capstyle="butt")
+    ax.plot([g + dt.timedelta(days=365)], [y], marker="|", ms=9, color=RULE)
+    marker = {"default": "o", "repaid": "x", "open": ">"}[kind]
+    ax.plot([end], [y], marker, color=col, ms=6)
+ax.axvline(tau_d, color=RULE, ls="--", lw=1)
+ax.annotate("snapshot", xy=(tau_d, len(loans) + 0.30), ha="center", va="bottom",
+            fontsize=9, color=RULE, annotation_clip=False)
+ax.set_yticks(range(1, len(loans) + 1))
+ax.set_yticklabels([r[0] for r in reversed(loans)])
+ax.set_ylim(0.4, len(loans) + 1.0)
+ax.xaxis.set_major_locator(mdates.YearLocator())
+ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+ax.xaxis.set_minor_locator(mdates.MonthLocator(bymonth=[7]))
+ax.set_xlabel("calendar time")
+ax.set_title("credit: loans to the snapshot", fontsize=10)
+
+ax = axs[1]
+# label, entry, exit (fraction of the rate year), exit kind
+lives = [("1", 0.00, 1.00, "open"), ("2", 0.35, 1.00, "open"),
+         ("3", 0.00, 0.55, "death"), ("4", 0.00, 0.72, "withdrawn"),
+         ("5", 0.18, 0.90, "death")]
+for j, (lab, a, b, kind) in enumerate(lives):
+    y = len(lives) - j
+    ax.plot([a, b], [y, y], color=OX, lw=2, solid_capstyle="butt")
+    marker = {"death": "o", "withdrawn": "x", "open": ">"}[kind]
+    ax.plot([b], [y], marker, color=OX, ms=6)
+ax.axvline(1.0, color=RULE, ls="--", lw=1)
+ax.annotate("census", xy=(1.0, len(lives) + 0.30), ha="center", va="bottom",
+            fontsize=9, color=RULE, annotation_clip=False)
+ax.set_yticks(range(1, len(lives) + 1))
+ax.set_yticklabels([r[0] for r in reversed(lives)])
+ax.set_ylim(0.4, len(lives) + 1.0)
+ax.set_xlim(-0.05, 1.12)
+ax.set_xlabel("time within the rate year $[x,\\,x+1)$")
+ax.set_title("life: lives to the census", fontsize=10)
+
+plt.tight_layout(); plt.show()
+```
+:::
+
+## A general outcome window
+
+We resolve the censoring with a **fixed-horizon** outcome, the standard device of application
+scorecards. Let $T_i$ be the time from origination to default, measured in months, and let
+
+$$
+A_i = \tau - g_i
+$$
+
+be the months of observation available on loan $i$ at the snapshot date $\tau$, where $g_i$ is its
+origination month. For an outcome window of $k$ months,
+
+$$
+D_i^{(k)} = \mathbf{1}\{ T_i \le k \},
+\qquad
+{\cal L}_k = \left\{ i : A_i \ge k \right\},
+\qquad
+n(k) = \left| {\cal L}_k \right| .
+$$
+
+The retention rule ${\cal L}_k$ keeps only loans whose window had closed by the snapshot, so every
+retained loan carries a complete observation. Setting $k = 12$ reproduces `default_12m` exactly,
+at $n(12) = 148{,}733$ loans, and that is what the rest of this lecture uses. Every formula from
+here on carries $k$, so nothing needs rewriting when the window moves. Note also that $k$ is the
+outcome period of the callout above, i.e. the third of Botha's three dials.
+
+The window is not a free parameter in practice, and the cost of moving it shows up immediately.
+
+```{python}
+raw = pl.read_parquet(
+    "../data/bondora_raw.parquet",
+    columns=["ReportAsOfEOD", "LoanDate", "DefaultDate"],
+)
+MONTH = 30.4375  # mean Gregorian month in days
+tau = raw["ReportAsOfEOD"][0]
+raw = raw.with_columns(
+    A=(pl.lit(tau) - pl.col("LoanDate")).dt.total_days() / MONTH,
+    T=(pl.col("DefaultDate") - pl.col("LoanDate")).dt.total_days() / MONTH,
+)
+pl.DataFrame(
+    [
+        {
+            "k (months)": k,
+            "n(k)": kept.height,
+            "default rate": (kept["T"] <= k).fill_null(False).mean(),
+        }
+        for k in (3, 6, 12, 24, 36, 48, 60)
+        for kept in [raw.filter(pl.col("A") >= k)]
+    ]
+)
+```
+
+Three features of that table matter, and they arise from two different mechanisms.
+
+At $k = 3$ the rate is 0.16 per cent, which measures nothing at all. Bondora flags default at 60
+days past due, and a first instalment cannot be 60 days late until roughly ninety days after
+origination, so the window closes before the definition can fire. The outcome window and the
+default definition interact, which is why the two cannot be chosen independently.
+
+Between $k = 12$ and $k = 24$ the rate climbs from 28.95 to 45.46 per cent, then flattens. That
+part is genuine saturation: the observed time to default has its ninetieth percentile at 721
+days, so by two years most defaults that will happen have happened.
+
+At $k = 60$ the rate falls back to 52.14 per cent from 53.46. That part is composition rather than
+risk. The filter $A_i \ge 60$ retains only loans originated before mid-2016, so the sample itself
+changes as the window lengthens, and the later high-risk vintages drop out of it. Botha,
+Oberholzer, Larney and de Jongh (2023) describe both failure modes from the literature they
+review: too short a window gives volatile results driven by risk immaturity, and too long a
+window drifts out of step with market conditions and with the portfolio's own risk composition.
+The section on cohorts below is where that second problem gets its name.
+
+## Cohorts, vintages and calendar time
+
+Three time axes run through any loan book, and keeping them apart is what lets the actuarial
+machinery transfer across intact.
+
+| Symbol | Meaning | Life insurance twin |
+|---|---|---|
+| $g_i$ | vintage, the origination month of loan $i$ | year of birth |
+| $t$ | months on book, $0 \le t \le k$ | duration since age $x$ |
+| $u$ | calendar month, $u = g + t$ | calendar year of observation |
+| $x_i$ | borrower age at origination | age $x$ |
+| $\tau$ | the snapshot date | census date |
+| $A_i = \tau - g_i$ | months of observation available | exposure to the census |
+
+The table deliberately reserves two letters. Borrower age is already $x_i$ here, and it has to
+stay $x$ for ${}_t p_x$ to keep meaning what it means. Months on book is the loan's duration since
+origination, which is exactly the role $t$ plays in ${}_t p_x$, so the credit quantity actuaries
+call MOB and the life quantity called duration are the same object and take the same letter.
+Vintage therefore gets its own.
+
+The three axes are then bound by an identity:
+
+$$
+u = g + t .
+$$
+
+Only two of the three are ever free. Demographers know this as the age-period-cohort
+identification problem, and it is why a mortality model indexed by all three needs a constraint
+imposed by hand rather than estimated. Credit inherits it whole. Breeden's age-period-cohort
+decomposition of loan-level performance is the same identity in credit clothing, splitting
+observed performance into a lifecycle in $t$, an environment in $u$ and a credit-quality effect
+in $g$.
+
+One property of this extract now does more damage than it appears to. `ReportAsOfEOD` takes a
+single value across all 179,235 rows, 20 July 2021. The snapshot $\tau$ is therefore a constant
+rather than a per-row field, and the extract holds one cross-section where a panel would hold
+many.
+
+::: {.callout-note icon=false title="Point-in-time and through-the-cycle PDs"}
+A **point-in-time (PiT)** PD conditions on where the economy is, i.e. it estimates
+$\mathbb{P}(D^{(k)} = 1 \mid \boldsymbol{X}, u)$ and moves with the cycle. IFRS 9 requires one,
+because an expected credit loss is a forecast made from today's conditions. A
+**through-the-cycle (TTC)** PD averages the cycle away instead, which is what an IRB long-run
+average targets. Production stacks mostly run something hybrid and then argue about where on the
+spectrum it has landed.
+
+This portfolio cannot yield a PiT PD, and the identity above is the reason. Conditional on months
+on book $t$, vintage $g$ and calendar month $u$ are collinear, so a single snapshot offers no way
+to tell an origination-quality effect from a macroeconomic one. The vintage figure later in this
+lecture shows the default rate running from 7 per cent in the 2012 vintage to 37 per cent in 2017,
+and two stories fit that equally well. Bondora may have loosened its underwriting, or those
+cohorts may simply have lived through a worse environment. More modelling will not separate them.
+
+Botha and Verster (2025) show what the missing ingredient buys. Their portfolio-level default rate
+at calendar month $t$,
+
+$$
+D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
+      \mathbb{I}\left( \max\left( y_{it}, \ldots, y_{i(t+k)} \right) = 1 \right),
+$$
+
+runs over the set ${\cal S}_P(t)$ of accounts still performing at $t$, with $n'_t$ its size. The
+maximum inside the indicator is the **worst-ever** aggregation, so an obligor who breaches and
+then cures still scores a one and the series is immune to cure-and-relapse cycling. What matters
+here is the index. $D_t$ is a time series in calendar time, and it exists to be regressed on
+macroeconomic variables, which is how a PiT PD gets built. Its ingredient is monthly performance
+history for every account. Bondora records one snapshot, so the maximum has nothing to run over.
+
+Breaking the collinearity needs a panel, i.e. many calendar months $u$ observed for each vintage
+$g$. `data/amex_panel.parquet` in this repository is a customer-month panel of exactly that shape,
+and it is where the point-in-time question gets picked up.
+:::
 
 ## Default modelling and PDs
 
@@ -135,22 +415,39 @@ The original lecture models claim counts $N_i \geq 0$ observed over a time
 exposure $v_i \in (0, 1]$, and studies the claims frequencies
 $Y_i = N_i / v_i$. That notation carries over to credit almost unchanged.
 Within the observation window, loan $i$ produces a number of default events
-$N_i$, and the window itself plays the role of the exposure $v_i$. Two
-features of credit then simplify the picture. Default is an absorbing state,
-so $N_i \in \{0, 1\}$ rather than $N_i \in \{0, 1, 2, \ldots\}$. And the
-fixed-horizon construction gives every loan the same window, $v_i \equiv 1$
-year. The frequency collapses to the indicator itself,
+$N_i$, and the window itself plays the role of the exposure $v_i$. Default is
+an absorbing state, so $N_i \in \{0, 1\}$ rather than
+$N_i \in \{0, 1, 2, \ldots\}$.
+
+What the exposure should be is then a real choice, and the two answers lead to
+different models. Measuring exposure in windows gives every retained loan the
+same one, $v_i \equiv 1$ window of $k$ months, and the frequency collapses to
+the indicator itself,
 
 $$
-Y_i = N_i / v_i = D_i \in \{0, 1\}.
+Y_i^{(k)} = N_i / v_i = D_i^{(k)} \in \{0, 1\}.
 $$
 
-The insurance view survives in credit wherever the window is allowed to vary
-again. Survival and hazard-rate models treat default as an event arriving at
-some intensity over time on book, and the IFRS 9 lifetime PD term structure
-is built exactly this way. For this lecture series we stay with the
-fixed-horizon indicator, which is how application scorecards are built in
-practice.
+Measuring it in months at risk instead gives each loan the time it actually
+spent exposed,
+
+$$
+v_i = \min(T_i,\, k) \text{ months}
+\qquad \Longrightarrow \qquad
+Y_i^{(k)} = \frac{N_i}{\min(T_i,\, k)} ,
+$$
+
+which is the honest claims-frequency analogue, with time to default in the role
+of exposure. Here the frequency does not collapse. A loan defaulting in month
+two and a loan defaulting in month eleven both score $D_i^{(k)} = 1$, yet they
+carry intensities differing by a factor of five, and the second convention
+keeps that difference while the first discards it.
+
+The first convention is how application scorecards are built, and it is what
+this lecture uses. The second is a discrete hazard, and it is the door into
+survival analysis: survival and hazard-rate models treat default as an event
+arriving at some intensity over time on book, and the IFRS 9 lifetime PD term
+structure is built exactly that way.
 
 The general task is to predict (forecast) the default behaviour as accurately
 as possible, taking into account all available borrower information
@@ -158,18 +455,19 @@ $\boldsymbol{X}_i$. (Best) predictors are typically computed by conditional
 means
 
 $$
-\mu(\boldsymbol{X}_i) := \mathbb{E}\left[ D_i \,\middle|\, \boldsymbol{X}_i \right]
-= \mathbb{P}\left( D_i = 1 \,\middle|\, \boldsymbol{X}_i \right)
-= \mathrm{PD}(\boldsymbol{X}_i).
+\mu_k(\boldsymbol{X}_i) := \mathbb{E}\left[ D_i^{(k)} \,\middle|\, \boldsymbol{X}_i \right]
+= \mathbb{P}\left( T_i \le k \,\middle|\, \boldsymbol{X}_i \right)
+= \mathrm{PD}_k(\boldsymbol{X}_i).
 $$
 
 For a binary response, the conditional mean **is** the probability of
-default. The pricing functional of the insurance lecture becomes the PD
-functional
+default, now carrying the window it was measured over. The pricing functional
+of the insurance lecture becomes the PD functional
 
 $$
-\boldsymbol{X} \mapsto \mu(\boldsymbol{X}) = \mathrm{PD}(\boldsymbol{X}),
+\boldsymbol{X} \mapsto \mu_k(\boldsymbol{X}) = \mathrm{PD}_k(\boldsymbol{X}),
 $$
+
 
 and everything the lectures develop for estimating regression functions
 applies to it. The distributional consequence is taken up in the next
@@ -178,15 +476,36 @@ family; a binary indicator leads to the Bernoulli member, whose canonical
 link is the logit. Deviance losses, maximum likelihood estimation and the
 balance property all carry over.
 
+::: {.callout-tip icon=false title="Reading a conditional expectation"}
+The notation $\mathbb{E}[\,D^{(k)} \mid \boldsymbol{X}\,]$ is doing something concrete, and the
+heatmap later in this lecture is a picture of it.
+
+**Conditioning means restricting.** Take every loan sharing a given borrower age and income, i.e.
+one cell of that heatmap, and set the rest of the portfolio aside. The conditional expectation is
+a property of that cell alone.
+
+**For a 0/1 outcome, the mean is the proportion.** Averaging a variable that only ever takes the
+values 0 and 1 returns the share of ones, so the conditional mean and the conditional probability
+are the same number. This is what makes $\mathrm{PD}_k$ a regression problem rather than something
+exotic. Nothing similar happens for claim severity, where the mean and any probability are
+different objects.
+
+**Cells run out.** The empirical rate inside a cell estimates $\mu_k$ for that cell, and with
+148,733 loans the cells thin out fast; the white space in that heatmap marks the combinations too
+sparse to estimate at all. Fitting a model rather than tabulating cells is how we borrow strength
+across them, and choosing which model class to borrow it with is the subject of the lectures that
+follow.
+:::
+
 ## Regression modelling
 
 In general, the true data generating mechanism is unknown. Therefore, one
 cannot compute the regression function
-$\boldsymbol{X} \mapsto \mu(\boldsymbol{X})$, and one needs to estimate it
+$\boldsymbol{X} \mapsto \mu_k(\boldsymbol{X})$, and one needs to estimate it
 from past data
 
 $$
-{\cal L} = \left( D_i, \boldsymbol{X}_i \right)_{i=1}^{n}.
+{\cal L} = \left( D_i^{(k)}, \boldsymbol{X}_i \right)_{i \in {\cal L}_k}.
 $$
 
 ${\cal L}$ is called the **learning sample**. Before solving this estimation
@@ -624,12 +943,24 @@ portfolio is replaced throughout by the public Bondora loan book, claim
 frequency modelling is recast as probability of default modelling, the code
 is Python rather than R, and the sections on the definition of default,
 censoring, endogenous pricing covariates and Simpson's paradox are new. The
+outcome window $k$ and its exposure conventions, the cohort and Lexis notation
+with the point-in-time discussion that follows from it, and the comparison of
+censoring across credit, life and general insurance are also new. The
 original lecture notes are available at
 <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304>.
 
 # References {.unnumbered}
 
 - Bondora AS. *Loan dataset (public reports)*. <https://www.bondora.com/en/public-reports>
+- Botha, A., Oberholzer, E., Larney, J. and de Jongh, R. (2023). *Defining and
+  comparing SICR-events for classifying impaired loans under IFRS 9*.
+- Botha, A. and Verster, T. (2025). *Approaches for modelling the term-structure
+  of default risk under IFRS 9: a tutorial using discrete-time survival
+  analysis*.
+- Breeden, J.L. (2016). *Incorporating lifecycle and environment in loan-level
+  forecasts and stress tests*. European Journal of Operational Research.
+- International Accounting Standards Board (2014). *IFRS 9: Financial
+  Instruments*, section 5.5: impairment.
 - European Parliament and Council. *Regulation (EU) No 575/2013 (Capital
   Requirements Regulation)*, Article 178: default of an obligor, as amended
   by Regulation (EU) 2024/1623 (CRR3).
