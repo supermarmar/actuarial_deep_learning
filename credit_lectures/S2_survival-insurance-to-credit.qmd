@@ -504,8 +504,12 @@ time, where it stretches the time axis. Only the Weibull is both.
 **Extensions.** Frailty models add a random effect for unobserved heterogeneity,
 which in credit is the borrower-level risk a scorecard misses. Multi-state models
 generalise competing risks to transitions among several states, which is how
-delinquency stages and cures are handled properly, and Botha's multistate and
-recurrent-event papers take exactly that route. Machine learning survival methods,
+delinquency stages and cures are handled properly; Botha, Verster and Breedt
+(2025) build the IFRS 9 term structure that way, in a non-stationary semi-Markov
+framework. A separate extension handles loans that default, cure and default
+again, since the lectures so far have treated default as absorbing: Botha,
+Verster and Scheepers (2025) compare Andersen-Gill and Prentice-Williams-Peterson
+Cox models for exactly those recurrent events. Machine learning survival methods,
 including random survival forests, DeepSurv and DeepHit, replace the linear
 predictor with a learned one, and lecture S3 takes them up.
 
@@ -550,6 +554,11 @@ discrete-time framing follows Botha and Verster (2025) and Singer and Willett
 - Bondora AS. *Loan dataset (public reports)*. <https://www.bondora.com/en/public-reports>
 - Botha, A. and Verster, T. (2025). *Approaches for modelling the term-structure
   of default risk under IFRS 9: a tutorial using discrete-time survival analysis*.
+- Botha, A., Verster, T. and Breedt, R. (2025). *Modelling the term-structure of
+  default risk under IFRS 9 within a multistate regression framework*.
+- Botha, A., Verster, T. and Scheepers, B. (2025). *Exploring different subtypes of
+  recurrent event Cox-regression models in modelling lifetime default risk: a
+  tutorial*.
 - Cox, D.R. (1972). *Regression models and life-tables*. Journal of the Royal
   Statistical Society, Series B.
 - Fine, J.P. and Gray, R.J. (1999). *A proportional hazards model for the
