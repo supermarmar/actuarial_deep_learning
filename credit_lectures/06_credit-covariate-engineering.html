@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich">
+<meta name="dcterms.date" content="2026-09-01">
+
+<title>Credit Lecture 6: Ensembling and Entity Embedding</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#network-ensembling" id="toc-network-ensembling" class="nav-link" data-scroll-target="#network-ensembling"><span class="header-section-number">1</span> Network ensembling</a>
+  <ul class="collapse">
+  <li><a href="#several-elements-of-randomness" id="toc-several-elements-of-randomness" class="nav-link" data-scroll-target="#several-elements-of-randomness"><span class="header-section-number">1.1</span> Several elements of randomness</a></li>
+  <li><a href="#the-ensemble-predictor" id="toc-the-ensemble-predictor" class="nav-link" data-scroll-target="#the-ensemble-predictor"><span class="header-section-number">1.2</span> The ensemble predictor</a></li>
+  <li><a href="#the-nagging-predictor" id="toc-the-nagging-predictor" class="nav-link" data-scroll-target="#the-nagging-predictor"><span class="header-section-number">1.3</span> The nagging predictor</a></li>
+  <li><a href="#nagging-on-the-bondora-book" id="toc-nagging-on-the-bondora-book" class="nav-link" data-scroll-target="#nagging-on-the-bondora-book"><span class="header-section-number">1.4</span> Nagging on the Bondora book</a></li>
+  <li><a href="#how-many-networks-do-we-need" id="toc-how-many-networks-do-we-need" class="nav-link" data-scroll-target="#how-many-networks-do-we-need"><span class="header-section-number">1.5</span> How many networks do we need?</a></li>
+  <li><a href="#what-nagging-does-not-fix" id="toc-what-nagging-does-not-fix" class="nav-link" data-scroll-target="#what-nagging-does-not-fix"><span class="header-section-number">1.6</span> What nagging does not fix</a></li>
+  </ul></li>
+  <li><a href="#categorical-covariates" id="toc-categorical-covariates" class="nav-link" data-scroll-target="#categorical-covariates"><span class="header-section-number">2</span> Categorical covariates</a>
+  <ul class="collapse">
+  <li><a href="#the-levels-a-credit-portfolio-presents" id="toc-the-levels-a-credit-portfolio-presents" class="nav-link" data-scroll-target="#the-levels-a-credit-portfolio-presents"><span class="header-section-number">2.1</span> The levels a credit portfolio presents</a></li>
+  <li><a href="#ordinal-coding-one-hot-encoding-and-dummy-coding" id="toc-ordinal-coding-one-hot-encoding-and-dummy-coding" class="nav-link" data-scroll-target="#ordinal-coding-one-hot-encoding-and-dummy-coding"><span class="header-section-number">2.2</span> Ordinal coding, one-hot encoding and dummy coding</a></li>
+  <li><a href="#target-encoding-is-weight-of-evidence" id="toc-target-encoding-is-weight-of-evidence" class="nav-link" data-scroll-target="#target-encoding-is-weight-of-evidence"><span class="header-section-number">2.3</span> Target encoding is weight of evidence</a></li>
+  <li><a href="#credibilitised-target-encoding" id="toc-credibilitised-target-encoding" class="nav-link" data-scroll-target="#credibilitised-target-encoding"><span class="header-section-number">2.4</span> Credibilitised target encoding</a></li>
+  <li><a href="#the-encodings-compared" id="toc-the-encodings-compared" class="nav-link" data-scroll-target="#the-encodings-compared"><span class="header-section-number">2.5</span> The encodings compared</a></li>
+  <li><a href="#leakage-and-why-an-in-sample-check-misses-it" id="toc-leakage-and-why-an-in-sample-check-misses-it" class="nav-link" data-scroll-target="#leakage-and-why-an-in-sample-check-misses-it"><span class="header-section-number">2.6</span> Leakage, and why an in-sample check misses it</a></li>
+  <li><a href="#entity-embedding" id="toc-entity-embedding" class="nav-link" data-scroll-target="#entity-embedding"><span class="header-section-number">2.7</span> Entity embedding</a></li>
+  <li><a href="#the-embedding-network-on-the-bondora-book" id="toc-the-embedding-network-on-the-bondora-book" class="nav-link" data-scroll-target="#the-embedding-network-on-the-bondora-book"><span class="header-section-number">2.8</span> The embedding network on the Bondora book</a></li>
+  <li><a href="#does-proximity-track-risk" id="toc-does-proximity-track-risk" class="nav-link" data-scroll-target="#does-proximity-track-risk"><span class="header-section-number">2.9</span> Does proximity track risk?</a></li>
+  </ul></li>
+  <li><a href="#continuous-covariates" id="toc-continuous-covariates" class="nav-link" data-scroll-target="#continuous-covariates"><span class="header-section-number">3</span> Continuous covariates</a>
+  <ul class="collapse">
+  <li><a href="#standardisation-and-the-minmaxscaler" id="toc-standardisation-and-the-minmaxscaler" class="nav-link" data-scroll-target="#standardisation-and-the-minmaxscaler"><span class="header-section-number">3.1</span> Standardisation and the MinMaxScaler</a></li>
+  <li><a href="#binning-and-what-it-costs" id="toc-binning-and-what-it-costs" class="nav-link" data-scroll-target="#binning-and-what-it-costs"><span class="header-section-number">3.2</span> Binning, and what it costs</a></li>
+  <li><a href="#continuous-covariate-embedding-and-the-tensor-structure" id="toc-continuous-covariate-embedding-and-the-tensor-structure" class="nav-link" data-scroll-target="#continuous-covariate-embedding-and-the-tensor-structure"><span class="header-section-number">3.3</span> Continuous covariate embedding and the tensor structure</a></li>
+  </ul></li>
+  <li><a href="#takeaways-and-outlook" id="toc-takeaways-and-outlook" class="nav-link" data-scroll-target="#takeaways-and-outlook">Takeaways and outlook</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture 6: Ensembling and Entity Embedding</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 1, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Lecture 6 of Deep Learning for Actuarial Modeling has two halves, and this companion keeps both. Network ensembling, which the course calls nagging, averages the randomness out of stochastic gradient descent, and on the Bondora book twenty averaged networks buy as much out-of-sample deviance as moving from the logistic GLM to a network bought in the first place. Averaging leaves the balance property exactly where it found it, which is provable rather than merely observed. The second half is covariate engineering, where credit modelling already has a settled answer: weight of evidence is the course’s target encoding moved onto the log-odds scale, and the Buehlmann credibility the course prescribes is the smoothing every scorecard team applies. We compare five encodings of a 328-level cell on a fixed readout, measure what a leaked encoding is worth, fit an entity-embedding network, and test whether proximity in the learned embedding tracks similarity in risk.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="introduction" class="level1 unnumbered">
+<h1 class="unnumbered">Introduction</h1>
+<p>Two loose ends were left hanging at the close of the fourth and fifth credit lecture. Refitting the same network on the same data from a different random initialisation moved the out-of-sample deviance around by a tenth of a point or so, which is estimation noise with no statistical content, and the network gave up the balance property that the canonical-link GLM held exactly. Lecture 6 of the course addresses the first directly through ensembling. Its second half turns to covariate engineering, which is where a credit modeller arrives with more prior practice than the course assumes, because scorecard development has been encoding categorical covariates for forty years and has a name for the course’s target encoding.</p>
+<p>The plan follows the source deck. We first set out why stochastic gradient descent solutions are non-unique, define the ensemble and nagging predictors, and fit twenty networks to the Bondora modelling table to see how many are needed. We then measure what averaging does to calibration in the large, where the answer is provable in one line and contradicts the course’s own results table. The second half works through ordinal coding, one-hot encoding, dummy coding, target encoding, credibilitised target encoding and entity embedding, comparing five of them on a fixed logistic readout over a deliberately high-cardinality cell. The lecture closes on continuous covariates and on the tensor structure that the attention lectures will need.</p>
+<div id="7a9de032" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Imports and shared settings</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> spearmanr</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>BLUE, RED, GREY <span class="op">=</span> <span class="st">"#3B4A75"</span>, <span class="st">"#8C2F1E"</span>, <span class="st">"#8A8377"</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({<span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="network-ensembling" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Network ensembling</h1>
+<section id="several-elements-of-randomness" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="several-elements-of-randomness"><span class="header-section-number">1.1</span> Several elements of randomness</h2>
+<p>A fitted network is not a function of the learning sample alone. Holding the architecture and the fitting procedure fixed, the course lists four sources of randomness that still move the answer, i.e.&nbsp;the initialisation <span class="math inline">\(\vartheta^{[0]}\)</span> from which gradient descent starts, the partition of the data into learning sample <span class="math inline">\(\mathcal{L}\)</span> and test sample <span class="math inline">\(\mathcal{T}\)</span>, the partition of <span class="math inline">\(\mathcal{L}\)</span> into training sample <span class="math inline">\(\mathcal{U}\)</span> and validation sample <span class="math inline">\(\mathcal{V}\)</span>, and the composition of the mini-batches <span class="math inline">\((\mathcal{U}_k)_{k=1}^{\lfloor n/s \rfloor}\)</span>. Dropout adds a fifth. Consequently the early-stopped solution is highly non-unique, and on a finite learning sample there are infinitely many equally good fitted models.</p>
+<p>The course calls this troublesome in actuarial work, and in credit risk the trouble has a specific institutional shape. A rating system under the internal ratings based approach is documented, validated and approved as a single object, and the annual validation cycle then asks whether this year’s estimates differ materially from last year’s. Where a refit on identical data can move a portfolio’s estimated PD by a tenth of a deviance point for no reason a validator can name, the difference between model drift and seed drift has to be established before anything else can be. Hence a credit team needs the run-to-run variation quantified rather than merely acknowledged.</p>
+</section>
+<section id="the-ensemble-predictor" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="the-ensemble-predictor"><span class="header-section-number">1.2</span> The ensemble predictor</h2>
+<p>Take <span class="math inline">\(M\)</span> predictors <span class="math inline">\((\widehat{\mu}_j)_{j=1}^M\)</span> that are conditionally independent and identically distributed given the learning sample, and average them into the ensemble predictor <span class="math display">\[
+\widehat{\mu}^{(M)} = \frac{1}{M} \sum_{j=1}^M \widehat{\mu}_j .
+\]</span> The estimation uncertainty of the average obeys <span class="math display">\[
+\sqrt{\mathrm{Var}\!\left(\widehat{\mu}^{(M)}\right)}
+  = \frac{1}{\sqrt{M}}\,\sqrt{\mathrm{Var}\!\left(\widehat{\mu}_1\right)}
+  ~\longrightarrow~ 0 \qquad \text{for } M \to \infty .
+\]</span> Averaging therefore shrinks the fluctuation of the predictor by <span class="math inline">\(\sqrt{M}\)</span>. Two cautions belong with that statement. First, the <span class="math inline">\(\sqrt{M}\)</span> rate applies to the standard deviation of the predictor and not to the loss, so the out-of-sample deviance of the ensemble approaches its infinite-ensemble limit with the remaining gap closing at a faster rate, since deviance is locally quadratic in the prediction error. Second, the result says nothing whatever about bias. Where every member of the ensemble is systematically wrong in the same direction, the average is systematically wrong by the same amount, and the section on the balance property below is that caution made concrete.</p>
+</section>
+<section id="the-nagging-predictor" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="the-nagging-predictor"><span class="header-section-number">1.3</span> The nagging predictor</h2>
+<p>Bagging, introduced by Breiman (1996) for regression trees, combines bootstrap resampling with aggregation. Network fitting needs no bootstrap, because the four elements of randomness already deliver as many distinct solutions as one cares to fit. Dietterich (2000a, 2000b) studied network ensembling generally, and Richman and Wüthrich (2020) brought it into actuarial work under the name nagging, for network aggregating.</p>
+<p>Given the learning sample <span class="math inline">\(\mathcal{L} = (Y_i, \boldsymbol{X}_i)_{i=1}^n\)</span>, fit <span class="math inline">\(M\)</span> networks whose randomness differs only in those elements. This yields <span class="math inline">\(M\)</span> conditionally i.i.d. fitted networks <span class="math inline">\((\mu_{\widehat{\vartheta}_j})_{j=1}^M\)</span> given <span class="math inline">\(\mathcal{L}\)</span>, and the nagging predictor is their average, <span class="math display">\[
+\widehat{\mu}^{\rm nagg}_M(\boldsymbol{X})
+  = \frac{1}{M} \sum_{j=1}^M \mu_{\widehat{\vartheta}_j}(\boldsymbol{X}) .
+\]</span></p>
+<p>The conditioning matters for the implementation. The training routine inherited from the fourth and fifth lecture draws the <span class="math inline">\(\mathcal{U}\)</span> and <span class="math inline">\(\mathcal{V}\)</span> partition, the weight initialisation and the mini-batch order from one seed, and the learning and test split is made once outside that routine. Varying only the seed therefore varies exactly the elements the course lists while holding <span class="math inline">\(\mathcal{L}\)</span> fixed, which is the condition the <span class="math inline">\(\sqrt{M}\)</span> statement requires.</p>
+</section>
+<section id="nagging-on-the-bondora-book" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="nagging-on-the-bondora-book"><span class="header-section-number">1.4</span> Nagging on the Bondora book</h2>
+<p>The modelling frame, the design matrix and the splits are those of the fourth and fifth lecture, unchanged, so that the numbers chain.</p>
+<div id="9e2417c3" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"Education"</span>) <span class="op">!=</span> <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> model_dat.select(</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"Education"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>     <span class="st">"HomeOwnershipType"</span>, <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>     <span class="st">"EmploymentDurationCurrentEmployer"</span>, <span class="st">"OccupationArea"</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>     <span class="st">"LoanDate"</span>]).to_pandas()</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>ho <span class="op">=</span> g[<span class="st">"HomeOwnershipType"</span>]</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"HomeOwnership"</span>] <span class="op">=</span> np.where(ho.isna() <span class="op">|</span> (ho <span class="op">==</span> <span class="op">-</span><span class="dv">1</span>), <span class="st">"missing"</span>,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>                              ho.fillna(<span class="op">-</span><span class="dv">1</span>).astype(<span class="bu">int</span>).astype(<span class="bu">str</span>))</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"EmploymentDuration"</span>] <span class="op">=</span> g[<span class="st">"EmploymentDurationCurrentEmployer"</span>].fillna(<span class="st">"missing"</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>oa <span class="op">=</span> g[<span class="st">"OccupationArea"</span>]</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"Occupation"</span>] <span class="op">=</span> np.where(oa.isna() <span class="op">|</span> (oa <span class="op">==</span> <span class="op">-</span><span class="dv">1</span>), <span class="st">"missing"</span>,</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>                           oa.fillna(<span class="op">-</span><span class="dv">1</span>).astype(<span class="bu">int</span>).astype(<span class="bu">str</span>))</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"Education"</span>] <span class="op">=</span> g[<span class="st">"Education"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"VerificationType"</span>] <span class="op">=</span> g[<span class="st">"VerificationType"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    g[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">101</span>],</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61+"</span>],</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeCens"</span>] <span class="op">=</span> g[<span class="st">"Age"</span>].clip(upper<span class="op">=</span><span class="dv">70</span>)</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>CATS <span class="op">=</span> [<span class="st">"Country"</span>, <span class="st">"Education"</span>, <span class="st">"HomeOwnership"</span>, <span class="st">"VerificationType"</span>,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>        <span class="st">"EmploymentDuration"</span>]</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>CONT <span class="op">=</span> [<span class="st">"AgeCens"</span>, <span class="st">"logIncome"</span>, <span class="st">"NewCreditCustomer"</span>]</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>onehot <span class="op">=</span> pd.get_dummies(g[CATS], prefix_sep<span class="op">=</span><span class="st">":"</span>)</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>X_all <span class="op">=</span> pd.concat([g[[<span class="st">"AgeCens"</span>, <span class="st">"logIncome"</span>]],</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>                   g[<span class="st">"NewCreditCustomer"</span>].astype(<span class="bu">float</span>),</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>                   onehot.astype(<span class="bu">float</span>)], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>y_all <span class="op">=</span> g[<span class="st">"default_12m"</span>].astype(<span class="bu">float</span>)</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>perm <span class="op">=</span> rng.permutation(<span class="bu">len</span>(g))</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>n_learn <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> <span class="bu">len</span>(g))</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>idx_learn, idx_test <span class="op">=</span> perm[:n_learn], perm[n_learn:]</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>y_learn <span class="op">=</span> y_all.iloc[idx_learn].to_numpy()</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>y_test <span class="op">=</span> y_all.iloc[idx_test].to_numpy()</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n = </span><span class="sc">{</span><span class="bu">len</span>(g)<span class="sc">:,}</span><span class="ss">,  q0 = </span><span class="sc">{</span>X_all<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">}</span><span class="ss">,  "</span></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"learn </span><span class="sc">{</span><span class="bu">len</span>(idx_learn)<span class="sc">:,}</span><span class="ss"> / test </span><span class="sc">{</span><span class="bu">len</span>(idx_test)<span class="sc">:,}</span><span class="ss">,  "</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"learning-sample default rate </span><span class="sc">{</span>y_learn<span class="sc">.</span>mean()<span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>n = 148,667,  q0 = 38,  learn 118,933 / test 29,734,  learning-sample default rate 0.28878</code></pre>
+</div>
+</div>
+<p>The training routine and the evaluation helpers carry over verbatim.</p>
+<div id="df837bd3" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Training routine from the fourth and fifth lecture</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bernoulli_deviance(pred, obs):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-12</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.clip(np.asarray(pred, <span class="bu">float</span>), eps, <span class="dv">1</span> <span class="op">-</span> eps)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.asarray(obs, <span class="bu">float</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">*</span> np.mean(<span class="op">-</span>y <span class="op">*</span> np.log(p) <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> y) <span class="op">*</span> np.log(<span class="dv">1</span> <span class="op">-</span> p))</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> make_fnn(q0, widths<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">10</span>), seed<span class="op">=</span><span class="dv">7</span>):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(seed)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    layers, prev <span class="op">=</span> [], q0</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> w <span class="kw">in</span> widths:</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        layers <span class="op">+=</span> [torch.nn.Linear(prev, w), torch.nn.Tanh()]</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        prev <span class="op">=</span> w</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    layers <span class="op">+=</span> [torch.nn.Linear(prev, <span class="dv">1</span>), torch.nn.Sigmoid()]</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_fnn(X_learn, y_lrn, seed<span class="op">=</span><span class="dv">7</span>, epochs<span class="op">=</span><span class="dv">500</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">50</span>):</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.random.default_rng(seed).permutation(<span class="bu">len</span>(X_learn))</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    tr, va <span class="op">=</span> p[:<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p))], p[<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p)):]</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    m_hat <span class="op">=</span> X_learn.iloc[tr].mean()</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    s_hat <span class="op">=</span> X_learn.iloc[tr].std().replace(<span class="dv">0</span>, <span class="fl">1.0</span>)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    prep <span class="op">=</span> <span class="kw">lambda</span> d: torch.tensor(((d <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).to_numpy(dtype<span class="op">=</span>np.float32))</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    Xtr, Xva <span class="op">=</span> prep(X_learn.iloc[tr]), prep(X_learn.iloc[va])</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    ytr <span class="op">=</span> torch.tensor(y_lrn.iloc[tr].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    yva <span class="op">=</span> torch.tensor(y_lrn.iloc[va].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> make_fnn(X_learn.shape[<span class="dv">1</span>], seed<span class="op">=</span>seed)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.NAdam(model.parameters())</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> torch.nn.BCELoss()</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    gen <span class="op">=</span> torch.Generator().manual_seed(seed)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    best, best_epoch, best_state <span class="op">=</span> np.inf, <span class="dv">0</span>, <span class="va">None</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, epochs <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>        model.train()</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> chunk <span class="kw">in</span> torch.randperm(<span class="bu">len</span>(Xtr), generator<span class="op">=</span>gen).split(batch):</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>            bce(model(Xtr[chunk]), ytr[chunk]).backward()</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">eval</span>()</span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>            v <span class="op">=</span> <span class="dv">200</span> <span class="op">*</span> bce(model(Xva), yva).item()</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="op">&lt;</span> best:</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>            best, best_epoch <span class="op">=</span> v, epoch</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>            best_state <span class="op">=</span> {k: t.clone() <span class="cf">for</span> k, t <span class="kw">in</span> model.state_dict().items()}</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">-</span> best_epoch <span class="op">&gt;=</span> patience:</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>    model.load_state_dict(best_state)</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, (m_hat, s_hat), best_epoch</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fnn_predict(model, scaler, X):</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>    m_hat, s_hat <span class="op">=</span> scaler</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> model(torch.tensor(</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>            ((X <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).to_numpy(dtype<span class="op">=</span>np.float32))).squeeze(<span class="dv">1</span>).numpy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>We refit the second lecture’s GLM on the same learning sample to keep the benchmark in view, then fit <span class="math inline">\(M = 20\)</span> networks differing only in seed.</p>
+<div id="34f7af65" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>FORMULA <span class="op">=</span> (<span class="st">"default_12m ~ AgeClass + logIncome + Country + C(Education)"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(HomeOwnership) + NewCreditCustomer + C(VerificationType)"</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(EmploymentDuration)"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>glm <span class="op">=</span> smf.glm(FORMULA, data<span class="op">=</span>g.iloc[idx_learn], family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>glm_test <span class="op">=</span> bernoulli_deviance(glm.predict(g.iloc[idx_test]), y_test)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>M <span class="op">=</span> <span class="dv">20</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>X_learn, y_lrn <span class="op">=</span> X_all.iloc[idx_learn], y_all.iloc[idx_learn]</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>P_test <span class="op">=</span> np.zeros((M, <span class="bu">len</span>(idx_test)))</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>P_learn <span class="op">=</span> np.zeros((M, <span class="bu">len</span>(idx_learn)))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>stops <span class="op">=</span> []</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(M):</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    model, scaler, stop <span class="op">=</span> train_fnn(X_learn, y_lrn, seed<span class="op">=</span><span class="dv">100</span> <span class="op">+</span> j)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    P_test[j] <span class="op">=</span> fnn_predict(model, scaler, X_all.iloc[idx_test])</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    P_learn[j] <span class="op">=</span> fnn_predict(model, scaler, X_learn)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    stops.append(stop)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> networks fitted in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss">s; "</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"early-stopping epoch ranged </span><span class="sc">{</span><span class="bu">min</span>(stops)<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span><span class="bu">max</span>(stops)<span class="sc">}</span><span class="ss"> "</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(mean </span><span class="sc">{</span>np<span class="sc">.</span>mean(stops)<span class="sc">:.1f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>20 networks fitted in 53s; early-stopping epoch ranged 30 to 186 (mean 70.3)</code></pre>
+</div>
+</div>
+<div id="a9a054e6" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>d_ind <span class="op">=</span> np.array([bernoulli_deviance(P_test[j], y_test) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(M)])</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>a_ind <span class="op">=</span> np.array([roc_auc_score(y_test, P_test[j]) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(M)])</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>ens_test, ens_learn <span class="op">=</span> P_test.mean(<span class="dv">0</span>), P_learn.mean(<span class="dv">0</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GLM benchmark, test deviance   </span><span class="sc">{</span>glm_test<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"single networks, test deviance  mean </span><span class="sc">{</span>d_ind<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">  "</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"sd </span><span class="sc">{</span>d_ind<span class="sc">.</span>std(ddof<span class="op">=</span><span class="dv">1</span>)<span class="sc">:.3f}</span><span class="ss">  range [</span><span class="sc">{</span>d_ind<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.3f}</span><span class="ss">, </span><span class="sc">{</span>d_ind<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">]"</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"single networks, test AUC       mean </span><span class="sc">{</span>a_ind<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">  "</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"sd </span><span class="sc">{</span>a_ind<span class="sc">.</span>std(ddof<span class="op">=</span><span class="dv">1</span>)<span class="sc">:.4f}</span><span class="ss">  range [</span><span class="sc">{</span>a_ind<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.4f}</span><span class="ss">, </span><span class="sc">{</span>a_ind<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.4f}</span><span class="ss">]"</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"nagging predictor M=</span><span class="sc">{</span>M<span class="sc">}</span><span class="ss">,        deviance </span><span class="sc">{</span>bernoulli_deviance(ens_test, y_test)<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"  AUC </span><span class="sc">{</span>roc_auc_score(y_test, ens_test)<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>GLM benchmark, test deviance   108.197
+single networks, test deviance  mean 107.677  sd 0.116  range [107.502, 107.937]
+single networks, test AUC       mean 0.7231  sd 0.0009  range [0.7217, 0.7247]
+nagging predictor M=20,        deviance 107.105  AUC 0.7269</code></pre>
+</div>
+</div>
+<p>The result is worth pausing on. A single network averages 107.677 in out-of-sample deviance across the twenty seeds, and the nagging predictor reaches 107.105, an improvement of 0.57 points. Moving from the logistic GLM to a single network, which was the whole subject of the previous lecture, was worth 108.197 against that same 107.677, or 0.52 points. Ensembling therefore buys slightly more on this book than the change of model class bought, and it buys it with no new covariates, no new architecture and no additional hyper-parameter. The AUC tells the same story more quietly, moving from 0.7231 on average to 0.7269.</p>
+<p>The spread across seeds also quantifies the non-uniqueness that the previous lecture only sampled twice. Twenty fits span 107.502 to 107.937 in test deviance, a range of 0.44 points, which is more than four fifths of the entire GLM-to-network gap. Early stopping fired anywhere between epoch 30 and epoch 186. Hence reporting a single network’s out-of-sample loss to three decimal places, as this series has been doing, overstates what one fit establishes, and the honest object to report is the ensemble.</p>
+</section>
+<section id="how-many-networks-do-we-need" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="how-many-networks-do-we-need"><span class="header-section-number">1.5</span> How many networks do we need?</h2>
+<p>The course answers roughly ten to twenty from its French motor third-party liability example. To ask the same question here we average the first <span class="math inline">\(m\)</span> of the stored prediction vectors for <span class="math inline">\(m = 1, \ldots, 20\)</span>. That cumulative average depends on the order in which the twenty fits happen to arrive, so we average the whole curve over five hundred random orderings and show the central eighty per cent of the spread.</p>
+<div id="ca9dc557" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>R <span class="op">=</span> <span class="dv">500</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>rp <span class="op">=</span> np.random.default_rng(<span class="dv">11</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>curve <span class="op">=</span> np.zeros((R, M))</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(R):</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    order <span class="op">=</span> rp.permutation(M)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    cum <span class="op">=</span> np.cumsum(P_test[order], axis<span class="op">=</span><span class="dv">0</span>) <span class="op">/</span> np.arange(<span class="dv">1</span>, M <span class="op">+</span> <span class="dv">1</span>)[:, <span class="va">None</span>]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    curve[r] <span class="op">=</span> [bernoulli_deviance(cum[k], y_test) <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(M)]</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>cm <span class="op">=</span> curve.mean(<span class="dv">0</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>lo, hi <span class="op">=</span> np.percentile(curve, [<span class="dv">10</span>, <span class="dv">90</span>], axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>ms <span class="op">=</span> np.arange(<span class="dv">1</span>, M <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>ax.fill_between(ms, lo, hi, color<span class="op">=</span>BLUE, alpha<span class="op">=</span><span class="fl">0.15</span>, lw<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>ax.plot(ms, cm, color<span class="op">=</span>BLUE, marker<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span><span class="st">"nagging predictor"</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>ax.axhline(d_ind.mean(), color<span class="op">=</span>GREY, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>           label<span class="op">=</span><span class="st">"mean single network"</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>ax.axhline(glm_test, color<span class="op">=</span>RED, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="fl">1.2</span>, label<span class="op">=</span><span class="st">"logistic GLM"</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"number of networks $m$"</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r"out-of-sample deviance </span><span class="kw">(</span><span class="dv">$</span><span class="vs">10</span><span class="dv">^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>ax.set_xticks([<span class="dv">1</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">20</span>])</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>ax.legend(loc<span class="op">=</span><span class="st">"upper right"</span>)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">4</span>, <span class="dv">9</span>, <span class="dv">14</span>, <span class="dv">19</span>]:</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  m = </span><span class="sc">{</span>k<span class="op">+</span><span class="dv">1</span><span class="sc">:2d}</span><span class="ss">   </span><span class="sc">{</span>cm[k]<span class="sc">:.3f}</span><span class="ss">   [</span><span class="sc">{</span>lo[k]<span class="sc">:.3f}</span><span class="ss">, </span><span class="sc">{</span>hi[k]<span class="sc">:.3f}</span><span class="ss">]"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="06_credit-covariate-engineering_files/figure-html/cell-7-output-1.png" width="963" height="528" class="figure-img"></p>
+<figcaption>Out-of-sample Bernoulli deviance of the nagging predictor as a function of the ensemble size <span class="math inline">\(m\)</span>, our counterpart of the course’s nagging plot. The line is the mean over 500 random orderings of the 20 fitted networks and the band spans the 10th to 90th percentile of that spread; both collapse to a point at <span class="math inline">\(m=20\)</span>, where every ordering gives the same average. The GLM benchmark and the mean single network are marked for reference.</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  m =  1   107.676   [107.536, 107.810]
+  m =  2   107.374   [107.269, 107.499]
+  m =  3   107.276   [107.178, 107.387]
+  m =  5   107.195   [107.117, 107.287]
+  m = 10   107.133   [107.079, 107.192]
+  m = 15   107.116   [107.085, 107.145]
+  m = 20   107.105   [107.105, 107.105]</code></pre>
+</div>
+</div>
+<p>Most of the gain arrives early. Two networks recover 107.374, five recover 107.195, and ten reach 107.133 against the 107.105 that twenty deliver, so the second ten networks are worth 0.03 points between them. The course’s recommendation of <span class="math inline">\(M \in \{10, 20\}\)</span> transfers to this book without adjustment, and the practical reading for a credit team is that ensembling is cheap. Twenty fits took under two minutes here, and the resulting predictor is both better and reproducible in a sense a single fit is not.</p>
+</section>
+<section id="what-nagging-does-not-fix" class="level2" data-number="1.6">
+<h2 data-number="1.6" class="anchored" data-anchor-id="what-nagging-does-not-fix"><span class="header-section-number">1.6</span> What nagging does not fix</h2>
+<p>Calibration in the large is the property the second lecture proved for the canonical-link GLM, whose fitted PDs sum exactly to the observed defaults on the learning sample. The previous lecture watched a single network give it up. One might hope that averaging repairs it, and the course’s own results table encourages the hope, since its nagging predictor sits at a balance of 7.36 per cent, exactly the portfolio figure that the null model and the GLM achieve, where its single network sits at 7.17.</p>
+<p>Averaging cannot do that, and the reason is one line of arithmetic. The mean of the ensemble’s predictions is the mean of the individual means, <span class="math display">\[
+\frac{1}{n}\sum_{i=1}^n \widehat{\mu}^{\rm nagg}_M(\boldsymbol{X}_i)
+= \frac{1}{M}\sum_{j=1}^M \left(
+   \frac{1}{n}\sum_{i=1}^n \mu_{\widehat{\vartheta}_j}(\boldsymbol{X}_i)
+   \right),
+\]</span> so the ensemble’s balance error is the average of the individual balance errors. Averaging removes the part of that error which varies from fit to fit, and leaves the part every fit shares.</p>
+<div id="1e37a0ab" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>b_ind <span class="op">=</span> P_learn.mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>obs <span class="op">=</span> y_learn.mean()</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>rel <span class="op">=</span> (b_ind <span class="op">/</span> obs <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>rel_ens <span class="op">=</span> (ens_learn.mean() <span class="op">/</span> obs <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"observed learning-sample default rate  </span><span class="sc">{</span>obs<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"single networks, mean predicted PD     mean </span><span class="sc">{</span>b_ind<span class="sc">.</span>mean()<span class="sc">:.5f}</span><span class="ss">  "</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"sd </span><span class="sc">{</span>b_ind<span class="sc">.</span>std(ddof<span class="op">=</span><span class="dv">1</span>)<span class="sc">:.5f}</span><span class="ss">  range [</span><span class="sc">{</span>b_ind<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.5f}</span><span class="ss">, </span><span class="sc">{</span>b_ind<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.5f}</span><span class="ss">]"</span>)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"single networks, relative balance miss mean </span><span class="sc">{</span>rel<span class="sc">.</span>mean()<span class="sc">:+.3f}</span><span class="ss">%  "</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"largest in absolute value </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(rel)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">%"</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"nagging predictor, mean predicted PD   </span><span class="sc">{</span>ens_learn<span class="sc">.</span>mean()<span class="sc">:.5f}</span><span class="ss">  "</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"relative balance miss </span><span class="sc">{</span>rel_ens<span class="sc">:+.3f}</span><span class="ss">%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>observed learning-sample default rate  0.28878
+single networks, mean predicted PD     mean 0.28755  sd 0.00295  range [0.28153, 0.29259]
+single networks, relative balance miss mean -0.424%  largest in absolute value 2.509%
+nagging predictor, mean predicted PD   0.28755  relative balance miss -0.424%</code></pre>
+</div>
+</div>
+<div id="91ce920c" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">2.2</span>))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>jit <span class="op">=</span> np.random.default_rng(<span class="dv">5</span>).uniform(<span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.25</span>, M)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ax.scatter(rel, jit, s<span class="op">=</span><span class="dv">22</span>, color<span class="op">=</span>GREY, zorder<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span><span class="st">"individual networks"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span>BLUE, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="st">"exact balance"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(rel_ens, color<span class="op">=</span>RED, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="ss">f"nagging predictor (</span><span class="sc">{</span>rel_ens<span class="sc">:+.2f}</span><span class="ss">%)"</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>ax.set_yticks([])<span class="op">;</span> ax.set_ylim(<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"relative balance miss (</span><span class="sc">% o</span><span class="st">f the observed default rate)"</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>ax.spines[<span class="st">"left"</span>].set_visible(<span class="va">False</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>ax.legend(loc<span class="op">=</span><span class="st">"upper left"</span>, fontsize<span class="op">=</span><span class="dv">8</span>, frameon<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="06_credit-covariate-engineering_files/figure-html/cell-9-output-1.png" width="964" height="318" class="figure-img"></p>
+<figcaption>Relative balance miss on the learning sample for each of the 20 networks (dots) and for the nagging predictor (solid line), as a percentage of the observed default rate. Exact balance is the dashed line at zero. Averaging collapses the dispersion, which spans -2.5 to +1.3 per cent across seeds, onto the common systematic component of -0.42 per cent, which it leaves untouched.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The measurement matches the algebra exactly. Individual networks miss the observed default count by anything from <span class="math inline">\(-2.51\)</span> to <span class="math inline">\(+1.32\)</span> per cent, a dispersion of about one percentage point in standard deviation, and their average miss is <span class="math inline">\(-0.42\)</span> per cent. The nagging predictor misses by <span class="math inline">\(-0.42\)</span> per cent. Ensembling has removed the seed-to-seed dispersion in calibration, which is a real gain for a validator who has to explain why this year’s number differs from last year’s, and it has left the systematic understatement precisely where it was.</p>
+<p>Consequently the course’s table showing the nagging predictor exactly on the portfolio figure cannot be averaging alone. The most likely explanation is that a balance correction was applied on top, which their lecture notes discuss under bias regularisation; this is inference from the published numbers rather than something the deck states. Either way, the reading for credit is the one the third lecture reached from the other direction. Where the balance property matters, and under the internal ratings based approach it is a supervisory expectation rather than a preference, it has to be imposed deliberately. The cheapest instrument remains an intercept recalibration on the learning sample, which is the degenerate combined actuarial neural network of the third lecture, and it composes with nagging without disturbing the ranking.</p>
+</section>
+</section>
+<section id="categorical-covariates" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Categorical covariates</h1>
+<section id="the-levels-a-credit-portfolio-presents" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="the-levels-a-credit-portfolio-presents"><span class="header-section-number">2.1</span> The levels a credit portfolio presents</h2>
+<p>Categorical covariates, whether nominal or ordinal, have to be brought into numerical form before any regression can use them. The course runs its examples on a six-level profession variable. The Bondora book offers the following, counted on the modelling frame.</p>
+<div id="0ec5c2ff" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> CATS <span class="op">+</span> [<span class="st">"Occupation"</span>]:</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    vc <span class="op">=</span> g[c].value_counts()</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    rate <span class="op">=</span> y_all.groupby(g[c]).mean()</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    tiny <span class="op">=</span> vc.index[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">:20s}</span><span class="ss"> K = </span><span class="sc">{</span><span class="bu">len</span>(vc)<span class="sc">:2d}</span><span class="ss">   smallest level '</span><span class="sc">{</span>tiny<span class="sc">}</span><span class="ss">' "</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"n = </span><span class="sc">{</span>vc[tiny]<span class="sc">:5d}</span><span class="ss">, default rate </span><span class="sc">{</span>rate[tiny]<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Country              K =  4   smallest level 'SK' n =   296, default rate 0.706
+Education            K =  5   smallest level '2' n =  6436, default rate 0.321
+HomeOwnership        K = 12   smallest level '0' n =    38, default rate 0.632
+VerificationType     K =  4   smallest level '2' n =  1826, default rate 0.280
+EmploymentDuration   K = 10   smallest level 'TrialPeriod' n =   751, default rate 0.316
+Occupation           K = 21   smallest level '0' n =     3, default rate 1.000</code></pre>
+</div>
+</div>
+<p>Two observations shape everything that follows. First, the cardinalities match the course’s own example closely, since its French motor data embeds a vehicle brand with eleven levels and a region with twenty-two, against home ownership with twelve here and occupation area with twenty-one. Second, <code>Occupation</code> has a level carrying three accounts, all three of which defaulted. An encoding that maps a level to its observed default rate will map that level to <span class="math inline">\(1\)</span>, and the second lecture already met this as quasi-complete separation. The credibility machinery below exists for exactly this cell.</p>
+<p>The genuine high-cardinality case cannot be reproduced on this data, and the reason is worth recording. Bondora redacts <code>City</code>, <code>County</code> and <code>EmploymentPosition</code> entirely in the public export, so every value is null. Geography is the canonical high-cardinality credit covariate and the one that motivates Richman and Wüthrich (2024) on regularising high-cardinality categoricals in network regressions. In its absence we construct a high-cardinality cell below by crossing three of the covariates we do have, which is also what a scorecard developer does when a segment needs finer treatment than any single field provides.</p>
+</section>
+<section id="ordinal-coding-one-hot-encoding-and-dummy-coding" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="ordinal-coding-one-hot-encoding-and-dummy-coding"><span class="header-section-number">2.2</span> Ordinal coding, one-hot encoding and dummy coding</h2>
+<p>For genuinely ordered levels <span class="math inline">\((a_k)_{k=1}^K\)</span> the course uses a one-dimensional entity embedding by rank, <span class="math display">\[
+X \in \mathcal{A} ~\mapsto~ \sum_{k=1}^K k\, \mathbf{1}_{\{X = a_k\}}
+  \in \mathbb{R} ,
+\]</span> and notes that an alphabetical ordering, which its running example happens to carry, is risk-insensitive and therefore not useful. The warning is well taken and slightly too strong, as the measurement below shows.</p>
+<p>One-hot encoding sends each level to a basis vector of <span class="math inline">\(\mathbb{R}^K\)</span>, <span class="math display">\[
+X \in \mathcal{A} ~\mapsto~
+\left(\mathbf{1}_{\{X = a_1\}}, \ldots, \mathbf{1}_{\{X = a_K\}}\right)^\top ,
+\]</span> which is redundant, since the first <span class="math inline">\(K-1\)</span> components determine the last. Dummy coding picks a reference level and measures the others against it, giving full rank in <span class="math inline">\(\mathbb{R}^{K-1}\)</span>. Both become sparse as <span class="math inline">\(K\)</span> grows, which is a numerical problem for gradient descent and a statistical one for the GLM: a level with three accounts gets its own parameter, fitted on three observations.</p>
+<p>Our design matrix has used one-hot encoding for the network and dummy coding inside the GLM formula throughout the series, and at these cardinalities both are perfectly serviceable. The interesting behaviour starts higher up.</p>
+</section>
+<section id="target-encoding-is-weight-of-evidence" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="target-encoding-is-weight-of-evidence"><span class="header-section-number">2.3</span> Target encoding is weight of evidence</h2>
+<p>The course introduces target encoding as a device mainly used for regression trees. Given the sample <span class="math inline">\((Y_i, X_i)_{i=1}^n\)</span> with categorical <span class="math inline">\(X_i \in \mathcal{A}\)</span>, compute the level means <span class="math display">\[
+\overline{y}_k = \frac{\sum_{i=1}^n Y_i \mathbf{1}_{\{X_i = a_k\}}}
+                       {\sum_{i=1}^n \mathbf{1}_{\{X_i = a_k\}}}
+\]</span> and use them as if they were ordinal labels. The course flags three weaknesses, i.e.&nbsp;that the encoding ignores interactions with the other covariates, that it is unreliable on scarce levels, and that it can leak information.</p>
+<p>Credit modelling reached this device independently and calls it weight of evidence. Standard scorecard practice replaces each level by <span class="math display">\[
+\mathrm{WoE}_k = \log \frac{\overline{y}_k / (1 - \overline{y}_k)}
+                            {\overline{y} / (1 - \overline{y})} ,
+\]</span> the log of the level’s default odds relative to the portfolio’s, where <span class="math inline">\(\overline{y}\)</span> is the overall default rate. The conventional industry definition uses the good-to-bad ratio and therefore carries the opposite sign; the form above keeps the sign of risk and changes nothing else.</p>
+<p>That log-odds transformation is the substantive difference from the course’s <span class="math inline">\(\overline{y}_k\)</span>, and under a logit link it is the right functional form. A logistic regression models <span class="math inline">\(\mathrm{logit}(p) = \beta_0 + \beta^\top \boldsymbol{x}\)</span>, so a covariate already expressed as a log-odds shift enters linearly and a single coefficient near unity reproduces the level’s marginal effect exactly. Feed <span class="math inline">\(\overline{y}_k\)</span> in on the probability scale and the same coefficient has to approximate a logit through a linear function, which it can only do locally. Hence weight of evidence is not merely a credit convention but a change of scale that matches the link, and it is why scorecards built on WoE-transformed characteristics behave so predictably.</p>
+<p>The cost of the log-odds scale is that it is unbounded. Where <span class="math inline">\(\overline{y}_k\)</span> reaches <span class="math inline">\(0\)</span> or <span class="math inline">\(1\)</span>, as it does for the three-account occupation level, the WoE diverges. The course’s next section is the remedy.</p>
+</section>
+<section id="credibilitised-target-encoding" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="credibilitised-target-encoding"><span class="header-section-number">2.4</span> Credibilitised target encoding</h2>
+<p>Following Micci-Barreca (2001) and Bühlmann (1967), shrink each level mean towards the global mean in proportion to how much data stands behind it, <span class="math display">\[
+\overline{y}^{\rm cred}_k = \alpha_k \overline{y}_k
+  + \left(1 - \alpha_k\right) \overline{y},
+\qquad
+\alpha_k = \frac{n_k}{n_k + \tau} \in (0, 1],
+\]</span> where <span class="math inline">\(n_k\)</span> counts the observations on level <span class="math inline">\(a_k\)</span> and the shrinkage parameter <span class="math inline">\(\tau \ge 0\)</span> is a hyper-parameter. A level with <span class="math inline">\(n_k \gg \tau\)</span> keeps its own mean and a level with <span class="math inline">\(n_k \ll \tau\)</span> is replaced by the portfolio mean. Setting <span class="math inline">\(\tau = 0\)</span> recovers raw target encoding.</p>
+<p>Credit teams generally reach the same place by a blunter route, enforcing a minimum bin size during characteristic binning and merging any level that falls below it into a neighbour. Merging is easier to document and loses the level’s identity; credibility keeps the identity and borrows strength. The two are complements, and the Bühlmann form has the advantage that <span class="math inline">\(\tau\)</span> is a single number a validator can challenge.</p>
+<p>Our test bed is a deliberately high-cardinality cell, formed by crossing country, education and occupation area.</p>
+<div id="ff3b3e58" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>cell <span class="op">=</span> (g[<span class="st">"Country"</span>] <span class="op">+</span> <span class="st">"|"</span> <span class="op">+</span> g[<span class="st">"Education"</span>] <span class="op">+</span> <span class="st">"|"</span> <span class="op">+</span> g[<span class="st">"Occupation"</span>]).to_numpy()</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>BASE <span class="op">=</span> np.column_stack([g[<span class="st">"AgeCens"</span>], g[<span class="st">"logIncome"</span>],</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                        g[<span class="st">"NewCreditCustomer"</span>].astype(<span class="bu">float</span>)])</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>n_cell <span class="op">=</span> pd.Series(y_learn).groupby(cell[idx_learn]).count()</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"levels of the cell: </span><span class="sc">{</span><span class="bu">len</span>(<span class="bu">set</span>(cell))<span class="sc">}</span><span class="ss"> overall, "</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(n_cell)<span class="sc">}</span><span class="ss"> present in the learning sample"</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"learning-sample levels with fewer than 10 accounts: </span><span class="sc">{</span>(n_cell <span class="op">&lt;</span> <span class="dv">10</span>)<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss">, "</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"fewer than 30: </span><span class="sc">{</span>(n_cell <span class="op">&lt;</span> <span class="dv">30</span>)<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>levels of the cell: 328 overall, 324 present in the learning sample
+learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</code></pre>
+</div>
+</div>
+<p>The shrinkage is applied on the log-odds scale, which is where the readout wants it.</p>
+<div id="783ac325" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cell_encoding(fit_idx, tau, kind<span class="op">=</span><span class="st">"woe"</span>):</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Level map for the cell, estimated on `fit_idx` only."""</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    yb, cb <span class="op">=</span> y_all.iloc[fit_idx].to_numpy(), cell[fit_idx]</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    grand <span class="op">=</span> yb.mean()</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> pd.Series(yb).groupby(cb).agg([<span class="st">"sum"</span>, <span class="st">"count"</span>])</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    ybar <span class="op">=</span> s[<span class="st">"sum"</span>] <span class="op">/</span> s[<span class="st">"count"</span>]</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> s[<span class="st">"count"</span>] <span class="op">/</span> (s[<span class="st">"count"</span>] <span class="op">+</span> tau)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    cred <span class="op">=</span> alpha <span class="op">*</span> ybar <span class="op">+</span> (<span class="dv">1</span> <span class="op">-</span> alpha) <span class="op">*</span> grand</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> kind <span class="op">==</span> <span class="st">"target"</span>:</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> cred, grand</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    logit <span class="op">=</span> <span class="kw">lambda</span> p: np.log(np.clip(p, <span class="fl">1e-9</span>, <span class="dv">1</span> <span class="op">-</span> <span class="fl">1e-9</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>                             <span class="op">/</span> np.clip(<span class="dv">1</span> <span class="op">-</span> p, <span class="fl">1e-9</span>, <span class="dv">1</span> <span class="op">-</span> <span class="fl">1e-9</span>))</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> logit(cred) <span class="op">-</span> logit(grand), <span class="fl">0.0</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> readout(label, z_fit, z_eval, fit_idx, eval_idx, verbose<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Logistic GLM on the three continuous covariates plus the encoded cell."""</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> sm.add_constant(np.column_stack([BASE[fit_idx], z_fit]))</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>    B <span class="op">=</span> sm.add_constant(np.column_stack([BASE[eval_idx], z_eval]))</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    fit <span class="op">=</span> sm.GLM(y_all.iloc[fit_idx], A, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>    d_in <span class="op">=</span> bernoulli_deviance(fit.predict(A), y_all.iloc[fit_idx])</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>    d_out <span class="op">=</span> bernoulli_deviance(fit.predict(B), y_all.iloc[eval_idx])</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>    auc <span class="op">=</span> roc_auc_score(y_all.iloc[eval_idx], fit.predict(B))</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> verbose:</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>label<span class="sc">:34s}</span><span class="ss"> in-sample </span><span class="sc">{</span>d_in<span class="sc">:7.3f}</span><span class="ss">   test </span><span class="sc">{</span>d_out<span class="sc">:7.3f}</span><span class="ss">   "</span></span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"AUC </span><span class="sc">{</span>auc<span class="sc">:.4f}</span><span class="ss">   parameters </span><span class="sc">{</span>A<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> d_out</span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> encode(mp, default, idx):</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(cell[idx]).<span class="bu">map</span>(mp).fillna(default).to_numpy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The shrinkage parameter is selected on a validation slice carved out of the learning sample, with both the encoding and the GLM fitted on the remaining ninety per cent. Selecting <span class="math inline">\(\tau\)</span> on the test sample would be the same offence the series has been warning about since the second lecture.</p>
+<div id="20b9a182" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> np.random.default_rng(<span class="dv">3</span>).permutation(<span class="bu">len</span>(idx_learn))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>cutoff <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p))</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>U, V <span class="op">=</span> idx_learn[p[:cutoff]], idx_learn[p[cutoff:]]</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>TAUS <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">20</span>, <span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">300</span>, <span class="dv">1000</span>]</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>val_dev, test_dev <span class="op">=</span> [], []</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> tau <span class="kw">in</span> TAUS:</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    mp, dflt <span class="op">=</span> cell_encoding(U, <span class="bu">float</span>(tau))</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    val_dev.append(readout(<span class="ss">f"tau=</span><span class="sc">{</span>tau<span class="sc">}</span><span class="ss">"</span>, encode(mp, dflt, U), encode(mp, dflt, V),</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>                           U, V, verbose<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    mp, dflt <span class="op">=</span> cell_encoding(idx_learn, <span class="bu">float</span>(tau))</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    test_dev.append(readout(<span class="ss">f"tau=</span><span class="sc">{</span>tau<span class="sc">}</span><span class="ss">"</span>, encode(mp, dflt, idx_learn),</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>                            encode(mp, dflt, idx_test), idx_learn, idx_test,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>                            verbose<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>tau_star <span class="op">=</span> TAUS[<span class="bu">int</span>(np.argmin(val_dev))]</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"selected tau* = </span><span class="sc">{</span>tau_star<span class="sc">}</span><span class="ss"> "</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(validation deviance </span><span class="sc">{</span><span class="bu">min</span>(val_dev)<span class="sc">:.3f}</span><span class="ss"> on n = </span><span class="sc">{</span><span class="bu">len</span>(V)<span class="sc">:,}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>selected tau* = 5 (validation deviance 107.773 on n = 11,894)</code></pre>
+</div>
+</div>
+<div id="7135d5ca" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.4</span>))</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.array(TAUS, <span class="bu">float</span>)<span class="op">;</span> x[<span class="dv">0</span>] <span class="op">=</span> <span class="fl">0.4</span>          <span class="co"># place tau = 0 on the log axis</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>ax.plot(x, val_dev, color<span class="op">=</span>BLUE, marker<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="fl">3.5</span>, label<span class="op">=</span><span class="vs">r"validation </span><span class="kw">(</span><span class="dv">$\m</span><span class="vs">athcal{V}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>ax.plot(x, test_dev, color<span class="op">=</span>GREY, marker<span class="op">=</span><span class="st">"s"</span>, ms<span class="op">=</span><span class="fl">3.5</span>, ls<span class="op">=</span><span class="st">"--"</span>, label<span class="op">=</span><span class="st">"test"</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(x[TAUS.index(tau_star)], color<span class="op">=</span>RED, lw<span class="op">=</span><span class="fl">1.2</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>           label<span class="op">=</span><span class="vs">rf"selected </span><span class="dv">$</span><span class="ch">\t</span><span class="vs">au</span><span class="dv">^</span><span class="op">*</span><span class="vs">=</span><span class="sc">{</span>tau_star<span class="sc">}</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>ax.set_xscale(<span class="st">"log"</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>ax.set_xticks([<span class="fl">0.4</span>, <span class="dv">1</span>, <span class="dv">10</span>, <span class="dv">100</span>, <span class="dv">1000</span>])</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>ax.set_xticklabels([<span class="st">"0"</span>, <span class="st">"1"</span>, <span class="st">"10"</span>, <span class="st">"100"</span>, <span class="st">"1000"</span>])</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"credibility parameter </span><span class="dv">$</span><span class="ch">\t</span><span class="vs">au</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r"Bernoulli deviance </span><span class="kw">(</span><span class="dv">$</span><span class="vs">10</span><span class="dv">^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>ax.legend()<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="06_credit-covariate-engineering_files/figure-html/cell-14-output-1.png" width="963" height="496" class="figure-img"></p>
+<figcaption>Selection of the credibility parameter <span class="math inline">\(\tau\)</span> for the 328-level cell. The validation curve is the selection criterion, computed with both the encoding and the GLM fitted on <span class="math inline">\(\mathcal{U}\)</span> and evaluated on the held-out <span class="math inline">\(\mathcal{V}\)</span>. The test curve is shown afterwards to confirm the choice was not lucky; it played no part in choosing <span class="math inline">\(\tau^*\)</span>. Both curves rise steeply towards <span class="math inline">\(\tau = 0\)</span>, where scarce levels keep their raw log-odds, and drift up beyond <span class="math inline">\(\tau \approx 20\)</span> as real signal is shrunk away.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="the-encodings-compared" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="the-encodings-compared"><span class="header-section-number">2.5</span> The encodings compared</h2>
+<p>Five encodings of the same cell now go through one fixed readout, a logistic GLM on age, log-income, the new-customer flag and the encoded cell. Holding the readout fixed isolates the encoding, which is the same device the third lecture used to compare representations.</p>
+<div id="d4de9a45" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"readout: logistic GLM, </span><span class="sc">{</span><span class="bu">len</span>(<span class="bu">set</span>(cell))<span class="sc">}</span><span class="ss">-level cell, "</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"test sample n = </span><span class="sc">{</span><span class="bu">len</span>(idx_test)<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>readout(<span class="st">"no cell at all"</span>, np.zeros((<span class="bu">len</span>(idx_learn), <span class="dv">0</span>)),</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        np.zeros((<span class="bu">len</span>(idx_test), <span class="dv">0</span>)), idx_learn, idx_test)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>levels <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>(cell[idx_learn]))</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>omap <span class="op">=</span> pd.Series({lv: i <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> i, lv <span class="kw">in</span> <span class="bu">enumerate</span>(levels)})</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>readout(<span class="st">"ordinal, alphabetical index"</span>, encode(omap, <span class="dv">0</span>, idx_learn),</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>        encode(omap, <span class="dv">0</span>, idx_test), idx_learn, idx_test)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>cat_l <span class="op">=</span> pd.Categorical(cell[idx_learn], categories<span class="op">=</span>levels)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>cat_t <span class="op">=</span> pd.Categorical(cell[idx_test], categories<span class="op">=</span>levels)</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>readout(<span class="st">"dummy coding"</span>,</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>        pd.get_dummies(cat_l, drop_first<span class="op">=</span><span class="va">True</span>).astype(<span class="bu">float</span>).to_numpy(),</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>        pd.get_dummies(cat_t, drop_first<span class="op">=</span><span class="va">True</span>).astype(<span class="bu">float</span>).to_numpy(),</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>        idx_learn, idx_test)</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>mp, dflt <span class="op">=</span> cell_encoding(idx_learn, <span class="fl">0.0</span>, kind<span class="op">=</span><span class="st">"target"</span>)</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>readout(<span class="st">"raw target encoding"</span>, encode(mp, dflt, idx_learn),</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>        encode(mp, dflt, idx_test), idx_learn, idx_test)</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>mp, dflt <span class="op">=</span> cell_encoding(idx_learn, <span class="fl">0.0</span>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>readout(<span class="st">"weight of evidence"</span>, encode(mp, dflt, idx_learn),</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>        encode(mp, dflt, idx_test), idx_learn, idx_test)</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>mp, dflt <span class="op">=</span> cell_encoding(idx_learn, <span class="bu">float</span>(tau_star))</span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>readout(<span class="ss">f"credibilitised WoE, tau=</span><span class="sc">{</span>tau_star<span class="sc">}</span><span class="ss">"</span>, encode(mp, dflt, idx_learn),</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a>        encode(mp, dflt, idx_test), idx_learn, idx_test)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>readout: logistic GLM, 328-level cell, test sample n = 29,734
+  no cell at all                     in-sample 117.385   test 117.959   AUC 0.6106   parameters 4
+  ordinal, alphabetical index        in-sample 113.539   test 114.402   AUC 0.6626   parameters 5</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  dummy coding                       in-sample 107.139   test 110.351   AUC 0.7086   parameters 327
+  raw target encoding                in-sample 107.332   test 109.432   AUC 0.7082   parameters 5
+  weight of evidence                 in-sample 107.203   test 110.199   AUC 0.7080   parameters 5
+  credibilitised WoE, tau=5          in-sample 107.294   test 109.339   AUC 0.7082   parameters 5</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="119">
+<pre><code>np.float64(109.33894419437505)</code></pre>
+</div>
+</div>
+<p>Four readings come out of that table, and one of them cuts against the course.</p>
+<p>The cell carries a great deal of information. Dropping it costs 8.6 deviance points and 0.10 of AUC against the best encoding, so this is a covariate worth engineering properly rather than a marginal one.</p>
+<p>The alphabetical ordinal encoding, which the course dismisses as risk-insensitive, recovers 3.6 of those points. The explanation is mechanical and instructive. Our cell label begins with the country code, so sorting alphabetically sorts primarily by country, and country is the strongest single driver of default in this book, running from 17.0 per cent in Estonia to 70.6 per cent in Slovakia. An arbitrary ordering is therefore only as risk-insensitive as the label’s construction makes it, and a modeller who reads a real improvement off an alphabetical index has learned something about the labelling scheme rather than about risk.</p>
+<p>Dummy coding buys the discrimination and pays for it in overfitting. Its in-sample deviance of 107.139 is the best of any encoding and its test deviance of 110.351 is the worst of the four serious ones, a gap of 3.2 points bought with 327 parameters. Raw target encoding reaches a better test deviance of 109.432 using one column in place of those 327, which is the compression argument for target encoding in its cleanest form.</p>
+<p>Weight of evidence without credibility is worse than raw target encoding, at 110.199 against 109.432, and this is where the log-odds scale bites back. A level with no defaults or with nothing but defaults receives an enormous WoE, bounded only by the numerical floor in the code, and a hundred such levels give the readout enormous leverage on almost no data. Raw target encoding is confined to <span class="math inline">\([0, 1]\)</span> and so degrades gracefully where WoE explodes. Credibility repairs it completely: at <span class="math inline">\(\tau^* = 5\)</span> the WoE encoding reaches 109.339, the best test deviance in the table, on that same single column. Consequently the log-odds scale is the right one and it is only usable once shrunk, which is precisely why industry practice never applies WoE to an unbinned high-cardinality field.</p>
+</section>
+<section id="leakage-and-why-an-in-sample-check-misses-it" class="level2" data-number="2.6">
+<h2 data-number="2.6" class="anchored" data-anchor-id="leakage-and-why-an-in-sample-check-misses-it"><span class="header-section-number">2.6</span> Leakage, and why an in-sample check misses it</h2>
+<p>The course lists leakage as a weakness of target encoding without quantifying it. The quantity is worth knowing, because the mistake is easy to make and its signature is nearly invisible in the place a modeller usually looks. We repeat two encodings with the level means computed on the whole dataset, test sample included, and change nothing else.</p>
+<div id="f9355e32" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>full <span class="op">=</span> np.arange(<span class="bu">len</span>(g))</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> kind, name <span class="kw">in</span> [(<span class="st">"target"</span>, <span class="st">"raw target encoding"</span>), (<span class="st">"woe"</span>, <span class="st">"weight of evidence"</span>)]:</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    mp, dflt <span class="op">=</span> cell_encoding(full, <span class="fl">0.0</span>, kind<span class="op">=</span>kind)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    readout(<span class="ss">f"LEAKED </span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">"</span>, encode(mp, dflt, idx_learn),</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>            encode(mp, dflt, idx_test), idx_learn, idx_test)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>mp, dflt <span class="op">=</span> cell_encoding(full, <span class="bu">float</span>(tau_star))</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>readout(<span class="ss">f"LEAKED credibilitised WoE"</span>, encode(mp, dflt, idx_learn),</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>        encode(mp, dflt, idx_test), idx_learn, idx_test)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  LEAKED raw target encoding         in-sample 107.381   test 108.960   AUC 0.7108   parameters 5
+  LEAKED weight of evidence          in-sample 107.255   test 108.869   AUC 0.7108   parameters 5
+  LEAKED credibilitised WoE          in-sample 107.322   test 108.966   AUC 0.7105   parameters 5</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="120">
+<pre><code>np.float64(108.96630490066586)</code></pre>
+</div>
+</div>
+<p>The leak is worth 0.47 deviance points on raw target encoding, moving 109.432 to 108.960, and 1.33 points on weight of evidence, moving 110.199 to 108.869. Both figures are of the same order as the entire gain the previous lecture measured from replacing the GLM with a network. A team that computes its WoE tables on the full development file before splitting therefore manufactures an apparent improvement the size of a genuine model-class upgrade, and it will not survive contact with next quarter’s applications.</p>
+<p>Credibility offers no protection, which is worth stating because it is the natural thing to hope. Shrinkage at <span class="math inline">\(\tau^* = 5\)</span> still moves the test deviance from 109.339 to 108.966 once the level means see the test sample, a leak of 0.37 points. Shrinkage addresses scarcity and leakage is a question of which rows the encoding was allowed to see, so the two failures are independent.</p>
+<p>The signature is what makes this dangerous. In-sample deviance moves by no more than 0.06 points under any of the three leaks, and it moves upward, because a level map estimated on the whole dataset fits the learning sample marginally worse than one estimated on the learning sample alone. An in-sample diagnostic therefore shows a leaked model as very slightly the poorer of the two, and no amount of in-sample checking will find this. The only defence is procedural, i.e.&nbsp;the split comes first, every encoding map is estimated inside the learning sample, and the map is stored alongside the scaling constants as part of the model.</p>
+</section>
+<section id="entity-embedding" class="level2" data-number="2.7">
+<h2 data-number="2.7" class="anchored" data-anchor-id="entity-embedding"><span class="header-section-number">2.7</span> Entity embedding</h2>
+<p>Entity embedding borrows from natural language processing, following Brébisson et al.&nbsp;(2015), Guo and Berkhahn (2016) and Richman (2021). Choose an embedding dimension <span class="math inline">\(b \in \mathbb{N}\)</span>, typically <span class="math inline">\(b \ll K\)</span>, and learn a map <span class="math display">\[
+\boldsymbol{e}^{\rm EE}: \mathcal{A} \to \mathbb{R}^b,
+\qquad X \mapsto \boldsymbol{e}^{\rm EE}(X),
+\]</span> carrying <span class="math inline">\(b \cdot K\)</span> weights. In a network this is an embedding layer, which is an additional layer that is not fully connected, and its weights are learned by gradient descent along with everything else. The intention the course states is that proximity in <span class="math inline">\(\mathbb{R}^b\)</span> should reflect similarity in risk behaviour, and the weights need no normalisation because only relative position matters.</p>
+<p>Three properties recommend the construction, and the discrimination gain is not reliably one of them. First, parameter economy. One-hot encoding of our five categoricals contributes 35 input columns to the first dense layer, where a <span class="math inline">\(b = 2\)</span> embedding contributes 10 columns plus 80 embedding weights, the 80 counting the reserved unseen index on each of the five, and the saving grows with <span class="math inline">\(K\)</span>. Second, the levels acquire coordinates that can be inspected, which the next section examines sceptically. Third, and most consequentially for the rest of the course, every covariate lands in the same <span class="math inline">\(b\)</span>-dimensional space, which is what turns a covariate vector into the tensor an attention layer consumes.</p>
+</section>
+<section id="the-embedding-network-on-the-bondora-book" class="level2" data-number="2.8">
+<h2 data-number="2.8" class="anchored" data-anchor-id="the-embedding-network-on-the-bondora-book"><span class="header-section-number">2.8</span> The embedding network on the Bondora book</h2>
+<p>Integer level codes must stay out of the scaler, since standardising a code destroys the indexing the embedding layer needs, so the training routine is rebuilt rather than reused. Codes run from <span class="math inline">\(1\)</span> to <span class="math inline">\(K\)</span> and index <span class="math inline">\(0\)</span> is reserved for a level absent from the learning sample, which cannot arise on this random split but would on an out-of-time one.</p>
+<div id="f2288b2c" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>levmaps <span class="op">=</span> {c: {lv: i <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> i, lv <span class="kw">in</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>               <span class="bu">enumerate</span>(<span class="bu">sorted</span>(g[c].iloc[idx_learn].unique()))} <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>cards <span class="op">=</span> {c: <span class="bu">len</span>(levmaps[c]) <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>codes <span class="op">=</span> np.column_stack([g[c].<span class="bu">map</span>(levmaps[c]).fillna(<span class="dv">0</span>).astype(<span class="bu">int</span>).to_numpy()</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                         <span class="cf">for</span> c <span class="kw">in</span> CATS])</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>Xc <span class="op">=</span> g[CONT].astype(<span class="bu">float</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"embedding cardinalities, including the reserved unseen index:"</span>, cards)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>embedding cardinalities, including the reserved unseen index: {'Country': 5, 'Education': 6, 'HomeOwnership': 13, 'VerificationType': 5, 'EmploymentDuration': 11}</code></pre>
+</div>
+</div>
+<div id="b67cb401" class="cell" data-execution_count="17">
+<details class="code-fold">
+<summary>Embedding network and its training routine</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> EmbedFNN(torch.nn.Module):</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n_cont, cards, b<span class="op">=</span><span class="dv">2</span>, widths<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">10</span>), seed<span class="op">=</span><span class="dv">7</span>):</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>        torch.manual_seed(seed)</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.emb <span class="op">=</span> torch.nn.ModuleList([torch.nn.Embedding(k, b) <span class="cf">for</span> k <span class="kw">in</span> cards])</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>        layers, prev <span class="op">=</span> [], n_cont <span class="op">+</span> b <span class="op">*</span> <span class="bu">len</span>(cards)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> w <span class="kw">in</span> widths:</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>            layers <span class="op">+=</span> [torch.nn.Linear(prev, w), torch.nn.Tanh()]</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>            prev <span class="op">=</span> w</span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>        layers <span class="op">+=</span> [torch.nn.Linear(prev, <span class="dv">1</span>), torch.nn.Sigmoid()]</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head <span class="op">=</span> torch.nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x_cont, x_cat):</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>        parts <span class="op">=</span> [x_cont] <span class="op">+</span> [m(x_cat[:, j]) <span class="cf">for</span> j, m <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="va">self</span>.emb)]</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.head(torch.cat(parts, dim<span class="op">=</span><span class="dv">1</span>))</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_embed(idx, seed<span class="op">=</span><span class="dv">7</span>, b<span class="op">=</span><span class="dv">2</span>, epochs<span class="op">=</span><span class="dv">500</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">50</span>):</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> np.random.default_rng(seed).permutation(<span class="bu">len</span>(idx))</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>    cut <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(q))</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    tr, va <span class="op">=</span> idx[q[:cut]], idx[q[cut:]]</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    m_hat <span class="op">=</span> Xc.iloc[tr].mean()</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    s_hat <span class="op">=</span> Xc.iloc[tr].std().replace(<span class="dv">0</span>, <span class="fl">1.0</span>)</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    pc <span class="op">=</span> <span class="kw">lambda</span> i: torch.tensor(((Xc.iloc[i] <span class="op">-</span> m_hat) <span class="op">/</span> s_hat)</span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>                                .to_numpy(dtype<span class="op">=</span>np.float32))</span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>    pk <span class="op">=</span> <span class="kw">lambda</span> i: torch.tensor(codes[i], dtype<span class="op">=</span>torch.<span class="bu">long</span>)</span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>    Ctr, Ktr, Cva, Kva <span class="op">=</span> pc(tr), pk(tr), pc(va), pk(va)</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>    ytr <span class="op">=</span> torch.tensor(y_all.iloc[tr].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>    yva <span class="op">=</span> torch.tensor(y_all.iloc[va].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> EmbedFNN(<span class="bu">len</span>(CONT), [cards[c] <span class="cf">for</span> c <span class="kw">in</span> CATS], b<span class="op">=</span>b, seed<span class="op">=</span>seed)</span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.NAdam(model.parameters())</span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> torch.nn.BCELoss()</span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>    gen <span class="op">=</span> torch.Generator().manual_seed(seed)</span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>    best, best_epoch, best_state <span class="op">=</span> np.inf, <span class="dv">0</span>, <span class="va">None</span></span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, epochs <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>        model.train()</span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> chunk <span class="kw">in</span> torch.randperm(<span class="bu">len</span>(Ctr), generator<span class="op">=</span>gen).split(batch):</span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>            bce(model(Ctr[chunk], Ktr[chunk]), ytr[chunk]).backward()</span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">eval</span>()</span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>            v <span class="op">=</span> <span class="dv">200</span> <span class="op">*</span> bce(model(Cva, Kva), yva).item()</span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="op">&lt;</span> best:</span>
+<span id="cb31-45"><a href="#cb31-45" aria-hidden="true" tabindex="-1"></a>            best, best_epoch <span class="op">=</span> v, epoch</span>
+<span id="cb31-46"><a href="#cb31-46" aria-hidden="true" tabindex="-1"></a>            best_state <span class="op">=</span> {k: t.clone() <span class="cf">for</span> k, t <span class="kw">in</span> model.state_dict().items()}</span>
+<span id="cb31-47"><a href="#cb31-47" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">-</span> best_epoch <span class="op">&gt;=</span> patience:</span>
+<span id="cb31-48"><a href="#cb31-48" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb31-49"><a href="#cb31-49" aria-hidden="true" tabindex="-1"></a>    model.load_state_dict(best_state)</span>
+<span id="cb31-50"><a href="#cb31-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, (m_hat, s_hat), best_epoch</span>
+<span id="cb31-51"><a href="#cb31-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-52"><a href="#cb31-52" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> embed_predict(model, scaler, idx):</span>
+<span id="cb31-53"><a href="#cb31-53" aria-hidden="true" tabindex="-1"></a>    m_hat, s_hat <span class="op">=</span> scaler</span>
+<span id="cb31-54"><a href="#cb31-54" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb31-55"><a href="#cb31-55" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> model(torch.tensor(((Xc.iloc[idx] <span class="op">-</span> m_hat) <span class="op">/</span> s_hat)</span>
+<span id="cb31-56"><a href="#cb31-56" aria-hidden="true" tabindex="-1"></a>                                  .to_numpy(dtype<span class="op">=</span>np.float32)),</span>
+<span id="cb31-57"><a href="#cb31-57" aria-hidden="true" tabindex="-1"></a>                     torch.tensor(codes[idx], dtype<span class="op">=</span>torch.<span class="bu">long</span>)).squeeze(<span class="dv">1</span>).numpy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>We fit ten embedding networks, so that the comparison against one-hot encoding is a comparison of nagging predictors at equal <span class="math inline">\(M\)</span> rather than of two single fits separated by less than the seed noise.</p>
+<div id="bb4e92fa" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ME <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>PE_test <span class="op">=</span> np.zeros((ME, <span class="bu">len</span>(idx_test)))</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>PE_learn <span class="op">=</span> np.zeros((ME, <span class="bu">len</span>(idx_learn)))</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>emb_models, emb_stops <span class="op">=</span> [], []</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(ME):</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    model, scaler, stop <span class="op">=</span> train_embed(idx_learn, seed<span class="op">=</span><span class="dv">100</span> <span class="op">+</span> j)</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    PE_test[j] <span class="op">=</span> embed_predict(model, scaler, idx_test)</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    PE_learn[j] <span class="op">=</span> embed_predict(model, scaler, idx_learn)</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    emb_models.append(model)</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>    emb_stops.append(stop)</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>n_par <span class="op">=</span> <span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> emb_models[<span class="dv">0</span>].parameters())</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>n_emb <span class="op">=</span> <span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> emb_models[<span class="dv">0</span>].emb.parameters())</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>ME<span class="sc">}</span><span class="ss"> embedding networks fitted in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss">s; "</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"early stopping between epochs </span><span class="sc">{</span><span class="bu">min</span>(emb_stops)<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span><span class="bu">max</span>(emb_stops)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"parameters </span><span class="sc">{</span>n_par<span class="sc">:,}</span><span class="ss">, of which </span><span class="sc">{</span>n_emb<span class="sc">}</span><span class="ss"> are embedding weights, "</span></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"against 1,266 for the one-hot network"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>10 embedding networks fitted in 68s; early stopping between epochs 84 and 207
+parameters 846, of which 80 are embedding weights, against 1,266 for the one-hot network</code></pre>
+</div>
+</div>
+<div id="d57da4e0" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>de <span class="op">=</span> np.array([bernoulli_deviance(PE_test[j], y_test) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(ME)])</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>ae <span class="op">=</span> np.array([roc_auc_score(y_test, PE_test[j]) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(ME)])</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>oh10 <span class="op">=</span> P_test[:ME].mean(<span class="dv">0</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>em10 <span class="op">=</span> PE_test.mean(<span class="dv">0</span>)</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"one-hot,   single: deviance mean </span><span class="sc">{</span>d_ind[:ME]<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> "</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"sd </span><span class="sc">{</span>d_ind[:ME]<span class="sc">.</span>std(ddof<span class="op">=</span><span class="dv">1</span>)<span class="sc">:.3f}</span><span class="ss">   AUC mean </span><span class="sc">{</span>a_ind[:ME]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"embedding, single: deviance mean </span><span class="sc">{</span>de<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> "</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"sd </span><span class="sc">{</span>de<span class="sc">.</span>std(ddof<span class="op">=</span><span class="dv">1</span>)<span class="sc">:.3f}</span><span class="ss">   AUC mean </span><span class="sc">{</span>ae<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"one-hot,   nagged M=</span><span class="sc">{</span>ME<span class="sc">}</span><span class="ss">: deviance </span><span class="sc">{</span>bernoulli_deviance(oh10, y_test)<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"   AUC </span><span class="sc">{</span>roc_auc_score(y_test, oh10)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"embedding, nagged M=</span><span class="sc">{</span>ME<span class="sc">}</span><span class="ss">: deviance </span><span class="sc">{</span>bernoulli_deviance(em10, y_test)<span class="sc">:.3f}</span><span class="ss">"</span></span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"   AUC </span><span class="sc">{</span>roc_auc_score(y_test, em10)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"embedding balance: predicted </span><span class="sc">{</span>PE_learn<span class="sc">.</span>mean(<span class="dv">0</span>)<span class="sc">.</span>mean()<span class="sc">:.5f}</span><span class="ss"> "</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"against observed </span><span class="sc">{</span>obs<span class="sc">:.5f}</span><span class="ss"> "</span></span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(</span><span class="sc">{</span>(PE_learn.mean(<span class="dv">0</span>).mean() <span class="op">/</span> obs <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> <span class="dv">100</span><span class="sc">:+.3f}</span><span class="ss">%)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>one-hot,   single: deviance mean 107.710 sd 0.124   AUC mean 0.7230
+embedding, single: deviance mean 107.313 sd 0.072   AUC mean 0.7258
+one-hot,   nagged M=10: deviance 107.120   AUC 0.7269
+embedding, nagged M=10: deviance 106.921   AUC 0.7284
+embedding balance: predicted 0.28600 against observed 0.28878 (-0.961%)</code></pre>
+</div>
+</div>
+<p>On this book the embedding wins, modestly and repeatably. Across the same ten seeds, single embedding networks average 107.313 in test deviance with a standard deviation of 0.072, against 107.710 and 0.124 for one-hot. The difference of 0.40 points is roughly nine times the standard error of that difference, so it is not seed noise. At <span class="math inline">\(M = 10\)</span> the nagged embedding predictor reaches 106.921 against 107.120, a gap of 0.20 points, and it reaches it with 846 parameters against 1,266.</p>
+<p>The course’s own results table has the opposite sign, with its entity-embedding network at 44.948 out-of-sample against 44.925 for one-hot, and its embedded nagging predictor ahead by 0.01 points. Both results are consistent, and together they say the obvious thing. At cardinalities in the teens and twenties, with more than a hundred thousand observations, the encoding of a categorical covariate is close to immaterial for accuracy, and which side of immaterial a given dataset falls on is not predictable. Therefore the case for embeddings rests on parameter economy, on the inspectable geometry, and on the tensor structure, rather than on a deviance improvement that may or may not appear.</p>
+<p>Calibration in the large moves the other way, as it has at every step of this series. The embedding ensemble understates the observed default count by 0.96 per cent where the one-hot ensemble understated it by 0.42. Greater flexibility, better ranking, worse balance.</p>
+</section>
+<section id="does-proximity-track-risk" class="level2" data-number="2.9">
+<h2 data-number="2.9" class="anchored" data-anchor-id="does-proximity-track-risk"><span class="header-section-number">2.9</span> Does proximity track risk?</h2>
+<p>The course states the intention that proximity in the embedding should reflect similarity in risk behaviour. That is a checkable claim, and the third lecture’s discipline applies, so we measure it rather than admire the picture. For each categorical we take the levels carrying at least five hundred accounts, compute the Euclidean distance between every pair of level embeddings and the absolute difference in their observed default rates, and report the rank correlation between the two. We do this for three separately fitted networks, because a claim about geometry that holds in one fit and not the next is not a claim about the data.</p>
+<div id="607859ee" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>rate_by <span class="op">=</span> {c: y_all.groupby(g[c]).mean() <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>count_by <span class="op">=</span> {c: g[c].value_counts() <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> CATS:</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> CATS.index(c)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    inv <span class="op">=</span> {v: k <span class="cf">for</span> k, v <span class="kw">in</span> levmaps[c].items()}</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    rhos <span class="op">=</span> []</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> model <span class="kw">in</span> emb_models[:<span class="dv">3</span>]:</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>        W <span class="op">=</span> model.emb[j].weight.detach().numpy()</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>        ks <span class="op">=</span> [i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, W.shape[<span class="dv">0</span>]) <span class="cf">if</span> count_by[c][inv[i]] <span class="op">&gt;=</span> <span class="dv">500</span>]</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>        D, R <span class="op">=</span> [], []</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> u <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(ks)):</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> v <span class="kw">in</span> <span class="bu">range</span>(u <span class="op">+</span> <span class="dv">1</span>, <span class="bu">len</span>(ks)):</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>                D.append(np.linalg.norm(W[ks[u]] <span class="op">-</span> W[ks[v]]))</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>                R.append(<span class="bu">abs</span>(rate_by[c][inv[ks[u]]] <span class="op">-</span> rate_by[c][inv[ks[v]]]))</span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>        rhos.append(spearmanr(D, R).statistic)</span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>c<span class="sc">:20s}</span><span class="ss"> levels </span><span class="sc">{</span><span class="bu">len</span>(ks)<span class="sc">:2d}</span><span class="ss">   Spearman by fit: "</span></span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>          <span class="op">+</span> <span class="st">"  "</span>.join(<span class="ss">f"</span><span class="sc">{</span>r<span class="sc">:+.3f}</span><span class="ss">"</span> <span class="cf">for</span> r <span class="kw">in</span> rhos))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  Country              levels  3   Spearman by fit: +0.500  -0.500  +1.000
+  Education            levels  5   Spearman by fit: -0.103  +0.382  -0.091
+  HomeOwnership        levels 11   Spearman by fit: +0.119  +0.158  +0.181
+  VerificationType     levels  4   Spearman by fit: -0.371  -0.600  -0.086
+  EmploymentDuration   levels 10   Spearman by fit: -0.201  -0.016  +0.123</code></pre>
+</div>
+</div>
+<p>The claim does not survive. Home ownership is the most favourable case and reaches only <span class="math inline">\(+0.12\)</span> to <span class="math inline">\(+0.18\)</span>, employment duration runs from <span class="math inline">\(-0.20\)</span> to <span class="math inline">\(+0.12\)</span> and so changes sign between refits of the same architecture on the same data, and verification type is consistently negative, meaning that levels sitting closer together in the embedding differ slightly more in observed default rate. Country has three qualifying levels and therefore three pairs, which supports no inference at all.</p>
+<p>The explanation is not a defect in the fitting. An embedding is identified only up to whatever the following layers can undo, and three fully connected tanh layers can undo a great deal, so the configuration that gradient descent settles on is one of many equivalent ones. More fundamentally, the embedding coordinates encode the level’s contribution jointly with every other covariate, whereas the observed default rate is a marginal quantity. A level whose accounts are mostly young borrowers with low incomes needs no embedding displacement to be risky, because age and income already carry it. Consequently proximity in the embedding measures similarity in residual contribution given the rest of the covariates, and that is not the quantity a reader of the plot will assume.</p>
+<div id="f4a7460b" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> place_labels(ax, pts, texts, sizes, fontsize<span class="op">=</span><span class="dv">7</span>, base<span class="op">=</span><span class="fl">12.0</span>, iters<span class="op">=</span><span class="dv">400</span>):</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Label a scatter without collisions.</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Labels start offset radially outward from the cloud's centre, then relax</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a><span class="co">    vertically until no two estimated text boxes overlap, and finally slide</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="co">    horizontally to stay inside the axes. A hairline leader keeps each label</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a><span class="co">    tied to its point once it has travelled.</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    fig <span class="op">=</span> ax.figure</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>    fig.canvas.draw()                      <span class="co"># transforms must be current</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>    P <span class="op">=</span> np.array([ax.transData.transform(p) <span class="cf">for</span> p <span class="kw">in</span> pts])</span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>    ang <span class="op">=</span> np.arctan2(<span class="op">*</span>(P <span class="op">-</span> P.mean(axis<span class="op">=</span><span class="dv">0</span>)).T[::<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>    off <span class="op">=</span> np.column_stack([base <span class="op">*</span> np.cos(ang), base <span class="op">*</span> np.sin(ang)])</span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>    off <span class="op">*=</span> fig.dpi <span class="op">/</span> <span class="fl">72.0</span></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>    px <span class="op">=</span> fig.dpi <span class="op">/</span> <span class="fl">72.0</span>                    <span class="co"># display coords are pixels, not points</span></span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.array([<span class="bu">len</span>(t) <span class="cf">for</span> t <span class="kw">in</span> texts], <span class="bu">float</span>) <span class="op">*</span> fontsize <span class="op">*</span> <span class="fl">0.60</span> <span class="op">*</span> px</span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>    h <span class="op">=</span> np.full(<span class="bu">len</span>(texts), fontsize <span class="op">*</span> <span class="fl">1.55</span> <span class="op">*</span> px)</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>    rad <span class="op">=</span> np.sqrt(np.asarray(sizes, <span class="bu">float</span>) <span class="op">/</span> np.pi) <span class="op">*</span> px <span class="op">+</span> <span class="fl">1.0</span>   <span class="co"># marker radii</span></span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(iters):                 <span class="co"># vertical separation alone suffices</span></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>        L <span class="op">=</span> P <span class="op">+</span> off</span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>        clash <span class="op">=</span> <span class="va">False</span></span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(L)):            <span class="co"># labels against each other</span></span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(i <span class="op">+</span> <span class="dv">1</span>, <span class="bu">len</span>(L)):</span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>                dy <span class="op">=</span> L[j, <span class="dv">1</span>] <span class="op">-</span> L[i, <span class="dv">1</span>]</span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> (<span class="bu">abs</span>(L[j, <span class="dv">0</span>] <span class="op">-</span> L[i, <span class="dv">0</span>]) <span class="op">&lt;</span> (w[i] <span class="op">+</span> w[j]) <span class="op">/</span> <span class="dv">2</span></span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a>                        <span class="kw">and</span> <span class="bu">abs</span>(dy) <span class="op">&lt;</span> (h[i] <span class="op">+</span> h[j]) <span class="op">/</span> <span class="dv">2</span>):</span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a>                    clash <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a>                    push <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> ((h[i] <span class="op">+</span> h[j]) <span class="op">/</span> <span class="dv">2</span> <span class="op">-</span> <span class="bu">abs</span>(dy) <span class="op">+</span> <span class="fl">1.0</span>)</span>
+<span id="cb38-30"><a href="#cb38-30" aria-hidden="true" tabindex="-1"></a>                    sign <span class="op">=</span> <span class="fl">1.0</span> <span class="cf">if</span> dy <span class="op">&gt;=</span> <span class="dv">0</span> <span class="cf">else</span> <span class="op">-</span><span class="fl">1.0</span></span>
+<span id="cb38-31"><a href="#cb38-31" aria-hidden="true" tabindex="-1"></a>                    off[j, <span class="dv">1</span>] <span class="op">+=</span> push <span class="op">*</span> sign</span>
+<span id="cb38-32"><a href="#cb38-32" aria-hidden="true" tabindex="-1"></a>                    off[i, <span class="dv">1</span>] <span class="op">-=</span> push <span class="op">*</span> sign</span>
+<span id="cb38-33"><a href="#cb38-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(L)):            <span class="co"># labels against the markers</span></span>
+<span id="cb38-34"><a href="#cb38-34" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> o <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(P)):</span>
+<span id="cb38-35"><a href="#cb38-35" aria-hidden="true" tabindex="-1"></a>                dy <span class="op">=</span> L[i, <span class="dv">1</span>] <span class="op">-</span> P[o, <span class="dv">1</span>]</span>
+<span id="cb38-36"><a href="#cb38-36" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> (<span class="bu">abs</span>(L[i, <span class="dv">0</span>] <span class="op">-</span> P[o, <span class="dv">0</span>]) <span class="op">&lt;</span> w[i] <span class="op">/</span> <span class="dv">2</span> <span class="op">+</span> rad[o]</span>
+<span id="cb38-37"><a href="#cb38-37" aria-hidden="true" tabindex="-1"></a>                        <span class="kw">and</span> <span class="bu">abs</span>(dy) <span class="op">&lt;</span> h[i] <span class="op">/</span> <span class="dv">2</span> <span class="op">+</span> rad[o]):</span>
+<span id="cb38-38"><a href="#cb38-38" aria-hidden="true" tabindex="-1"></a>                    clash <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb38-39"><a href="#cb38-39" aria-hidden="true" tabindex="-1"></a>                    push <span class="op">=</span> h[i] <span class="op">/</span> <span class="dv">2</span> <span class="op">+</span> rad[o] <span class="op">-</span> <span class="bu">abs</span>(dy) <span class="op">+</span> <span class="fl">1.0</span></span>
+<span id="cb38-40"><a href="#cb38-40" aria-hidden="true" tabindex="-1"></a>                    off[i, <span class="dv">1</span>] <span class="op">+=</span> push <span class="op">*</span> (<span class="fl">1.0</span> <span class="cf">if</span> dy <span class="op">&gt;=</span> <span class="dv">0</span> <span class="cf">else</span> <span class="op">-</span><span class="fl">1.0</span>)</span>
+<span id="cb38-41"><a href="#cb38-41" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> clash:</span>
+<span id="cb38-42"><a href="#cb38-42" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb38-43"><a href="#cb38-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-44"><a href="#cb38-44" aria-hidden="true" tabindex="-1"></a>    x0, x1 <span class="op">=</span> ax.transData.transform([(v, <span class="dv">0</span>) <span class="cf">for</span> v <span class="kw">in</span> ax.get_xlim()])[:, <span class="dv">0</span>]</span>
+<span id="cb38-45"><a href="#cb38-45" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(off)):              <span class="co"># keep the box inside the axes</span></span>
+<span id="cb38-46"><a href="#cb38-46" aria-hidden="true" tabindex="-1"></a>        cx <span class="op">=</span> P[k, <span class="dv">0</span>] <span class="op">+</span> off[k, <span class="dv">0</span>]</span>
+<span id="cb38-47"><a href="#cb38-47" aria-hidden="true" tabindex="-1"></a>        off[k, <span class="dv">0</span>] <span class="op">+=</span> (np.clip(cx, x0 <span class="op">+</span> w[k] <span class="op">/</span> <span class="dv">2</span>, x1 <span class="op">-</span> w[k] <span class="op">/</span> <span class="dv">2</span>) <span class="op">-</span> cx)</span>
+<span id="cb38-48"><a href="#cb38-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-49"><a href="#cb38-49" aria-hidden="true" tabindex="-1"></a>    off <span class="op">/=</span> fig.dpi <span class="op">/</span> <span class="fl">72.0</span>                  <span class="co"># annotate() wants offset points</span></span>
+<span id="cb38-50"><a href="#cb38-50" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> (x, y), (dx, dy), t <span class="kw">in</span> <span class="bu">zip</span>(pts, off, texts):</span>
+<span id="cb38-51"><a href="#cb38-51" aria-hidden="true" tabindex="-1"></a>        far <span class="op">=</span> <span class="bu">abs</span>(dy) <span class="op">&gt;</span> <span class="fl">1.8</span> <span class="op">*</span> base</span>
+<span id="cb38-52"><a href="#cb38-52" aria-hidden="true" tabindex="-1"></a>        ax.annotate(t, (x, y), textcoords<span class="op">=</span><span class="st">"offset points"</span>, xytext<span class="op">=</span>(dx, dy),</span>
+<span id="cb38-53"><a href="#cb38-53" aria-hidden="true" tabindex="-1"></a>                    fontsize<span class="op">=</span>fontsize, color<span class="op">=</span>BLUE, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>,</span>
+<span id="cb38-54"><a href="#cb38-54" aria-hidden="true" tabindex="-1"></a>                    arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-"</span>, lw<span class="op">=</span><span class="fl">0.4</span>, color<span class="op">=</span>GREY,</span>
+<span id="cb38-55"><a href="#cb38-55" aria-hidden="true" tabindex="-1"></a>                                    shrinkA<span class="op">=</span><span class="dv">0</span>, shrinkB<span class="op">=</span><span class="dv">3</span>) <span class="cf">if</span> far <span class="cf">else</span> <span class="va">None</span>)</span>
+<span id="cb38-56"><a href="#cb38-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-57"><a href="#cb38-57" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">9.5</span>, <span class="fl">4.8</span>))</span>
+<span id="cb38-58"><a href="#cb38-58" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, c <span class="kw">in</span> <span class="bu">zip</span>(axes, [<span class="st">"HomeOwnership"</span>, <span class="st">"EmploymentDuration"</span>]):</span>
+<span id="cb38-59"><a href="#cb38-59" aria-hidden="true" tabindex="-1"></a>    j <span class="op">=</span> CATS.index(c)</span>
+<span id="cb38-60"><a href="#cb38-60" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> emb_models[<span class="dv">0</span>].emb[j].weight.detach().numpy()</span>
+<span id="cb38-61"><a href="#cb38-61" aria-hidden="true" tabindex="-1"></a>    inv <span class="op">=</span> {v: k <span class="cf">for</span> k, v <span class="kw">in</span> levmaps[c].items()}</span>
+<span id="cb38-62"><a href="#cb38-62" aria-hidden="true" tabindex="-1"></a>    ks <span class="op">=</span> <span class="bu">list</span>(<span class="bu">range</span>(<span class="dv">1</span>, W.shape[<span class="dv">0</span>]))</span>
+<span id="cb38-63"><a href="#cb38-63" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i <span class="kw">in</span> ks:</span>
+<span id="cb38-64"><a href="#cb38-64" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> count_by[c][inv[i]]</span>
+<span id="cb38-65"><a href="#cb38-65" aria-hidden="true" tabindex="-1"></a>        ax.scatter(W[i, <span class="dv">0</span>], W[i, <span class="dv">1</span>], s<span class="op">=</span><span class="dv">8</span> <span class="op">+</span> <span class="dv">55</span> <span class="op">*</span> np.sqrt(n <span class="op">/</span> count_by[c].<span class="bu">max</span>()),</span>
+<span id="cb38-66"><a href="#cb38-66" aria-hidden="true" tabindex="-1"></a>                   color<span class="op">=</span>GREY, alpha<span class="op">=</span><span class="fl">0.75</span>, edgecolor<span class="op">=</span><span class="st">"white"</span>, lw<span class="op">=</span><span class="fl">0.6</span>, zorder<span class="op">=</span><span class="dv">3</span>)</span>
+<span id="cb38-67"><a href="#cb38-67" aria-hidden="true" tabindex="-1"></a>    ax.axhline(<span class="dv">0</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">0.4</span>)<span class="op">;</span> ax.axvline(<span class="dv">0</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">0.4</span>)</span>
+<span id="cb38-68"><a href="#cb38-68" aria-hidden="true" tabindex="-1"></a>    ax.set_title(<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">, $b=2$"</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb38-69"><a href="#cb38-69" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"embedding coordinate 1"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"coordinate 2"</span>)</span>
+<span id="cb38-70"><a href="#cb38-70" aria-hidden="true" tabindex="-1"></a>    ax.margins(<span class="fl">0.34</span>)</span>
+<span id="cb38-71"><a href="#cb38-71" aria-hidden="true" tabindex="-1"></a>    place_labels(ax, [<span class="bu">tuple</span>(W[i]) <span class="cf">for</span> i <span class="kw">in</span> ks],</span>
+<span id="cb38-72"><a href="#cb38-72" aria-hidden="true" tabindex="-1"></a>                 [<span class="ss">f"</span><span class="sc">{</span>inv[i]<span class="sc">}</span><span class="ss"> (</span><span class="sc">{</span>rate_by[c][inv[i]]<span class="sc">:.2f}</span><span class="ss">)"</span> <span class="cf">for</span> i <span class="kw">in</span> ks],</span>
+<span id="cb38-73"><a href="#cb38-73" aria-hidden="true" tabindex="-1"></a>                 [<span class="dv">8</span> <span class="op">+</span> <span class="dv">55</span> <span class="op">*</span> np.sqrt(count_by[c][inv[i]] <span class="op">/</span> count_by[c].<span class="bu">max</span>())</span>
+<span id="cb38-74"><a href="#cb38-74" aria-hidden="true" tabindex="-1"></a>                  <span class="cf">for</span> i <span class="kw">in</span> ks])</span>
+<span id="cb38-75"><a href="#cb38-75" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="06_credit-covariate-engineering_files/figure-html/cell-22-output-1.png" width="1413" height="705" class="figure-img"></p>
+<figcaption>Two-dimensional entity embeddings from the first fitted network, our counterpart of the course’s embedded-region illustration. Marker area is proportional to the number of accounts on the level and each label carries the level’s observed default rate. Coordinates are comparable within a panel and within this single fit only, since a refit lands on a different configuration; the rank correlations above show that proximity here does not track similarity in default rate.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>None of this argues against embedding layers, whose case was made on other grounds above. It argues against a specific piece of interpretive theatre. A two-dimensional embedding plot is a picture of the fitted parameters and it is easy to narrate, so it will be offered to model committees as evidence that the network has learned something sensible about the levels. On this portfolio that narration would be unfounded, and the check that establishes as much costs a rank correlation over three refits. The interpretability tools the ninth lecture introduces, which work on the fitted regression function rather than on internal weights, are the ones that answer this question properly.</p>
+</section>
+</section>
+<section id="continuous-covariates" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Continuous covariates</h1>
+<section id="standardisation-and-the-minmaxscaler" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="standardisation-and-the-minmaxscaler"><span class="header-section-number">3.1</span> Standardisation and the MinMaxScaler</h2>
+<p>In theory a continuous covariate needs no pre-processing. In practice it may sit on the wrong scale or enter with the wrong functional form, and gradient descent requires every input component to live on a comparable scale, since otherwise early stopping cannot succeed. The course gives two transformations. Standardisation replaces <span class="math inline">\(X\)</span> by <span class="math inline">\((X - \widehat{m}) / \widehat{s}\)</span> using the empirical mean and standard deviation, and the MinMaxScaler maps the observed range onto <span class="math inline">\([-1, 1]\)</span> by <span class="math display">\[
+X ~\mapsto~ 2\,\frac{X - \min_i X_i}{\max_i X_i - \min_i X_i} - 1 .
+\]</span> The course adds an instruction in bold, i.e.&nbsp;the scaling constants need to be stored. Every routine in this series estimates them inside the training sample and returns them with the model, for the reason the leakage section made concrete.</p>
+<p>The choice between the two is not neutral on credit data, and the third lecture paid for the lesson. Monetary aggregates such as total exposure or cumulative arrears have extreme right tails, so standardisation leaves a handful of accounts hundreds of standard deviations from the centre and the first mini-batch containing one destroys the fit. The MinMaxScaler fails differently on the same data, since the single largest account defines the upper bound and compresses everything else towards <span class="math inline">\(-1\)</span>. Neither transformation repairs a tail, and a credit modeller therefore censors or log-transforms first and scales afterwards. This series censors age at 70 and uses log-income rather than income for exactly that reason.</p>
+</section>
+<section id="binning-and-what-it-costs" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="binning-and-what-it-costs"><span class="header-section-number">3.2</span> Binning, and what it costs</h2>
+<p>GLMs commonly discretise a continuous covariate by binning, assigning categorical labels <span class="math inline">\(a_k\)</span> over a finite partition <span class="math inline">\((I_k)_{k=1}^K\)</span> of the support, <span class="math display">\[
+X ~\mapsto~ \sum_{k=1}^K a_k \mathbf{1}_{\{X \in I_k\}} .
+\]</span> Alternatively the covariate can be expanded into several transformed copies, and the course’s example replaces a positive <span class="math inline">\(X\)</span> by <span class="math inline">\((X, \log X, e^X, (X - 10)^2)^\top\)</span>.</p>
+<p>Binning is universal in scorecard development, where a characteristic is binned into attributes and each attribute takes a WoE value, and the practice long predates any concern about gradient descent. Its reasons are that a step function is trivial to document and to sign off, that it handles a non-monotone effect without anyone having to specify a functional form, and that it isolates missing values into their own attribute. The cost is that the boundaries are chosen by the modeller, that the fitted effect is constant within a bin and discontinuous across boundaries, and that two applicants either side of an age boundary receive different scores for a difference of one day. The previous lecture showed the network recovering a smooth age effect that the seven hand-chosen age bands only approximated, which is the same trade seen from the modelling side.</p>
+</section>
+<section id="continuous-covariate-embedding-and-the-tensor-structure" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="continuous-covariate-embedding-and-the-tensor-structure"><span class="header-section-number">3.3</span> Continuous covariate embedding and the tensor structure</h2>
+<p>Recent architectures embed continuous covariates as well, sending <span class="math inline">\(X \in \mathbb{R}\)</span> through a small deep network <span class="math inline">\(\boldsymbol{z}^{(d:1)}: \mathbb{R} \to \mathbb{R}^b\)</span> whose parameters are learned during fitting. This puts continuous and categorical covariates into the same <span class="math inline">\(b\)</span>-dimensional space. Writing the covariate vector as <span class="math inline">\(\boldsymbol{X} = (X_1, \ldots, X_{q_c}, X_{q_c+1}, \ldots, X_q)^\top\)</span> with <span class="math inline">\(q_c\)</span> categorical and <span class="math inline">\(q - q_c\)</span> continuous components, and applying embeddings of common dimension <span class="math inline">\(b\)</span> throughout, the input becomes <span class="math display">\[
+\left[\boldsymbol{e}^{\rm EE}_1(X_1), \ldots,
+      \boldsymbol{e}^{\rm EE}_{q_c}(X_{q_c}),
+      \boldsymbol{z}^{(d:1)}_{q_c+1}(X_{q_c+1}), \ldots,
+      \boldsymbol{z}^{(d:1)}_{q}(X_{q})\right]
+~\in~ \mathbb{R}^{b \times q} .
+\]</span></p>
+<p>That object is a tensor rather than a vector, and it is the reason this lecture matters more than its accuracy numbers suggest. An attention layer takes a sequence of <span class="math inline">\(q\)</span> tokens each of dimension <span class="math inline">\(b\)</span> and computes how much each token should attend to every other, which requires precisely this shape. The third lecture noted that credit’s tabular cross-section has no natural sequence for a recurrent or convolutional architecture to exploit. Embedding every covariate into a common space manufactures one, where the sequence is the covariate list itself and attention learns which characteristics should modify the reading of which others. Hence the Credibility Transformer of Richman, Scognamiglio and Wüthrich (2025), which the tenth and eleventh lectures build, starts from the construction in this section.</p>
+</section>
+</section>
+<section id="takeaways-and-outlook" class="level1 unnumbered">
+<h1 class="unnumbered">Takeaways and outlook</h1>
+<p>Ensembling is the cheapest improvement in this series so far. Averaging twenty networks that differ only in seed reduced out-of-sample deviance from 107.677 to 107.105 on the Bondora book, which is what the change from GLM to network delivered, and it required no new modelling decision. Nine tenths of the gain arrived by the tenth network, so the course’s recommendation of <span class="math inline">\(M \in \{10, 20\}\)</span> carries over. The seed spread of 0.44 deviance points across twenty fits also settles how precisely a single network’s loss can honestly be quoted, which is less precisely than this series had been quoting it.</p>
+<p>Averaging leaves calibration in the large exactly as it found it, since the ensemble’s mean prediction is the mean of the members’ mean predictions. Nagging removed the seed-to-seed dispersion in the balance miss, which spanned <span class="math inline">\(-2.5\)</span> to <span class="math inline">\(+1.3\)</span> per cent, and left the shared systematic component of <span class="math inline">\(-0.42\)</span> per cent untouched. Balance has to be imposed, and the intercept recalibration of the third lecture remains the cheapest instrument.</p>
+<p>On covariate engineering, credit modelling turns out to have arrived first. Weight of evidence is the course’s target encoding moved onto the log-odds scale, which is the scale a logit link wants, and the Bühlmann credibility the course prescribes is the same shrinkage that a minimum bin size approximates. Applied to a 328-level cell, credibilitised WoE at <span class="math inline">\(\tau^* = 5\)</span> gave the best test deviance in the comparison on one column, where dummy coding needed 327 and overfitted by 3.2 points, and uncredibilitised WoE was worse than useless on the scarce tail. A leaked encoding was worth up to 1.33 deviance points of pure illusion, invisible in-sample.</p>
+<p>Entity embedding beat one-hot encoding here by 0.20 points at <span class="math inline">\(M = 10\)</span>, using two thirds of the parameters, where the course’s motor example found the opposite sign. Both findings are small enough to establish that accuracy is the weakest of the three arguments for embedding layers. The strongest is structural, since embedding every covariate into a common <span class="math inline">\(b\)</span>-dimensional space produces the <span class="math inline">\(b \times q\)</span> tensor that attention consumes. Meanwhile the interpretive claim that proximity in the embedding reflects similarity in risk did not survive measurement on this portfolio, where the rank correlation was weak and changed sign between refits.</p>
+<p>The seventh lecture takes up calibration directly, which is the thread this lecture has now twice deferred. Auto-calibration and the balance property give the vocabulary for the recalibration that nagging has been shown to require, and for a credit portfolio they connect to the supervisory expectation that a rating system’s estimated PDs match realised default rates grade by grade.</p>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+<p>This document adapts the storyline, structure and notation of <em>Lecture 6: Ensembling and Entity Embedding</em> from the summer school <strong>Deep Learning for Actuarial Modeling</strong> (Scognamiglio, Maggi and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of the project <em>AI Tools for Actuaries</em>, used under CC BY-NC 4.0. Changes made: the Poisson claim-frequency thread is recast as the Bernoulli default thread on the public Bondora loan book, the code is Python with PyTorch rather than R with Keras, the identification of target encoding with weight of evidence and the associated log-odds argument are new, and so are the order-averaged nagging curve, the algebraic result that ensembling cannot repair the balance property together with its measurement, the five-way encoding comparison on a constructed 328-level cell, the credibility parameter selected on a validation sample, the quantification of encoding leakage, and the rank-correlation test of whether embedding proximity tracks default risk. The numerical results concern the credit data throughout. The original lecture notes are available at <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a>.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<ul>
+<li>Brébisson, A. de, Simon, É., Auvolat, A., Vincent, P. and Bengio, Y. (2015). Artificial neural networks applied to taxi destination prediction. arXiv:1508.00021.</li>
+<li>Breiman, L. (1996). Bagging predictors. <em>Machine Learning</em> 24, 123-140.</li>
+<li>Bühlmann, H. (1967). Experience rating and credibility. <em>ASTIN Bulletin</em> 4(3), 199-207.</li>
+<li>Dietterich, T.G. (2000a). An experimental comparison of three methods for constructing ensembles of decision trees: bagging, boosting and randomization. <em>Machine Learning</em> 40, 139-157.</li>
+<li>Dietterich, T.G. (2000b). Ensemble methods in machine learning. In <em>Multiple Classifier Systems</em>, Lecture Notes in Computer Science, 1-15.</li>
+<li>Guo, C. and Berkhahn, F. (2016). Entity embeddings of categorical variables. arXiv:1604.06737.</li>
+<li>Micci-Barreca, D. (2001). A preprocessing scheme for high-cardinality categorical attributes in classification and prediction problems. <em>SIGKDD Explorations</em> 3(1), 27-32.</li>
+<li>Richman, R. (2021). AI in actuarial science, a review of recent advances, part 1. <em>Annals of Actuarial Science</em> 15(2), 207-229.</li>
+<li>Richman, R., Scognamiglio, S. and Wüthrich, M.V. (2025). The credibility transformer. <em>European Actuarial Journal</em>.</li>
+<li>Richman, R. and Wüthrich, M.V. (2020). Nagging predictors. <em>Risks</em> 8(3), 83.</li>
+<li>Richman, R. and Wüthrich, M.V. (2024). High-cardinality categorical covariates in network regressions. <em>Japanese Journal of Statistics and Data Science</em> 7(2), 921-965.</li>
+<li>Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser, L. and Polosukhin, I. (2017). Attention is all you need. arXiv:1706.03762.</li>
+<li>Wüthrich, M.V. and Merz, M. (2023). <em>Statistical Foundations of Actuarial Learning and its Applications</em>. Springer.</li>
+<li>Scognamiglio, S., Maggi, M. and Wüthrich, M.V. (2026). <em>Deep Learning for Actuarial Modeling</em>, SSRN 5162304.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>
