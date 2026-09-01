@@ -16,10 +16,15 @@
 # credit_lectures/ holds Mario's credit risk companion lectures, and lectures/
 # holds the three course lectures reconstructed from their PDF decks.
 #
+# Paths are required. A no-argument default that swept both directories would
+# render the credit lectures too, and those execute Python against the Bondora
+# parquet, which is gitignored, so a fresh clone would fail partway through on
+# missing data rather than on anything to do with the lecture asked for.
+#
 # Usage:
-#   bash scripts/render_lecture.sh                                  # everything
 #   bash scripts/render_lecture.sh lectures/08_icenet-regularization.qmd
-#   bash scripts/render_lecture.sh credit_lectures/01_credit-use-case.qmd
+#   bash scripts/render_lecture.sh lectures/*.qmd
+#   bash scripts/render_lecture.sh credit_lectures/*.qmd
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -27,11 +32,12 @@ cd "$(dirname "$0")/.."
 QUARTO="${QUARTO:-$HOME/.local/bin/quarto}"
 export QUARTO_PYTHON="$PWD/.venv/bin/python"
 
-if [[ $# -gt 0 ]]; then
-  qmds=("$@")
-else
-  qmds=(credit_lectures/*.qmd lectures/*.qmd)
+if [[ $# -eq 0 ]]; then
+  echo "usage: bash scripts/render_lecture.sh <lecture.qmd> [...]" >&2
+  echo "  e.g. bash scripts/render_lecture.sh lectures/*.qmd" >&2
+  exit 2
 fi
+qmds=("$@")
 
 for qmd in "${qmds[@]}"; do
   [[ -f "$qmd" ]] || { echo "no such file: $qmd" >&2; exit 1; }

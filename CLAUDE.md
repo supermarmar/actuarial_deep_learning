@@ -137,7 +137,11 @@ transcribes its deck frame by frame, rendered through the same script the credit
 
 ```bash
 bash scripts/render_lecture.sh lectures/08_icenet-regularization.qmd
+bash scripts/render_lecture.sh lectures/*.qmd                        # all three
 ```
+
+The script takes paths and has no no-argument default, because sweeping both
+directories would execute the credit lectures against the gitignored Bondora parquet.
 
 The text, mathematics and tables are the authors'. Ours are the abstract (joined from each
 deck's own Overview boxes), the ordering into a document rather than slides, and the figure
