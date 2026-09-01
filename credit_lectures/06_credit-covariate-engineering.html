@@ -186,7 +186,7 @@ window.Quarto = {
 <h1 class="unnumbered">Introduction</h1>
 <p>Two loose ends were left hanging at the close of the fourth and fifth credit lecture. Refitting the same network on the same data from a different random initialisation moved the out-of-sample deviance around by a tenth of a point or so, which is estimation noise with no statistical content, and the network gave up the balance property that the canonical-link GLM held exactly. Lecture 6 of the course addresses the first directly through ensembling. Its second half turns to covariate engineering, which is where a credit modeller arrives with more prior practice than the course assumes, because scorecard development has been encoding categorical covariates for forty years and has a name for the course’s target encoding.</p>
 <p>The plan follows the source deck. We first set out why stochastic gradient descent solutions are non-unique, define the ensemble and nagging predictors, and fit twenty networks to the Bondora modelling table to see how many are needed. We then measure what averaging does to calibration in the large, where the answer is provable in one line and contradicts the course’s own results table. The second half works through ordinal coding, one-hot encoding, dummy coding, target encoding, credibilitised target encoding and entity embedding, comparing five of them on a fixed logistic readout over a deliberately high-cardinality cell. The lecture closes on continuous covariates and on the tensor structure that the attention lectures will need.</p>
-<div id="7a9de032" class="cell" data-execution_count="1">
+<div id="2916c026" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Imports and shared settings</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
@@ -235,7 +235,7 @@ window.Quarto = {
 <section id="nagging-on-the-bondora-book" class="level2" data-number="1.4">
 <h2 data-number="1.4" class="anchored" data-anchor-id="nagging-on-the-bondora-book"><span class="header-section-number">1.4</span> Nagging on the Bondora book</h2>
 <p>The modelling frame, the design matrix and the splits are those of the fourth and fifth lecture, unchanged, so that the numbers chain.</p>
-<div id="9e2417c3" class="cell" data-execution_count="2">
+<div id="beb3c0df" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
@@ -285,7 +285,7 @@ window.Quarto = {
 </div>
 </div>
 <p>The training routine and the evaluation helpers carry over verbatim.</p>
-<div id="df837bd3" class="cell" data-execution_count="3">
+<div id="0e3f6e82" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Training routine from the fourth and fifth lecture</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bernoulli_deviance(pred, obs):</span>
@@ -343,7 +343,7 @@ window.Quarto = {
 </details>
 </div>
 <p>We refit the second lecture’s GLM on the same learning sample to keep the benchmark in view, then fit <span class="math inline">\(M = 20\)</span> networks differing only in seed.</p>
-<div id="34f7af65" class="cell" data-execution_count="4">
+<div id="83e27534" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>FORMULA <span class="op">=</span> (<span class="st">"default_12m ~ AgeClass + logIncome + Country + C(Education)"</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(HomeOwnership) + NewCreditCustomer + C(VerificationType)"</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(EmploymentDuration)"</span>)</span>
@@ -365,10 +365,10 @@ window.Quarto = {
 <span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"early-stopping epoch ranged </span><span class="sc">{</span><span class="bu">min</span>(stops)<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span><span class="bu">max</span>(stops)<span class="sc">}</span><span class="ss"> "</span></span>
 <span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(mean </span><span class="sc">{</span>np<span class="sc">.</span>mean(stops)<span class="sc">:.1f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>20 networks fitted in 53s; early-stopping epoch ranged 30 to 186 (mean 70.3)</code></pre>
+<pre><code>20 networks fitted in 52s; early-stopping epoch ranged 30 to 186 (mean 70.3)</code></pre>
 </div>
 </div>
-<div id="a9a054e6" class="cell" data-execution_count="5">
+<div id="a5fb73e2" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>d_ind <span class="op">=</span> np.array([bernoulli_deviance(P_test[j], y_test) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(M)])</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>a_ind <span class="op">=</span> np.array([roc_auc_score(y_test, P_test[j]) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(M)])</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>ens_test, ens_learn <span class="op">=</span> P_test.mean(<span class="dv">0</span>), P_learn.mean(<span class="dv">0</span>)</span>
@@ -392,7 +392,7 @@ nagging predictor M=20,        deviance 107.105  AUC 0.7269</code></pre>
 <section id="how-many-networks-do-we-need" class="level2" data-number="1.5">
 <h2 data-number="1.5" class="anchored" data-anchor-id="how-many-networks-do-we-need"><span class="header-section-number">1.5</span> How many networks do we need?</h2>
 <p>The course answers roughly ten to twenty from its French motor third-party liability example. To ask the same question here we average the first <span class="math inline">\(m\)</span> of the stored prediction vectors for <span class="math inline">\(m = 1, \ldots, 20\)</span>. That cumulative average depends on the order in which the twenty fits happen to arrive, so we average the whole curve over five hundred random orderings and show the central eighty per cent of the spread.</p>
-<div id="ca9dc557" class="cell" data-execution_count="6">
+<div id="ff9cd88c" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>R <span class="op">=</span> <span class="dv">500</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>rp <span class="op">=</span> np.random.default_rng(<span class="dv">11</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>curve <span class="op">=</span> np.zeros((R, M))</span>
@@ -441,13 +441,13 @@ nagging predictor M=20,        deviance 107.105  AUC 0.7269</code></pre>
 <section id="what-nagging-does-not-fix" class="level2" data-number="1.6">
 <h2 data-number="1.6" class="anchored" data-anchor-id="what-nagging-does-not-fix"><span class="header-section-number">1.6</span> What nagging does not fix</h2>
 <p>Calibration in the large is the property the second lecture proved for the canonical-link GLM, whose fitted PDs sum exactly to the observed defaults on the learning sample. The previous lecture watched a single network give it up. One might hope that averaging repairs it, and the course’s own results table encourages the hope, since its nagging predictor sits at a balance of 7.36 per cent, exactly the portfolio figure that the null model and the GLM achieve, where its single network sits at 7.17.</p>
-<p>Averaging cannot do that, and the reason is one line of arithmetic. The mean of the ensemble’s predictions is the mean of the individual means, <span class="math display">\[
+<p>Averaging can only do that by coincidence, and the reason is one line of arithmetic. The mean of the ensemble’s predictions is the mean of the individual means, <span class="math display">\[
 \frac{1}{n}\sum_{i=1}^n \widehat{\mu}^{\rm nagg}_M(\boldsymbol{X}_i)
 = \frac{1}{M}\sum_{j=1}^M \left(
    \frac{1}{n}\sum_{i=1}^n \mu_{\widehat{\vartheta}_j}(\boldsymbol{X}_i)
    \right),
 \]</span> so the ensemble’s balance error is the average of the individual balance errors. Averaging removes the part of that error which varies from fit to fit, and leaves the part every fit shares.</p>
-<div id="1e37a0ab" class="cell" data-execution_count="7">
+<div id="e6d5a6aa" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>b_ind <span class="op">=</span> P_learn.mean(axis<span class="op">=</span><span class="dv">1</span>)</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>obs <span class="op">=</span> y_learn.mean()</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>rel <span class="op">=</span> (b_ind <span class="op">/</span> obs <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> <span class="dv">100</span></span>
@@ -458,15 +458,21 @@ nagging predictor M=20,        deviance 107.105  AUC 0.7269</code></pre>
 <span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"single networks, relative balance miss mean </span><span class="sc">{</span>rel<span class="sc">.</span>mean()<span class="sc">:+.3f}</span><span class="ss">%  "</span></span>
 <span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"largest in absolute value </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(rel)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3f}</span><span class="ss">%"</span>)</span>
 <span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"nagging predictor, mean predicted PD   </span><span class="sc">{</span>ens_learn<span class="sc">.</span>mean()<span class="sc">:.5f}</span><span class="ss">  "</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"relative balance miss </span><span class="sc">{</span>rel_ens<span class="sc">:+.3f}</span><span class="ss">%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"relative balance miss </span><span class="sc">{</span>rel_ens<span class="sc">:+.3f}</span><span class="ss">%"</span>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>half_a, half_b <span class="op">=</span> P_learn[:<span class="dv">10</span>].mean(<span class="dv">0</span>), P_learn[<span class="dv">10</span>:].mean(<span class="dv">0</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"two disjoint ensembles of ten, relative miss "</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>(half_a.mean() <span class="op">/</span> obs <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> <span class="dv">100</span><span class="sc">:+.3f}</span><span class="ss">% and "</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>(half_b.mean() <span class="op">/</span> obs <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> <span class="dv">100</span><span class="sc">:+.3f}</span><span class="ss">%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>observed learning-sample default rate  0.28878
 single networks, mean predicted PD     mean 0.28755  sd 0.00295  range [0.28153, 0.29259]
 single networks, relative balance miss mean -0.424%  largest in absolute value 2.509%
-nagging predictor, mean predicted PD   0.28755  relative balance miss -0.424%</code></pre>
+nagging predictor, mean predicted PD   0.28755  relative balance miss -0.424%
+two disjoint ensembles of ten, relative miss -0.373% and -0.475%</code></pre>
 </div>
 </div>
-<div id="91ce920c" class="cell" data-execution_count="8">
+<div id="61a8a6d8" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">2.2</span>))</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>jit <span class="op">=</span> np.random.default_rng(<span class="dv">5</span>).uniform(<span class="op">-</span><span class="fl">0.25</span>, <span class="fl">0.25</span>, M)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ax.scatter(rel, jit, s<span class="op">=</span><span class="dv">22</span>, color<span class="op">=</span>GREY, zorder<span class="op">=</span><span class="dv">3</span>, label<span class="op">=</span><span class="st">"individual networks"</span>)</span>
@@ -486,8 +492,8 @@ nagging predictor, mean predicted PD   0.28755  relative balance miss -0.424%</c
 </div>
 </div>
 </div>
-<p>The measurement matches the algebra exactly. Individual networks miss the observed default count by anything from <span class="math inline">\(-2.51\)</span> to <span class="math inline">\(+1.32\)</span> per cent, a dispersion of about one percentage point in standard deviation, and their average miss is <span class="math inline">\(-0.42\)</span> per cent. The nagging predictor misses by <span class="math inline">\(-0.42\)</span> per cent. Ensembling has removed the seed-to-seed dispersion in calibration, which is a real gain for a validator who has to explain why this year’s number differs from last year’s, and it has left the systematic understatement precisely where it was.</p>
-<p>Consequently the course’s table showing the nagging predictor exactly on the portfolio figure cannot be averaging alone. The most likely explanation is that a balance correction was applied on top, which their lecture notes discuss under bias regularisation; this is inference from the published numbers rather than something the deck states. Either way, the reading for credit is the one the third lecture reached from the other direction. Where the balance property matters, and under the internal ratings based approach it is a supervisory expectation rather than a preference, it has to be imposed deliberately. The cheapest instrument remains an intercept recalibration on the learning sample, which is the degenerate combined actuarial neural network of the third lecture, and it composes with nagging without disturbing the ranking.</p>
+<p>The measurement matches the algebra exactly. Individual networks miss the observed default count by anything from <span class="math inline">\(-2.51\)</span> to <span class="math inline">\(+1.32\)</span> per cent, a dispersion of about one percentage point in standard deviation, and their average miss is <span class="math inline">\(-0.42\)</span> per cent. The nagging predictor misses by <span class="math inline">\(-0.42\)</span> per cent, and splitting the twenty fits into two disjoint ensembles of ten puts their misses at <span class="math inline">\(-0.373\)</span> and <span class="math inline">\(-0.475\)</span> per cent, a tenth of a point apart where individual fits stand 3.8 points apart. Ensembling therefore does compress the seed-to-seed dispersion in calibration, which is a real gain for a validator who has to explain why this year’s number differs from last year’s, and it leaves the systematic understatement precisely where it was.</p>
+<p>Consequently the course’s table would require its ten individual balances to average to the portfolio figure exactly. That is possible, since our own individual misses straddle zero, and the table makes it implausible. Both of its ensembles land on 7.36, matching the null model and the GLM, where its two single networks sit at 7.17 and 7.16. Averaging luck reproducing the null value twice over is a great deal less likely than a balance correction applied on top, which their lecture notes discuss under bias regularisation. This is inference from the published numbers rather than something the deck states. Either way, the reading for credit is the one the third lecture reached from the other direction. Where the balance property matters, and under the internal ratings based approach it is a supervisory expectation rather than a preference, it has to be imposed deliberately. The cheapest instrument remains an intercept recalibration on the learning sample, which is the degenerate combined actuarial neural network of the third lecture, and it composes with nagging without disturbing the ranking.</p>
 </section>
 </section>
 <section id="categorical-covariates" class="level1" data-number="2">
@@ -495,7 +501,7 @@ nagging predictor, mean predicted PD   0.28755  relative balance miss -0.424%</c
 <section id="the-levels-a-credit-portfolio-presents" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="the-levels-a-credit-portfolio-presents"><span class="header-section-number">2.1</span> The levels a credit portfolio presents</h2>
 <p>Categorical covariates, whether nominal or ordinal, have to be brought into numerical form before any regression can use them. The course runs its examples on a six-level profession variable. The Bondora book offers the following, counted on the modelling frame.</p>
-<div id="0ec5c2ff" class="cell" data-execution_count="9">
+<div id="493544d5" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> CATS <span class="op">+</span> [<span class="st">"Occupation"</span>]:</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    vc <span class="op">=</span> g[c].value_counts()</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    rate <span class="op">=</span> y_all.groupby(g[c]).mean()</span>
@@ -549,7 +555,7 @@ X \in \mathcal{A} ~\mapsto~
 \]</span> where <span class="math inline">\(n_k\)</span> counts the observations on level <span class="math inline">\(a_k\)</span> and the shrinkage parameter <span class="math inline">\(\tau \ge 0\)</span> is a hyper-parameter. A level with <span class="math inline">\(n_k \gg \tau\)</span> keeps its own mean and a level with <span class="math inline">\(n_k \ll \tau\)</span> is replaced by the portfolio mean. Setting <span class="math inline">\(\tau = 0\)</span> recovers raw target encoding.</p>
 <p>Credit teams generally reach the same place by a blunter route, enforcing a minimum bin size during characteristic binning and merging any level that falls below it into a neighbour. Merging is easier to document and loses the level’s identity; credibility keeps the identity and borrows strength. The two are complements, and the Bühlmann form has the advantage that <span class="math inline">\(\tau\)</span> is a single number a validator can challenge.</p>
 <p>Our test bed is a deliberately high-cardinality cell, formed by crossing country, education and occupation area.</p>
-<div id="ff3b3e58" class="cell" data-execution_count="10">
+<div id="a57ae68f" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>cell <span class="op">=</span> (g[<span class="st">"Country"</span>] <span class="op">+</span> <span class="st">"|"</span> <span class="op">+</span> g[<span class="st">"Education"</span>] <span class="op">+</span> <span class="st">"|"</span> <span class="op">+</span> g[<span class="st">"Occupation"</span>]).to_numpy()</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>BASE <span class="op">=</span> np.column_stack([g[<span class="st">"AgeCens"</span>], g[<span class="st">"logIncome"</span>],</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>                        g[<span class="st">"NewCreditCustomer"</span>].astype(<span class="bu">float</span>)])</span>
@@ -564,7 +570,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 </div>
 </div>
 <p>The shrinkage is applied on the log-odds scale, which is where the readout wants it.</p>
-<div id="783ac325" class="cell" data-execution_count="11">
+<div id="b14368a3" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cell_encoding(fit_idx, tau, kind<span class="op">=</span><span class="st">"woe"</span>):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Level map for the cell, estimated on `fit_idx` only."""</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    yb, cb <span class="op">=</span> y_all.iloc[fit_idx].to_numpy(), cell[fit_idx]</span>
@@ -596,7 +602,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 <span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.Series(cell[idx]).<span class="bu">map</span>(mp).fillna(default).to_numpy()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The shrinkage parameter is selected on a validation slice carved out of the learning sample, with both the encoding and the GLM fitted on the remaining ninety per cent. Selecting <span class="math inline">\(\tau\)</span> on the test sample would be the same offence the series has been warning about since the second lecture.</p>
-<div id="20b9a182" class="cell" data-execution_count="12">
+<div id="b0f8a7e9" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> np.random.default_rng(<span class="dv">3</span>).permutation(<span class="bu">len</span>(idx_learn))</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>cutoff <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p))</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>U, V <span class="op">=</span> idx_learn[p[:cutoff]], idx_learn[p[cutoff:]]</span>
@@ -618,7 +624,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 <pre><code>selected tau* = 5 (validation deviance 107.773 on n = 11,894)</code></pre>
 </div>
 </div>
-<div id="7135d5ca" class="cell" data-execution_count="13">
+<div id="6cc817b9" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.4</span>))</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.array(TAUS, <span class="bu">float</span>)<span class="op">;</span> x[<span class="dv">0</span>] <span class="op">=</span> <span class="fl">0.4</span>          <span class="co"># place tau = 0 on the log axis</span></span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>ax.plot(x, val_dev, color<span class="op">=</span>BLUE, marker<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="fl">3.5</span>, label<span class="op">=</span><span class="vs">r"validation </span><span class="kw">(</span><span class="dv">$\m</span><span class="vs">athcal{V}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
@@ -644,7 +650,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 <section id="the-encodings-compared" class="level2" data-number="2.5">
 <h2 data-number="2.5" class="anchored" data-anchor-id="the-encodings-compared"><span class="header-section-number">2.5</span> The encodings compared</h2>
 <p>Five encodings of the same cell now go through one fixed readout, a logistic GLM on age, log-income, the new-customer flag and the encoded cell. Holding the readout fixed isolates the encoding, which is the same device the third lecture used to compare representations.</p>
-<div id="d4de9a45" class="cell" data-execution_count="14">
+<div id="9a3aacca" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"readout: logistic GLM, </span><span class="sc">{</span><span class="bu">len</span>(<span class="bu">set</span>(cell))<span class="sc">}</span><span class="ss">-level cell, "</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"test sample n = </span><span class="sc">{</span><span class="bu">len</span>(idx_test)<span class="sc">:,}</span><span class="ss">"</span>)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>readout(<span class="st">"no cell at all"</span>, np.zeros((<span class="bu">len</span>(idx_learn), <span class="dv">0</span>)),</span>
@@ -682,7 +688,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
   weight of evidence                 in-sample 107.203   test 110.199   AUC 0.7080   parameters 5
   credibilitised WoE, tau=5          in-sample 107.294   test 109.339   AUC 0.7082   parameters 5</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="119">
+<div class="cell-output cell-output-display" data-execution_count="161">
 <pre><code>np.float64(109.33894419437505)</code></pre>
 </div>
 </div>
@@ -695,7 +701,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 <section id="leakage-and-why-an-in-sample-check-misses-it" class="level2" data-number="2.6">
 <h2 data-number="2.6" class="anchored" data-anchor-id="leakage-and-why-an-in-sample-check-misses-it"><span class="header-section-number">2.6</span> Leakage, and why an in-sample check misses it</h2>
 <p>The course lists leakage as a weakness of target encoding without quantifying it. The quantity is worth knowing, because the mistake is easy to make and its signature is nearly invisible in the place a modeller usually looks. We repeat two encodings with the level means computed on the whole dataset, test sample included, and change nothing else.</p>
-<div id="f9355e32" class="cell" data-execution_count="15">
+<div id="a1993798" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>full <span class="op">=</span> np.arange(<span class="bu">len</span>(g))</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> kind, name <span class="kw">in</span> [(<span class="st">"target"</span>, <span class="st">"raw target encoding"</span>), (<span class="st">"woe"</span>, <span class="st">"weight of evidence"</span>)]:</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    mp, dflt <span class="op">=</span> cell_encoding(full, <span class="fl">0.0</span>, kind<span class="op">=</span>kind)</span>
@@ -709,7 +715,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
   LEAKED weight of evidence          in-sample 107.255   test 108.869   AUC 0.7108   parameters 5
   LEAKED credibilitised WoE          in-sample 107.322   test 108.966   AUC 0.7105   parameters 5</code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="120">
+<div class="cell-output cell-output-display" data-execution_count="162">
 <pre><code>np.float64(108.96630490066586)</code></pre>
 </div>
 </div>
@@ -728,7 +734,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 <section id="the-embedding-network-on-the-bondora-book" class="level2" data-number="2.8">
 <h2 data-number="2.8" class="anchored" data-anchor-id="the-embedding-network-on-the-bondora-book"><span class="header-section-number">2.8</span> The embedding network on the Bondora book</h2>
 <p>Integer level codes must stay out of the scaler, since standardising a code destroys the indexing the embedding layer needs, so the training routine is rebuilt rather than reused. Codes run from <span class="math inline">\(1\)</span> to <span class="math inline">\(K\)</span> and index <span class="math inline">\(0\)</span> is reserved for a level absent from the learning sample, which cannot arise on this random split but would on an out-of-time one.</p>
-<div id="f2288b2c" class="cell" data-execution_count="16">
+<div id="bd635eb9" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>levmaps <span class="op">=</span> {c: {lv: i <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> i, lv <span class="kw">in</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>               <span class="bu">enumerate</span>(<span class="bu">sorted</span>(g[c].iloc[idx_learn].unique()))} <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>cards <span class="op">=</span> {c: <span class="bu">len</span>(levmaps[c]) <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
@@ -740,7 +746,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 <pre><code>embedding cardinalities, including the reserved unseen index: {'Country': 5, 'Education': 6, 'HomeOwnership': 13, 'VerificationType': 5, 'EmploymentDuration': 11}</code></pre>
 </div>
 </div>
-<div id="b67cb401" class="cell" data-execution_count="17">
+<div id="bbb89c85" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Embedding network and its training routine</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> EmbedFNN(torch.nn.Module):</span>
@@ -803,7 +809,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 </details>
 </div>
 <p>We fit ten embedding networks, so that the comparison against one-hot encoding is a comparison of nagging predictors at equal <span class="math inline">\(M\)</span> rather than of two single fits separated by less than the seed noise.</p>
-<div id="bb4e92fa" class="cell" data-execution_count="18">
+<div id="89cc92d5" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>ME <span class="op">=</span> <span class="dv">10</span></span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>PE_test <span class="op">=</span> np.zeros((ME, <span class="bu">len</span>(idx_test)))</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>PE_learn <span class="op">=</span> np.zeros((ME, <span class="bu">len</span>(idx_learn)))</span>
@@ -826,7 +832,7 @@ learning-sample levels with fewer than 10 accounts: 100, fewer than 30: 161</cod
 parameters 846, of which 80 are embedding weights, against 1,266 for the one-hot network</code></pre>
 </div>
 </div>
-<div id="d57da4e0" class="cell" data-execution_count="19">
+<div id="b046e407" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>de <span class="op">=</span> np.array([bernoulli_deviance(PE_test[j], y_test) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(ME)])</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>ae <span class="op">=</span> np.array([roc_auc_score(y_test, PE_test[j]) <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(ME)])</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>oh10 <span class="op">=</span> P_test[:ME].mean(<span class="dv">0</span>)</span>
@@ -852,12 +858,12 @@ embedding balance: predicted 0.28600 against observed 0.28878 (-0.961%)</code></
 </div>
 <p>On this book the embedding wins, modestly and repeatably. Across the same ten seeds, single embedding networks average 107.313 in test deviance with a standard deviation of 0.072, against 107.710 and 0.124 for one-hot. The difference of 0.40 points is roughly nine times the standard error of that difference, so it is not seed noise. At <span class="math inline">\(M = 10\)</span> the nagged embedding predictor reaches 106.921 against 107.120, a gap of 0.20 points, and it reaches it with 846 parameters against 1,266.</p>
 <p>The course’s own results table has the opposite sign, with its entity-embedding network at 44.948 out-of-sample against 44.925 for one-hot, and its embedded nagging predictor ahead by 0.01 points. Both results are consistent, and together they say the obvious thing. At cardinalities in the teens and twenties, with more than a hundred thousand observations, the encoding of a categorical covariate is close to immaterial for accuracy, and which side of immaterial a given dataset falls on is not predictable. Therefore the case for embeddings rests on parameter economy, on the inspectable geometry, and on the tensor structure, rather than on a deviance improvement that may or may not appear.</p>
-<p>Calibration in the large moves the other way, as it has at every step of this series. The embedding ensemble understates the observed default count by 0.96 per cent where the one-hot ensemble understated it by 0.42. Greater flexibility, better ranking, worse balance.</p>
+<p>Calibration in the large moves the other way, as it did for the network of the previous lecture. The embedding ensemble understates the observed default count by 0.96 per cent where the one-hot ensemble understated it by 0.42. Better ranking, worse balance, and on this occasion from the smaller of the two models.</p>
 </section>
 <section id="does-proximity-track-risk" class="level2" data-number="2.9">
 <h2 data-number="2.9" class="anchored" data-anchor-id="does-proximity-track-risk"><span class="header-section-number">2.9</span> Does proximity track risk?</h2>
 <p>The course states the intention that proximity in the embedding should reflect similarity in risk behaviour. That is a checkable claim, and the third lecture’s discipline applies, so we measure it rather than admire the picture. For each categorical we take the levels carrying at least five hundred accounts, compute the Euclidean distance between every pair of level embeddings and the absolute difference in their observed default rates, and report the rank correlation between the two. We do this for three separately fitted networks, because a claim about geometry that holds in one fit and not the next is not a claim about the data.</p>
-<div id="607859ee" class="cell" data-execution_count="20">
+<div id="dde75efd" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>rate_by <span class="op">=</span> {c: y_all.groupby(g[c]).mean() <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>count_by <span class="op">=</span> {c: g[c].value_counts() <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> CATS:</span>
@@ -885,7 +891,7 @@ embedding balance: predicted 0.28600 against observed 0.28878 (-0.961%)</code></
 </div>
 <p>The claim does not survive. Home ownership is the most favourable case and reaches only <span class="math inline">\(+0.12\)</span> to <span class="math inline">\(+0.18\)</span>, employment duration runs from <span class="math inline">\(-0.20\)</span> to <span class="math inline">\(+0.12\)</span> and so changes sign between refits of the same architecture on the same data, and verification type is consistently negative, meaning that levels sitting closer together in the embedding differ slightly more in observed default rate. Country has three qualifying levels and therefore three pairs, which supports no inference at all.</p>
 <p>The explanation is not a defect in the fitting. An embedding is identified only up to whatever the following layers can undo, and three fully connected tanh layers can undo a great deal, so the configuration that gradient descent settles on is one of many equivalent ones. More fundamentally, the embedding coordinates encode the level’s contribution jointly with every other covariate, whereas the observed default rate is a marginal quantity. A level whose accounts are mostly young borrowers with low incomes needs no embedding displacement to be risky, because age and income already carry it. Consequently proximity in the embedding measures similarity in residual contribution given the rest of the covariates, and that is not the quantity a reader of the plot will assume.</p>
-<div id="f4a7460b" class="cell" data-execution_count="21">
+<div id="7e9f8efd" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> place_labels(ax, pts, texts, sizes, fontsize<span class="op">=</span><span class="dv">7</span>, base<span class="op">=</span><span class="fl">12.0</span>, iters<span class="op">=</span><span class="dv">400</span>):</span>
 <span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Label a scatter without collisions.</span></span>
 <span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1007,6 +1013,7 @@ X ~\mapsto~ \sum_{k=1}^K a_k \mathbf{1}_{\{X \in I_k\}} .
 <p>Averaging leaves calibration in the large exactly as it found it, since the ensemble’s mean prediction is the mean of the members’ mean predictions. Nagging removed the seed-to-seed dispersion in the balance miss, which spanned <span class="math inline">\(-2.5\)</span> to <span class="math inline">\(+1.3\)</span> per cent, and left the shared systematic component of <span class="math inline">\(-0.42\)</span> per cent untouched. Balance has to be imposed, and the intercept recalibration of the third lecture remains the cheapest instrument.</p>
 <p>On covariate engineering, credit modelling turns out to have arrived first. Weight of evidence is the course’s target encoding moved onto the log-odds scale, which is the scale a logit link wants, and the Bühlmann credibility the course prescribes is the same shrinkage that a minimum bin size approximates. Applied to a 328-level cell, credibilitised WoE at <span class="math inline">\(\tau^* = 5\)</span> gave the best test deviance in the comparison on one column, where dummy coding needed 327 and overfitted by 3.2 points, and uncredibilitised WoE was worse than useless on the scarce tail. A leaked encoding was worth up to 1.33 deviance points of pure illusion, invisible in-sample.</p>
 <p>Entity embedding beat one-hot encoding here by 0.20 points at <span class="math inline">\(M = 10\)</span>, using two thirds of the parameters, where the course’s motor example found the opposite sign. Both findings are small enough to establish that accuracy is the weakest of the three arguments for embedding layers. The strongest is structural, since embedding every covariate into a common <span class="math inline">\(b\)</span>-dimensional space produces the <span class="math inline">\(b \times q\)</span> tensor that attention consumes. Meanwhile the interpretive claim that proximity in the embedding reflects similarity in risk did not survive measurement on this portfolio, where the rank correlation was weak and changed sign between refits.</p>
+<p>One deliberate omission belongs in the record. Every result above sits on the random split, where the second and the fourth and fifth lectures both carried an out-of-time contrast as well. The source deck has no out-of-time content, so the scope here follows it, and the expectation is easy to state and worth testing separately. Ensembling attacks estimation variance and vintage drift is not estimation variance, so the 0.57-point gain should shrink out of time, plausibly to very little.</p>
 <p>The seventh lecture takes up calibration directly, which is the thread this lecture has now twice deferred. Auto-calibration and the balance property give the vocabulary for the recalibration that nagging has been shown to require, and for a credit portfolio they connect to the supervisory expectation that a rating system’s estimated PDs match realised default rates grade by grade.</p>
 </section>
 <section id="copyright-and-attribution" class="level1 unnumbered">

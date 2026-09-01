@@ -390,8 +390,9 @@ predictor sits at a balance of 7.36 per cent, exactly the portfolio
 figure that the null model and the GLM achieve, where its single network
 sits at 7.17.
 
-Averaging cannot do that, and the reason is one line of arithmetic. The
-mean of the ensemble's predictions is the mean of the individual means,
+Averaging can only do that by coincidence, and the reason is one line of
+arithmetic. The mean of the ensemble's predictions is the mean of the
+individual means,
 $$
 \frac{1}{n}\sum_{i=1}^n \widehat{\mu}^{\rm nagg}_M(\boldsymbol{X}_i)
  = \frac{1}{M}\sum_{j=1}^M \left(
@@ -414,6 +415,11 @@ print(f"single networks, relative balance miss mean {rel.mean():+.3f}%  "
       f"largest in absolute value {np.abs(rel).max():.3f}%")
 print(f"nagging predictor, mean predicted PD   {ens_learn.mean():.5f}  "
       f"relative balance miss {rel_ens:+.3f}%")
+
+half_a, half_b = P_learn[:10].mean(0), P_learn[10:].mean(0)
+print(f"two disjoint ensembles of ten, relative miss "
+      f"{(half_a.mean() / obs - 1) * 100:+.3f}% and "
+      f"{(half_b.mean() / obs - 1) * 100:+.3f}%")
 ```
 
 ```{python}
@@ -434,16 +440,23 @@ The measurement matches the algebra exactly. Individual networks miss the
 observed default count by anything from $-2.51$ to $+1.32$ per cent, a
 dispersion of about one percentage point in standard deviation, and their
 average miss is $-0.42$ per cent. The nagging predictor misses by $-0.42$
-per cent. Ensembling has removed the seed-to-seed dispersion in
-calibration, which is a real gain for a validator who has to explain why
-this year's number differs from last year's, and it has left the
-systematic understatement precisely where it was.
+per cent, and splitting the twenty fits into two disjoint ensembles of ten
+puts their misses at $-0.373$ and $-0.475$ per cent, a tenth of a point
+apart where individual fits stand 3.8 points apart. Ensembling
+therefore does compress the seed-to-seed dispersion in calibration, which
+is a real gain for a validator who has to explain why this year's number
+differs from last year's, and it leaves the systematic understatement
+precisely where it was.
 
-Consequently the course's table showing the nagging predictor exactly on
-the portfolio figure cannot be averaging alone. The most likely
-explanation is that a balance correction was applied on top, which their
-lecture notes discuss under bias regularisation; this is inference from
-the published numbers rather than something the deck states. Either way,
+Consequently the course's table would require its ten individual balances
+to average to the portfolio figure exactly. That is possible, since our own
+individual misses straddle zero, and the table makes it implausible.
+Both of its ensembles land on 7.36, matching the null model and the GLM,
+where its two single networks sit at 7.17 and 7.16. Averaging luck
+reproducing the null value twice over is a great deal less likely than a
+balance correction applied on top, which their lecture notes discuss under
+bias regularisation. This is inference from the published numbers rather
+than something the deck states. Either way,
 the reading for credit is the one the third lecture reached from the other
 direction. Where the balance property matters, and under the internal
 ratings based approach it is a supervisory expectation rather than a
@@ -964,10 +977,11 @@ parameter economy, on the inspectable geometry, and on the tensor
 structure, rather than on a deviance improvement that may or may not
 appear.
 
-Calibration in the large moves the other way, as it has at every step of
-this series. The embedding ensemble understates the observed default count
-by 0.96 per cent where the one-hot ensemble understated it by 0.42.
-Greater flexibility, better ranking, worse balance.
+Calibration in the large moves the other way, as it did for the network
+of the previous lecture. The embedding ensemble understates the observed
+default count by 0.96 per cent where the one-hot ensemble understated it
+by 0.42. Better ranking, worse balance, and on this occasion from the
+smaller of the two models.
 
 ## Does proximity track risk?
 
@@ -1241,6 +1255,14 @@ consumes. Meanwhile the interpretive claim that proximity in the embedding
 reflects similarity in risk did not survive measurement on this
 portfolio, where the rank correlation was weak and changed sign between
 refits.
+
+One deliberate omission belongs in the record. Every result above sits on
+the random split, where the second and the fourth and fifth lectures both
+carried an out-of-time contrast as well. The source deck has no
+out-of-time content, so the scope here follows it, and the expectation is
+easy to state and worth testing separately. Ensembling attacks estimation
+variance and vintage drift is not estimation variance, so the 0.57-point
+gain should shrink out of time, plausibly to very little.
 
 The seventh lecture takes up calibration directly, which is the thread
 this lecture has now twice deferred. Auto-calibration and the balance
