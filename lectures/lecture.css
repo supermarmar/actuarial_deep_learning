@@ -629,6 +629,21 @@ table caption {
 }
 
 .callout-icon-container, .callout-icon { display: none; }
+/* Quarto 1.7 puts the callout kind in a screen-reader span ahead of the title,
+   so an untreated "Overview" box renders as "NOTEOVERVIEW". The authors' pages
+   were built before that span existed. Hide it the standard way rather than
+   removing it, so the callout still announces its kind. */
+.screen-reader-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 .callout-title-container { display: block; }
 
 .callout-body > :first-child { margin-top: 0; }

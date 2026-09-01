@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render a credit lecture and strip Quarto's theme assets from the output.
+# Render a Quarto lecture and strip Quarto's theme assets from the output.
 #
 # lectures/lecture.css was written for the course authors' pages, which carry
 # full Quarto markup (#quarto-content, #quarto-margin-sidebar, main.content)
@@ -12,9 +12,14 @@
 # `theme: none` is not an alternative: it drops the wrapper markup itself, so
 # the stylesheet's two-column rail never engages.
 #
+# Two kinds of .qmd go through here, and the only difference is the directory:
+# credit_lectures/ holds Mario's credit risk companion lectures, and lectures/
+# holds the three course lectures reconstructed from their PDF decks.
+#
 # Usage:
-#   bash scripts/render_credit_lecture.sh                  # all credit lectures
-#   bash scripts/render_credit_lecture.sh 01_credit-use-case.qmd
+#   bash scripts/render_lecture.sh                                  # everything
+#   bash scripts/render_lecture.sh lectures/08_icenet-regularization.qmd
+#   bash scripts/render_lecture.sh credit_lectures/01_credit-use-case.qmd
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -25,14 +30,14 @@ export QUARTO_PYTHON="$PWD/.venv/bin/python"
 if [[ $# -gt 0 ]]; then
   qmds=("$@")
 else
-  qmds=(credit_lectures/*.qmd)
-  qmds=("${qmds[@]#credit_lectures/}")
+  qmds=(credit_lectures/*.qmd lectures/*.qmd)
 fi
 
 for qmd in "${qmds[@]}"; do
-  "$QUARTO" render "credit_lectures/$qmd"
-  html="credit_lectures/${qmd%.qmd}.html"
-  libs="credit_lectures/${qmd%.qmd}_files/libs"
+  [[ -f "$qmd" ]] || { echo "no such file: $qmd" >&2; exit 1; }
+  "$QUARTO" render "$qmd"
+  html="${qmd%.qmd}.html"
+  libs="${qmd%.qmd}_files/libs"
   .venv/bin/python - "$html" <<'EOF'
 import re, sys
 
