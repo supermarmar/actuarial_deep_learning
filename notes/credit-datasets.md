@@ -75,7 +75,7 @@ original source should be confirmed before anything derived from it is
 shared. The development file holds 96,806 accounts with a `bad_flag` at 1.42
 per cent; the validation file holds 41,792 accounts and **no** `bad_flag`,
 so honest evaluation requires splitting the development file. Both carry
-1,215 anonymised features in four blocks: `onus_attribute` (48),
+1,214 anonymised features in four blocks: `onus_attribute` (48),
 `transaction_attribute` (664), `bureau` (452) and `bureau_enquiry` (50).
 
 The pair converts to `credit_card_dev.parquet` and
