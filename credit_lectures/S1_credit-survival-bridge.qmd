@@ -164,7 +164,18 @@ The mapping needs one rule that is easy to get wrong. **A `DefaultDate` takes
 precedence over `Status`**, because default is absorbing. 10,743 loans carry a
 `Status` of Repaid and a `DefaultDate` together, having defaulted and later
 recovered, and reading `Status` first would score all of them as settlements and
-discard the event.
+discard the event. The 52,887 loans marked Repaid therefore split into 10,743
+defaults and 42,144 settlements.
+
+Two approximations in the settlement timings are worth stating, since neither is
+visible in the counts. 855 settled loans carry a recorded end date falling after
+the snapshot, i.e. a scheduled date standing in for an unobserved early
+repayment, and the converter caps those at $\tau$, which is the longest exposure
+consistent with the loan having ended by then. A further three carry an end date
+equal to their origination date, and the whole-month floor gives each of them one
+month of exposure it did not have. Both groups are small enough to leave every
+figure in this lecture unchanged, and both are the kind of thing that should be
+said out loud rather than absorbed silently.
 
 :::
 
