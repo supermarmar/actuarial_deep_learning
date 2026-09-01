@@ -365,8 +365,9 @@ observed performance into a lifecycle in $t$, an environment in $u$ and a credit
 in $g$.
 
 One property of this extract now does more damage than it appears to. `ReportAsOfEOD` takes a
-single value across all 179,235 rows, 20 July 2021, so $\tau$ is a constant rather than a per-row
-field and the file is a cross-section rather than a panel.
+single value across all 179,235 rows, 20 July 2021. The snapshot $\tau$ is therefore a constant
+rather than a per-row field, and the extract holds one cross-section where a panel would hold
+many.
 
 ::: {.callout-note icon=false title="Point-in-time and through-the-cycle PDs"}
 A **point-in-time (PiT)** PD conditions on where the economy is, i.e. it estimates
