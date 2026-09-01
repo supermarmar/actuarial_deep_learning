@@ -23,9 +23,9 @@ models and in-context learning.
 
 | Path | Purpose |
 |---|---|
-| `lectures/` | Seven Quarto-rendered lecture documents (`.html`), downloaded from the course site, plus `lecture.css`, the shared presentation layer. Their figures live in `lectures/figures/`, gitignored, see below |
-| `scripts/` | Repo utilities. Currently the lecture figure fetcher |
-| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, adapting each course lecture to the Bondora PD problem. Render with `bash scripts/render_credit_lecture.sh`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out |
+| `lectures/` | Ten lecture documents (`.html`) plus `lecture.css`, the shared presentation layer. Seven were Quarto-rendered by the course authors and downloaded from the course site; lectures 3, 8 and 12 are reconstructions from the PDF decks, and carry a `.qmd` source beside them. The authors' figures live in `lectures/figures/`, gitignored; the reconstructed ones live in `lectures/figures-reconstructed/` and are committed, see below |
+| `scripts/` | Repo utilities: the lecture figure fetcher, the PDF figure extractor, the Quarto render wrapper and the credit data converter |
+| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, adapting each course lecture to the Bondora PD problem. Render with `bash scripts/render_lecture.sh credit_lectures/*.qmd`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
 | `reference/` | Four Python notebooks from the `wueth/AITools4Actuaries` GitHub repo |
@@ -129,6 +129,37 @@ which the flat `figures/` layout collapses onto one path. The two copies are byt
 today, and the script compares rather than overwrites, so a future divergence gets shouted
 about.
 
+### Reconstructed lectures
+
+Lectures 3, 8 and 12 were handed out as beamer PDFs rather than as Quarto HTML, so they were
+missing from the lecture set until 1 September 2026. Each now has a `.qmd` in `lectures/` that
+transcribes its deck frame by frame, rendered through the same script the credit lectures use:
+
+```bash
+bash scripts/render_lecture.sh lectures/08_icenet-regularization.qmd
+```
+
+The text, mathematics and tables are the authors'. Ours are the abstract (joined from each
+deck's own Overview boxes), the ordering into a document rather than slides, and the figure
+crops. Each `.qmd` says so in a comment at the top of its header, so the provenance travels
+with the file.
+
+Their figures live in `lectures/figures-reconstructed/` and **are committed**, unlike everything
+`fetch_lecture_figures.sh` pulls. The reason is rebuildability: they come out of the PDFs, which
+belong in `vault/raw/` rather than here, so a fresh clone has no way to regenerate them.
+Rebuild them from the decks with:
+
+```bash
+.venv/bin/python scripts/extract_lecture_figures.py        # all three lectures
+.venv/bin/python scripts/extract_lecture_figures.py 8      # one lecture
+```
+
+The script rasterises whole pages rather than pulling embedded images, because several plots
+are vector drawings that `pdfimages` never sees and every embedded raster carries a paired soft
+mask. It expects the decks in `~/Downloads`; edit `PDF_DIR` if they move. Per-figure `top`,
+`bottom`, `left` and `right` fractions trim the beamer furniture before the white margins are
+cropped, and the page counter is masked so it does not survive as a stray "10/36" beside a plot.
+
 ### Never reformat the authors' files
 
 `lectures/`, `exercises/` and `reference/` hold files exactly as issued, so a formatter must
@@ -142,6 +173,9 @@ The `.prettierignore` rule names `lectures/*.html` rather than `lectures/`, so t
 `lectures/lecture.css` stays formattable. A directory exclusion would not allow it back:
 Prettier reads gitignore semantics, where excluding a directory stops the walk and a later
 `!lectures/lecture.css` is inert.
+
+The three reconstructed lectures sit inside the same guard, and want it for a different reason:
+their `.html` is generated. Edit the `.qmd` and re-render rather than touching the output.
 
 ## Portfolio dashboard
 

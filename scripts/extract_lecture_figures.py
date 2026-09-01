@@ -53,6 +53,28 @@ class Figure:
 
 
 DECKS: dict[str, tuple[str, tuple[Figure, ...]]] = {
+    "3": (
+        "Lecture-3.pdf",
+        (
+            Figure(8, "scaling-laws", top=0.38, bottom=0.26),
+            Figure(9, "intelligence-age", top=0.15, bottom=0.28),
+            Figure(13, "fashion-mnist-samples", top=0.48, bottom=0.10),
+            Figure(14, "fashion-mnist-pca", top=0.26, bottom=0.20),
+            Figure(18, "fashion-mnist-autoencoder", top=0.16, bottom=0.03),
+            Figure(19, "representation-to-prediction", top=0.42, bottom=0.38),
+            Figure(21, "cnn-layers-1-2", top=0.44, bottom=0.05),
+            Figure(22, "cnn-layer-5", top=0.28, bottom=0.03),
+            Figure(24, "single-layer-fnn", top=0.17, bottom=0.06, left=0.52),
+            Figure(25, "deep-fnn", top=0.17, bottom=0.05, left=0.48),
+            Figure(26, "fnn-generalises-glm", top=0.17, bottom=0.30, left=0.50),
+            Figure(32, "cnn-convolution", top=0.17, bottom=0.04),
+            Figure(36, "rnn-diagram", top=0.17, bottom=0.06),
+            Figure(37, "lstm-cell", top=0.28, bottom=0.16),
+            Figure(38, "gru-cell", top=0.28, bottom=0.20),
+            Figure(41, "autoencoder", top=0.17, bottom=0.05, left=0.48),
+            Figure(46, "cann-implementation", top=0.17, bottom=0.30),
+        ),
+    ),
     "8": (
         "Lecture-8.pdf",
         (
