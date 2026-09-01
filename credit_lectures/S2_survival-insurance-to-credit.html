@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-01">
+
+<title>Credit Lecture S2: Survival Analysis from Insurance to Credit</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#two-traditions-one-mathematics" id="toc-two-traditions-one-mathematics" class="nav-link active" data-scroll-target="#two-traditions-one-mathematics"><span class="header-section-number">1</span> Two traditions, one mathematics</a></li>
+  <li><a href="#where-the-subject-came-from" id="toc-where-the-subject-came-from" class="nav-link" data-scroll-target="#where-the-subject-came-from"><span class="header-section-number">2</span> Where the subject came from</a></li>
+  <li><a href="#the-correspondence" id="toc-the-correspondence" class="nav-link" data-scroll-target="#the-correspondence"><span class="header-section-number">3</span> The correspondence</a></li>
+  <li><a href="#the-denominator-exposed-to-risk-against-the-person-period-expansion" id="toc-the-denominator-exposed-to-risk-against-the-person-period-expansion" class="nav-link" data-scroll-target="#the-denominator-exposed-to-risk-against-the-person-period-expansion"><span class="header-section-number">4</span> The denominator: exposed to risk against the person-period expansion</a></li>
+  <li><a href="#the-lexis-diagram" id="toc-the-lexis-diagram" class="nav-link" data-scroll-target="#the-lexis-diagram"><span class="header-section-number">5</span> The Lexis diagram</a></li>
+  <li><a href="#multiple-decrements-and-competing-risks" id="toc-multiple-decrements-and-competing-risks" class="nav-link" data-scroll-target="#multiple-decrements-and-competing-risks"><span class="header-section-number">6</span> Multiple decrements and competing risks</a>
+  <ul class="collapse">
+  <li><a href="#the-fine-gray-subdistribution-hazard" id="toc-the-fine-gray-subdistribution-hazard" class="nav-link" data-scroll-target="#the-fine-gray-subdistribution-hazard"><span class="header-section-number">6.1</span> The Fine-Gray subdistribution hazard</a></li>
+  <li><a href="#what-the-two-hazards-say-about-the-same-covariate" id="toc-what-the-two-hazards-say-about-the-same-covariate" class="nav-link" data-scroll-target="#what-the-two-hazards-say-about-the-same-covariate"><span class="header-section-number">6.2</span> What the two hazards say about the same covariate</a></li>
+  </ul></li>
+  <li><a href="#a-map-of-the-methods" id="toc-a-map-of-the-methods" class="nav-link" data-scroll-target="#a-map-of-the-methods"><span class="header-section-number">7</span> A map of the methods</a></li>
+  <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways"><span class="header-section-number">8</span> Takeaways</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture S2: Survival Analysis from Insurance to Credit</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 1, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Lecture S1 built a discrete hazard model for the Bondora loan book without once using actuarial notation, which is an odd way for an actuary to arrive at survival analysis. This lecture supplies the translation. It sets out where the subject came from, maps the four vocabularies that describe the same mathematics, and then does the two pieces of work the mapping makes possible: it shows that the central exposed to risk and the person-period expansion are the same denominator computed under different fractional-period assumptions, differing here by 3.5 per cent, and it carries out the Fine-Gray correction that S1 measured and deferred. The value of this lecture sits in the correspondence, so it is built around one table, one Lexis diagram and two computations.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="two-traditions-one-mathematics" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Two traditions, one mathematics</h1>
+<p>An actuary meeting survival analysis for the first time has the disorienting experience of recognising every idea and none of the symbols. Lecture S1 estimated a quantity it called the discrete hazard <span class="math inline">\(q_{i,t}\)</span> and chained it into a survival probability, which is the life table an actuary has known since their first examination. It computed a Kaplan-Meier curve, which is a life table built from individual records instead of grouped ones. Furthermore, it worried about loans leaving the risk set early, which is withdrawal in a multiple-decrement table.</p>
+<p>The reason the vocabularies diverged is historical. Actuaries developed the machinery first, for whole populations observed in aggregate, and their notation optimises for computation by hand from published tables. Biostatisticians redeveloped it for clinical trials, where a few hundred patients are observed individually, and their notation optimises for likelihoods and estimators. Consequently the same object carries two names, and credit risk, arriving last, borrowed from both.</p>
+<p>This lecture is the translation. It does not re-derive the theory, because Mario’s own statistics lecture on survival analysis already covers censoring and truncation, the likelihood, Kaplan-Meier with Greenwood, Nelson-Aalen, the log-rank test, parametric families, proportional hazards against accelerated failure time, Cox with partial likelihood, frailty and competing risks. What follows instead is the mapping, and the two computations the mapping licenses.</p>
+<div id="9ad0ac99" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">9</span>, <span class="dv">4</span>), <span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>surv <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_survival.parquet"</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="op">=</span> <span class="dv">60</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>surv<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loans"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>179,235 loans</code></pre>
+</div>
+</div>
+</section>
+<section id="where-the-subject-came-from" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Where the subject came from</h1>
+<p>Survival analysis has three separate origins, and each left a layer in the notation.</p>
+<p>The <strong>actuarial</strong> layer is the oldest. John Graunt’s <em>Natural and Political Observations</em> of 1662 built the first life table from London’s bills of mortality, and Edmond Halley’s Breslau table of 1693 turned the construction into something that could price an annuity. The apparatus of <span class="math inline">\(l_x\)</span>, <span class="math inline">\(q_x\)</span> and later the force of mortality <span class="math inline">\(\mu_x\)</span> was complete in essentials long before anyone wrote down a likelihood, because it was built to be computed by hand and read off a page.</p>
+<p>The <strong>statistical</strong> layer arrived in the twentieth century, driven by two problems the actuarial machinery handled awkwardly. Reliability engineering needed to describe the failure of components tested individually, and clinical trials needed to compare treatments on small samples where some patients were still alive when the study ended. Kaplan and Meier (1958) gave the non-parametric estimator for individual censored records, Mantel (1966) the log-rank test for comparing groups, and Cox (1972) the proportional hazards model that made regression possible without specifying the baseline. Cox’s partial likelihood is the single most cited paper in statistics, and it is why the subject reads as biostatistics rather than as actuarial science today.</p>
+<p>The <strong>discrete-time</strong> layer is the one credit risk actually uses. Singer and Willett (1993) set out the person-period expansion for social science event histories, showing that a discrete-time hazard model is a logistic regression on a restructured dataset, which is the result S1 leaned on. Fine and Gray (1999) then gave the regression model for competing risks that this lecture applies below. Credit risk adopted the discrete-time formulation because loan performance arrives monthly, so continuous time buys nothing, and because the resulting model fits with tooling every lender already owns.</p>
+</section>
+<section id="the-correspondence" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The correspondence</h1>
+<p>Here is the mapping, which is the reason this lecture exists. Mario’s actuarial mathematics lecture puts it in one sentence: the same object appears in four disciplines under four names, and once the actuarial notation is learned deeply the other three literatures read for free.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Concept</th>
+<th>Actuarial</th>
+<th>Survival analysis</th>
+<th>Reliability</th>
+<th>Credit risk</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Probability of surviving a further <span class="math inline">\(k\)</span></td>
+<td><span class="math inline">\({}_t p_x\)</span></td>
+<td><span class="math inline">\(S(t \mid x)\)</span></td>
+<td><span class="math inline">\(R(t)\)</span></td>
+<td><span class="math inline">\({}_k p_{i,t}\)</span>, no default in the next <span class="math inline">\(k\)</span> months</td>
+</tr>
+<tr class="even">
+<td>Probability of failing by <span class="math inline">\(t\)</span></td>
+<td><span class="math inline">\({}_t q_x\)</span></td>
+<td><span class="math inline">\(F(t) = 1 - S(t)\)</span></td>
+<td>unreliability</td>
+<td><span class="math inline">\(\mathrm{PD}_t\)</span></td>
+</tr>
+<tr class="odd">
+<td>Instantaneous rate</td>
+<td>force of mortality <span class="math inline">\(\mu_{x+t}\)</span></td>
+<td>hazard <span class="math inline">\(h(t)\)</span></td>
+<td>failure rate</td>
+<td>default intensity <span class="math inline">\(\lambda(t)\)</span></td>
+</tr>
+<tr class="even">
+<td>Cumulative rate</td>
+<td><span class="math inline">\(\int_0^t \mu_{x+s}\,\mathrm{d}s\)</span></td>
+<td><span class="math inline">\(H(t)\)</span></td>
+<td>cumulative hazard</td>
+<td>cumulative intensity</td>
+</tr>
+<tr class="odd">
+<td>One-period rate</td>
+<td><span class="math inline">\(q_{x+t}\)</span></td>
+<td>discrete hazard</td>
+<td>per-period failure</td>
+<td>marginal PD, <span class="math inline">\(q_{i,t}\)</span></td>
+</tr>
+<tr class="even">
+<td>Denominator</td>
+<td>central exposed to risk <span class="math inline">\(E^c_x\)</span></td>
+<td>risk set <span class="math inline">\(n_t\)</span></td>
+<td>operating time</td>
+<td>loan-months at risk</td>
+</tr>
+<tr class="odd">
+<td>Exits other than the event</td>
+<td>withdrawal, decrement</td>
+<td>censoring, competing risk</td>
+<td>suspension</td>
+<td>prepayment, settlement</td>
+</tr>
+<tr class="even">
+<td>Age scale</td>
+<td>attained age <span class="math inline">\(x\)</span></td>
+<td>time since entry</td>
+<td>operating age</td>
+<td>months on book <span class="math inline">\(t\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Two rows deserve comment, because they are where a translation goes wrong rather than merely reads oddly.</p>
+<p>The <strong>age scale</strong> row is the trap, and it is worth stating in the strongest form. An actuary’s <span class="math inline">\(x\)</span> is attained age, so the credit twin of <span class="math inline">\(x\)</span> is months on book <span class="math inline">\(t\)</span>, the attained age of the loan, and the transliteration of <span class="math inline">\({}_t p_x\)</span> is <span class="math inline">\({}_k p_{i,t}\)</span> with <span class="math inline">\((k, t)\)</span> in the roles of <span class="math inline">\((t, x)\)</span>. Borrower age is <strong>not</strong> the twin of <span class="math inline">\(x\)</span>, despite the shared word. It is a covariate, and two borrowers of different ages whose loans are both twelve months old sit at the same point on the loan’s survival curve. Consequently the false friend here costs more than a symbol: it would put a covariate on the time axis and leave the loan’s own clock without one.</p>
+<p>The <strong>exits</strong> row is the one this lecture spends its second half on. Actuaries have always had multiple decrements, meaning a table where lives can leave by death, withdrawal, or retirement, each with its own rate. Biostatistics arrived at the same structure later and called it competing risks. They are the same object, and the actuarial tradition arguably handled it more carefully for longer, since a pension fund that treats withdrawal as if it were death misprices the whole scheme.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="One notation decision, and the alternative">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>One notation decision, and the alternative
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The cumulative hazard has two symbols in circulation, and Mario’s own materials carry both: the statistics lecture writes <span class="math inline">\(\hat H(t)\)</span> while the actuarial formulae sheet writes <span class="math inline">\(\hat\Lambda(t)\)</span> for the same object. Neither is wrong. <span class="math inline">\(H\)</span> dominates the biostatistics literature and <span class="math inline">\(\Lambda\)</span> the point-process and credit-intensity literature, where <span class="math inline">\(\lambda(t)\)</span> is the intensity and <span class="math inline">\(\Lambda(t)\)</span> its integral.</p>
+<p><strong>This lecture series uses <span class="math inline">\(H(t)\)</span></strong>, for consistency with the statistics lecture the reader is most likely to have open alongside it, and because <span class="math inline">\(\Lambda\)</span> collides with the loading matrices that appear later in the summer school. Where a credit paper writes <span class="math inline">\(\Lambda(t)\)</span>, read <span class="math inline">\(H(t)\)</span>.</p>
+</div>
+</div>
+</section>
+<section id="the-denominator-exposed-to-risk-against-the-person-period-expansion" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> The denominator: exposed to risk against the person-period expansion</h1>
+<p>Now the first computation. Both traditions estimate a one-period rate as events divided by exposure, and they disagree about what exposure means. That disagreement is worth exactly one number, and this section measures it.</p>
+<p>The actuarial <strong>central exposed to risk</strong> <span class="math inline">\(E^c_t\)</span> counts time. A loan contributes to month <span class="math inline">\(t\)</span> the fraction of that month it actually spent at risk, so a loan exiting halfway through contributes half a month. Dividing deaths by it gives a <strong>central rate</strong>, an estimate of the force of default <span class="math inline">\(\mu_t\)</span>, which is a rate per unit time and can exceed one.</p>
+<p>The statistical <strong>person-period expansion</strong> counts rows. A loan contributes one row for each month in which it was at risk at any point, so a loan exiting halfway through contributes a whole row. Dividing events by it gives a <strong>probability</strong>, the discrete hazard <span class="math inline">\(q_t\)</span> of lecture S1, which cannot exceed one.</p>
+<div id="42b86049" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>t_obs <span class="op">=</span> surv[<span class="st">"t_obs"</span>].to_numpy()</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>t_m <span class="op">=</span> surv[<span class="st">"t_obs_m"</span>].to_numpy().clip(<span class="bu">max</span><span class="op">=</span>HORIZON <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>kind <span class="op">=</span> surv[<span class="st">"exit_kind"</span>].to_numpy()</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>months <span class="op">=</span> np.arange(<span class="dv">1</span>, HORIZON <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co"># actuarial: time lived inside each month, part-months included</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>Ec <span class="op">=</span> np.array([(np.clip(t_obs, m <span class="op">-</span> <span class="dv">1</span>, m) <span class="op">-</span> (m <span class="op">-</span> <span class="dv">1</span>)).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months])</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>deaths <span class="op">=</span> np.array([((t_obs <span class="op">&gt;</span> m <span class="op">-</span> <span class="dv">1</span>) <span class="op">&amp;</span> (t_obs <span class="op">&lt;=</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"default"</span>)).<span class="bu">sum</span>()</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                   <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># statistical: one row per month at risk, whole months only</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>n_pp <span class="op">=</span> np.array([(t_m <span class="op">&gt;=</span> m).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>d_pp <span class="op">=</span> np.array([((t_m <span class="op">==</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"default"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>mu_t <span class="op">=</span> deaths <span class="op">/</span> Ec              <span class="co"># central rate, the force of default</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>q_pp <span class="op">=</span> d_pp <span class="op">/</span> n_pp              <span class="co"># discrete hazard, lecture S1's q_t</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>q_cfm <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> np.exp(<span class="op">-</span>mu_t)       <span class="co"># convert the force to a probability, constant force</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"central exposed to risk over 60 months : </span><span class="sc">{</span>Ec<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:14,.0f}</span><span class="ss"> loan-months"</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"person-period rows over 60 months      : </span><span class="sc">{</span>n_pp<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:14,.0f}</span><span class="ss"> rows"</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"ratio                                  : </span><span class="sc">{</span>Ec<span class="sc">.</span><span class="bu">sum</span>() <span class="op">/</span> n_pp<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:14.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>central exposed to risk over 60 months :      2,582,053 loan-months
+person-period rows over 60 months      :      2,672,193 rows
+ratio                                  :         0.9663</code></pre>
+</div>
+</div>
+<p>The expansion carries 3.5 per cent more exposure than the loans actually lived, and every unit of the difference is a part-month handed out whole. That is a systematic overstatement of the denominator, so the person-period hazard sits systematically below the converted central rate.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="This is the fractional-age assumption, wearing a different hat">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>This is the fractional-age assumption, wearing a different hat
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Converting a force of default into a one-period probability needs an assumption about what happens inside the period, which is precisely the fractional-age assumption of actuarial mathematics. Under a <strong>constant force</strong> (CFM), <span class="math inline">\(q_t = 1 - \exp(-\mu_t)\)</span>, which is what the code above applies. Under a <strong>uniform distribution of deaths</strong> (UDD) the conversion is different, and the two disagree by an amount that grows with the rate.</p>
+<p>The person-period expansion makes no such assumption explicitly. Nevertheless it makes one implicitly, by treating a loan present for any part of a month as present for all of it, and the 3.5 per cent gap above is the price of that implicit choice. An actuary reading a discrete-time credit model should recognise the convention rather than look for one.</p>
+</div>
+</div>
+<div id="d7a0fc96" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>S_cfm <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_cfm)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>S_pp <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_pp)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"PD_60, force of default chained under CFM : </span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_cfm[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.6f}</span><span class="ss">"</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"PD_60, person-period discrete hazard      : </span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_pp[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.6f}</span><span class="ss">"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"difference                                : </span><span class="sc">{</span>(<span class="dv">1</span> <span class="op">-</span> S_cfm[<span class="op">-</span><span class="dv">1</span>]) <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> S_pp[<span class="op">-</span><span class="dv">1</span>])<span class="sc">:+.6f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>PD_60, force of default chained under CFM : 0.725655
+PD_60, person-period discrete hazard      : 0.716798
+difference                                : +0.008857</code></pre>
+</div>
+</div>
+<div id="1bb1fbf9" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>ax.plot(months, n_pp <span class="op">/</span> <span class="dv">1000</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">1.6</span>, label<span class="op">=</span><span class="st">"person-period rows"</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>ax.plot(months, Ec <span class="op">/</span> <span class="dv">1000</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.6</span>, label<span class="op">=</span><span class="st">"central exposed to risk"</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"months on book $t$"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"thousands of loan-months"</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"the denominator"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">1</span>]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>ax.plot(months, q_pp <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">1.6</span>, label<span class="op">=</span><span class="st">"$q_t$, person-period"</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>ax.plot(months, q_cfm <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.6</span>, label<span class="op">=</span><span class="st">"$1 - e^{-</span><span class="ch">\\</span><span class="st">mu_t}$, constant force"</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"months on book $t$"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"one-period default probability (%)"</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"the rate"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S2_survival-insurance-to-credit_files/figure-html/cell-5-output-1.png" width="1339" height="588" class="figure-img"></p>
+<figcaption>The two exposure conventions on the Bondora book, over sixty months on book. (lhs): the actuarial central exposed to risk against the person-period row count, per month. The expansion sits above the exposure everywhere, because a loan exiting mid-month contributes a whole row and only part of a month. (rhs): the resulting one-period rates, with the central rate converted to a probability under a constant force. The gap is widest where the hazard is highest, which is the early peak.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="the-lexis-diagram" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> The Lexis diagram</h1>
+<p>Lecture 1 fixed three time axes bound by the identity <span class="math inline">\(u = g + t\)</span>, and noted the consequence that vintage and calendar effects are collinear given months on book. Demographers draw that identity, and the picture is worth more than the algebra.</p>
+<div id="3d1085fe" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>vintages <span class="op">=</span> np.arange(<span class="dv">0</span>, <span class="dv">55</span>, <span class="dv">6</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>tau_x <span class="op">=</span> <span class="dv">60</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> g <span class="kw">in</span> vintages:</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    span <span class="op">=</span> <span class="bu">min</span>(<span class="dv">48</span>, tau_x <span class="op">-</span> g)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> span <span class="op">&lt;=</span> <span class="dv">0</span>:</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">continue</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    key <span class="op">=</span> g <span class="op">==</span> <span class="dv">24</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    ax.plot([g, g <span class="op">+</span> span], [<span class="dv">0</span>, span], color<span class="op">=</span>OX <span class="cf">if</span> key <span class="cf">else</span> GREY,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>            lw<span class="op">=</span><span class="fl">1.8</span> <span class="cf">if</span> key <span class="cf">else</span> <span class="fl">0.9</span>, zorder<span class="op">=</span><span class="dv">3</span> <span class="cf">if</span> key <span class="cf">else</span> <span class="dv">2</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>ax.axhspan(<span class="dv">0</span>, <span class="dv">12</span>, color<span class="op">=</span>RULE, alpha<span class="op">=</span><span class="fl">0.10</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">12</span>, color<span class="op">=</span>RULE, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>ax.axvline(tau_x, color<span class="op">=</span>RULE, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="fl">1.2</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"snapshot $</span><span class="ch">\\</span><span class="st">tau$"</span>, xy<span class="op">=</span>(tau_x, <span class="dv">44</span>), ha<span class="op">=</span><span class="st">"right"</span>, va<span class="op">=</span><span class="st">"top"</span>,</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>            fontsize<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span>RULE, rotation<span class="op">=</span><span class="dv">90</span>)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"outcome window $k = 12$"</span>, xy<span class="op">=</span>(<span class="dv">2</span>, <span class="fl">13.5</span>), fontsize<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span>RULE)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"one vintage $g$"</span>, xy<span class="op">=</span>(<span class="dv">24</span> <span class="op">+</span> <span class="dv">17</span>, <span class="dv">17</span>), fontsize<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span>OX)</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="dv">0</span>, <span class="dv">78</span>)<span class="op">;</span> ax.set_ylim(<span class="dv">0</span>, <span class="dv">48</span>)</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"calendar month $u$"</span>)</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"months on book $t$"</span>)</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S2_survival-insurance-to-credit_files/figure-html/cell-6-output-1.png" width="963" height="617" class="figure-img"></p>
+<figcaption>A Lexis diagram for a loan book. Each diagonal is one loan, entering at its origination month <span class="math inline">\(g\)</span> on the horizontal axis and rising at 45 degrees as months on book <span class="math inline">\(t\)</span> accumulate, so a point on a diagonal sits at calendar month <span class="math inline">\(u = g + t\)</span>. The vertical dashed line is the snapshot <span class="math inline">\(\tau\)</span>: the Bondora extract observes the book along that single line. Bronze marks one vintage, whose loans run parallel; the horizontal band marks a fixed twelve-month outcome window, which cuts every vintage at the same <span class="math inline">\(t\)</span> but at a different <span class="math inline">\(u\)</span>.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The diagram makes lecture 1’s identification problem visual. A single snapshot observes the book along one vertical line, so each vintage is seen at exactly one age, and there is no way to hold <span class="math inline">\(u\)</span> fixed while <span class="math inline">\(t\)</span> varies. A panel observes many vertical lines, which is what breaks the collinearity and what <code>data/amex_panel.parquet</code> supplies.</p>
+<p>Life insurance draws the identical picture with year of birth on the horizontal axis and attained age on the vertical, and calls the diagonals lifelines. The horizontal band that here marks the outcome window there marks a rate year, and the part-year exposures that band cuts are exactly the central exposed to risk of the previous section.</p>
+</section>
+<section id="multiple-decrements-and-competing-risks" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Multiple decrements and competing risks</h1>
+<p>Lecture S1 established that early repayment removes a loan from the risk set for a reason correlated with its default risk, so treating it as censoring overstates the PD, by 3.05 percentage points over twelve months and 16.99 over sixty. This section carries out the correction.</p>
+<p>The actuarial framing is the multiple-decrement table. A life aged <span class="math inline">\(x\)</span> can leave by death or by withdrawal, with <strong>independent</strong> rates <span class="math inline">\(q^{(d)}_x\)</span> and <span class="math inline">\(q^{(w)}_x\)</span>, and the table reports <strong>dependent</strong> rates <span class="math inline">\((aq)^{(d)}_x\)</span> and <span class="math inline">\((aq)^{(w)}_x\)</span>, which are the probabilities of actually leaving each way in the presence of the other decrement. An actuary who reports an independent rate as if it were a dependent one has made exactly S1’s error.</p>
+<p>The survival framing splits the same distinction two ways. The <strong>cause-specific hazard</strong> asks: given the loan is still performing, what is the chance it defaults this month? That is S1’s <span class="math inline">\(q_{i,t}\)</span>, and it is the right quantity for understanding the mechanism of default. The <strong>subdistribution hazard</strong> asks: what is the chance this loan has defaulted by month <span class="math inline">\(k\)</span>, counting settled loans as loans that never will? That is the right quantity for a provision, because IFRS 9 needs the expected loss on the loans that actually exist.</p>
+<div id="fedd4f8f" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>n_all <span class="op">=</span> np.array([(t_m <span class="op">&gt;=</span> m).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>d_def <span class="op">=</span> np.array([((t_m <span class="op">==</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"default"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>d_set <span class="op">=</span> np.array([((t_m <span class="op">==</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"settled"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>d_cen <span class="op">=</span> np.array([((t_m <span class="op">==</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"censored"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># the actuarial dependent/independent contrast, in one line each</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>q_indep <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> d_def <span class="op">/</span> n_all)                       <span class="co"># S1's Kaplan-Meier</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>S_any <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> d_def <span class="op">/</span> n_all <span class="op">-</span> d_set <span class="op">/</span> n_all)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>q_dep <span class="op">=</span> np.cumsum(np.concatenate([[<span class="fl">1.0</span>], S_any[:<span class="op">-</span><span class="dv">1</span>]]) <span class="op">*</span> (d_def <span class="op">/</span> n_all))  <span class="co"># Aalen-Johansen</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">12</span>, <span class="dv">60</span>):</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"k = </span><span class="sc">{</span>k<span class="sc">:2d}</span><span class="ss">   independent (KM) </span><span class="sc">{</span>q_indep[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:7.2%}</span><span class="ss">   "</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"dependent (Aalen-Johansen) </span><span class="sc">{</span>q_dep[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:7.2%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>k = 12   independent (KM)  30.76%   dependent (Aalen-Johansen)  27.72%
+k = 60   independent (KM)  71.68%   dependent (Aalen-Johansen)  54.69%</code></pre>
+</div>
+</div>
+<section id="the-fine-gray-subdistribution-hazard" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="the-fine-gray-subdistribution-hazard"><span class="header-section-number">6.1</span> The Fine-Gray subdistribution hazard</h2>
+<p>Fine and Gray (1999) made the dependent quantity regressable, and the trick is a change to the risk set that reads as strange until its purpose is clear. A loan that settles in month nine <strong>stays in the risk set</strong> for every later month, carrying the event value zero forever. It is a loan that has been observed never to default, so keeping it in the denominator is what stops the chained product running away from the cumulative incidence.</p>
+<p>Loans censored administratively cannot be handled that way, since their eventual fate is genuinely unknown. They receive inverse probability of censoring weights, using the Kaplan-Meier estimate <span class="math inline">\(\hat G(t)\)</span> of the censoring distribution, so a loan censored at month <span class="math inline">\(c\)</span> contributes weight <span class="math inline">\(\hat G(t) / \hat G(c)\)</span> thereafter.</p>
+<div id="1f3b989d" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>G <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> d_cen <span class="op">/</span> n_all)          <span class="co"># KM of the censoring distribution</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"G(12) = </span><span class="sc">{</span>G[<span class="dv">11</span>]<span class="sc">:.4f}</span><span class="ss">   G(60) = </span><span class="sc">{</span>G[<span class="dv">59</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> subdistribution_table(t_m, kind, weights_by<span class="op">=</span><span class="va">None</span>, horizon<span class="op">=</span>HORIZON):</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Weighted risk set and events under the Fine-Gray subdistribution rule."""</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    rows <span class="op">=</span> []</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> m <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, horizon <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> np.zeros(<span class="bu">len</span>(t_m))</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        w[t_m <span class="op">&gt;=</span> m] <span class="op">=</span> <span class="fl">1.0</span>                                   <span class="co"># still at risk</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        settled <span class="op">=</span> np.where((t_m <span class="op">&lt;</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"settled"</span>))[<span class="dv">0</span>]</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        w[settled] <span class="op">=</span> G[m <span class="op">-</span> <span class="dv">1</span>] <span class="op">/</span> G[np.clip(t_m[settled] <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, horizon <span class="op">-</span> <span class="dv">1</span>)]</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        y <span class="op">=</span> ((t_m <span class="op">==</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"default"</span>)).astype(<span class="bu">float</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        rows.append((m, w.<span class="bu">sum</span>(), (y <span class="op">*</span> w).<span class="bu">sum</span>()))</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(rows)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>fg <span class="op">=</span> subdistribution_table(t_m, kind)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>q_sub <span class="op">=</span> fg[:, <span class="dv">2</span>] <span class="op">/</span> fg[:, <span class="dv">1</span>]</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>cif_fg <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_sub)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">risk set at month 60: </span><span class="sc">{</span>fg[<span class="op">-</span><span class="dv">1</span>, <span class="dv">1</span>]<span class="sc">:,.0f}</span><span class="ss"> weighted (subdistribution) "</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"against </span><span class="sc">{</span>n_all[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:,.0f}</span><span class="ss"> (cause-specific)"</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">12</span>, <span class="dv">60</span>):</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"k = </span><span class="sc">{</span>k<span class="sc">:2d}</span><span class="ss">   chained subdistribution hazard </span><span class="sc">{</span>cif_fg[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:7.2%}</span><span class="ss">   "</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"Aalen-Johansen </span><span class="sc">{</span>q_dep[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:7.2%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>G(12) = 0.8218   G(60) = 0.1304
+
+risk set at month 60: 10,535 weighted (subdistribution) against 2,061 (cause-specific)
+k = 12   chained subdistribution hazard  27.69%   Aalen-Johansen  27.72%
+k = 60   chained subdistribution hazard  54.56%   Aalen-Johansen  54.69%</code></pre>
+</div>
+</div>
+<p>At month sixty the subdistribution risk set holds five times as many loans as the cause-specific one, because every loan settled in the preceding fifty-nine months is still being counted. Chaining the subdistribution hazard then reproduces the non-parametric cumulative incidence to within 0.13 percentage points, which is the check that the construction is doing what it claims.</p>
+</section>
+<section id="what-the-two-hazards-say-about-the-same-covariate" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="what-the-two-hazards-say-about-the-same-covariate"><span class="header-section-number">6.2</span> What the two hazards say about the same covariate</h2>
+<p>The distinction earns its keep when a covariate enters, because the two hazards can disagree about how much a risk driver matters, and occasionally about its sign. Fitting both on Bondora’s listing grade shows the mechanism.</p>
+<div id="abbebd6e" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>RATINGS <span class="op">=</span> [<span class="st">"AA"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"E"</span>, <span class="st">"F"</span>, <span class="st">"HR"</span>]</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>BANDS <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">9</span>, <span class="dv">12</span>, <span class="dv">18</span>, <span class="dv">24</span>, <span class="dv">36</span>, <span class="dv">48</span>, <span class="dv">60</span>]</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>BAND_LABELS <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>a <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(BANDS[:<span class="op">-</span><span class="dv">1</span>], BANDS[<span class="dv">1</span>:])]</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>rated <span class="op">=</span> surv.<span class="bu">filter</span>(pl.col(<span class="st">"Rating"</span>).is_in(RATINGS))</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>rt_m <span class="op">=</span> rated[<span class="st">"t_obs_m"</span>].to_numpy().clip(<span class="bu">max</span><span class="op">=</span>HORIZON <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>rt_kind <span class="op">=</span> rated[<span class="st">"exit_kind"</span>].to_numpy()</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>rt_rating <span class="op">=</span> rated[<span class="st">"Rating"</span>].to_numpy()</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>cause_rows, sub_rows <span class="op">=</span> [], []</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> m <span class="kw">in</span> months:</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    at_risk <span class="op">=</span> rt_m <span class="op">&gt;=</span> m</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> ((rt_m <span class="op">==</span> m) <span class="op">&amp;</span> (rt_kind <span class="op">==</span> <span class="st">"default"</span>)).astype(<span class="bu">float</span>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    settled <span class="op">=</span> np.where((rt_m <span class="op">&lt;</span> m) <span class="op">&amp;</span> (rt_kind <span class="op">==</span> <span class="st">"settled"</span>))[<span class="dv">0</span>]</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> np.zeros(<span class="bu">len</span>(rt_m))</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    w[at_risk] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>    w[settled] <span class="op">=</span> G[m <span class="op">-</span> <span class="dv">1</span>] <span class="op">/</span> G[np.clip(rt_m[settled] <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, HORIZON <span class="op">-</span> <span class="dv">1</span>)]</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> r <span class="kw">in</span> RATINGS:</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>        is_r <span class="op">=</span> rt_rating <span class="op">==</span> r</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>        cs <span class="op">=</span> at_risk <span class="op">&amp;</span> is_r</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>        cause_rows.append((m, r, cs.<span class="bu">sum</span>(), y[cs].<span class="bu">sum</span>()))</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>        sb <span class="op">=</span> (w <span class="op">&gt;</span> <span class="dv">0</span>) <span class="op">&amp;</span> is_r</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a>        sub_rows.append((m, r, w[sb].<span class="bu">sum</span>(), (y[sb] <span class="op">*</span> w[sb]).<span class="bu">sum</span>()))</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_hazard(rows):</span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> pd.DataFrame(rows, columns<span class="op">=</span>[<span class="st">"t"</span>, <span class="st">"Rating"</span>, <span class="st">"W"</span>, <span class="st">"D"</span>])</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>    f[<span class="st">"period"</span>] <span class="op">=</span> pd.cut(f[<span class="st">"t"</span>], BANDS, labels<span class="op">=</span>BAND_LABELS)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>    f[<span class="st">"Rating"</span>] <span class="op">=</span> pd.Categorical(f[<span class="st">"Rating"</span>], categories<span class="op">=</span>RATINGS)</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> f[f[<span class="st">"W"</span>] <span class="op">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> smf.glm(<span class="st">"D + I(W - D) ~ C(period) + Rating - 1"</span>, data<span class="op">=</span>f,</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>                   family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>m_cause <span class="op">=</span> fit_hazard(cause_rows)</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>m_sub <span class="op">=</span> fit_hazard(sub_rows)</span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>comparison <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cause-specific"</span>: [m_cause.params[<span class="ss">f"Rating[T.</span><span class="sc">{</span>r<span class="sc">}</span><span class="ss">]"</span>] <span class="cf">for</span> r <span class="kw">in</span> RATINGS[<span class="dv">1</span>:]],</span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>    <span class="st">"subdistribution"</span>: [m_sub.params[<span class="ss">f"Rating[T.</span><span class="sc">{</span>r<span class="sc">}</span><span class="ss">]"</span>] <span class="cf">for</span> r <span class="kw">in</span> RATINGS[<span class="dv">1</span>:]],</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>RATINGS[<span class="dv">1</span>:])</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a>comparison[<span class="st">"difference"</span>] <span class="op">=</span> comparison[<span class="st">"subdistribution"</span>] <span class="op">-</span> comparison[<span class="st">"cause-specific"</span>]</span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(comparison.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    cause-specific  subdistribution  difference
+A           0.2568           0.3095      0.0527
+B           0.3507           0.3578      0.0071
+C           0.6244           0.5969     -0.0275
+D           0.9883           0.9291     -0.0592
+E           1.2438           1.1614     -0.0824
+F           1.9288           1.7573     -0.1715
+HR          2.1881           2.0074     -0.1807</code></pre>
+</div>
+</div>
+<p>The pattern is systematic. Relative to grade AA, the subdistribution coefficients are <strong>attenuated at the risky end</strong>, with HR falling from 2.1881 to 2.0074 and F from 1.9288 to 1.7573, while being slightly <strong>larger at the safe end</strong>, with A rising from 0.2568 to 0.3095.</p>
+<p>The mechanism is the competing risk. Good grades repay early far more often, and under the subdistribution rule those repaid loans stay in the risk set as loans that will never default, which raises the good grades’ apparent cumulative incidence relative to their conditional default intensity. Hence the two coefficients answer different questions and both are correct. A model owner asking which borrowers are most likely to default while still performing wants the cause-specific number. A model owner provisioning under IFRS 9 wants the subdistribution number, because a loan that has repaid generates no loss.</p>
+<div id="631c6d71" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>ax.plot(months, q_indep <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">1.6</span>, ls<span class="op">=</span><span class="st">"--"</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Kaplan-Meier (settlement as censoring)"</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>ax.plot(months, q_dep <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.8</span>, label<span class="op">=</span><span class="st">"Aalen-Johansen"</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>ax.plot(months, cif_fg <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.0</span>, label<span class="op">=</span><span class="st">"Fine-Gray, chained"</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"horizon $k$ (months)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"cumulative default probability (%)"</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"the correction"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">1</span>]</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> np.arange(<span class="bu">len</span>(RATINGS) <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>ax.plot(comparison[<span class="st">"cause-specific"</span>], y, <span class="st">"o"</span>, color<span class="op">=</span>GREY, ms<span class="op">=</span><span class="dv">5</span>, label<span class="op">=</span><span class="st">"cause-specific"</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>ax.plot(comparison[<span class="st">"subdistribution"</span>], y, <span class="st">"o"</span>, color<span class="op">=</span>OX, ms<span class="op">=</span><span class="dv">5</span>, label<span class="op">=</span><span class="st">"subdistribution"</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> y:</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    ax.plot([comparison[<span class="st">"cause-specific"</span>].iloc[i], comparison[<span class="st">"subdistribution"</span>].iloc[i]],</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>            [i, i], color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">0.7</span>, zorder<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(y)<span class="op">;</span> ax.set_yticklabels(RATINGS[<span class="dv">1</span>:])</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"coefficient on the logit scale, relative to AA"</span>)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"grade effects under each hazard"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S2_survival-insurance-to-credit_files/figure-html/cell-10-output-1.png" width="1350" height="587" class="figure-img"></p>
+<figcaption>The competing-risks correction on the Bondora book. (lhs): three estimates of the cumulative default probability. Kaplan-Meier treats settlement as censoring and runs highest; Aalen-Johansen and the chained Fine-Gray subdistribution hazard agree with each other and sit 17.0 percentage points below it at sixty months. The gap is the correction, and it widens with the horizon. (rhs): the two sets of grade coefficients, on the logit scale relative to grade AA, showing the attenuation at the risky end.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="a-map-of-the-methods" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> A map of the methods</h1>
+<p>The remaining machinery is covered in depth in Mario’s statistics lecture on survival analysis, so what follows locates each method rather than deriving it.</p>
+<p><strong>Non-parametric.</strong> Kaplan-Meier for the survival curve, Nelson-Aalen for the cumulative hazard <span class="math inline">\(H(t)\)</span>, Greenwood for the variance and the log-rank test for comparing groups. These need no model and answer the descriptive question, which is where any analysis should start. Lecture S1 used all four.</p>
+<p><strong>Semi-parametric.</strong> The Cox proportional hazards model leaves the baseline hazard unspecified and estimates covariate effects through a partial likelihood, which is its whole appeal: no assumption about the shape of the lifecycle is needed. Its discrete-time counterpart is the model S1 fitted, where the baseline is carried by period indicators and is therefore estimated rather than left out. Consequently the discrete-time form gives up Cox’s elegance and gains a directly readable lifecycle curve, which in credit is usually the better trade.</p>
+<p><strong>Parametric.</strong> Exponential, Weibull, log-normal, log-logistic and Gompertz distributions impose a shape on the hazard, buying extrapolation beyond the observed window at the cost of an assumption. Gompertz is the actuarial one, since <span class="math inline">\(\mu_x = Bc^x\)</span> is the classic mortality law. Parametric models split further into proportional hazards, where a covariate scales the hazard, and accelerated failure time, where it stretches the time axis. Only the Weibull is both.</p>
+<p><strong>Extensions.</strong> Frailty models add a random effect for unobserved heterogeneity, which in credit is the borrower-level risk a scorecard misses. Multi-state models generalise competing risks to transitions among several states, which is how delinquency stages and cures are handled properly; Botha, Verster and Breedt (2025) build the IFRS 9 term structure that way, in a non-stationary semi-Markov framework. A separate extension handles loans that default, cure and default again, since the lectures so far have treated default as absorbing: Botha, Verster and Scheepers (2025) compare Andersen-Gill and Prentice-Williams-Peterson Cox models for exactly those recurrent events. Machine learning survival methods, including random survival forests, DeepSurv and DeepHit, replace the linear predictor with a learned one, and lecture S3 takes them up.</p>
+</section>
+<section id="takeaways" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Takeaways</h1>
+<p>The translation is worth more than any single result in it, but three results fell out of doing it properly.</p>
+<ol type="1">
+<li>The four vocabularies describe one mathematics. The trap is the time axis rather than the symbols: attained age in life insurance is a covariate in credit, and months on book is the credit analogue of duration.</li>
+<li>The central exposed to risk and the person-period expansion are the same denominator under different fractional-period conventions. On this book the expansion carries 3.5 per cent more exposure than the loans lived, because a loan exiting mid-month contributes a whole row and part of a month.</li>
+<li>Competing risks are multiple decrements, and the Fine-Gray subdistribution hazard is how the dependent rate becomes regressable. Its risk set holds settled loans forever, which is why chaining it reproduces the cumulative incidence, and its coefficients are attenuated at the risky end because good grades exit by repayment.</li>
+</ol>
+<p>The correction lecture S1 deferred is therefore made. What remains open is the one lecture 1 could not close either: no covariate here varies with calendar time, so the portfolio-level term of the Botha and Verster specification stays unfitted, and a point-in-time lifetime PD needs the panel rather than the cross-section.</p>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+<p>This lecture answers no lecture of the summer school <strong>Deep Learning for Actuarial Modeling</strong> and is original to this repository. The four-discipline correspondence is adapted from Mario’s own actuarial mathematics lecture on survival models, and the methods map from his statistics lecture on survival analysis. The competing risks treatment follows Fine and Gray (1999) and Putter et al.&nbsp;(2007); the discrete-time framing follows Botha and Verster (2025) and Singer and Willett (1993). The Bondora loan book is public.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<ul>
+<li>Aalen, O.O. and Johansen, S. (1978). <em>An empirical transition matrix for non-homogeneous Markov chains based on censored observations</em>. Scandinavian Journal of Statistics.</li>
+<li>Bondora AS. <em>Loan dataset (public reports)</em>. <a href="https://www.bondora.com/en/public-reports" class="uri">https://www.bondora.com/en/public-reports</a></li>
+<li>Botha, A. and Verster, T. (2025). <em>Approaches for modelling the term-structure of default risk under IFRS 9: a tutorial using discrete-time survival analysis</em>.</li>
+<li>Botha, A., Verster, T. and Breedt, R. (2025). <em>Modelling the term-structure of default risk under IFRS 9 within a multistate regression framework</em>.</li>
+<li>Botha, A., Verster, T. and Scheepers, B. (2025). <em>Exploring different subtypes of recurrent event Cox-regression models in modelling lifetime default risk: a tutorial</em>.</li>
+<li>Cox, D.R. (1972). <em>Regression models and life-tables</em>. Journal of the Royal Statistical Society, Series B.</li>
+<li>Fine, J.P. and Gray, R.J. (1999). <em>A proportional hazards model for the subdistribution of a competing risk</em>. Journal of the American Statistical Association.</li>
+<li>Graunt, J. (1662). <em>Natural and Political Observations Made upon the Bills of Mortality</em>.</li>
+<li>Halley, E. (1693). <em>An estimate of the degrees of the mortality of mankind</em>. Philosophical Transactions of the Royal Society.</li>
+<li>Kaplan, E.L. and Meier, P. (1958). <em>Nonparametric estimation from incomplete observations</em>. Journal of the American Statistical Association.</li>
+<li>Mantel, N. (1966). <em>Evaluation of survival data and two new rank order statistics arising in its consideration</em>. Cancer Chemotherapy Reports.</li>
+<li>Putter, H., Fiocco, M. and Geskus, R.B. (2007). <em>Tutorial in biostatistics: competing risks and multi-state models</em>. Statistics in Medicine.</li>
+<li>Singer, J.D. and Willett, J.B. (1993). <em>It’s about time: using discrete-time survival analysis to study duration and the timing of events</em>. Journal of Educational Statistics.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

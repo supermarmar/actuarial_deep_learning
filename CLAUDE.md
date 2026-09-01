@@ -25,7 +25,7 @@ models and in-context learning.
 |---|---|
 | `lectures/` | Ten lecture documents (`.html`) plus `lecture.css`, the shared presentation layer. Seven were Quarto-rendered by the course authors and downloaded from the course site; lectures 3, 8 and 12 are reconstructions from the PDF decks, and carry a `.qmd` source beside them. The authors' figures live in `lectures/figures/`, gitignored; the reconstructed ones live in `lectures/figures-reconstructed/` and are committed, see below |
 | `scripts/` | Repo utilities: the lecture figure fetcher, the PDF figure extractor, the Quarto render wrapper and the credit data converter |
-| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, one per course lecture and **numbered to match the course**, so `03_credit-deep-learning-overview` answers `lectures/03_deep-learning-overview` and `04-05_credit-fnn` answers `lectures/04-05_fnn`. Most adapt their course lecture to the Bondora PD problem; lecture 3 uses the wide credit card portfolio instead, because Bondora's 45 interpretable columns make no case for automated feature extraction. Render with `bash scripts/render_lecture.sh credit_lectures/*.qmd`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out. Lecture 1 reads `bondora_raw.parquet` for its censoring and outcome-window illustrations, which need `DefaultDate`, `Status` and `ReportAsOfEOD`; the modelling table `bondora_pd.parquet` stays leak-free and is never the source for those |
+| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, one per course lecture and **numbered to match the course**, so `03_credit-deep-learning-overview` answers `lectures/03_deep-learning-overview` and `04-05_credit-fnn` answers `lectures/04-05_fnn`. Most adapt their course lecture to the Bondora PD problem; lecture 3 uses the wide credit card portfolio instead, because Bondora's 45 interpretable columns make no case for automated feature extraction. Render with `bash scripts/render_lecture.sh credit_lectures/*.qmd`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out. Lecture 1 reads `bondora_raw.parquet` for its censoring and outcome-window illustrations, which need `DefaultDate`, `Status` and `ReportAsOfEOD`; the modelling table `bondora_pd.parquet` stays leak-free and is never the source for those. Lectures prefixed `S` are a **survival analysis track numbered outside the course sequence**, because no course lecture answers them: `S1_credit-survival-bridge` picks up the discrete-hazard exposure convention lecture 1 defines but does not use, and `S2_survival-insurance-to-credit` supplies the actuarial-to-statistical translation and the Fine-Gray correction S1 defers. They read `bondora_survival.parquet`. `S3`, on neural survival heads, is planned and not written |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
 | `reference/` | Four Python notebooks from the `wueth/AITools4Actuaries` GitHub repo |
@@ -80,7 +80,16 @@ history and the file is one `curl` away. Redownload it from
 `credit_lectures/` series and profiled in `notes/credit-datasets.md`:
 
 - `LoanData_Bondora.csv` (150 MB): the public Bondora P2P loan book, extract dated
-  2021-07-20, from `https://www.bondora.com/en/public-reports`.
+  2021-07-20, from `https://www.bondora.com/en/public-reports`. It yields two derived
+  modelling tables with different shapes, and mixing them up is the easy mistake.
+  `bondora_pd.parquet` is the fixed-horizon table: 148,733 seasoned loans and a
+  12-month flag. `bondora_survival.parquet` is the survival table: all 179,235 loans,
+  the observed duration, and a three-level `exit_kind` (71,416 default, 42,144 settled,
+  65,675 censored) from which the event indicator is derived rather than stored, so
+  prepayment-as-censoring is never baked in. `DefaultDate` takes precedence over
+  `Status` there, since 10,743 Repaid loans carry one; and `ContractEndDate` is
+  deliberately admitted despite the leakage exclusion list, because a survival model's
+  response **is** the exit time.
 - `Dev_data_to_be_shared.csv` and `validation_data_to_be_shared.csv` (420 MB): an
   anonymised credit card portfolio distributed as a dev/validation pair; the validation
   file carries no `bad_flag`. Local files only; source to be confirmed.
@@ -180,6 +189,14 @@ Prettier reads gitignore semantics, where excluding a directory stops the walk a
 
 The three reconstructed lectures sit inside the same guard, and want it for a different reason:
 their `.html` is generated. Edit the `.qmd` and re-render rather than touching the output.
+
+The same point bites during review. Review comments left as HTML comments in a rendered
+`credit_lectures/*.html` do **not** survive the next render, so copy them out before
+re-rendering (see `notes/lecture-1-review-comments-2026-09-01.md` for the pattern) and
+prefer commenting in the `.qmd`. Re-rendering credit lecture 1 is safe, contrary to the
+earlier assumption that its forty quoted figures made a re-render costly: on 1 September
+2026 all 58 computed output lines reproduced identically, the only diff being two
+statsmodels summary timestamps.
 
 ## Portfolio dashboard
 
