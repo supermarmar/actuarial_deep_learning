@@ -9,7 +9,7 @@
 <meta name="author" content="Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich">
 <meta name="dcterms.date" content="2026-08-31">
 
-<title>Credit Lecture 3: Feed-Forward Neural Networks</title>
+<title>Credit Lectures 4 and 5: Feed-Forward Neural Networks</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -144,7 +144,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Credit Lecture 3: Feed-Forward Neural Networks</h1>
+<h1 class="title">Credit Lectures 4 and 5: Feed-Forward Neural Networks</h1>
 <p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
 </div>
 
@@ -182,7 +182,7 @@ window.Quarto = {
 
 <section id="introduction" class="level1 unnumbered">
 <h1 class="unnumbered">Introduction</h1>
-<p>The second credit lecture closed with a promise. The GLM regression function is linear in the covariates up to the link, and the networks to come would keep every other piece of the machinery (the Bernoulli deviance as loss, the sigmoid as output activation, the out-of-sample loss as arbiter) while replacing the covariates <span class="math inline">\(\boldsymbol{X}\)</span> with learned features <span class="math inline">\(\boldsymbol{z}^{(d:1)}(\boldsymbol{X})\)</span>. This lecture keeps that promise. It adapts Lectures 4 and 5 of the course, on feed-forward neural networks, to the Bondora PD problem; the credit series numbers it 3 because it is the third companion document.</p>
+<p>The second credit lecture closed with a promise. The GLM regression function is linear in the covariates up to the link, and the networks to come would keep every other piece of the machinery (the Bernoulli deviance as loss, the sigmoid as output activation, the out-of-sample loss as arbiter) while replacing the covariates <span class="math inline">\(\boldsymbol{X}\)</span> with learned features <span class="math inline">\(\boldsymbol{z}^{(d:1)}(\boldsymbol{X})\)</span>. The third lecture sketched how that substitution works and where it leads. This lecture keeps the promise in full, adapting Lectures 4 and 5 of the course, on feed-forward neural networks, to the Bondora PD problem.</p>
 <p>The plan mirrors the course. We first define the feed-forward network architecture and its parameter count, then state the universality theorems that justify the architecture, then work through gradient descent training, whose critical ingredient is early stopping. The example section fits a network to the Bondora modelling table of the second lecture and asks the questions that lecture taught us to ask, i.e.&nbsp;how the network compares with the GLM on the random split, whether its advantage survives the out-of-time split, and what happens to calibration in the large once the canonical-link score equations are gone.</p>
 </section>
 <section id="feed-forward-neural-networks" class="level1" data-number="1">
@@ -521,7 +521,7 @@ trainable parameters: 217</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="03_credit-fnn_files/figure-html/cell-9-output-1.png" width="955" height="527" class="figure-img"></p>
+<p><img src="04-05_credit-fnn_files/figure-html/cell-9-output-1.png" width="955" height="527" class="figure-img"></p>
 <figcaption>Training and validation Bernoulli deviance by epoch on the random split, our computed counterpart of the course’s early-stopping illustration. The training deviance keeps falling; the validation deviance bottoms out at epoch 71 (dashed line) and then drifts upward as the network starts memorising the training sample. The retained parameter is the epoch-71 checkpoint.</figcaption>
 </figure>
 </div>
@@ -606,7 +606,7 @@ FNN, test      : deviance 107.621   null 120.802   AUC 0.7241   mean PD 0.2911 v
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="03_credit-fnn_files/figure-html/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="04-05_credit-fnn_files/figure-html/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Predicted PD against borrower age for the reference profile, network against GLM, fitted on the random split’s learning sample. The GLM is constant within each hand-chosen age band; the network traces a smooth curve through the same territory, steep to age 40, flat at the bottom through the 40s and 50s, and rising gently into old age. Above the censoring point of 70 the network’s input is constant, so its curve is flat by construction.</figcaption>
 </figure>
 </div>
@@ -654,7 +654,7 @@ FNN, oot test  : deviance 101.329   null 107.365   AUC 0.7146   mean PD 0.3156 v
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="03_credit-fnn_files/figure-html/cell-15-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="04-05_credit-fnn_files/figure-html/cell-15-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Monthly observed default rate (dots) against the mean predicted PD of the out-of-time GLM and FNN. The two models are nearly indistinguishable at monthly resolution, inside and outside the development window alike; right of the dashed cutoff both track the vintage cycle they were fitted on while the observed rates fall away beneath them. Months from 2013 onward are shown, as in the second lecture.</figcaption>
 </figure>
 </div>

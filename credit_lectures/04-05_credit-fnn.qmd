@@ -1,5 +1,5 @@
 ---
-title: "Credit Lecture 3: Feed-Forward Neural Networks"
+title: "Credit Lectures 4 and 5: Feed-Forward Neural Networks"
 subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
 author: "Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich"
 date: "2026-08-31"
@@ -41,10 +41,10 @@ function is linear in the covariates up to the link, and the networks to
 come would keep every other piece of the machinery (the Bernoulli deviance
 as loss, the sigmoid as output activation, the out-of-sample loss as
 arbiter) while replacing the covariates $\boldsymbol{X}$ with learned
-features $\boldsymbol{z}^{(d:1)}(\boldsymbol{X})$. This lecture keeps that
-promise. It adapts Lectures 4 and 5 of the course, on feed-forward neural
-networks, to the Bondora PD problem; the credit series numbers it 3
-because it is the third companion document.
+features $\boldsymbol{z}^{(d:1)}(\boldsymbol{X})$. The third lecture
+sketched how that substitution works and where it leads. This lecture
+keeps the promise in full, adapting Lectures 4 and 5 of the course, on
+feed-forward neural networks, to the Bondora PD problem.
 
 The plan mirrors the course. We first define the feed-forward network
 architecture and its parameter count, then state the universality theorems
