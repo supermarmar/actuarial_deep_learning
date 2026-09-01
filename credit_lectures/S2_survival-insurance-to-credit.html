@@ -170,7 +170,7 @@ window.Quarto = {
 <p>An actuary meeting survival analysis for the first time has the disorienting experience of recognising every idea and none of the symbols. Lecture S1 estimated a quantity it called the discrete hazard <span class="math inline">\(q_{i,t}\)</span> and chained it into a survival probability, which is the life table an actuary has known since their first examination. It computed a Kaplan-Meier curve, which is a life table built from individual records instead of grouped ones. Furthermore, it worried about loans leaving the risk set early, which is withdrawal in a multiple-decrement table.</p>
 <p>The reason the vocabularies diverged is historical. Actuaries developed the machinery first, for whole populations observed in aggregate, and their notation optimises for computation by hand from published tables. Biostatisticians redeveloped it for clinical trials, where a few hundred patients are observed individually, and their notation optimises for likelihoods and estimators. Consequently the same object carries two names, and credit risk, arriving last, borrowed from both.</p>
 <p>This lecture is the translation. It does not re-derive the theory, because Mario’s own statistics lecture on survival analysis already covers censoring and truncation, the likelihood, Kaplan-Meier with Greenwood, Nelson-Aalen, the log-rank test, parametric families, proportional hazards against accelerated failure time, Cox with partial likelihood, frailty and competing risks. What follows instead is the mapping, and the two computations the mapping licenses.</p>
-<div id="7ae5b5b5" class="cell" data-execution_count="1">
+<div id="bb6cffc2" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -219,11 +219,11 @@ window.Quarto = {
 </thead>
 <tbody>
 <tr class="odd">
-<td>Probability of surviving <span class="math inline">\(t\)</span></td>
+<td>Probability of surviving a further <span class="math inline">\(k\)</span></td>
 <td><span class="math inline">\({}_t p_x\)</span></td>
 <td><span class="math inline">\(S(t \mid x)\)</span></td>
 <td><span class="math inline">\(R(t)\)</span></td>
-<td><span class="math inline">\({}_t p_{i}\)</span>, probability of no default by <span class="math inline">\(t\)</span></td>
+<td><span class="math inline">\({}_k p_{i,t}\)</span>, no default in the next <span class="math inline">\(k\)</span> months</td>
 </tr>
 <tr class="even">
 <td>Probability of failing by <span class="math inline">\(t\)</span></td>
@@ -277,7 +277,7 @@ window.Quarto = {
 </tbody>
 </table>
 <p>Two rows deserve comment, because they are where a translation goes wrong rather than merely reads oddly.</p>
-<p>The <strong>age scale</strong> row is the trap. An actuary’s <span class="math inline">\(x\)</span> is attained age and runs on one universal clock, so two lives aged 60 are comparable whenever they were born. A survival analyst’s clock starts at entry to the study, and lecture 1 fixed the credit convention explicitly: <span class="math inline">\(t\)</span> is months on book, running from origination. Consequently borrower age, which lecture 1 keeps as <span class="math inline">\(x_i\)</span>, is a covariate in credit and the time axis in life insurance. The same letter does opposite jobs, which is exactly why lecture 1 reserved it.</p>
+<p>The <strong>age scale</strong> row is the trap, and it is worth stating in the strongest form. An actuary’s <span class="math inline">\(x\)</span> is attained age, so the credit twin of <span class="math inline">\(x\)</span> is months on book <span class="math inline">\(t\)</span>, the attained age of the loan, and the transliteration of <span class="math inline">\({}_t p_x\)</span> is <span class="math inline">\({}_k p_{i,t}\)</span> with <span class="math inline">\((k, t)\)</span> in the roles of <span class="math inline">\((t, x)\)</span>. Borrower age is <strong>not</strong> the twin of <span class="math inline">\(x\)</span>, despite the shared word. It is a covariate, and two borrowers of different ages whose loans are both twelve months old sit at the same point on the loan’s survival curve. Consequently the false friend here costs more than a symbol: it would put a covariate on the time axis and leave the loan’s own clock without one.</p>
 <p>The <strong>exits</strong> row is the one this lecture spends its second half on. Actuaries have always had multiple decrements, meaning a table where lives can leave by death, withdrawal, or retirement, each with its own rate. Biostatistics arrived at the same structure later and called it competing risks. They are the same object, and the actuarial tradition arguably handled it more carefully for longer, since a pension fund that treats withdrawal as if it were death misprices the whole scheme.</p>
 <div class="callout callout-style-default callout-note no-icon callout-titled" title="One notation decision, and the alternative">
 <div class="callout-header d-flex align-content-center">
@@ -299,7 +299,7 @@ window.Quarto = {
 <p>Now the first computation. Both traditions estimate a one-period rate as events divided by exposure, and they disagree about what exposure means. That disagreement is worth exactly one number, and this section measures it.</p>
 <p>The actuarial <strong>central exposed to risk</strong> <span class="math inline">\(E^c_t\)</span> counts time. A loan contributes to month <span class="math inline">\(t\)</span> the fraction of that month it actually spent at risk, so a loan exiting halfway through contributes half a month. Dividing deaths by it gives a <strong>central rate</strong>, an estimate of the force of default <span class="math inline">\(\mu_t\)</span>, which is a rate per unit time and can exceed one.</p>
 <p>The statistical <strong>person-period expansion</strong> counts rows. A loan contributes one row for each month in which it was at risk at any point, so a loan exiting halfway through contributes a whole row. Dividing events by it gives a <strong>probability</strong>, the discrete hazard <span class="math inline">\(q_t\)</span> of lecture S1, which cannot exceed one.</p>
-<div id="7e4349ee" class="cell" data-execution_count="2">
+<div id="108b16b6" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>t_obs <span class="op">=</span> surv[<span class="st">"t_obs"</span>].to_numpy()</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>t_m <span class="op">=</span> surv[<span class="st">"t_obs_m"</span>].to_numpy().clip(<span class="bu">max</span><span class="op">=</span>HORIZON <span class="op">+</span> <span class="dv">1</span>)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>kind <span class="op">=</span> surv[<span class="st">"exit_kind"</span>].to_numpy()</span>
@@ -342,7 +342,7 @@ ratio                                  :         0.9663</code></pre>
 <p>The person-period expansion makes no such assumption explicitly. Nevertheless it makes one implicitly, by treating a loan present for any part of a month as present for all of it, and the 3.5 per cent gap above is the price of that implicit choice. An actuary reading a discrete-time credit model should recognise the convention rather than look for one.</p>
 </div>
 </div>
-<div id="12273c7a" class="cell" data-execution_count="3">
+<div id="52b6a447" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>S_cfm <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_cfm)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>S_pp <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_pp)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"PD_60, force of default chained under CFM : </span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_cfm[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.6f}</span><span class="ss">"</span>)</span>
@@ -354,7 +354,7 @@ PD_60, person-period discrete hazard      : 0.716798
 difference                                : +0.008857</code></pre>
 </div>
 </div>
-<div id="d3aa4ba6" class="cell" data-execution_count="4">
+<div id="ba09580b" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
@@ -384,7 +384,7 @@ difference                                : +0.008857</code></pre>
 <section id="the-lexis-diagram" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> The Lexis diagram</h1>
 <p>Lecture 1 fixed three time axes bound by the identity <span class="math inline">\(u = g + t\)</span>, and noted the consequence that vintage and calendar effects are collinear given months on book. Demographers draw that identity, and the picture is worth more than the algebra.</p>
-<div id="995d7c4f" class="cell" data-execution_count="5">
+<div id="67034538" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>vintages <span class="op">=</span> np.arange(<span class="dv">0</span>, <span class="dv">55</span>, <span class="dv">6</span>)</span>
@@ -426,7 +426,7 @@ difference                                : +0.008857</code></pre>
 <p>Lecture S1 established that early repayment removes a loan from the risk set for a reason correlated with its default risk, so treating it as censoring overstates the PD, by 3.05 percentage points over twelve months and 16.99 over sixty. This section carries out the correction.</p>
 <p>The actuarial framing is the multiple-decrement table. A life aged <span class="math inline">\(x\)</span> can leave by death or by withdrawal, with <strong>independent</strong> rates <span class="math inline">\(q^{(d)}_x\)</span> and <span class="math inline">\(q^{(w)}_x\)</span>, and the table reports <strong>dependent</strong> rates <span class="math inline">\((aq)^{(d)}_x\)</span> and <span class="math inline">\((aq)^{(w)}_x\)</span>, which are the probabilities of actually leaving each way in the presence of the other decrement. An actuary who reports an independent rate as if it were a dependent one has made exactly S1’s error.</p>
 <p>The survival framing splits the same distinction two ways. The <strong>cause-specific hazard</strong> asks: given the loan is still performing, what is the chance it defaults this month? That is S1’s <span class="math inline">\(q_{i,t}\)</span>, and it is the right quantity for understanding the mechanism of default. The <strong>subdistribution hazard</strong> asks: what is the chance this loan has defaulted by month <span class="math inline">\(k\)</span>, counting settled loans as loans that never will? That is the right quantity for a provision, because IFRS 9 needs the expected loss on the loans that actually exist.</p>
-<div id="e87d0ed6" class="cell" data-execution_count="6">
+<div id="da4195d4" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>n_all <span class="op">=</span> np.array([(t_m <span class="op">&gt;=</span> m).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>d_def <span class="op">=</span> np.array([((t_m <span class="op">==</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"default"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>d_set <span class="op">=</span> np.array([((t_m <span class="op">==</span> m) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"settled"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> m <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
@@ -449,7 +449,7 @@ k = 60   independent (KM)  71.68%   dependent (Aalen-Johansen)  54.69%</code></p
 <h2 data-number="6.1" class="anchored" data-anchor-id="the-fine-gray-subdistribution-hazard"><span class="header-section-number">6.1</span> The Fine-Gray subdistribution hazard</h2>
 <p>Fine and Gray (1999) made the dependent quantity regressable, and the trick is a change to the risk set that reads as strange until its purpose is clear. A loan that settles in month nine <strong>stays in the risk set</strong> for every later month, carrying the event value zero forever. It is a loan that has been observed never to default, so keeping it in the denominator is what stops the chained product running away from the cumulative incidence.</p>
 <p>Loans censored administratively cannot be handled that way, since their eventual fate is genuinely unknown. They receive inverse probability of censoring weights, using the Kaplan-Meier estimate <span class="math inline">\(\hat G(t)\)</span> of the censoring distribution, so a loan censored at month <span class="math inline">\(c\)</span> contributes weight <span class="math inline">\(\hat G(t) / \hat G(c)\)</span> thereafter.</p>
-<div id="4ddba6fb" class="cell" data-execution_count="7">
+<div id="b33628c7" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>G <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> d_cen <span class="op">/</span> n_all)          <span class="co"># KM of the censoring distribution</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"G(12) = </span><span class="sc">{</span>G[<span class="dv">11</span>]<span class="sc">:.4f}</span><span class="ss">   G(60) = </span><span class="sc">{</span>G[<span class="dv">59</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -487,7 +487,7 @@ k = 60   chained subdistribution hazard  54.56%   Aalen-Johansen  54.69%</code><
 <section id="what-the-two-hazards-say-about-the-same-covariate" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="what-the-two-hazards-say-about-the-same-covariate"><span class="header-section-number">6.2</span> What the two hazards say about the same covariate</h2>
 <p>The distinction earns its keep when a covariate enters, because the two hazards can disagree about how much a risk driver matters, and occasionally about its sign. Fitting both on Bondora’s listing grade shows the mechanism.</p>
-<div id="17384893" class="cell" data-execution_count="8">
+<div id="c6af7831" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -545,7 +545,7 @@ HR          2.1881           2.0074     -0.1807</code></pre>
 </div>
 <p>The pattern is systematic. Relative to grade AA, the subdistribution coefficients are <strong>attenuated at the risky end</strong>, with HR falling from 2.1881 to 2.0074 and F from 1.9288 to 1.7573, while being slightly <strong>larger at the safe end</strong>, with A rising from 0.2568 to 0.3095.</p>
 <p>The mechanism is the competing risk. Good grades repay early far more often, and under the subdistribution rule those repaid loans stay in the risk set as loans that will never default, which raises the good grades’ apparent cumulative incidence relative to their conditional default intensity. Hence the two coefficients answer different questions and both are correct. A model owner asking which borrowers are most likely to default while still performing wants the cause-specific number. A model owner provisioning under IFRS 9 wants the subdistribution number, because a loan that has repaid generates no loss.</p>
-<div id="298c5c80" class="cell" data-execution_count="9">
+<div id="3302e793" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>

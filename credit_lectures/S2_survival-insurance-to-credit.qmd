@@ -115,7 +115,7 @@ the other three literatures read for free.
 
 | Concept | Actuarial | Survival analysis | Reliability | Credit risk |
 |---|---|---|---|---|
-| Probability of surviving $t$ | ${}_t p_x$ | $S(t \mid x)$ | $R(t)$ | ${}_t p_{i}$, probability of no default by $t$ |
+| Probability of surviving a further $k$ | ${}_t p_x$ | $S(t \mid x)$ | $R(t)$ | ${}_k p_{i,t}$, no default in the next $k$ months |
 | Probability of failing by $t$ | ${}_t q_x$ | $F(t) = 1 - S(t)$ | unreliability | $\mathrm{PD}_t$ |
 | Instantaneous rate | force of mortality $\mu_{x+t}$ | hazard $h(t)$ | failure rate | default intensity $\lambda(t)$ |
 | Cumulative rate | $\int_0^t \mu_{x+s}\,\mathrm{d}s$ | $H(t)$ | cumulative hazard | cumulative intensity |
@@ -127,13 +127,15 @@ the other three literatures read for free.
 Two rows deserve comment, because they are where a translation goes wrong rather
 than merely reads oddly.
 
-The **age scale** row is the trap. An actuary's $x$ is attained age and runs on
-one universal clock, so two lives aged 60 are comparable whenever they were born.
-A survival analyst's clock starts at entry to the study, and lecture 1 fixed the
-credit convention explicitly: $t$ is months on book, running from origination.
-Consequently borrower age, which lecture 1 keeps as $x_i$, is a covariate in
-credit and the time axis in life insurance. The same letter does opposite jobs,
-which is exactly why lecture 1 reserved it.
+The **age scale** row is the trap, and it is worth stating in the strongest form.
+An actuary's $x$ is attained age, so the credit twin of $x$ is months on book $t$,
+the attained age of the loan, and the transliteration of ${}_t p_x$ is
+${}_k p_{i,t}$ with $(k, t)$ in the roles of $(t, x)$. Borrower age is **not** the
+twin of $x$, despite the shared word. It is a covariate, and two borrowers of
+different ages whose loans are both twelve months old sit at the same point on
+the loan's survival curve. Consequently the false friend here costs more than a
+symbol: it would put a covariate on the time axis and leave the loan's own clock
+without one.
 
 The **exits** row is the one this lecture spends its second half on. Actuaries
 have always had multiple decrements, meaning a table where lives can leave by

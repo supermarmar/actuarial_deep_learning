@@ -263,7 +263,15 @@ plt.tight_layout(); plt.show()
 ## A general outcome window
 
 We resolve the censoring with a **fixed-horizon** outcome, the standard device of application
-scorecards. Let $T_i$ be the time from origination to default, measured in months, and let
+scorecards. Build it from the monthly default flag directly. Let $y_{i,t} \in \{0, 1\}$ record
+whether loan $i$ is in default at $t$ months on book, i.e. at calendar month $g_i + t$, under the
+Article 178 definition set out above. The time to default is then the first month that flag fires,
+
+$$
+T_i = \min \left\{ t \ge 1 : y_{i,t} = 1 \right\},
+$$
+
+with $T_i = \infty$ for a loan that never defaults. Let further
 
 $$
 A_i = \tau - g_i
@@ -273,15 +281,23 @@ be the months of observation available on loan $i$ at the snapshot date $\tau$, 
 origination month. For an outcome window of $k$ months,
 
 $$
-D_i^{(k)} = \mathbf{1}\{ T_i \le k \},
+D_i^{(k)} = \mathbf{1}\{ T_i \le k \} = \max \left( y_{i,1}, \ldots, y_{i,k} \right),
 \qquad
-{\cal L}_k = \left\{ i : A_i \ge k \right\},
+{\cal W}_k = \left\{ i : A_i \ge k \right\},
 \qquad
-n(k) = \left| {\cal L}_k \right| .
+n(k) = \# {\cal W}_k ,
 $$
 
-The retention rule ${\cal L}_k$ keeps only loans whose window had closed by the snapshot, so every
-retained loan carries a complete observation. Setting $k = 12$ reproduces `default_12m` exactly,
+where $\# {\cal W}_k$ denotes the number of elements of the set, its cardinality. The second
+equality for $D_i^{(k)}$ is worth pausing on, because it is Botha's **worst-ever** aggregation
+appearing here already: a loan that breaches and then cures still scores a one, since the maximum
+over the window remembers the breach. The same device returns in the next section as the
+ingredient of a point-in-time default rate.
+
+The retention rule ${\cal W}_k$ keeps only loans whose **w**indow had closed by the snapshot, so
+every retained loan carries a complete observation. It takes a plain letter deliberately:
+$\mathcal{L}$ is the loss function throughout the summer school lectures, and reusing it here
+would collide. Setting $k = 12$ reproduces `default_12m` exactly,
 at $n(12) = 148{,}733$ loans, and that is what the rest of this lecture uses. Every formula from
 here on carries $k$, so nothing needs rewriting when the window moves. Note also that $k$ is the
 outcome period of the callout above, i.e. the third of Botha's three dials.
@@ -339,70 +355,56 @@ machinery transfer across intact.
 | Symbol | Meaning | Life insurance twin |
 |---|---|---|
 | $g_i$ | vintage, the origination month of loan $i$ | year of birth |
-| $t$ | months on book, $0 \le t \le k$ | duration since age $x$ |
+| $t$ | months on book, the attained age of the loan | attained age $x$ |
 | $u$ | calendar month, $u = g + t$ | calendar year of observation |
-| $x_i$ | borrower age at origination | age $x$ |
+| $k$ | the horizon being asked about, in months | the duration $t$ in ${}_t p_x$ |
 | $\tau$ | the snapshot date | census date |
 | $A_i = \tau - g_i$ | months of observation available | exposure to the census |
 
-The table deliberately reserves two letters. Borrower age is already $x_i$ here, and it has to
-stay $x$ for ${}_t p_x$ to keep meaning what it means. Months on book is the loan's duration since
-origination, which is exactly the role $t$ plays in ${}_t p_x$, so the credit quantity actuaries
-call MOB and the life quantity called duration are the same object and take the same letter.
-Vintage therefore gets its own.
-
-The three axes are then bound by an identity:
+Note which letter plays which role, because the tempting mapping is the wrong one. A loan's own
+clock is months on book, so $t$ is the loan's **attained age**, and the actuarial twin of $t$ is
+$x$ rather than the duration. Vintage $g_i$ is then the loan's date of birth, which is what makes
+$u = g + t$ the same identity a demographer draws. Consequently the survival probability
+transliterates as
 
 $$
-u = g + t .
+{}_k p_{i,t} = \mathbb{P}\left( \text{loan } i, \text{ now } t \text{ months on book, survives a further } k \text{ months} \right),
 $$
+
+which has exactly the shape of ${}_t p_x$ with $(k, t)$ in the roles of $(t, x)$. Note that $t$ is
+therefore unbounded by $k$: a loan can be forty months on book and still be asked about over the
+next twelve.
+
+Borrower age deserves a warning rather than a row in that table. It is written $x_i$ here and it
+is a genuine and useful covariate, entering the models later in this lecture as an age class.
+Nevertheless it is **not** the credit twin of the actuarial $x$, and treating it as one is the
+most common false friend in this translation. Two borrowers of different ages whose loans are both
+twelve months old sit at the same point on the loan's survival curve; their ages shift the level
+of the curve without indexing it.
+
+The three axes are then bound by an identity. For loan $i$ observed at $t$ months on book, the
+calendar month is
+
+$$
+u = g_i + t ,
+$$
+
+and the subscript is dropped only when the axes are discussed as axes rather than as quantities
+attached to a particular loan.
 
 Only two of the three are ever free. Demographers know this as the age-period-cohort
-identification problem, and it is why a mortality model indexed by all three needs a constraint
-imposed by hand rather than estimated. Credit inherits it whole. Breeden's age-period-cohort
-decomposition of loan-level performance is the same identity in credit clothing, splitting
-observed performance into a lifecycle in $t$, an environment in $u$ and a credit-quality effect
-in $g$.
+identification problem, and with $t$ read as the loan's attained age the correspondence is exact:
+**age** is months on book $t$, **period** is calendar month $u$, and **cohort** is vintage $g$.
+That is why a mortality model indexed by all three needs a constraint imposed by hand instead of
+estimated, and credit inherits the problem whole. Breeden's age-period-cohort decomposition of
+loan-level performance is the same identity in credit clothing, splitting observed performance
+into a lifecycle in $t$, an environment in $u$ and a credit-quality effect in $g$.
 
 One property of this extract now does more damage than it appears to. `ReportAsOfEOD` takes a
 single value across all 179,235 rows, 20 July 2021. The snapshot $\tau$ is therefore a constant
 rather than a per-row field, and the extract holds one cross-section where a panel would hold
-many.
-
-::: {.callout-note icon=false title="Point-in-time and through-the-cycle PDs"}
-A **point-in-time (PiT)** PD conditions on where the economy is, i.e. it estimates
-$\mathbb{P}(D^{(k)} = 1 \mid \boldsymbol{X}, u)$ and moves with the cycle. IFRS 9 requires one,
-because an expected credit loss is a forecast made from today's conditions. A
-**through-the-cycle (TTC)** PD averages the cycle away instead, which is what an IRB long-run
-average targets. Production stacks mostly run something hybrid and then argue about where on the
-spectrum it has landed.
-
-This portfolio cannot yield a PiT PD, and the identity above is the reason. Conditional on months
-on book $t$, vintage $g$ and calendar month $u$ are collinear, so a single snapshot offers no way
-to tell an origination-quality effect from a macroeconomic one. The vintage figure later in this
-lecture shows the default rate running from 7 per cent in the 2012 vintage to 37 per cent in 2017,
-and two stories fit that equally well. Bondora may have loosened its underwriting, or those
-cohorts may simply have lived through a worse environment. More modelling will not separate them.
-
-Botha and Verster (2025) show what the missing ingredient buys. Their portfolio-level default rate
-at calendar month $t$,
-
-$$
-D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
-      \mathbb{I}\left( \max\left( y_{it}, \ldots, y_{i(t+k)} \right) = 1 \right),
-$$
-
-runs over the set ${\cal S}_P(t)$ of accounts still performing at $t$, with $n'_t$ its size. The
-maximum inside the indicator is the **worst-ever** aggregation, so an obligor who breaches and
-then cures still scores a one and the series is immune to cure-and-relapse cycling. What matters
-here is the index. $D_t$ is a time series in calendar time, and it exists to be regressed on
-macroeconomic variables, which is how a PiT PD gets built. Its ingredient is monthly performance
-history for every account. Bondora records one snapshot, so the maximum has nothing to run over.
-
-Breaking the collinearity needs a panel, i.e. many calendar months $u$ observed for each vintage
-$g$. `data/amex_panel.parquet` in this repository is a customer-month panel of exactly that shape,
-and it is where the point-in-time question gets picked up.
-:::
+many. What that costs is taken up once the PD itself has been defined, in the callout closing the
+next section.
 
 ## Default modelling and PDs
 
@@ -498,6 +500,44 @@ across them, and choosing which model class to borrow it with is the subject of 
 follow.
 :::
 
+The point-in-time question the previous section raised can now be stated in the language of
+$\mathrm{PD}_k$, which is why it was held back to here.
+
+::: {.callout-note icon=false title="Point-in-time and through-the-cycle PDs"}
+A **point-in-time (PiT)** PD conditions on where the economy is, i.e. it estimates
+$\mathbb{P}(D^{(k)} = 1 \mid \boldsymbol{X}, u)$ and moves with the cycle. IFRS 9 requires one,
+because an expected credit loss is a forecast made from today's conditions. A
+**through-the-cycle (TTC)** PD averages the cycle away instead, which is what an IRB long-run
+average targets. Production stacks mostly run something hybrid and then argue about where on the
+spectrum it has landed.
+
+This portfolio cannot yield a PiT PD, and the identity above is the reason. Conditional on months
+on book $t$, vintage $g$ and calendar month $u$ are collinear, so a single snapshot offers no way
+to tell an origination-quality effect from a macroeconomic one. The vintage figure later in this
+lecture shows the default rate running from 7 per cent in the 2012 vintage to 37 per cent in 2017,
+and two stories fit that equally well. Bondora may have loosened its underwriting, or those
+cohorts may simply have lived through a worse environment. More modelling will not separate them.
+
+Botha and Verster (2025) show what the missing ingredient buys. Their portfolio-level default rate
+at calendar month $t$,
+
+$$
+D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
+      \mathbb{I}\left( \max\left( y_{it}, \ldots, y_{i(t+k)} \right) = 1 \right),
+$$
+
+runs over the set ${\cal S}_P(t)$ of accounts still performing at $t$, with $n'_t$ its size. The
+maximum inside the indicator is the **worst-ever** aggregation, so an obligor who breaches and
+then cures still scores a one and the series is immune to cure-and-relapse cycling. What matters
+here is the index. $D_t$ is a time series in calendar time, and it exists to be regressed on
+macroeconomic variables, which is how a PiT PD gets built. Its ingredient is monthly performance
+history for every account. Bondora records one snapshot, so the maximum has nothing to run over.
+
+Breaking the collinearity needs a panel, i.e. many calendar months $u$ observed for each vintage
+$g$. `data/amex_panel.parquet` in this repository is a customer-month panel of exactly that shape,
+and it is where the point-in-time question gets picked up.
+:::
+
 ## Regression modelling
 
 In general, the true data generating mechanism is unknown. Therefore, one
@@ -506,10 +546,12 @@ $\boldsymbol{X} \mapsto \mu_k(\boldsymbol{X})$, and one needs to estimate it
 from past data
 
 $$
-{\cal L} = \left( D_i^{(k)}, \boldsymbol{X}_i \right)_{i \in {\cal L}_k}.
+{\cal L} = \left( D_i^{(k)}, \boldsymbol{X}_i \right)_{i \in {\cal W}_k}.
 $$
 
-${\cal L}$ is called the **learning sample**. Before solving this estimation
+${\cal L}$ is called the **learning sample**, and it is indexed by the retained set ${\cal W}_k$
+of the previous section. The two letters had to be separated: the original lecture uses
+${\cal L}$ for the learning sample throughout, so the retention set cannot share it. Before solving this estimation
 problem, one should always empirically study the available data. This
 empirical study is crucial to fully understand the problem and to select a
 suitable class of candidate regression models ${\cal M} = \{\mu\}$.

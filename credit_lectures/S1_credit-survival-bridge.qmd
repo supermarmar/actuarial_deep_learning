@@ -61,9 +61,11 @@ every month of that lifetime.
 
 The reader is assumed to hold lecture 1 and nothing else. Every symbol it fixed
 carries over unchanged, and the three time axes in particular: $g_i$ for the
-vintage or origination month of loan $i$, $t$ for months on book, $u = g + t$ for
-calendar month, $x_i$ for the age of the borrower, and $\tau$ for the snapshot date,
-a single date across this extract, 20 July 2021.
+vintage or origination month of loan $i$, $t$ for months on book, which is the
+attained age of the loan, $u = g + t$ for calendar month, $k$ for the horizon
+being asked about, and $\tau$ for the snapshot date, a single date across this
+extract, 20 July 2021. Borrower age is a covariate here and is written $x_i$,
+deliberately not standing in for the actuarial $x$, whose role $t$ plays.
 
 ```{python}
 import numpy as np
@@ -85,7 +87,7 @@ print(f"{surv.height:,} loans, {surv.width} columns")
 
 Lecture 1 defined $A_i = \tau - g_i$, the months of observation **available** on
 loan $i$ at the snapshot, and used it to retain loans whose outcome window had
-closed, ${\cal L}_k = \{ i : A_i \ge k \}$. The survival literature defines a
+closed, ${\cal W}_k = \{ i : A_i \ge k \}$. The survival literature defines a
 different quantity with a confusingly similar role, the **censoring time** $C_i$
 in $\tilde T_i = \min(T_i, C_i)$, meaning the point at which the loan stopped being
 at risk.
@@ -227,16 +229,19 @@ $$
 
 This lecture writes the individual conditional default probability as $q_{i,t}$
 in place of $h$, following the notation of Mario's credit risk notation lecture and
-the actuarial $q_x$ it descends from, and writes ${}_k p_i$ for the probability that
-loan $i$ survives $k$ months. Botha's $h(t_{(k)})$ and the $q_{i,t}$ used here are
+the actuarial $q_x$ it descends from, and writes ${}_k p_{i,t}$ for the probability
+that loan $i$, currently $t$ months on book, survives a further $k$ months. That
+has the shape of ${}_t p_x$ with $(k, t)$ in the roles of $(t, x)$. Everything in
+this lecture is measured from origination, so $t = 0$ throughout and the second
+subscript is dropped to keep the formulae readable. Botha's $h(t_{(k)})$ and the $q_{i,t}$ used here are
 the same object. In that notation,
 
 $$
 q_{i,t} = \mathbb{P}\left( T_i = t \,\middle|\, T_i \ge t, \boldsymbol{X}_i \right),
 \qquad
-{}_k p_i = \prod_{t=1}^{k} \left( 1 - q_{i,t} \right),
+{}_k p_{i,0} = \prod_{t=1}^{k} \left( 1 - q_{i,t} \right),
 \qquad
-\mathrm{PD}_k(\boldsymbol{X}_i) = 1 - {}_k p_i .
+\mathrm{PD}_k(\boldsymbol{X}_i) = 1 - {}_k p_{i,0} .
 $$
 
 Setting $k = 12$ recovers exactly the quantity lecture 1 modelled, so the
