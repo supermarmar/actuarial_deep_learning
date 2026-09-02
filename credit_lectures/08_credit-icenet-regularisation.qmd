@@ -59,32 +59,32 @@ because its subject is what happens when the fitting objective carries a
 penalty alongside the loss.
 
 The course lecture has two halves and this companion keeps both. The first
-surveys regularisation, meaning ridge, LASSO, elastic net, group LASSO and
+surveys regularisation, meaning ridge, LASSO, elastic net, group LASSO, and
 fused LASSO, each of which penalises the parameter vector. The second
 presents ICEnet, the architecture of Richman and Wüthrich (2024), which
-penalises the fitted regression function instead, so that its individual
+instead penalises the fitted regression function, so that its individual
 conditional expectation curves come out smooth and monotone in chosen
-covariates. Credit modelling meets both halves with prior practice
-already in place. Scorecard development has selected variables by
-stepwise procedures for decades, and it has always insisted that the
-fitted risk curve run in the direction the credit officer expects.
+covariates. Credit modelling, however, meets both halves with prior
+practice already in place, since scorecard development has selected
+variables by stepwise procedures for decades and has always insisted that
+the fitted risk curve run in the direction the credit officer expects.
 
-Three results here are new to the series. The course's rule that the
-intercept must be excluded from the penalty turns out to be the balance
-property under another name, which is verifiable by breaking the rule and
-watching the balance go. Fused LASSO on one-year age bands is automated
-coarse classing, so the boundaries the fourth and fifth lecture chose by
-hand can be compared against boundaries the data chooses for itself.
-Finally, the network's readout refitted on frozen learned features
-restores exact balance while leaving the ICEnet constraints standing,
-which is the discharge lecture 7 asked for.
+Three results here are new to the series. First, the course's rule that
+the intercept must be excluded from the penalty turns out to be the
+balance property under another name, which is verifiable by breaking the
+rule and watching the balance go. Second, fused LASSO on one-year age
+bands is automated coarse classing, so the boundaries the fourth and fifth
+lecture chose by hand can be compared against boundaries the data chooses
+for itself. Finally, the network's readout refitted on frozen learned
+features restores exact balance while leaving the ICEnet constraints
+standing, which discharges what lecture 7 asked for.
 
 Two conventions carry over. There is no exposure offset, since
 `default_12m` is a zero-one flag over a fixed twelve-month window, so the
 case weights $v_i$ of the source deck are all one and the dispersion
-$\varphi$ is one. Second, deviance is quoted on the series' scale
+$\varphi$ is one. Similarly, deviance is quoted on the series' scale
 throughout, meaning $100 \times 2 \times$ the mean Bernoulli deviance
-contribution, so the numbers below sit beside those of lectures 2, 4, 5, 6
+contribution, so the numbers below sit beside those of lectures 2, 4, 5, 6,
 and 7 without rescaling.
 
 ```{python}
@@ -109,9 +109,10 @@ torch.set_num_threads(4)
 ::: {.callout-note title="Overview"}
 Regularisation is a fitting technique aiming at shrinkage and selection of
 the parameters during their estimation, achieved by penalising extreme
-values so that the fitted model comes out smoother in some sense. This
-section works the course's catalogue of penalties on the Bondora design
-matrix, and it ends on the two that credit modelling has its own name for.
+values so that the fitted model comes out smoother in some sense.
+Consequently this section works the course's catalogue of penalties on the
+Bondora design matrix, and it ends on the two that credit modelling
+already has its own name for.
 :::
 
 ## What a credit model is trying to shrink
@@ -125,24 +126,25 @@ response at all. Since none of the three is knowable in advance on a real
 book, covariate selection is where the modeller spends the effort.
 
 Consequently the temptation is to include everything and let the fit sort
-it out. On finite samples that strategy fails, through over-fitting,
-through collinearity, and through the plain identifiability problems that
-follow when two columns carry one signal. A credit application form is a
-generous source of all three. Bondora's raw extract runs to 112 columns
-before any engineering, and several of them are near-duplicates by
-construction, since `IncomeTotal` is the sum of seven declared income
-components that also appear individually.
+it out. On finite samples, however, that strategy fails, through
+over-fitting, through collinearity, and through the plain identifiability
+problems that follow when two columns carry one signal. A credit
+application form is a generous source of all three, because Bondora's raw
+extract runs to 112 columns before any engineering and several of them are
+near-duplicates by construction, since `IncomeTotal` is the sum of seven
+declared income components that also appear individually.
 
 Model complexity control therefore matters, and the target is a *sparse*
 model, meaning the fewest covariates that still predict well. In practice
-one starts slightly too large and shrinks, which is what regularisation
-does by penalising complexity, extreme coefficients, or both.
+one starts slightly too large and then shrinks, so regularisation earns its
+place by penalising complexity, extreme coefficients, or both.
 
-Credit has its own reason to care, over and above predictive accuracy. A
-scorecard is a document that has to be explained to a credit committee, to
-model validation, and in a consumer complaint to the borrower who was
-declined. Every surviving variable is a variable somebody must be prepared
-to defend, so parsimony buys explicability as well as generalisation.
+Credit, moreover, has its own reason to care, over and above predictive
+accuracy. A scorecard is a document that has to be explained to a credit
+committee, to model validation, and in a consumer complaint to the
+borrower who was declined. Hence every surviving variable is a variable
+somebody must be prepared to defend, so parsimony buys explicability as
+well as generalisation.
 
 ## The penalty function
 
@@ -152,19 +154,19 @@ $$
 \sum_{i=1}^n \frac{v_i}{\varphi}\, L\!\left(Y_i, \mu_\vartheta(\boldsymbol{X}_i)\right)
 + \lambda\, R(\vartheta_{\backslash 0}) \right),
 $$
-where $R : \mathbb{R}^r \to \mathbb{R}_+$ is the *penalty function*, and
+where $R : \mathbb{R}^r \to \mathbb{R}_+$ is the *penalty function*, while
 $\lambda \geq 0$ is the *regularisation parameter*. The parameter vector is
 $\vartheta = (\vartheta_0, \vartheta_1, \ldots, \vartheta_r)^\top$, whose
-first component $\vartheta_0$ is the intercept, called the bias term in
-machine learning. The notation $\vartheta_{\backslash 0}$ means the vector
+first component $\vartheta_0$ is the intercept, so called the bias term in
+machine learning because it sets the overall level and no slope. The notation $\vartheta_{\backslash 0}$ means the vector
 with that first component removed.
 
-Note that no $1/n$ scaling sits in front of the sum. Dropping it leaves the
-unregularised solution unchanged and makes $\lambda$ independent of the
-sample size, so a $\lambda$ tuned on one book transfers to a book of
-another size. Every $\lambda$ quoted in this half of the lecture is on that
-sum scale, against $n = 118{,}933$ training loans, which is why the values
-run into the thousands.
+Note that no $1/n$ scaling sits in front of the sum. Although dropping it
+leaves the unregularised solution unchanged, it makes $\lambda$ independent
+of the sample size, so a $\lambda$ tuned on one book transfers to a book of
+another size. Consequently every $\lambda$ quoted in this half of the
+lecture is on that sum scale, against $n = 118{,}933$ training loans, which
+is why the values run into the thousands.
 
 ## Standardisation comes first
 
@@ -173,7 +175,7 @@ penalises $\vartheta_k^2$, so a covariate measured in euros attracts a
 coefficient a thousand times smaller than the same covariate measured in
 thousands of euros, and it therefore attracts a million times less penalty.
 Standardising every column to mean zero and unit variance on the training
-sample is what makes the penalty mean the same thing for all of them. This
+sample makes the penalty mean the same thing for all of them. This
 is not optional housekeeping. On the Bondora design matrix, `IncomeTotal`
 on its raw scale and `NewCreditCustomer` as a zero-one flag differ in
 standard deviation by a factor of about 2,700.
@@ -232,8 +234,8 @@ print(f"learn {len(X_learn):,} / test {len(X_test):,};  "
 
 One structural detail deserves flagging, because it differs from the GLM
 practice of the second lecture. The design matrix carries *every* level of
-each categorical covariate, with no reference level dropped, which is what
-the fourth and fifth lecture handed the network. Under an unpenalised fit
+each categorical covariate, with no reference level dropped, exactly as the
+fourth and fifth lecture handed it to the network. Under an unpenalised fit
 that makes $\vartheta$ unidentified, although the fitted values remain
 identified. Under a penalty it is the standard and preferred setup, since
 group LASSO can then remove a whole covariate symmetrically instead of
@@ -335,7 +337,8 @@ $$
 + \lambda\, \|\vartheta_{\backslash 0}\|_2^2 \right).
 $$
 Large coefficients are punished, which is called *shrinkage*, and the
-degree of it is set by $\lambda$, usually chosen by cross-validation.
+degree of it is set by $\lambda$, which is usually chosen by
+cross-validation because no analytic optimum exists.
 
 ```{python}
 ridge_path = {}
@@ -346,10 +349,11 @@ for lam in [0, 1, 10, 100, 1000, 10000]:
 The path is uneventful, which is itself the finding. Test deviance improves
 by 0.028 points between $\lambda = 0$ and $\lambda = 1{,}000$ and then
 deteriorates, so the unregularised fit was barely over-fitted to begin
-with. That should be expected on a GLM with 38 columns and 118,933
-observations, where the ratio of observations to parameters is above 3,000
-to one. Ridge earns its keep on wide problems, and the Bondora design
-matrix is narrow.
+with. Indeed that should be expected on a GLM with 38 columns and 118,933
+observations, since the ratio of observations to parameters is above 3,000
+to one. Ridge earns its keep on wide problems, whereas the Bondora design
+matrix is narrow. Consequently a validation team asking why this scorecard
+carries no ridge penalty can be answered with the path above.
 
 ## LASSO regularisation
 
@@ -368,10 +372,10 @@ components to exactly zero one after another, which delivers a sparse model
 and, read the other way, an ordering of the covariates by importance.
 
 Geometrically the feasible set under the Lagrangian formulation is an
-$L^2$ ball for ridge and an $L^1$ cube for LASSO. Projecting onto a ball
-lands in the interior of a face almost surely, whereas projecting onto a
-cube frequently lands on a corner, and a corner is a coordinate set to
-zero.
+$L^2$ ball for ridge and an $L^1$ cube for LASSO. Since projecting onto a
+ball lands in the interior of a face almost surely, whereas projecting
+onto a cube frequently lands on a corner, and since a corner is a
+coordinate set to zero, the sparsity follows from the geometry alone.
 
 ```{python}
 lasso_path = {}
@@ -381,11 +385,11 @@ for lam in [1, 10, 100, 300, 1000, 3000]:
 
 Seven of the 38 columns leave by $\lambda = 100$ and 27 of them by
 $\lambda = 3{,}000$, at which point the test deviance has given up 0.855
-points and the AUC 0.006. Scorecard practice usually stops well short of
-that, and the common workflow is to use LASSO for selection and then refit
-an unpenalised model on the survivors, so that the reported coefficients
-carry no shrinkage bias and the standard errors mean what they usually
-mean.
+points and the AUC 0.006. Scorecard practice, however, usually stops well
+short of that. Instead the common workflow is to use LASSO for selection
+and then refit an unpenalised model on the survivors, so that the reported
+coefficients carry no shrinkage bias and the standard errors mean what
+they usually mean.
 
 ```{python}
 #| fig-cap: "Coefficient paths on the standardised Bondora design matrix, ridge on the left and LASSO on the right, plotted against the regularisation parameter on a log scale. Ridge shrinks every coefficient towards zero together and none of them arrives; LASSO sends them to exactly zero one at a time, and the count of survivors is printed above each path. The four `Country` coefficients are drawn in bronze-red and the remaining 34 in grey, which is why one family stays visibly larger than the rest under both penalties."
@@ -431,7 +435,7 @@ with $\alpha \in [0,1]$. It exists because LASSO handles correlated
 covariates badly, tending to pick one of a correlated group arbitrarily and
 zero the others, whereas the ridge component encourages the group to share
 the weight. Credit application data is full of correlated groups, since
-income, employment duration and home ownership all proxy for financial
+income, employment duration, and home ownership all proxy for financial
 stability, so the elastic net is often the better default on a scorecard.
 
 ```{python}
@@ -445,9 +449,10 @@ The course states in passing that $\vartheta_0$ "needs to be excluded from
 regularisation to be able to calibrate the overall level of the model",
 and warns that otherwise "we receive a statistically biased model". For a
 credit portfolio that sentence has a name, and the seventh lecture spent
-its length on it. The overall level of a PD model is the portfolio's
-expected loss and the capital plan resting on it, so a fitted model whose
-mean PD misses the observed default rate misprices the whole book at once.
+its length on it. Indeed the overall level of a PD model is the
+portfolio's expected loss and the capital plan resting on it, so a fitted
+model whose mean PD misses the observed default rate misprices the whole
+book at once.
 
 The claim is checkable by breaking it. Since our fitter takes
 `penalise_intercept` as a switch, we can run the same ridge path twice and
@@ -467,9 +472,10 @@ for lam in [100, 1000, 10000]:
 
 Excluding the intercept holds balance at zero to five decimal places along
 the entire path, whatever $\lambda$ does to the other 38 coefficients.
-Including it costs 0.30 per cent of balance at $\lambda = 100$, 2.84 per
-cent at $\lambda = 1{,}000$, and 19.92 per cent at $\lambda = 10{,}000$,
-where the mean predicted PD has climbed from 28.88 per cent to 34.63.
+Including it, by contrast, costs 0.30 per cent of balance at
+$\lambda = 100$, 2.84 per cent at $\lambda = 1{,}000$, and 19.92 per cent
+at $\lambda = 10{,}000$, where the mean predicted PD has climbed from
+28.88 per cent to 34.63.
 
 The direction of the drift is worth reading, because it explains the
 mechanism. On standardised covariates, $\vartheta_0$ is the log-odds at the
@@ -486,8 +492,8 @@ Lecture 7 fixed a broken level after the fit, using a one-parameter
 intercept shift or an isotonic recalibration. The result above is the
 degenerate case of doing it during the fit: leave the level parameter
 unpenalised and the score equation survives the penalty intact, so there
-is nothing to repair. Section 3.6 does the same thing for a network, where
-the score equation has to be recovered rather than merely preserved.
+is nothing to repair. Section 3.6 does the same thing for a network, where the score equation has
+to be recovered instead, because early stopping never solved it.
 :::
 
 ## Grouped covariates and group LASSO
@@ -511,12 +517,12 @@ $$
 \sum_{i=1}^n \frac{v_i}{\varphi} L\!\left(Y_i, \mu_\vartheta(\boldsymbol{X}_i)\right)
 + \sum_{k=1}^G \lambda_k \|\vartheta^{(k)}\|_2 \right).
 $$
-Note the norm is unsquared, which is what makes the penalty non-smooth at
-$\vartheta^{(k)} = \boldsymbol{0}$ and therefore capable of setting an
-entire block to zero at once. Squaring it would give plain ridge back. We
-follow the usual convention of scaling each $\lambda_k$ by
-$\sqrt{d_k}$, so that a twelve-level covariate is not penalised more
-lightly per level than a one-column covariate.
+Note the norm is unsquared, so the penalty is non-smooth at
+$\vartheta^{(k)} = \boldsymbol{0}$ and can therefore set an entire block to
+zero at once, whereas squaring it would give plain ridge back. We also
+follow the usual convention of scaling each $\lambda_k$ by $\sqrt{d_k}$, so
+that a twelve-level covariate is not penalised more lightly per level than
+a one-column covariate.
 
 Bondora's 38 columns fall into eight groups: the three genuinely scalar
 covariates, and the five categoricals.
@@ -550,13 +556,14 @@ and `AgeCens` follow by $\lambda = 3{,}000$, and only `Country` and
 `NewCreditCustomer` survive to $\lambda = 10{,}000$.
 
 Income leaving first deserves a comment, since it contradicts the intuition
-that income is the central variable in a consumer credit model. Lecture C1
-found the same thing from the other direction. Standardising the second
-lecture's GLM over the observed country and age distribution gave a
+that income is the central variable in a consumer credit model. Lecture C1,
+however, found the same thing from the other direction. Standardising the
+second lecture's GLM over the observed country and age distribution gave a
 marginal income curve falling only from 30.4 to 27.8 per cent across the
 whole income range, so income moves the fitted PD by under three
-percentage points once country is held fixed. Country moves it far more,
-and group LASSO is reading that same geometry off the coefficient norms.
+percentage points once country is held fixed. Country, by contrast, moves
+it far more, and group LASSO is therefore reading that same geometry off
+the coefficient norms.
 
 ```{python}
 #| fig-cap: "Group LASSO on the Bondora design matrix: the group norm $\\|\\vartheta^{(k)}\\|_2$ for each of the eight risk drivers against the regularisation parameter. A driver leaves the model when its curve reaches zero, and the order in which the eight curves arrive is the variable-reduction ordering. `Country` is drawn in bronze-red as the one driver that survives to the end of the path; markers distinguish the series so the panel survives a greyscale print."
@@ -587,11 +594,11 @@ $$
 + \sum_{j=2}^{r} \lambda_j \left| \vartheta_j - \vartheta_{j-1} \right| \right),
 $$
 so an $L^1$ penalty on the differences drives some of them to exactly zero,
-which forces adjacent coefficients to be exactly equal. Higher-order
-differences work the same way.
+which in turn forces adjacent coefficients to be exactly equal. Similarly,
+higher-order differences work the same way.
 
-Credit modelling has been doing this by hand for forty years and calls it
-*coarse classing*. The analyst cuts a continuous driver into fine bins,
+Credit modelling, however, has been doing this by hand for forty years,
+and it calls the procedure *coarse classing*. The analyst cuts a continuous driver into fine bins,
 inspects the weight of evidence per bin, and then merges adjacent bins
 whose risk is indistinguishable until the surviving bands are few,
 monotone-ish, and populated enough to be stable. Setting adjacent
@@ -603,11 +610,11 @@ boundary.
 The implementation uses a change of basis that makes the whole thing a
 plain LASSO. Write the age effect in the *cumulative-step* basis, with one
 column $D_k = \mathbf{1}_{\{\mathrm{age} \ge a_k\}}$ per candidate boundary
-$a_k$. The coefficient on $D_k$ is then the log-odds jump at $a_k$, so a
-zero coefficient means no boundary there, and an $L^1$ penalty on those
+$a_k$. Because the coefficient on $D_k$ is then the log-odds jump at $a_k$,
+a zero coefficient means no boundary there, and an $L^1$ penalty on those
 coefficients is exactly the fused penalty on the underlying band effects.
-This equivalence is standard and it costs nothing, since we already have a
-LASSO solver above.
+Consequently the equivalence costs nothing, since we already have a LASSO
+solver above.
 
 ```{python}
 ages = np.arange(18, 71)
@@ -628,7 +635,7 @@ The step columns are deliberately left unstandardised, so that each
 coefficient reads directly as a log-odds jump at that birthday and the
 penalty treats every candidate boundary alike. The remaining covariates are
 standardised as before and left unpenalised, since they are controls here
-rather than the object of the exercise.
+while the age boundaries are the object of the exercise.
 
 ```{python}
 Xf_learn, Xf_test = Xf.iloc[idx_learn], Xf.iloc[idx_test]
@@ -650,12 +657,13 @@ for lam in [0, 10, 30, 100, 300, 1000]:
 print(f"\nhand-chosen boundaries of lectures 4 and 5: {HAND}")
 ```
 
-Read the boundary lists rather than the deviances. At $\lambda = 300$ the
-penalty keeps nine boundaries, at ages 23, 26, 28, 29, 32, 34, 39, 42 and
-46, and it keeps **none above 46**. The six hand-chosen boundaries were
-20, 25, 30, 40, 50 and 60, so two of the six were spent on territory where
-the data asks for no boundary at all, and the dense stretch from 26 to 34,
-where the data asks for four, received one.
+Read the boundary lists first, since the deviances move very little here.
+At $\lambda = 300$ the penalty keeps nine boundaries, at ages 23, 26, 28,
+29, 32, 34, 39, 42, and 46, while it keeps **none above 46**. The six
+hand-chosen boundaries were 20, 25, 30, 40, 50, and 60, so two of the six
+were spent on territory where the data asks for no boundary at all,
+whereas the dense stretch from 26 to 34, where the data asks for four,
+received one.
 
 The reason is where the book's mass and its risk gradient sit.
 
@@ -669,13 +677,13 @@ for lo, hi in [(18, 22), (23, 34), (35, 46), (47, 59), (60, 70)]:
 
 Half the book sits between 23 and 46, and the steep part of the age effect
 that the fourth and fifth lecture found, falling from 25.3 per cent at age
-18 to a trough near 40, lies inside that stretch. Above 47 the observed
-default rate moves by 2.5 percentage points across 32 per cent of the book,
-and once income, country and the other controls are held fixed the fused
-penalty judges that movement not worth a parameter. Manual coarse classing
-tends to place boundaries at round numbers spread evenly across the range,
-which over-resolves a sparse and flat tail while under-resolving the dense
-and steep middle.
+18 to a trough near 40, lies inside that stretch. Above 47, by contrast,
+the observed default rate moves by 2.5 percentage points across 32 per
+cent of the book, and once income, country, and the other controls are
+held fixed the fused penalty judges that movement not worth a parameter.
+Manual coarse classing, meanwhile, tends to place boundaries at round
+numbers spread evenly across the range, which therefore over-resolves a
+sparse and flat tail while under-resolving the dense and steep middle.
 
 The comparison is worth making like for like, with the same fitting
 machinery and the same controls, differing only in the boundary set.
@@ -706,9 +714,9 @@ points and 0.0003 of AUC, and they also beat the saturated 52-boundary
 model, which over-fits the sparse ages. The margin is small, and it should
 be, since the age effect is one term among eight in a model whose deviance
 is dominated by the irreducible noise in a 29 per cent default rate.
-Nevertheless the boundaries themselves are the deliverable, and a
-procedure that produces them from the data in one fit is a genuine
-replacement for an afternoon of judgement.
+Nevertheless the boundaries themselves are the deliverable, so a procedure
+that produces them from the data in one fit genuinely replaces an
+afternoon of judgement.
 
 ```{python}
 #| fig-cap: "Fitted age effect on the log-odds scale, in the cumulative-step basis, as the fused penalty is tightened. The saturated fit ($\\lambda = 0$, grey) keeps all 52 one-year boundaries and is visibly noisy above age 50 where the book thins. At $\\lambda = 300$ (bronze-red) nine boundaries survive, all of them below 47. The hand-chosen banding of lectures 4 and 5 is the dashed blue step function, and the vertical marks beneath the axis show where each scheme places a boundary. All curves are shifted to zero at age 18 so the shapes can be compared."
@@ -740,8 +748,8 @@ $$
 $$
 where $(u)_+ = \max\{u, 0\}$ is the rectified linear unit. Each penalty
 charges nothing while the constraint holds and charges linearly in the
-violation once it fails, which is what makes it a soft constraint rather
-than a hard one.
+violation once it fails, so it constrains softly and a large enough gain in
+the predictive term can still buy a violation.
 
 Both are natural in the cumulative-step basis above, where enforcing
 monotonicity in age means requiring every step coefficient to carry the
@@ -749,20 +757,21 @@ same sign. In a scorecard this is routine, because a band-level risk curve
 that reverses direction is hard to defend to a credit committee and harder
 still to explain to a declined applicant.
 
-The limitation is that all of this acts on $\vartheta$. A GLM's parameters
-map onto its regression function transparently, so constraining one
-constrains the other. A network's do not, which is the problem the second
-half of this lecture solves.
+The limitation, however, is that all of this acts on $\vartheta$. Since a
+GLM's parameters map onto its regression function transparently,
+constraining one constrains the other. A network's parameters do not,
+which is the problem the second half of this lecture solves.
 
 # ICEnet: constraining the function instead of the weights
 
 ::: {.callout-note title="Overview"}
 This section presents ICEnet, introduced by Richman and Wüthrich (2024).
 Its idea is to constrain the network's *predictions* so that they come out
-smooth and monotone in chosen risk factors, leaving the deep learning
-framework otherwise untouched. Whereas the penalties above act on the
-parameters, ICEnet acts on the behaviour of the fitted function along
-individual conditional expectation curves.
+smooth and monotone in chosen risk factors, while leaving the deep
+learning framework otherwise untouched. Whereas the penalties above act on
+the parameters, ICEnet therefore acts on the behaviour of the fitted
+function along individual conditional expectation curves, so the
+constraint survives however the weights are arranged.
 :::
 
 ## Why a credit model wants a monotone curve
@@ -780,17 +789,17 @@ direction somewhere in the middle of its range is usually a small-sample
 artefact of the development window, and it will not replicate.
 
 Both expectations appear in scorecard practice as things a validation team
-looks for. Rather than resting the case on a regulatory citation, the
-argument here is a model-risk one, since a curve nobody can explain is a
-curve nobody can challenge, and a lender that cannot explain its pricing
-to a declined applicant has an operational problem irrespective of what the
-rulebook says.
+looks for. Instead of resting the case on a regulatory citation, though,
+the argument here is a model-risk one, since a curve nobody can explain is
+a curve nobody can challenge, and a lender that cannot explain its pricing
+to a declined applicant has an operational problem irrespective of what
+the rulebook says.
 
 In a GLM these constraints are imposed on the coefficients directly, as
-section 1.10 showed. In a network, operating on the weights is not
-feasible, since no individual weight corresponds to the effect of one
-covariate. ICEnet therefore leaves the weights alone and constrains the
-predictions.
+section 1.10 showed. In a network, however, operating on the weights is
+not feasible, because no individual weight corresponds to the effect of
+one covariate. ICEnet therefore leaves the weights alone and constrains
+the predictions.
 
 ## ICE and PDP
 
@@ -801,10 +810,11 @@ $$
 $$
 where $q$ is the number of covariates. For covariate $j$ define a set of
 values $\mathcal{A}_j = \{a^j_1, \ldots, a^j_{K_j}\}$. Where $X_j$ is
-categorical, $\mathcal{A}_j$ holds all $K_j$ levels; where $X_j$ is
-continuous, it holds $K_j$ representative values over the observed range,
-ordered $a^j_1 < \cdots < a^j_{K_j}$ and typically chosen by quantile
-binning.
+categorical, $\mathcal{A}_j$ holds all $K_j$ levels, whereas for a
+continuous $X_j$ it holds $K_j$ representative values over the observed
+range, ordered $a^j_1 < \cdots < a^j_{K_j}$ and typically chosen by
+quantile binning because equal counts keep every difference below equally
+well estimated.
 
 For observation $i$, define the *pseudo-input* obtained by overwriting
 covariate $j$ and leaving the rest of that borrower's record alone,
@@ -828,39 +838,41 @@ The *partial dependence plot* is the empirical average of the ICE curves,
 $$
 \mathrm{PDP}^{[j]} = \frac{1}{n} \sum_{i=1}^n \mathrm{ICE}^{[j]}_i .
 $$
-Averaging is what makes it readable and also what makes it dangerous:
-section 3.2 shows a PDP on this book that is perfectly monotone while
-77.8 per cent of the curves underneath it are not.
+Averaging makes the plot readable, and it also makes the plot dangerous.
+Section 3.2 shows a partial dependence plot on this book that is perfectly
+monotone while 77.8 per cent of the curves underneath it are not.
 :::
 
 A credit reading of the pseudo-input is worth stating, since it is where
-the interpretation can go wrong. Setting a borrower's income to
-$a^j_u$ while holding their country, age, employment duration and home
-ownership fixed asks the model a question about a borrower who may not
-exist in the data. Lecture C1 made the same point about standardisation
-and checked positivity before relying on the answer. An ICE curve is a
-statement about the fitted function, so treating it as a causal statement
-about what would happen if that borrower's income changed requires the
-separate apparatus C1 sets out.
+the interpretation can go wrong. Setting a borrower's income to $a^j_u$
+while holding their country, age, employment duration, and home ownership
+fixed asks the model a question about a borrower who may not exist in the
+data. Indeed lecture C1 made the same point about standardisation, and it
+checked positivity before relying on the answer. An ICE curve is
+therefore a statement about the fitted function, so treating it as a
+causal statement about what would happen if that borrower's income changed
+requires the separate apparatus C1 sets out.
 
 ## The idea and the compound loss
 
-ICEnet proceeds in four steps. Select the covariates requiring smoothness,
-$\mathcal{S} \subset \{1, \ldots, q\}$, and those requiring monotonicity,
-$\mathcal{M} \subset \{1, \ldots, q\}$. For each observation generate the
-pseudo-inputs by varying the constrained covariates. Apply the same model
-to the observed inputs, giving $\widehat{Y}_i$, and to the pseudo-inputs,
-giving the ICE curves. Then fit against a compound loss carrying a
-predictive term, a smoothness penalty, and a monotonicity penalty,
+ICEnet proceeds in four steps. First, select the covariates requiring
+smoothness, $\mathcal{S} \subset \{1, \ldots, q\}$, and those requiring
+monotonicity, $\mathcal{M} \subset \{1, \ldots, q\}$. Then, for each
+observation, generate the pseudo-inputs by varying the constrained
+covariates. Next apply the same model twice, to the observed inputs so as
+to obtain $\widehat{Y}_i$, and to the pseudo-inputs so as to obtain the ICE
+curves. Finally fit against a compound loss carrying a predictive term, a
+smoothness penalty, and a monotonicity penalty,
 $$
 L(\vartheta; i) = L^{D}\!\left(Y_i, \mu_\vartheta(\boldsymbol{X}_i)\right)
 + L_2\!\left(\mu_\vartheta(\boldsymbol{X}_i)\right)
 + L_3\!\left(\mu_\vartheta(\boldsymbol{X}_i)\right),
 $$
 where $L^{D}$ is the deviance loss of the regression problem, here
-Bernoulli. The two penalties depend on non-negative parameters
-$\lambda_{s,j}$ and $\lambda_{m,j}$ trading predictive accuracy against
-constraint strength.
+Bernoulli. Both penalties depend on non-negative parameters
+$\lambda_{s,j}$ and $\lambda_{m,j}$, which trade predictive accuracy
+against constraint strength, so the whole architecture reduces to the same
+loss-plus-penalty shape section 1.2 set out.
 
 ### Smoothness penalty
 
@@ -927,8 +939,8 @@ monotonically from 30.4 to 27.8 per cent across the range, so a decreasing
 constraint encodes a direction that both the data and a credit officer
 support. That sets $\delta_j = +1$.
 
-Two implementation choices are ours and both affect the numbers, so they
-are stated rather than buried. The grid uses $K_j = 20$ quantile points
+Two implementation choices are ours and both affect the numbers, so the
+text states each one and what it costs. The grid uses $K_j = 20$ quantile points
 trimmed to the 1st and 99th percentiles. Trimming matters here because
 Bondora's declared incomes run from under one euro to over a million, so
 an untrimmed grid puts two of its twenty points in territory holding
@@ -948,8 +960,10 @@ they are not comparable with the sum-scale $\lambda$ of the first half.
 We reuse the architecture of the fourth and fifth lecture without change,
 depth $d = 3$ with $(q_1, q_2, q_3) = (20, 15, 10)$ neurons, tanh
 activations, a sigmoid readout, NAdam over mini-batches of 5,000, and early
-stopping on a 10 per cent validation partition. All seeds are fixed and
-training runs on the CPU, so these numbers reproduce on re-render.
+stopping on a 10 per cent validation partition. Since all seeds are fixed
+and training runs on the CPU, these numbers reproduce on re-render, and
+consequently every figure quoted below can be checked against the printed
+output beside it.
 
 ```{python}
 K = 20
@@ -1134,11 +1148,11 @@ monotone and move on. Underneath it, 77.8 per cent of individual borrowers
 sit on a curve that rises somewhere, and the largest single rising step is
 28.3 percentage points of PD.
 
-Averaging is what destroys the evidence. Where one borrower's curve rises
+Averaging destroys the evidence. Where one borrower's curve rises
 over an income interval and another's falls over the same interval, the
 two cancel in the mean, so the partial dependence plot can be monotone
 while almost none of its constituents are. For a lender the constituents
-are what get priced, since a decision is made per applicant, and an
+get priced, since a decision is made per applicant, and an
 applicant whose modelled PD rises by 28 points because they declared more
 income is an applicant with a complaint.
 
@@ -1255,16 +1269,16 @@ The seventh lecture proved that a GLM fitted by maximum likelihood under
 the canonical link satisfies $\sum_i (\widehat{\mu}_i - Y_i) = 0$ exactly,
 because that identity *is* the score equation for the intercept. The
 network loses the property because early stopping halts the optimiser
-before any score equation is solved, and section 1.7 above showed the
+before any score equation is solved, whereas section 1.7 above showed the
 identity surviving a penalty as long as the intercept is left out of it.
 
-Both facts point at the same repair. The fourth and fifth lecture framed a
-network as a feature extractor followed by a GLM readout, so the last
-hidden layer produces learned features
+Both facts therefore point at the same repair. Since the fourth and fifth
+lecture framed a network as a feature extractor followed by a GLM readout,
+the last hidden layer produces learned features
 $\boldsymbol{z}^{(d:1)}(\boldsymbol{X}) \in \mathbb{R}^{10}$ and the output
-layer is a logistic regression on them. If those features are frozen and
-the readout alone is refitted by maximum likelihood, the score equation
-returns, and with it exact balance.
+layer is a logistic regression on them. Hence, if those features are
+frozen and the readout alone is refitted by maximum likelihood, the score
+equation returns, and with it exact balance.
 
 ```{python}
 def frozen_readout(model, scaler):
@@ -1342,10 +1356,10 @@ for tag, model, scaler in [("FNN", fnn, sc_fnn),
 
 They compose. The ICEnet's violation rate is 0.1 per cent both before and
 after the refit, and the largest wrong-sign step stays below 0.2
-percentage points of PD. The unconstrained network's rate is
+percentage points of PD. The unconstrained network's rate, however, is
 unchanged at roughly 78 per cent either way, which is the honest half of
-the finding, since the readout refit restores balance without creating
-monotonicity. A modeller who wants both properties has to buy each with
+the finding, because the readout refit restores balance while creating no
+monotonicity of its own. A modeller who wants both properties has to buy each with
 its own instrument: the compound loss for the shape of the curves, and the
 canonical-link readout for the level.
 
@@ -1360,57 +1374,59 @@ drift remains untouched by any of it.
 
 # Takeaways and outlook {.unnumbered}
 
-Regularisation penalises the parameter vector and ICEnet penalises the
-fitted function, and the Bondora book has something to say about each.
+Regularisation penalises the parameter vector, whereas ICEnet penalises
+the fitted function, and the Bondora book has something to say about each.
 
 On the regularisation half, the finding that transfers is the intercept
 exclusion. Leaving $\vartheta_0$ out of the penalty is the balance property
-of lecture 7 expressed as a fitting rule, and breaking it costs 19.9 per
+of lecture 7 expressed as a fitting rule, so breaking it costs 19.9 per
 cent of balance at the top of the ridge path, taking the mean predicted PD
-from 28.9 per cent to 34.6 on a book that defaults at 28.9. Ridge and LASSO
-otherwise do little on a design matrix 38 columns wide and 118,933 rows
-deep, which is worth knowing before a validation team asks why the
-scorecard was not regularised. Group LASSO, however, produces the
-variable-reduction ordering a scorecard build wants, and on this book it
-drops `logIncome` first, corroborating C1's finding that income moves the
-fitted PD by under three percentage points once country is held fixed.
+from 28.9 per cent to 34.6 on a book that defaults at 28.9. Ridge and
+LASSO otherwise do little here, because the design matrix is 38 columns
+wide and 118,933 rows deep, which is worth knowing before a validation
+team asks why the scorecard carries no penalty. Group LASSO, however,
+produces the variable-reduction ordering a scorecard build wants.
+Moreover, on this book it drops `logIncome` first, which corroborates C1's
+finding that income moves the fitted PD by under three percentage points
+once country is held fixed.
 
-Fused LASSO is the result to carry furthest. Applied to one-year age bands
-in the cumulative-step basis, it is coarse classing performed by
-optimisation, and it selects nine boundaries between 23 and 46 with none
-above 46, against the six hand-chosen boundaries of lectures 4 and 5 that
-spent two on the flat tail above 50. The selected banding beats the
+Fused LASSO, meanwhile, is the result to carry furthest. Applied to
+one-year age bands in the cumulative-step basis, it is coarse classing
+performed by optimisation, and it therefore selects nine boundaries
+between 23 and 46 with none above 46, whereas the six hand-chosen
+boundaries of lectures 4 and 5 spent two on the flat tail above 50. The selected banding beats the
 hand-chosen one on test deviance and beats the saturated 52-boundary model
-too. The margin is 0.036 deviance points, so the case for the method rests
-on the boundaries it hands over and on the afternoon of judgement it
-replaces.
+too. Since the margin is only 0.036 deviance points, however, the case for
+the method rests on the boundaries it hands over and on the afternoon of
+judgement it replaces.
 
-On the ICEnet half, the striking measurement is the gap between the two
-readings of one fitted model. The unconstrained network's income partial
+On the ICEnet half, by contrast, the striking measurement is the gap
+between two readings of one fitted model. The unconstrained network's income partial
 dependence plot descends from 30.1 to 26.8 per cent without a single
 rising step, while 77.8 per cent of individual borrowers sit on a curve
 that rises somewhere and the worst of them rises by 28.3 percentage points
-of PD. Averaging cancels the
-violations, so a validation pack built on partial dependence plots cannot
-see them, and pricing happens per applicant. A constraint parameter of 0.1
-removes 86 per cent of those violations at no measurable cost in test
-deviance, and 1.0 removes 99.9 per cent of them for 0.078 points.
+of PD. Because averaging cancels the violations, a validation pack built
+on partial dependence plots cannot see them, whereas pricing happens per
+applicant. A constraint parameter of 0.1, meanwhile, removes 86 per cent
+of those violations at no measurable cost in test deviance, and 1.0
+removes 99.9 per cent of them for 0.078 points.
 
-Finally, lecture 7's promissory note is discharged. Freezing the learned
-features and refitting the readout as a canonical-link logistic maximum
-likelihood restores $\sum_i (\widehat{\mu}_i - Y_i) = 0$ to a residual of
-about $2 \times 10^{-11}$, improves the test deviance slightly, and leaves
-the ICEnet's monotonicity standing. Two instruments buy two properties, and
-they do not fight.
+Finally, lecture 7's promissory note is discharged. Since freezing the
+learned features and refitting the readout as a canonical-link logistic
+maximum likelihood restores $\sum_i (\widehat{\mu}_i - Y_i) = 0$ to a
+residual of about $2 \times 10^{-11}$, the level comes back exactly, while
+the test deviance improves slightly and the ICEnet's monotonicity stands.
+Hence two instruments buy two properties, and they do not fight.
 
-Two threads leave this lecture. The smooth monotone PD curve built here is
-the input the R2 capital lecture wants, since risk grades cut from a
-non-monotone curve produce a grade ordering that reverses somewhere, and
-the long-run average default rate per grade then fails its own back-test.
-Separately, the ninth and tenth lectures take up LocalGLMnet, which
-attacks the same interpretability problem from the other end by reading
-covariate effects off an attention-weighted linear form; C2 is where the
-credit series asks whether those effects may be read causally.
+Two threads leave this lecture. First, the smooth monotone PD curve built
+here is the input the R2 capital lecture wants, because risk grades cut
+from a non-monotone curve produce a grade ordering that reverses
+somewhere, so the long-run average default rate per grade then fails its
+own back-test. Separately, the ninth and tenth lectures take up
+LocalGLMnet, which attacks the same interpretability problem from the
+other end by reading covariate effects off an attention-weighted linear
+form. C2 is then where the credit series asks whether those effects may be
+read causally.
 
 # Copyright and attribution {.unnumbered}
 
@@ -1420,7 +1436,7 @@ Actuarial Modeling** (Scognamiglio, Maggi and Wüthrich, Università
 Cattolica del Sacro Cuore, Milano, 2026), part of the project *AI Tools for
 Actuaries*, used under CC BY-NC 4.0. Changes made: the Poisson
 claim-frequency thread is recast as the Bernoulli default thread on the
-public Bondora loan book, the code is Python with PyTorch, statsmodels and
+public Bondora loan book, the code is Python with PyTorch, statsmodels, and
 scikit-learn rather than R, every penalty in the regularisation half is
 fitted on the credit design matrix instead of stated only, and the
 following are new: the FISTA fitter that serves all five penalties from one
