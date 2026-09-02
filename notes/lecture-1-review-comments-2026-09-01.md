@@ -105,3 +105,61 @@ Verbatim, including typos.
    loan-level $D^{(k)}_{i,t}$ is now in the same display. The paper's own symbols
    ($D_t$, ${\cal S}_P(t)$, $n'_t$) are named in the prose so the source stays
    findable.
+
+## Round 3, 2 September 2026
+
+Four further comments, left as HTML comments in the rendered file and copied here
+before re-rendering. Verbatim, including typos. The first three ask for **new
+lectures** rather than edits to lecture 1, so each has a plan of its own under
+`notes/plans/`; the fourth is a figure change to lecture 1 itself.
+
+1. (head of the PiT and TTC callout, `01_credit-use-case.qmd:679`) This section is
+   getting quite large I think it might need it as its own lecture given the
+   complexity expands in a IFRS 9 space. Lets plan out a lecture where we look to
+   build that up from this lecture and the notation is aligned to what you have, what
+   I want you to touch on is concepts like conditional PiT PDs, unconditional PiT PDs,
+   FiT (Forward in Time) which is when you incorporating macro economic information.
+   Do some deep research perhaps to find papers that speak about this and refernce
+   many of the Botha papers that go into different methods of estimating such PiT PDs
+   (markov chains, regressions, survival models etc) and the pros and cons of eahc
+
+2. (head of the hybrid PD callout, `01_credit-use-case.qmd:778`) For this section I
+   think this will become an IRB lecture which I think I have done some good work on
+   in my guides repo in the wiki and lecture folder so read through that to get the
+   structure and story and we can plan this out as well and create a second plan to
+   run in another Claude session. It can be briefly mentioned here
+
+3. (head of section 3.1 "Covariates interact", `01_credit-use-case.qmd:993`) The
+   interactions and covariates and causation stuff I would like to do some deep
+   research into the medical stats field to see how they deal with this - add to vault
+   and plan this out as your 3rd plan this will be a seperate lecture or more
+
+4. (on the kernel-smoothed default-rate figure, `01_credit-use-case.qmd:1037`) can we
+   also show this as a 3d graph together with the 2d ggraph
+
+### How each was answered
+
+1. **Answered on 2 September 2026.** The lecture is
+   `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`, on a new regulatory track prefixed `R`,
+   and lecture 1's callout is cut to 43 per cent of its length with a forward reference in
+   place of the material that moved. It opens by separating the two axes the comment asked
+   about, and the separation is corroborated rather than asserted: the guides' own
+   `03_notation.md` defines conditional and unconditional PiT PDs by the conditioning event
+   $D_{i,t}(p) = 0$, so the axis is survival, while PiT against TTC is the macro axis. FiT is
+   adopted as the course's label with its provenance stated plainly, since the term appears
+   in neither IFRS 9 nor the literature, and the standard's own "forward-looking information"
+   leads. The guides define a FiT PD twice in incompatible ways, and the lecture takes the
+   probit form, with the multiplicative FLI factor named as the shortcut it is; `R2` must
+   answer the same way. Eleven methods are reviewed, each with a cost as well as a benefit,
+   covering all three Botha papers plus Bellotti and Crook, Belkin and Breeden, and two
+   reserving techniques an actuarial audience already owns. Finally the point-in-time claim
+   is demonstrated on Bondora rather than asserted, and the demonstration is more useful
+   than a clean one would have been: the pooled fit over three markets returns economically
+   backwards signs at overwhelming significance, because the Finnish and Spanish books
+   expanded through a period of falling unemployment, and Estonia alone gives GDP growth at
+   -0.083 and inflation at +0.093 with a twelve-month PD swinging 9.1 percentage points on
+   the macro state. Research and notation contract in `notes/ifrs9-pit-pd-research.md`.
+2. Planned, not implemented. See `notes/plans/02-irb-capital-lecture.md`.
+3. Planned, not implemented. See `notes/plans/03-causal-inference-lecture.md`.
+4. Treated as a small change to lecture 1 rather than a plan, and mirrored into the
+   `.qmd` at the figure so it survives the next render. Outstanding.

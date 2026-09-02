@@ -24,8 +24,8 @@ models and in-context learning.
 | Path | Purpose |
 |---|---|
 | `lectures/` | Ten lecture documents (`.html`) plus `lecture.css`, the shared presentation layer. Seven were Quarto-rendered by the course authors and downloaded from the course site; lectures 3, 8 and 12 are reconstructions from the PDF decks, and carry a `.qmd` source beside them. The authors' figures live in `lectures/figures/`, gitignored; the reconstructed ones live in `lectures/figures-reconstructed/` and are committed, see below |
-| `scripts/` | Repo utilities: the lecture figure fetcher, the PDF figure extractor, the Quarto render wrapper and the credit data converter |
-| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, one per course lecture and **numbered to match the course**, so `03_credit-deep-learning-overview` answers `lectures/03_deep-learning-overview` and `04-05_credit-fnn` answers `lectures/04-05_fnn`. Most adapt their course lecture to the Bondora PD problem; lecture 3 uses the wide credit card portfolio instead, because Bondora's 45 interpretable columns make no case for automated feature extraction. Render with `bash scripts/render_lecture.sh credit_lectures/*.qmd`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out. Lecture 1 reads `bondora_raw.parquet` for its censoring and outcome-window illustrations, which need `DefaultDate`, `Status` and `ReportAsOfEOD`; the modelling table `bondora_pd.parquet` stays leak-free and is never the source for those. Lectures prefixed `S` are a **survival analysis track numbered outside the course sequence**, because no course lecture answers them: `S1_credit-survival-bridge` picks up the discrete-hazard exposure convention lecture 1 defines but does not use, and `S2_survival-insurance-to-credit` supplies the actuarial-to-statistical translation and the Fine-Gray correction S1 defers. `S3_deep-survival-credit` replaces S1's logistic regression with a network, so the whole term structure comes out of one forward pass with a mask instead of the 2.7 million-row expansion, and asks lecture 7's balance and auto-calibration questions of a survival head. All three read `bondora_survival.parquet` |
+| `scripts/` | Repo utilities: the lecture figure fetcher, the PDF figure extractor, the Quarto render wrapper, the credit data converter and the Eurostat macro fetcher |
+| `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, one per course lecture and **numbered to match the course**, so `03_credit-deep-learning-overview` answers `lectures/03_deep-learning-overview` and `04-05_credit-fnn` answers `lectures/04-05_fnn`. Most adapt their course lecture to the Bondora PD problem; lecture 3 uses the wide credit card portfolio instead, because Bondora's 45 interpretable columns make no case for automated feature extraction. Render with `bash scripts/render_lecture.sh credit_lectures/*.qmd`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out. Lecture 1 reads `bondora_raw.parquet` for its censoring and outcome-window illustrations, which need `DefaultDate`, `Status` and `ReportAsOfEOD`; the modelling table `bondora_pd.parquet` stays leak-free and is never the source for those. Lectures prefixed `S` are a **survival analysis track numbered outside the course sequence**, because no course lecture answers them: `S1_credit-survival-bridge` picks up the discrete-hazard exposure convention lecture 1 defines but does not use, and `S2_survival-insurance-to-credit` supplies the actuarial-to-statistical translation and the Fine-Gray correction S1 defers. `S3_deep-survival-credit` replaces S1's logistic regression with a network, so the whole term structure comes out of one forward pass with a mask instead of the 2.7 million-row expansion, and asks lecture 7's balance and auto-calibration questions of a survival head. All three read `bondora_survival.parquet`. Lectures prefixed `R` are a **regulatory track, also numbered outside the course sequence**, and they grow out of review comments on lecture 1 asking for two of its callouts to become lectures: `R1_credit-ifrs9-pit-pd` separates the survival conditioning axis from the macro one, reviews eleven ways to estimate a point-in-time PD term structure, and demonstrates one on Bondora expanded to person-periods with real Eurostat series attached, so it reads `bondora_survival.parquet` **and** `credit_lectures/data/macro_eurostat.csv`. `R2_credit-irb-capital` is planned rather than written, and takes lecture 1's hybrid PD callout into the IRB world |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
 | `reference/` | Four Python notebooks from the `wueth/AITools4Actuaries` GitHub repo |
@@ -107,6 +107,28 @@ Rebuild the derived parquets with:
 .venv/bin/python scripts/convert_credit_data.py                    # bondora + credit card (default)
 .venv/bin/python scripts/convert_credit_data.py --datasets amex    # amex_panel, amex_cross_section; streams 15 GB
 ```
+
+### The one committed data file
+
+`credit_lectures/data/macro_eurostat.csv` (15 kB) is the exception to everything above. It
+holds three public Eurostat series for EE, FI and ES from 2009, namely the harmonised
+unemployment rate, HICP annual inflation and real GDP growth year on year, and lecture R1
+conditions its point-in-time hazard on them. It is **committed** rather than gitignored,
+because a lecture nobody can render on a fresh clone is worse than a small text file in git
+history, and the file says so in a comment at its own head. Rebuild it with:
+
+```bash
+.venv/bin/python scripts/fetch_macro_eurostat.py
+```
+
+Two details in that script are deliberate. Real GDP is published quarterly, so each quarterly
+rate is held constant across its three months rather than interpolated, since interpolation
+would invent monthly variation Eurostat never measured. And SK is excluded from the country
+list, because its Bondora risk set has a median of seventeen loans a month.
+
+Note also that the `.gitignore` rule is `/data/` rather than `data/`. The unanchored form
+matched `credit_lectures/data/` as well, and a negation inside an excluded directory is inert,
+since git stops the walk at the directory and never reaches an exception for a file below it.
 
 Rendering the credit lectures needs the quarto CLI (installed user-space at
 `~/.local/bin/quarto`, since the Homebrew cask wants sudo) plus three render-only
