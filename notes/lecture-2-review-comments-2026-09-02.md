@@ -27,5 +27,6 @@ formatter, which the render discards.
 3. A notation sweep of the whole lecture rather than section 2.1 alone, so the document
    stays internally consistent: the response is $D_i^{(k)}$ with $k = 12$ months, the
    conditional mean is $\mu_k$ and the probability of default is $\mathrm{PD}_k$, exactly
-   as lecture 1 fixes them. Borrower age keeps lecture 1's warning: it is a covariate,
-   never the actuarial $x$.
+   as lecture 1 fixes them. Lecture 1's false friend is sidestepped instead of restated:
+   $x_i$ is borrower age there, so this lecture never uses $x_i$ for a covariate
+   realisation and writes $\boldsymbol{X}_i$ throughout.

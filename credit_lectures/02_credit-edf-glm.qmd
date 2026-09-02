@@ -36,7 +36,7 @@ jupyter: python3
 
 # Introduction
 
-The first credit lecture estimated probabilities of default informally, by
+The first credit lecture estimated probabilities of default (PD) informally, by
 empirical default rates per covariate band and by two regression models
 whose loss functions we simply asserted. This lecture supplies the
 distributional theory behind those choices. The framework is the
@@ -54,7 +54,7 @@ regression models, and each has a direct credit reading:
 - **Accuracy**: the estimated PDs should be close to the true (unknown) default probabilities.
 - **Smoothness**: PDs should vary smoothly in continuous borrower characteristics.
 - **Sparsity**: the model should not carry covariates that do no work.
-- **Explainability**: a declined applicant, a validator and a supervisor will all ask why.
+- **Explainability**: a declined applicant, a validator, and a supervisor will all ask why.
 - **Finite sample properties**: estimates must be reliable at the cell sizes a portfolio actually has.
 - **Quantifiable uncertainty**: a PD without a standard error cannot support a capital number.
 - **Adaptability**: the model must be re-estimable as the book and the economy move.
@@ -62,8 +62,9 @@ regression models, and each has a direct credit reading:
 
 Explainability and regulatory compliance carry more weight in credit than
 almost anywhere else in actuarial work, because PD models are embedded in
-individual lending decisions and in regulatory capital. The EDF and GLM
-framework of this lecture scores highly on both, which is one reason
+individual lending decisions and in regulatory capital. The EDF and
+generalised linear model (GLM) framework of this lecture scores highly on
+both, which is one reason
 logistic regression remained the industry standard for decades. The deep
 learning lectures that follow have to earn their extra accuracy against this
 benchmark.
@@ -192,10 +193,14 @@ M_Y(s)
 $$
 
 since the exponent rearranges as
-$sy + (y\theta - \kappa(\theta))/\psi
-= \left(y(\theta + s\psi) - \kappa(\theta + s\psi)\right)/\psi
-+ \left(\kappa(\theta + s\psi) - \kappa(\theta)\right)/\psi$. The remaining integrand is
-the same family member at canonical parameter $\theta + s\psi$, so it integrates to one for
+
+$$
+sy + \frac{y\theta - \kappa(\theta)}{\psi}
+= \frac{y(\theta + s\psi) - \kappa(\theta + s\psi)}{\psi}
++ \frac{\kappa(\theta + s\psi) - \kappa(\theta)}{\psi} .
+$$
+
+The remaining integrand is the same family member at canonical parameter $\theta + s\psi$, so it integrates to one for
 every $s$ small enough to keep $\theta + s\psi$ inside $\boldsymbol{\Theta}$. Consequently
 
 $$
@@ -281,8 +286,8 @@ $$
 so the mean function is the sigmoid, the variance is $\mu_k(1-\mu_k)$, and the
 canonical link is the **logit**, $h(\mu) = \log(\mu/(1-\mu))$. The
 dispersion is fixed at $\varphi = 1$; a single binary observation carries no
-free variance parameter, so overdispersion arises only once default counts
-are aggregated; a single indicator cannot exhibit it. The weight is $v = 1$
+free variance parameter, so overdispersion belongs to aggregated default
+counts alone. The weight is $v = 1$
 because the fixed-horizon construction of the first lecture gave every loan
 the same twelve-month window; its alternative exposure
 $v_i = \min(T_i, k)$ belongs to the hazard convention that lecture S1 takes
@@ -451,8 +456,9 @@ precisely the situation an out-of-time split exists to simulate.
 One remark on metrics before we fit anything. The deviance losses of this
 lecture judge the **level** of the predicted PDs, so they are calibration
 measures in the sense of the later calibration lecture. Credit practice
-leads its validation reports with the **AUC** (equivalently the Gini
-coefficient, ${\rm Gini} = 2\,{\rm AUC} - 1$), which judges only the
+leads its validation reports with the **area under the ROC curve (AUC)**,
+equivalently the Gini
+coefficient ${\rm Gini} = 2\,{\rm AUC} - 1$, which judges only the
 **ranking** of borrowers by predicted risk and is blind to the level. The
 two views can disagree, and below they will. We report AUC alongside every
 deviance and defer the systematic treatment of calibration to the
@@ -592,17 +598,17 @@ $$
 
 because the two objectives differ by the saturated log-likelihood, which is
 zero for binary data, and by the factor $-2$. In-sample loss minimisation,
-maximum likelihood and log-loss minimisation are one estimation problem
+maximum likelihood, and log-loss minimisation are one estimation problem
 seen from three angles, and by the finite-sample result quoted earlier this
 common estimator is also the one that uses the data best.
 
 ## GLM example: Bondora data
 
 We now fit a logistic GLM whose scope mirrors the seven-covariate French
-MTPL fit of the course. The first lecture's covariates `AgeClass`,
+motor third-party liability (MTPL) fit of the course. The first lecture's covariates `AgeClass`,
 `logIncome` and `Country` are joined by five further application-time
 variables: education, home ownership, the new-customer flag, income
-verification and employment duration.
+verification, and employment duration.
 
 Two data points force small engineering decisions, and both are worth
 stating openly. First, `HomeOwnershipType` is missing for 1,604 loans and
@@ -830,7 +836,7 @@ everything proved here survives into deep learning.
 
 # Copyright and attribution {.unnumbered}
 
-This document adapts the storyline, structure and notation of *Lecture 2:
+This document adapts the storyline, structure, and notation of *Lecture 2:
 Exponential Dispersion Family and Generalized Linear Models* from the
 summer school **Deep Learning for Actuarial Modeling** (Scognamiglio, Maggi
 and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of
@@ -839,7 +845,7 @@ made: the Poisson claim-frequency thread is recast as the Bernoulli default
 thread on the public Bondora loan book, the code is Python where the
 original is R,
 the out-of-time validation contrast, the quasi-complete separation remark,
-the scorecard points aside and the grouped binomial equivalence are new,
+the scorecard points aside, and the grouped binomial equivalence are new,
 and the offsets-versus-weights section is replaced by its Bernoulli
 counterpart. The original lecture notes are available at
 <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304>.
