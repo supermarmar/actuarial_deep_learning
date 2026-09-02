@@ -499,28 +499,379 @@ should look hardest.
 
 # How the estimate is actually produced
 
-<!-- Intent: the methods review the review comment asked for. One subsection per
-method, each with what it buys and what it costs, then one comparison table. -->
+Eleven methods produce a point-in-time term structure and no two of them answer quite the same
+question. What follows gives each its estimator, then what it buys, then what it costs, because
+a review that lists only the advantages is a sales document. The order runs roughly from the
+loan-level survival family, through the portfolio-level transition family, to the two
+techniques an actuarial reader already owns from reserving.
+
+Three of the eleven are already fitted elsewhere in this series, so this section states their
+place in the taxonomy and points at the lecture that does the work.
 
 ## The discrete-time hazard model
 
+One row per loan-month at risk, a binary response flagging the month of default, and a
+logistic regression on the result whose period indicators form the baseline hazard. Botha and
+Verster (2025) specify it with four covariate blocks,
+
+$$
+q_{i,t} = \mathrm{logit}^{-1}\left(
+\boldsymbol{\alpha}^{\!\top} \boldsymbol{E}_{i,t}
++ \boldsymbol{\beta}^{\!\top} \boldsymbol{x}_{i}
++ \boldsymbol{\gamma}^{\!\top} \boldsymbol{x}_{i}(t)
++ \boldsymbol{\delta}^{\!\top} \boldsymbol{Z}_u
+\right) ,
+$$
+
+where $\boldsymbol{E}_{i,t}$ holds the period indicators, so the model carries no separate
+intercept, and the four blocks are the baseline, time-fixed covariates, spell-level
+time-varying covariates and portfolio-level time-varying covariates. The last block is where
+the macroeconomy lives, and $\boldsymbol{\delta}$ is the coefficient section 5 fits.
+
+**What it buys.** Every horizon from one fit, since chaining the hazards gives
+$\mathrm{PD}_k$ at any $k$ without refitting. Native macro conditioning through
+$\boldsymbol{\delta}$, so a scenario path substitutes directly into the linear predictor.
+Loan-level heterogeneity through $\boldsymbol{\beta}$. And no new estimation machinery
+whatever, because the person-period layout turns the hazard into the mean of a binary
+response, so anything that maximises a binomial likelihood fits it, up to and including the
+network of lecture S3.
+
+**What it costs.** The expansion. Bondora's 179,235 loans become 2,672,193 rows at a
+sixty-month cap, and the exposure convention inside that expansion is a modelling choice
+rather than a formatting one: lecture S2 measures the person-period denominator running 3.5
+per cent above the exposure the loans actually lived, because a loan exiting mid-month
+contributes a whole row. Competing risks are handled by how the table is built rather than by
+the estimator, so treating settlement as censoring is a decision the layout conceals. And the
+baseline needs banding wherever a month carries no defaults, since a saturated period
+indicator on an empty cell is not identified.
+
+**Verdict: the default choice, and the spine of this lecture.** It is the only method here
+that delivers a loan-level term structure and native macro conditioning from a single model.
+Lecture S1 fits it on Bondora and lecture S3 replaces its logistic link with a network.
+
 ## Markov chains and the two assumptions they need
+
+Loans occupy delinquency states rather than a binary performing flag, and a transition matrix
+governs migration between them. Taking the guides' five-state space, i.e. performing $P$,
+under-performing $U$, defaulted $D$, settled $S$ and written off $W$, with the last two
+absorbing, the chain is governed by
+
+$$
+p_{ml} = \mathbb{P}\left( Y_t = l \,\middle|\, Y_{t-1} = m \right) ,
+\qquad
+\hat p_{ml} = \frac{n_{ml}}{n_m} ,
+\qquad
+v_t = v_1 T^{\,t} ,
+$$
+
+and the twelve-month PD is the $D$ element of $v_{12}$, with the lifetime PD the same element
+of $v_n$.
+
+**What it buys.** A PD at any horizon from one matrix, trivially. A forecast of the entire
+future portfolio profile rather than of default alone, so the same object answers "what share
+of today's book is in arrears in a year" for budgeting and stress testing. And the state space
+makes competing risks explicit, since settlement and write-off are states rather than a
+censoring convention, which is the honest reason to teach the method even where nobody ships
+it.
+
+**What it costs.** Two assumptions, both empirically rejected. Botha, Verster and Breedt (2025)
+reject stationarity of the matrix and homogeneity of the population, and the guides add a
+third piece of the same evidence: observed sojourn times are heavily right-skewed and visibly
+not exponential, which the Markov property requires. Repairing the fit means time-specific
+matrices, which makes the model complex for little gain over estimating the term structure
+directly. And small monthly migration errors compound: a matrix raised to the sixtieth power
+turns a rounding error into a materially wrong lifetime PD.
+
+**Verdict: keep it as the baseline every richer method is measured against, and do not ship
+it.** Its value here is that the next two methods are each a repair to one of its two
+assumptions.
 
 ## Beta regression on the transition cells
 
+The repair for non-stationarity. Each cell of the matrix becomes a time series over calendar
+months, $p_{ml}(u) = n_{ml}(u) / n_m(u)$, and each series is modelled by a beta regression
+with variable dispersion, so both the mean $\mu_{ml}(u)$ and the precision are parameterised
+on inputs including the macro state:
+
+$$
+g\left( \mu_{ml}(u) \right) = \boldsymbol{\beta}_{ml}^{\!\top} \boldsymbol{X}_{ml}(u) ,
+\qquad
+p_{ml}(u) \sim \mathrm{Beta}\left( \mu_{ml}(u),\, \sigma_{ml}(u) \right) .
+$$
+
+**What it buys.** Macro conditioning at portfolio level, directly and per transition type, in a
+distribution that respects the $[0,1]$ support of a proportion instead of pretending a rate is
+Gaussian. Modelling the dispersion as well as the mean matters for a cell whose volatility
+itself moves with the cycle.
+
+**What it costs.** The unit of observation is a cell, so the model cannot see a loan and the
+homogeneity assumption survives untouched. One fit per transition type of interest means a
+proliferation of models with no joint constraint keeping a row of the matrix summing to one,
+so the fitted matrix has to be renormalised and the renormalisation is arbitrary.
+
+**Verdict: a genuine improvement on the plain chain, and a halfway house.** Botha, Verster and
+Breedt place it second of their three.
+
 ## Multinomial logistic regression on the transitions
+
+The repair for heterogeneity, and the same transition problem moved to loan level. With a
+baseline destination category $J'$,
+
+$$
+\log \frac{ p_{l}\left( \boldsymbol{x}_i \right) }{ p_{J'}\left( \boldsymbol{x}_i \right) }
+= \boldsymbol{\beta}_{l0} + \boldsymbol{\beta}_{l}^{\!\top} \boldsymbol{x}_i ,
+\qquad
+p_{ml}\left( u, \boldsymbol{x}_i \right)
+= \mathbb{P}\left( Y_t = l \,\middle|\, Y_{t-1} = m,\, \boldsymbol{x}_i,\, \boldsymbol{Z}_u \right) ,
+$$
+
+fitted once per non-absorbing starting state, so on the five-state space that means two models,
+for $m \in \{P, D\}$. Time-fixed, spell-level time-varying and portfolio-level inputs all
+enter, exactly as in the hazard model.
+
+**What it buys.** Heterogeneity and joint estimation together. The destination probabilities
+from one state are estimated as a single softmax, so a row of the matrix sums to one by
+construction rather than by renormalisation, and Botha, Verster and Breedt attribute the
+method's win precisely to that joint modelling rather than to cell-by-cell fits. Redefaults and
+cures come free, because $D$ is a transient state with an outward transition to $P$ rather than
+an absorbing one.
+
+**What it costs.** Parameters, $(J-1)(p+1)$ of them per starting state, so the design needs
+volume. More importantly it needs the delinquency state observed monthly for every account,
+which is strictly more data than a hazard model on time to first default requires, and it is
+the requirement Bondora fails. Interpretation also gets harder: there is no single coefficient
+to point at when a validator asks what a one-point rise in unemployment does to the
+twelve-month PD, because the answer runs through a matrix product.
+
+**Verdict: the best of the three multistate techniques on the published evidence, and the right
+choice where the bank wants stage migration rather than default alone.** It answers IFRS 9
+staging and lifetime PD from one model, which is an operational argument the hazard model
+cannot make.
 
 ## Cox regression with time-varying macro covariates
 
+The continuous-time ancestor of the whole family. Bellotti and Crook (2009) fit a
+proportional hazards model in which each macroeconomic series enters at the value it took in
+the month of default or censoring,
+
+$$
+h_i(t) = h_0(t) \exp\left(
+\boldsymbol{\beta}^{\!\top} \boldsymbol{X}_i + \boldsymbol{\delta}^{\!\top} \boldsymbol{Z}_{g_i + t}
+\right) ,
+$$
+
+with $h_0$ a nonparametric baseline estimated from the data by partial likelihood.
+
+**What it buys.** The empirical case for macro conditioning itself, which this method
+established. On over 100,000 UK credit card accounts opened between 1997 and 2005, adding
+seven macroeconomic series lifted the log-likelihood ratio statistic by 1,779 on 25 degrees of
+freedom, and on an independent 2002 to 2005 test set the macro-augmented model achieved
+significantly lower misclassification cost than both logistic regression and a Cox model
+without the macro block. Interest rate dominated, with a standardised marginal effect of 0.261,
+nearly three times that of earnings, the next most important, which is consistent with the
+direct mechanical effect of rates on a monthly repayment. Every sign matched prior economic
+expectation except production. Furthermore, the paper's practical payoff is exactly the
+substitution IFRS 9 needs: replace the historical macro series with a scenario forecast and
+the model produces stressed default probabilities without refitting.
+
+**What it costs.** Proportional hazards, which asserts that a covariate multiplies the hazard
+by a constant at every loan age, so a characteristic whose effect fades as a book seasons is
+misspecified. A baseline left unparameterised, which is elegant in a clinical trial and
+awkward for an IFRS 9 lifetime PD, since extrapolating beyond the observed follow-up needs a
+functional form the method deliberately avoids. And a continuous-time apparatus imposed on
+data that arrive monthly, which buys nothing when every event time is already tied at a month
+boundary.
+
+**Verdict: cite it for the argument, fit the discrete-time version.** In monthly data the
+discrete hazard is the same model with a tractable likelihood, an interpretable banded
+baseline and a covariate structure a validator can read, which is why the Botha tutorial
+builds on the discrete form.
+
 ## Recurrent events: Andersen-Gill and Prentice-Williams-Peterson
+
+Everything above treats default as the end of the story, and a retail book says otherwise. A
+loan may default, cure, and default again, and both §36.74 of the Basel framework and Article 178(5) of the
+Capital Requirements Regulation acknowledge default as a state a loan can leave. A
+time-to-first-default model discards every observation after the first event, which throws
+away the history of exactly the accounts a lender most wants to understand.
+
+Botha, Verster and Scheepers (2025) compare two Cox extensions that keep it, in their section
+2, "Different types of recurrent event survival models". The **Andersen-Gill** model assumes a
+common baseline hazard across all spells and measures time on one calendar scale, so a cured
+loan simply resumes contributing at-risk time. The **Prentice-Williams-Peterson** gap-time
+model stratifies by spell number, giving each spell its own baseline hazard and permitting
+spell-specific covariate effects, and resets the clock to zero at the start of every new
+spell.
+
+**What Andersen-Gill buys** is simplicity: one baseline, one set of coefficients, and
+redefaults included at almost no modelling cost. **What it costs** is the assumption doing the
+work, since one baseline for every spell asserts that the risk of a second default behaves
+like the risk of a first, which retail experience contradicts.
+
+**What Prentice-Williams-Peterson buys** is the right shape for retail lending, because a
+redefault genuinely is a different event and the gap-time clock matches how a cured account is
+managed in practice. **What it costs** is data, since spell-stratified baselines need enough
+second and third spells to estimate, and the portfolio-level term structure now requires
+aggregating spell-level marginals back to the loan.
+
+**Verdict: PWP is the theoretically right recurrent-event choice and Andersen-Gill is
+dominated, though the honest note is what the comparison shows.** Time-to-first-default and
+PWP produce broadly similar discriminatory performance, measured by Harrell's c-statistic and
+by time-dependent ROC analysis, while Andersen-Gill underperforms both. Consequently the
+recurrent-event machinery buys correctness of the estimand rather than discrimination, and it
+is worth the complexity where redefaults are material to the loss and not otherwise.
 
 ## Vasicek Z-factor scaling of a through-the-cycle grade PD
 
+The route from an existing IRB model to a point-in-time number, and section 3.2's probit form
+read as an estimator. Take a through-the-cycle grade PD, push it through
+
+$$
+\mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, Z_u \right)
+= \Phi\left( \frac{ \Phi^{-1}\left( \mathrm{PD}^{\rm TTC}_k \right) - \sqrt{\rho}\, Z_u }{ \sqrt{1 - \rho} } \right) ,
+$$
+
+and the only unknown is the factor realisation $Z_u$. Belkin, Suchower and Forest (1998)
+showed that it need not stay latent: for each observed year, compute the model-implied
+transition matrix at a trial $Z$, minimise its distance from the observed matrix, and take the
+minimiser as that year's realisation. The recovered series turns negative in downturns such as
+the early 1990s recession and positive in expansions, which is the evidence that it measures
+the cycle rather than noise. Djurovic (2025) improves the recovery by fitting one $Z$ to the
+whole matrix in a single weighted least-squares problem rather than grade by grade, removing
+the inconsistency of different grades implying different values of the same common factor.
+
+**What it buys.** A point-in-time PD from a through-the-cycle model with nothing refitted, in
+closed form, at negligible computational cost. Exact averaging, since
+$\mathbb{E}_Z[\mathrm{PD}^{\rm PiT}] = \mathrm{PD}^{\rm TTC}$ holds identically, which no other
+method here gives for free. And an institution that already maintains annual transition
+matrices can run the estimation on data it has.
+
+**What it costs.** $Z_u$ is a recovery rather than a forecast. It is estimated from realised
+transitions, so projecting a point-in-time PD forward still needs a separate model linking $Z$
+to macroeconomic variables, which puts the FLI design problem of section 3.4 straight back in
+the path. The loading $\rho$ is either prescribed by regulation, in which case it was not
+fitted to this portfolio, or estimated, in which case it comes with wide uncertainty. And the
+method scales a level while saying nothing about loan age.
+
+**Verdict: the right tool for converting an existing IRB grade PD to a point-in-time one, and
+the wrong tool for a term structure.** An IFRS 9 term structure is a statement about how risk
+runs with loan age, and this method has no loan-age dimension at all.
+
 ## The age-period-cohort decomposition
+
+Section 3.5 gave the argument; this is the estimator. Breeden (2016) writes the loan-level
+outcome as three separable offsets and embeds them in a GLM scorecard,
+
+$$
+\mathrm{logit}\, q_{i,t}
+= \underbrace{F(t)}_{\text{lifecycle}}
++ \underbrace{G(g_i)}_{\text{vintage}}
++ \underbrace{H(u)}_{\text{environment}}
++ \boldsymbol{\beta}^{\!\top} \boldsymbol{X}_i ,
+\qquad u = g_i + t ,
+$$
+
+with the environment term anchored to an external macro series spanning several cycles and
+back-projected onto the portfolio's vintages.
+
+**What it buys.** The collinearity break, explicitly and by construction rather than
+incidentally. A named, traceable macro coefficient a validator can challenge, which is a
+governance argument that beats a more accurate black box in practice. Reported stability of
+rank-ordering out of time on a US auto book where a plain scorecard decays. And a form that
+drops into an existing scorecard stack, so the bank keeps its infrastructure.
+
+**What it costs.** The external series, and the assumption that the sensitivity estimated on
+it transfers to this portfolio. That assumption is untestable on internal data by
+construction, and it arrives dressed as a data preparation step rather than as a modelling
+choice, which is where it escapes scrutiny.
+
+**Verdict: the cleanest answer to lecture 1's collinearity complaint, and the one method here
+whose key step cannot be validated on internal data alone.**
 
 ## Two methods an actuary already owns
 
+The guides' PD methodology carries two techniques that an actuarial audience knows from
+reserving rather than from credit, and both are in wide production use, so a review that
+omitted them would misdescribe the field.
+
+**Empirical term structures.** Read the marginal and cumulative PDs straight off a defaults
+table with no model at all. With $d_{k,t}$ the accounts performing at observation month $M_k$
+that defaulted in the period $(t-1, t]$, and $n_{k,0}$ the performing count at $M_k$,
+
+$$
+p^m_{k,t} = \frac{d_{k,t}}{n_{k,0}} ,
+\qquad
+p^c_{k,t} = \sum_{s \le t} \frac{d_{k,s}}{n_{k,0}} ,
+$$
+
+then average over the most recent $R$ observation months. What it buys is intuitiveness, no
+forecasting step, and native treatment of attrition and redefaults, so a lifetime PD may
+exceed 100 per cent for a high-risk account, which the method intends rather than tolerates.
+It also makes the point-in-time axis a single tunable parameter, which is the reason it belongs
+in this lecture: **a short reference period $R$ gives a point-in-time estimate with unwanted
+volatility, and an $R$ spanning a full cycle gives a through-the-cycle one.** What it costs is
+that the whole model is the segment definition, and granular segments run out of defaults, so
+the estimates' quality rests entirely on a judgement the method itself gives no help with.
+**Verdict: worth knowing because it is what many production stacks actually run, and because
+it exposes the PiT-to-TTC axis as a dial.**
+
+**Run-off triangles and the chain ladder.** The reserving triangle applied to defaults and
+closures instead of claims, with the chain ladder projecting the incomplete diagonals. What it
+buys is ease of design and automation, and point-in-time estimates that predict the near
+future well. What it costs is that account-level term structures then need crude linear
+scaling of a segment-level curve, which fits badly, and that recent structural change in the
+portfolio distorts the triangle in ways that are correctable only if somebody notices.
+**Verdict: include it for one reason, that an actuarial audience already owns the technique and
+can therefore see immediately what a credit term structure is.**
+
+Four further methods in that file are out of scope here, since none is a Botha method and none
+bears on the point-in-time question: ARIMA on the default rate series, Lorenz curve
+calibration, gradient-boosted direct PD prediction, and market-implied PDs from credit
+spreads.
+
 ## The comparison
+
+The columns are the questions that decide which method a portfolio can support. "Macro
+native" asks whether the macro state enters the estimator itself or has to be bolted on
+afterwards. "Recurrent" asks whether a loan may default twice. "Competing risks" asks whether
+settlement and write-off are modelled or assumed away.
+
+| Method | Unit of observation | Macro native | Competing risks | Recurrent defaults | Data demanded |
+|---|---|---|---|---|---|
+| Discrete-time hazard | loan-month | yes, $\boldsymbol{Z}_u$ block | by data construction | no, first default only | monthly at-risk history, one row per loan-month |
+| Markov chain | portfolio, state pair | no | yes, as absorbing states | yes | monthly delinquency state per account |
+| Beta regression on cells | transition cell by month | yes, per cell | yes, as states | yes | the same, aggregated to cell time series |
+| Multinomial logistic | loan-month, state pair | yes | yes, as states | yes | monthly delinquency state per account |
+| Cox with macro covariates | loan, continuous time | yes | by censoring | no | event times plus a dated macro series |
+| Andersen-Gill | loan-spell, calendar clock | yes | by censoring | yes, common baseline | spell history per loan |
+| Prentice-Williams-Peterson | loan-spell, gap clock | yes | by censoring | yes, spell-stratified | spell history, enough second spells |
+| Vasicek $Z$-factor scaling | rating grade by year | via a separate $Z$ model | no | no | annual transition matrices, a TTC PD, a $\rho$ |
+| Age-period-cohort | loan-month | yes, plus an external series | by censoring | no | monthly history and a longer external macro history |
+| Empirical term structure | observation-month cohort | no, through $R$ only | yes, attrition native | yes | a defaults table by cohort and horizon |
+| Run-off triangle, chain ladder | segment by development month | no | yes, closures native | yes | a triangle of defaults and closures |
+
+: Eleven methods for a point-in-time PD term structure, on the dimensions that decide which one a portfolio can support. Compiled from Botha and Verster (2025), Botha, Verster and Breedt (2025), Botha, Verster and Scheepers (2025), Bellotti and Crook (2009), Belkin, Suchower and Forest (1998), Breeden (2016) and Mario's IFRS 9 PD methodology. "By data construction" means the estimator itself is silent and the treatment is decided when the table is built.
+
+Two performance orderings are established in the literature and both are worth carrying,
+with the attribution stated so a reader can check them.
+
+On the **multistate** family, Botha, Verster and Breedt (2025) report that each successive
+model outperforms the previous on residential mortgage data, so multinomial logistic
+regression beats beta regression, which beats a plain Markov chain, and they attribute the
+ordering to joint rather than per-cell modelling of the transition probabilities. Their
+section 3, "Three models for deriving lifetime PD-estimates", carries both the models and the
+comparison.
+
+On the **recurrent-event** family, Botha, Verster and Scheepers (2025) report that
+time-to-first-default and Prentice-Williams-Peterson perform comparably while Andersen-Gill
+underperforms, measured by Harrell's c-statistic and time-dependent ROC analysis. The section
+map in this repository's source registration for that paper does not cover its empirical
+results, so the attribution here names the paper and the two diagnostics rather than a section
+number, which is the honest form of the citation.
+
+Both orderings come with the same caveat, and it is the caveat that matters most for anyone
+choosing a method on this basis. Each was measured on one portfolio, and neither paper claims
+the ordering transfers. A method's fit is a property of the book it was fitted to.
 
 # The demonstration on Bondora
 
