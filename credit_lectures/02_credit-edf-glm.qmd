@@ -36,7 +36,7 @@ jupyter: python3
 
 # Introduction
 
-The first credit lecture estimated probabilities of default informally, by
+The first credit lecture estimated probabilities of default (PD) informally, by
 empirical default rates per covariate band and by two regression models
 whose loss functions we simply asserted. This lecture supplies the
 distributional theory behind those choices. The framework is the
@@ -54,7 +54,7 @@ regression models, and each has a direct credit reading:
 - **Accuracy**: the estimated PDs should be close to the true (unknown) default probabilities.
 - **Smoothness**: PDs should vary smoothly in continuous borrower characteristics.
 - **Sparsity**: the model should not carry covariates that do no work.
-- **Explainability**: a declined applicant, a validator and a supervisor will all ask why.
+- **Explainability**: a declined applicant, a validator, and a supervisor will all ask why.
 - **Finite sample properties**: estimates must be reliable at the cell sizes a portfolio actually has.
 - **Quantifiable uncertainty**: a PD without a standard error cannot support a capital number.
 - **Adaptability**: the model must be re-estimable as the book and the economy move.
@@ -62,13 +62,80 @@ regression models, and each has a direct credit reading:
 
 Explainability and regulatory compliance carry more weight in credit than
 almost anywhere else in actuarial work, because PD models are embedded in
-individual lending decisions and in regulatory capital. The EDF and GLM
-framework of this lecture scores highly on both, which is one reason
+individual lending decisions and in regulatory capital. The EDF and
+generalised linear model (GLM) framework of this lecture scores highly on
+both, which is one reason
 logistic regression remained the industry standard for decades. The deep
 learning lectures that follow have to earn their extra accuracy against this
 benchmark.
 
 # Exponential dispersion family: a bit of theory
+
+The density below is written once and covers both a discrete and a continuous response, so it
+is worth fixing what each of those objects is before the theory starts.
+
+::: {.callout-note icon=false title="Mass functions, densities and distribution functions"}
+A **discrete** random variable places its probability on individual outcomes, and its
+**probability mass function** records how much sits on each,
+
+$$
+p(y) = \mathbb{P}(Y = y) \ge 0,
+\qquad
+\sum_{y \in \mathcal{Y}} p(y) = 1 ,
+$$
+
+the sum running over the support $\mathcal{Y}$. By contrast, a **continuous** random variable
+has no atoms,
+i.e. $\mathbb{P}(Y = y) = 0$ for every single value $y$, so probability is carried instead by a
+**density** $f$ and recovered only over intervals,
+
+$$
+f(y) \ge 0,
+\qquad
+\int_{\mathbb{R}} f(y)\,\mathrm{d}y = 1,
+\qquad
+\mathbb{P}(a < Y \le b) = \int_a^b f(y)\,\mathrm{d}y .
+$$
+
+Similarly, the **cumulative distribution function** accumulates either of them,
+
+$$
+F(y) = \mathbb{P}(Y \le y) = \sum_{z \le y} p(z)
+\quad \text{(discrete)},
+\qquad
+F(y) = \mathbb{P}(Y \le y) = \int_{-\infty}^{y} f(z)\,\mathrm{d}z
+\quad \text{(continuous)} ,
+$$
+
+and it is non-decreasing and right-continuous, with $F(y) \to 0$ as $y \to -\infty$ and
+$F(y) \to 1$ as $y \to +\infty$. In the continuous case $f = F'$ wherever the derivative
+exists, so a density and a distribution function hold the same information in differential and
+in accumulated form. The complement $S(y) = 1 - F(y)$ is the **survival function**, and it is
+the object lecture S1 attaches its monthly hazards to.
+
+Consequently both quantities the first lecture defined sit on this list. The default indicator has a mass
+function with two atoms,
+
+$$
+\mathbb{P}\left(D_i^{(k)} = 1 \,\middle|\, \boldsymbol{X}_i\right) = \mu_k(\boldsymbol{X}_i),
+\qquad
+\mathbb{P}\left(D_i^{(k)} = 0 \,\middle|\, \boldsymbol{X}_i\right) = 1 - \mu_k(\boldsymbol{X}_i) ,
+$$
+
+and the time to default $T_i$ has a distribution function whose value at the horizon is the
+probability of default itself,
+
+$$
+\mathrm{PD}_k(\boldsymbol{X}_i)
+= \mathbb{P}\left( T_i \le k \,\middle|\, \boldsymbol{X}_i \right)
+= F_{T_i \mid \boldsymbol{X}_i}(k) .
+$$
+
+A PD is therefore a conditional distribution function read at a single point, which is why
+moving the horizon $k$ produces a whole term structure from one distribution. Since $T_i$ is
+measured in whole months on book, the discrete forms above are the operative ones throughout
+this series, and the continuous forms are the idealisation that makes the calculus convenient.
+:::
 
 A random variable $Y$ belongs to the exponential dispersion family if its
 density (or probability mass function) can be written as
@@ -90,6 +157,78 @@ $$
 \mathrm{Var}(Y) = \frac{\varphi}{v}\, \kappa''(\theta).
 $$
 
+Those two formulas are asserted here and the callout proves them, which also explains where
+the cumulant function gets its name.
+
+::: {.callout-note icon=false title="Moments, and the function that generates them"}
+The **$m$th raw moment** of $Y$ is $\mathbb{E}[Y^m]$, and the **$m$th central moment** is
+$\mathbb{E}\left[(Y - \mathbb{E}[Y])^m\right]$. The first raw moment is the mean, the second
+central moment is the variance, and the third and fourth central moments, standardised by the
+variance, give the skewness and the kurtosis. Moments are averages of powers, so each one
+summarises a single shape feature of the distribution.
+
+The **moment generating function** collects all of them at once,
+
+$$
+M_Y(s) = \mathbb{E}\left[ e^{sY} \right]
+= \sum_{m = 0}^{\infty} \frac{s^m}{m!} \, \mathbb{E}\left[Y^m\right] ,
+$$
+
+for $s$ in a neighbourhood of the origin on which the expectation is finite. Therefore the
+moments need no separate calculation. Differentiate
+$m$ times and evaluate at zero, which leaves one term of that series, hence
+$\mathbb{E}[Y^m] = M_Y^{(m)}(0)$. Moreover, where $M_Y$ exists on an open interval around zero it
+pins down the distribution completely. Its logarithm $K_Y(s) = \log M_Y(s)$ is the **cumulant
+generating function**, whose derivatives at zero are the cumulants, the first two being the
+mean and the variance directly.
+
+For an EDF member that logarithm comes out in closed form. Writing $\psi = \varphi / v$ for
+brevity, and reading the integral as a sum for a discrete member,
+
+$$
+M_Y(s)
+= \int \exp\left( sy + \frac{y\theta - \kappa(\theta)}{\psi} + c(y, \psi) \right) \mathrm{d}y
+= \exp\left( \frac{\kappa(\theta + s\psi) - \kappa(\theta)}{\psi} \right)
+\int f_{\theta + s\psi}(y) \, \mathrm{d}y ,
+$$
+
+since the exponent rearranges as
+
+$$
+sy + \frac{y\theta - \kappa(\theta)}{\psi}
+= \frac{y(\theta + s\psi) - \kappa(\theta + s\psi)}{\psi}
++ \frac{\kappa(\theta + s\psi) - \kappa(\theta)}{\psi} .
+$$
+
+The remaining integrand is the same family member at canonical parameter $\theta + s\psi$, so it integrates to one for
+every $s$ small enough to keep $\theta + s\psi$ inside $\boldsymbol{\Theta}$. Consequently
+
+$$
+K_Y(s) = \frac{\kappa(\theta + s\psi) - \kappa(\theta)}{\psi},
+\qquad
+K_Y'(s) = \kappa'(\theta + s\psi),
+\qquad
+K_Y''(s) = \psi \, \kappa''(\theta + s\psi) ,
+$$
+
+and setting $s = 0$ returns $\mathbb{E}[Y] = \kappa'(\theta)$ and
+$\mathrm{Var}(Y) = (\varphi/v)\,\kappa''(\theta)$. The name follows, since $\kappa$ generates
+the cumulants of the family up to that affine change of argument.
+
+In particular, the Bernoulli case is immediate, with $\psi = 1$ and
+$\kappa(\theta) = \log(1 + e^{\theta})$,
+
+$$
+M_{D^{(k)}}(s) = \frac{1 + e^{\theta + s}}{1 + e^{\theta}} = 1 - \mu_k + \mu_k e^{s} ,
+$$
+
+whose two terms are the two atoms of the mass function read off as coefficients. The third
+cumulant is $\kappa'''(\theta) = \mu_k (1 - \mu_k)(1 - 2\mu_k)$, so the skewness of the
+indicator is $(1 - 2\mu_k) / \sqrt{\mu_k (1 - \mu_k)}$, which reaches $4.13$ at a PD of
+5 per cent and vanishes only at $\mu_k = 1/2$. Consequently a handful of defaults carries much
+of the weight in a small cell, which is a recurring difficulty in low-default portfolios.
+:::
+
 Since $\kappa$ is strictly convex on the interior of $\boldsymbol{\Theta}$,
 the mean function $\kappa'$ is strictly increasing and therefore invertible.
 Its inverse
@@ -98,26 +237,37 @@ $$
 h := (\kappa')^{-1}
 $$
 
-is called the **canonical link**, and it identifies means with canonical
-parameters one to one, $h(\mathbb{E}[Y]) = \theta$.
+is called the **canonical link**. Hence means and canonical parameters
+correspond one to one, $h(\mathbb{E}[Y]) = \theta$.
 
 ## The Bernoulli member
 
-The default indicator $D \in \{0, 1\}$ of the first lecture has probability
-mass function $\mathbb{P}(D = y) = \mu^{y} (1 - \mu)^{1-y}$ for
-$y \in \{0,1\}$, where $\mu = \mathrm{PD}$ is the default probability.
-Rewriting,
+The first lecture's notation carries over unchanged, and this lecture keeps
+it. The response is the fixed-horizon default indicator
+$D_i^{(k)} = \mathbf{1}\{T_i \le k\} \in \{0, 1\}$ of loan $i$ over a
+window of $k$ months, and its conditional mean is
+$\mu_k(\boldsymbol{X}_i) = \mathbb{E}\left[D_i^{(k)} \mid \boldsymbol{X}_i\right]
+= \mathrm{PD}_k(\boldsymbol{X}_i)$. The horizon travels with both, since a
+PD means nothing without the window it was measured over, and here
+$k = 12$ months throughout. Where a subscript slot is already occupied, by
+a parameterisation $\vartheta$ or by a learning sample $\mathcal{L}$, the
+window rides on the response instead of being written twice.
+
+Suppressing the loan index while the distributional theory is in view, the
+indicator has probability mass function
+$\mathbb{P}\left(D^{(k)} = y\right) = \mu_k^{y} (1 - \mu_k)^{1-y}$ for
+$y \in \{0,1\}$. Rewriting,
 
 $$
-\mathbb{P}(D = y)
-= \exp\left( y \log\frac{\mu}{1-\mu} + \log(1 - \mu) \right)
+\mathbb{P}\left(D^{(k)} = y\right)
+= \exp\left( y \log\frac{\mu_k}{1-\mu_k} + \log(1 - \mu_k) \right)
 = \exp\left( y\theta - \log(1 + e^{\theta}) \right),
 $$
 
 which is the EDF form with
 
 $$
-\theta = \log\frac{\mu}{1-\mu},
+\theta = \log\frac{\mu_k}{1-\mu_k},
 \qquad
 \kappa(\theta) = \log\left(1 + e^{\theta}\right),
 \qquad
@@ -128,18 +278,20 @@ The canonical parameter is the **log-odds** of default, an object every
 credit modeller already works with. Differentiating the cumulant function,
 
 $$
-\kappa'(\theta) = \frac{e^{\theta}}{1 + e^{\theta}} = \mu,
+\kappa'(\theta) = \frac{e^{\theta}}{1 + e^{\theta}} = \mu_k,
 \qquad
-\kappa''(\theta) = \mu (1 - \mu),
+\kappa''(\theta) = \mu_k (1 - \mu_k),
 $$
 
-so the mean function is the sigmoid, the variance is $\mu(1-\mu)$, and the
+so the mean function is the sigmoid, the variance is $\mu_k(1-\mu_k)$, and the
 canonical link is the **logit**, $h(\mu) = \log(\mu/(1-\mu))$. The
 dispersion is fixed at $\varphi = 1$; a single binary observation carries no
-free variance parameter, so overdispersion is a phenomenon of aggregated
-default counts rather than of individual indicators. The weight is $v = 1$
+free variance parameter, so overdispersion belongs to aggregated default
+counts alone. The weight is $v = 1$
 because the fixed-horizon construction of the first lecture gave every loan
-the same twelve-month window. This is the simplification that credit buys:
+the same twelve-month window; its alternative exposure
+$v_i = \min(T_i, k)$ belongs to the hazard convention that lecture S1 takes
+up. This is the simplification that credit buys:
 where the insurance lectures carry $v_i$ through every formula as a time
 exposure, our formulas carry $v_i \equiv 1$ and $\varphi = 1$, and the
 general theory specialises accordingly.
@@ -148,6 +300,9 @@ general theory specialises accordingly.
 
 For mean estimation within the EDF, the natural loss is the **deviance
 loss**
+
+<!-- REVIEW (Mario, round 2, 2 Sep 2026): mention how this meets up with the ML world.
+     Answered by the callout below. -->
 
 $$
 L(y, m)
@@ -161,6 +316,51 @@ its log-likelihood under the estimated mean $m$. The deviance loss is zero
 precisely when $m = y$, and it is **strictly consistent** for mean
 estimation (Gneiting, 2011), which is the minimal requirement for a loss
 that is meant to recover conditional means.
+
+::: {.callout-note icon=false title="The same losses, under machine learning names"}
+Machine learning practice picks a loss and reads the model off it, whereas the EDF derives
+the loss from an assumption about the response. Both routes arrive at the same short menu.
+Every named regression objective in a gradient boosting library is one of the deviance
+losses tabulated in the next section, wearing a different label.
+
+| EDF member | boosting `objective` | loss or metric function |
+|---|---|---|
+| Gaussian | `reg:squarederror`, `regression` | `mean_squared_error`, `nn.MSELoss` |
+| gamma | `reg:gamma`, `gamma` | `mean_gamma_deviance` |
+| Poisson | `count:poisson`, `poisson` | `mean_poisson_deviance`, `nn.PoissonNLLLoss` |
+| Tweedie | `reg:tweedie`, `tweedie` | `mean_tweedie_deviance` |
+| Bernoulli | `binary:logistic`, `binary` | `log_loss`, `nn.BCELoss` |
+
+Three details make that correspondence exact. First, the factor two and the saturated
+log-likelihood are constants in $m$, so they move the value of the loss without moving its
+minimiser. A library reporting a negative log-likelihood and one reporting a deviance
+therefore agree on the fitted model and disagree on the number they print, which is why a
+loss reading is comparable across models within one implementation and meaningless across
+two.
+
+Second, under the canonical link the derivative of the negative log-likelihood with respect
+to the linear predictor is $(m - y) / \psi$ for **every** member of the family, and the
+second derivative is $\kappa''(\theta) / \psi$. Hence a single boosting implementation
+serves the whole menu, since swapping the objective swaps the two lines that compute the
+gradient and the Hessian. The raw residual drives the fit in every row above.
+
+Third, and this is what the EDF framing adds, choosing a loss is choosing a variance
+function $V(\mu)$: an assumption about how dispersion scales with the mean. Gaussian takes
+it constant, Poisson linear in $\mu$ and gamma quadratic. On a $0/1$ response the Bernoulli
+variance $\mu_k(1 - \mu_k)$ is forced by the response itself, so squared error, which on an
+indicator is the Brier score, and log loss are both strictly consistent for $\mu_k$ and
+differ in how they weight the observations. Lecture 7 uses that freedom deliberately when it
+decomposes the Brier score.
+
+The warning sits one level up, in the metrics a scoring pipeline reaches for by default.
+Accuracy, the $F_1$ score and the AUC are invariant under any strictly monotone rescaling of
+the fitted scores, so they grade the ordering of the borrowers and leave the level of
+$\mathrm{PD}_k$ unidentified. A model selected on AUC alone can therefore rank the book
+faultlessly and still misprice every loan in it. Lecture 7 takes that gap up as calibration,
+and lectures 4 and 5 train their networks on `nn.BCELoss`, which is this section's
+Bernoulli deviance halved. Its sibling `nn.BCEWithLogitsLoss` folds the logit link into the
+same loss for numerical stability.
+:::
 
 ## Examples of deviance losses
 
@@ -210,21 +410,21 @@ and fit no EDF member comfortably.
 Model fitting minimises an **in-sample loss** over a learning sample
 
 $$
-\mathcal{L} = \left( D_i, \boldsymbol{X}_i \right)_{i=1}^{n},
+\mathcal{L} = \left( D_i^{(k)}, \boldsymbol{X}_i \right)_{i=1}^{n},
 \qquad
 \widehat{\mu}_{\mathcal{L}} \in \underset{\mu}{\arg\min}
-\sum_{i=1}^{n} L\left(D_i, \mu(\boldsymbol{X}_i)\right),
+\sum_{i=1}^{n} L\left(D_i^{(k)}, \mu(\boldsymbol{X}_i)\right),
 $$
 
 where the general theory's weights $v_i/\varphi$ have already been set to
 one. A model can achieve a small in-sample loss by memorising noise, so a
 fair assessment requires a **test sample**
-$\mathcal{T} = (D_t, \boldsymbol{X}_t)_{t=1}^{m}$ that took no part in the
+$\mathcal{T} = (D_t^{(k)}, \boldsymbol{X}_t)_{t=1}^{m}$ that took no part in the
 fitting. The **out-of-sample loss** (generalisation loss)
 
 $$
 \widehat{\mathrm{GL}}\left(\mathcal{T}, \widehat{\mu}_{\mathcal{L}}\right)
-= \frac{1}{m} \sum_{t=1}^{m} L\left(D_t, \widehat{\mu}_{\mathcal{L}}(\boldsymbol{X}_t)\right)
+= \frac{1}{m} \sum_{t=1}^{m} L\left(D_t^{(k)}, \widehat{\mu}_{\mathcal{L}}(\boldsymbol{X}_t)\right)
 $$
 
 is the main workhorse for model validation and model selection in machine
@@ -304,8 +504,9 @@ precisely the situation an out-of-time split exists to simulate.
 One remark on metrics before we fit anything. The deviance losses of this
 lecture judge the **level** of the predicted PDs, so they are calibration
 measures in the sense of the later calibration lecture. Credit practice
-leads its validation reports with the **AUC** (equivalently the Gini
-coefficient, ${\rm Gini} = 2\,{\rm AUC} - 1$), which judges only the
+leads its validation reports with the **area under the ROC curve (AUC)**,
+equivalently the Gini
+coefficient ${\rm Gini} = 2\,{\rm AUC} - 1$, which judges only the
 **ranking** of borrowers by predicted risk and is blind to the level. The
 two views can disagree, and below they will. We report AUC alongside every
 deviance and defer the systematic treatment of calibration to the
@@ -327,9 +528,9 @@ with regression parameter
 $\vartheta = (\vartheta_0, \ldots, \vartheta_q)^\top \in \mathbb{R}^{q+1}$.
 The conditional mean is linear in the covariates up to the link
 transformation,
-$\mu_{\vartheta}(\boldsymbol{X}) = \mathbb{E}[D \,|\, \boldsymbol{X}] = g^{-1}\langle \vartheta, \boldsymbol{X} \rangle$,
+$\mu_{\vartheta}(\boldsymbol{X}) = \mathbb{E}[D^{(k)} \,|\, \boldsymbol{X}] = g^{-1}\langle \vartheta, \boldsymbol{X} \rangle$,
 which in credit is the PD functional
-$\mathrm{PD}(\boldsymbol{X}) = \mu_{\vartheta}(\boldsymbol{X})$ of the first
+$\mathrm{PD}_k(\boldsymbol{X}) = \mu_{\vartheta}(\boldsymbol{X})$ of the first
 lecture.
 
 ## Logit-link example
@@ -401,7 +602,7 @@ The balance property deserves its credit translation. Under the canonical
 link, the maximum likelihood score equations include, through the intercept,
 
 $$
-\sum_{i=1}^{n} \widehat{\mu}(\boldsymbol{X}_i) = \sum_{i=1}^{n} D_i,
+\sum_{i=1}^{n} \widehat{\mu}(\boldsymbol{X}_i) = \sum_{i=1}^{n} D_i^{(k)},
 $$
 
 so the fitted PDs sum exactly to the observed number of defaults on the
@@ -421,8 +622,8 @@ responses the log-likelihood of the learning sample is
 $$
 \vartheta \mapsto \ell(\vartheta)
 = \sum_{i=1}^{n}
-D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
-+ (1 - D_i) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right),
+D_i^{(k)} \log \mu_{\vartheta}(\boldsymbol{X}_i)
++ \left(1 - D_i^{(k)}\right) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right),
 $$
 
 and $\widehat{\vartheta}^{\rm MLE} \in \arg\max_{\vartheta} \ell(\vartheta)$
@@ -439,31 +640,31 @@ Bernoulli deviance loss over the learning sample,
 $$
 \widehat{\vartheta}^{\rm MLE}
 \in \underset{\vartheta}{\arg\min}
-\sum_{i=1}^{n} 2 \left( -D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
-- (1 - D_i) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right) \right),
+\sum_{i=1}^{n} 2 \left( -D_i^{(k)} \log \mu_{\vartheta}(\boldsymbol{X}_i)
+- \left(1 - D_i^{(k)}\right) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right) \right),
 $$
 
 because the two objectives differ by the saturated log-likelihood, which is
 zero for binary data, and by the factor $-2$. In-sample loss minimisation,
-maximum likelihood and log-loss minimisation are one estimation problem
+maximum likelihood, and log-loss minimisation are one estimation problem
 seen from three angles, and by the finite-sample result quoted earlier this
 common estimator is also the one that uses the data best.
 
 ## GLM example: Bondora data
 
 We now fit a logistic GLM whose scope mirrors the seven-covariate French
-MTPL fit of the course. The first lecture's covariates `AgeClass`,
+motor third-party liability (MTPL) fit of the course. The first lecture's covariates `AgeClass`,
 `logIncome` and `Country` are joined by five further application-time
 variables: education, home ownership, the new-customer flag, income
-verification and employment duration.
+verification, and employment duration.
 
 Two data points force small engineering decisions, and both are worth
 stating openly. First, `HomeOwnershipType` is missing for 1,604 loans and
 `EmploymentDurationCurrentEmployer` for 820. In credit data, missingness is
 routinely informative (an applicant who skips a field differs from one who
-fills it in), so we assign each an explicit `missing` category rather than
-dropping rows or imputing values, and we let the model estimate what
-missingness is worth. Second, the first lecture's oldest age class `71+`
+fills it in), so we assign each an explicit `missing` category, drop no
+rows, impute no values, and let the model estimate what missingness is
+worth. Second, the first lecture's oldest age class `71+`
 contains 13 loans and zero defaults. In a logistic GLM a covariate class
 with no defaults drives its coefficient to $-\infty$; the likelihood keeps
 improving as the fitted PD of the class falls to zero, IRLS runs until it
@@ -639,8 +840,8 @@ print(f"max |coefficient difference|: "
 ```
 
 The learning sample of 118,933 loans collapses to 124 cells, and the two
-coefficient vectors agree to $10^{-12}$, which is IRLS convergence
-tolerance rather than approximation. The reported deviances differ, because
+coefficient vectors agree to $10^{-12}$, which is the IRLS convergence
+tolerance, so the two fits are the same fit. The reported deviances differ, because
 the saturated model changes when the data are grouped, and the coefficient
 estimates are unaffected. In practice the grouped form is how logistic
 GLMs are fitted on aggregated cohort data, e.g. historical default-rate
@@ -683,15 +884,16 @@ everything proved here survives into deep learning.
 
 # Copyright and attribution {.unnumbered}
 
-This document adapts the storyline, structure and notation of *Lecture 2:
+This document adapts the storyline, structure, and notation of *Lecture 2:
 Exponential Dispersion Family and Generalized Linear Models* from the
 summer school **Deep Learning for Actuarial Modeling** (Scognamiglio, Maggi
 and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of
 the project *AI Tools for Actuaries*, used under CC BY-NC 4.0. Changes
 made: the Poisson claim-frequency thread is recast as the Bernoulli default
-thread on the public Bondora loan book, the code is Python rather than R,
+thread on the public Bondora loan book, the code is Python where the
+original is R,
 the out-of-time validation contrast, the quasi-complete separation remark,
-the scorecard points aside and the grouped binomial equivalence are new,
+the scorecard points aside, and the grouped binomial equivalence are new,
 and the offsets-versus-weights section is replaced by its Bernoulli
 counterpart. The original lecture notes are available at
 <https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304>.

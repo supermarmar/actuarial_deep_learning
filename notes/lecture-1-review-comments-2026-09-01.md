@@ -159,7 +159,81 @@ lectures** rather than edits to lecture 1, so each has a plan of its own under
    expanded through a period of falling unemployment, and Estonia alone gives GDP growth at
    -0.083 and inflation at +0.093 with a twelve-month PD swinging 9.1 percentage points on
    the macro state. Research and notation contract in `notes/ifrs9-pit-pd-research.md`.
-2. Planned, not implemented. See `notes/plans/02-irb-capital-lecture.md`.
-3. Planned, not implemented. See `notes/plans/03-causal-inference-lecture.md`.
-4. Treated as a small change to lecture 1 rather than a plan, and mirrored into the
-   `.qmd` at the figure so it survives the next render. Outstanding.
+2. **Answered on 2 September 2026.** The lecture is
+   `credit_lectures/R2_credit-irb-capital.qmd`, the second lecture of the regulatory track, and
+   lecture 1's hybrid callout keeps both representations and loses the derivation, dropping from
+   355 prose words to 194 with a forward reference in place of what moved. The structure and story
+   come from the A-IRB progression in the guides repo, as the comment asked, and they come as
+   structure alone: no portfolio specific travels, and Bondora carries every worked example.
+   Sections 2 to 5 build the framework, section 6 runs the five-step sequence end to end, section 7
+   derives the capital formula and evaluates it, and section 8 asks the validator's questions.
+   Three results are worth more than the walk-through. The F-test that chooses the long-run average
+   period has almost no power at annual frequency, needing a sevenfold variance ratio for 80 per
+   cent power against 1.7-fold on monthly cohorts, so every candidate window passed including one
+   excluding the 2009 crisis and passing meant nothing. Serial correlation at $\phi = 0.66$ takes a
+   twelve-year annual series down to about two and a half independent observations and multiplies
+   the Type C margin of conservatism by 2.2, which is the whole content of paragraph 327 of the ECB
+   guide. And the risk weight curve turns over near a 40 per cent probability of default, so
+   Bondora's riskiest grade consumes less capital than its safest and the book's mean risk weight is
+   twice the standardised approach's flat 75 per cent. The prescribed retail correlations and the
+   capital formula were verified against the Basel Committee's own explanatory note rather than
+   taken from the guides; four regulatory citations could not be verified locally and the lecture
+   cites around them. Outline, notation bridge and citation register in
+   `notes/irb-lecture-structure.md`.
+3. **Answered on 2 September 2026.** The lecture is
+   `credit_lectures/C1_credit-interaction-and-causation.qmd`, on a new causal track prefixed `C`,
+   and lecture 1's section 3.1 keeps its figure and gains a paragraph naming the mechanism as
+   confounding. The deep research the comment asked for ran first and is recorded in
+   `notes/causation-research.md`: ten candidate citations verified against MEDLINE or Crossref,
+   one title corrected, and two better sources found during the search. Eleven sources are now
+   registered in the vault at T4 with three new wiki articles,
+   `methods/interaction-and-effect-modification`, `methods/adjustment-set-selection` and
+   `methods/unmeasured-confounding-sensitivity`, plus an extension to `methods/causal-inference`;
+   `kb-lint` reports zero broken citations and zero broken wikilinks. Four of the eleven are
+   paywalled at *Epidemiology* and *Annals* with no PMC deposit, so they are registered as
+   `not-ingested` stubs and every claim citing one is marked as tracing to the abstract rather
+   than to a read.
+
+   What the lecture does with that material is worth recording, because three results were
+   stronger than the plan expected. The scale demonstration is arithmetic rather than assertion:
+   a logit with no interaction term gives an odds ratio of 0.9107 in all three countries and risk
+   differences of -1.30, -2.23 and -2.31 percentage points, and the general result is that
+   interaction is present on at least one scale whenever both covariates matter, so a bare "no
+   interaction" claim conveys nothing. Lecture 1's `Interest` argument turns out to be a mediator
+   **and** a collider depending on the path, and conditioning on the rate leaves the income
+   coefficient almost untouched while taking a third off the Spanish country coefficient. And the
+   constructed collider flips the income coefficient from -0.119 to +0.623 while improving AIC by
+   29,822 and lifting the Gini from 0.386 to 0.635, so every conventional selection criterion in
+   credit would have chosen it.
+
+   The plan feared the standardisation would collapse on thin cells the way `R1`'s macro fit did.
+   It does not: all fifteen country-by-quintile cells are populated, the thinnest at 630 loans,
+   and standardising GLM3 over the observed country and age distribution reverses the sign of
+   lecture 1's figure, giving a curve that falls from 30.4 to 27.8 per cent where the raw pooled
+   rate climbs from 20.1 to 27.9. Restricting to the three-country common support, which holds
+   70 per cent of the book, attenuates the risk ratio from 0.9149 to 0.9363, so a quarter of the
+   pooled-range effect was extrapolation. The E-value is then computed on that standardised risk
+   ratio rather than on the logit's odds ratio, and at 1.338 it says an ordinary omitted borrower
+   characteristic would explain the effect away. Fairness is one section per the plan's decision,
+   and it catches that Bondora's `Gender == 2` is 12,164 Spanish loans out of 12,180.
+
+   `C2` was deferred per decision 2 of the plan, covering attribution read causally, i.e. SHAP,
+   LocalGLMnet and ICE marginal effects against the Table 2 fallacy. It gets its own plan when
+   the course reaches its LocalGLMnet lectures, which is where it belongs.
+4. **Answered on 2 September 2026.** Treated as a small change to lecture 1 rather than a
+   plan, and mirrored into the `.qmd` at the figure so it survives the next render. The
+   figure is now two panels, a heatmap beside a `plot_surface` view, and the guard against
+   the obvious failure is that both are drawn from the one smoothed `rate` array on one
+   `Normalize(0.1, 0.5)` under one colourbar, so the surface cannot disagree with the map.
+   Three details were easy to get wrong. The surface takes bin **centres** rather than
+   edges, since `linspace(18, 76, 59)` and `linspace(5.5, 9.0, 71)` give 58 and 70 bins and
+   `rate` is therefore `(58, 70)`, which `np.meshgrid(..., indexing="ij")` matches without a
+   silent transpose. The `cnt_s > 8` NaN mask is kept on both panels, because the white
+   space is the honest part of the figure. And the `elev=28, azim=-125` view was chosen over
+   matplotlib's default `-58`, which throws the z-axis furniture into the colourbar; the
+   z-axis label is dropped for the same reason, the colourbar already naming the quantity.
+   The prose beside the figure now argues the interaction the surface makes visible: the age
+   profile is pronounced at high incomes and close to flat at low ones, so no tilted plane
+   reproduces it. A first draft of that sentence placed the ridge on the low-income edge,
+   which the rendered figure contradicts, and it was corrected against the render rather
+   than against expectation.

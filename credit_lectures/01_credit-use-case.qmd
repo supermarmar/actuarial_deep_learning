@@ -732,45 +732,27 @@ $$
 \qquad \lambda \in [0, 1] ,
 $$
 
-with $\lambda = 0$ fully through the cycle and $\lambda = 1$ fully point in time. It is easy to
-explain and it leaves $\lambda$ with no meaning beyond itself, which is why a validator will ask
-how it was set.
+with $\lambda = 0$ fully through the cycle and $\lambda = 1$ fully point in time. It leaves
+$\lambda$ with no meaning beyond itself, which is why a validator will ask how it was set.
 
-The one-factor version gives the dial a meaning. Let $Z_u \sim {\cal N}(0, 1)$ be a systematic
-factor for calendar month $u$, high values benign, and let $\rho \in [0, 1)$ be the loan's loading
-on it. Then
+The one-factor version gives the dial a meaning, writing $Z_u \sim {\cal N}(0, 1)$ for a
+systematic factor in calendar month $u$, high values benign, and $\rho \in [0, 1)$ for the loan's
+loading on it:
 
 $$
 \mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z_u \right)
 = \Phi\left( \frac{ \Phi^{-1}\left( \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) \right)
-- \sqrt{\rho} \, Z_u }{ \sqrt{1 - \rho} } \right) ,
+- \sqrt{\rho} \, Z_u }{ \sqrt{1 - \rho} } \right) .
 $$
 
-which is Vasicek's conditional default probability. At $\rho = 0$ the TTC PD passes through
-unmoved; as $\rho$ rises the same input swings further with the cycle, so $\rho$ is a measure of
-how point-in-time the model is.
+This is Vasicek's conditional default probability, and $\rho$ has replaced $\lambda$ as the dial,
+measuring how far the same input swings with the cycle.
 
-Two properties earn the extra notation. First, averaging the output returns the TTC PD exactly,
-
-$$
-\mathbb{E}_{Z}\left[ \mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z \right) \right]
-= \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) ,
-$$
-
-by the identity $\mathbb{E}\left[ \Phi(a - bZ) \right] = \Phi\left( a / \sqrt{1 + b^2} \right)$ at
-$a = \Phi^{-1}(\cdot) / \sqrt{1 - \rho}$ and $b = \sqrt{\rho / (1 - \rho)}$. The probit link and
-the normal factor are chosen so that the average comes out right, which is what makes this the
-natural home for the previous callout's TTC definition. The warning there still applies to the
-input, mind: setting $Z_u$ to its mean of zero gives
-$\Phi\left( \Phi^{-1}(\mathrm{PD}^{\rm TTC}_k) / \sqrt{1 - \rho} \right)$, which understates the
-TTC PD whenever that PD is below one half. At a TTC PD of 3 per cent and $\rho = 0.15$ it returns
-2.07 per cent, a shortfall of nearly a third.
-
-Secondly, the IRB capital formula is this same expression with the factor stressed rather than
-averaged, $Z_u = -\Phi^{-1}(0.999)$, and there $\rho$ is the asset correlation the CRR prescribes
-by exposure class rather than something the modeller fits. A credit audience therefore already
-knows the machinery; the hybrid reading simply uses it at the middle of the factor distribution
-instead of in its tail.
+Both of its useful properties belong to lecture R2. Averaging the output over $Z$ returns the TTC
+PD **exactly**, and stressing the factor instead, at $Z_u = -\Phi^{-1}(0.999)$, turns the same
+expression into the IRB capital formula with $\rho$ prescribed by exposure class rather than
+fitted. R2 takes that substitution through the whole production sequence, from this scorecard to a
+risk weight.
 :::
 
 ## Regression modelling
@@ -933,7 +915,13 @@ is **endogenous**. It is an output of the lender's previous risk assessment
 rather than a property of the borrower, and a model built on it mostly
 recovers the incumbent model. We therefore leave it out of the regressions
 below and keep it as a benchmark of how much structure a good model should
-find.
+find. In causal language the rate is a **mediator**, sitting on the path from
+the borrower's characteristics to default, and it is simultaneously a
+**collider** on a second path, since the platform's unobserved view of the
+borrower points into both the rate and the outcome. Credit lecture C1 draws
+both paths and measures what conditioning on the rate costs: the income
+coefficient barely moves while a third of the estimated Spanish country effect
+disappears into the coupon.
 
 ## Covariates interact
 
@@ -978,12 +966,25 @@ lecture insists on estimating $\mu(\boldsymbol{X})$ **jointly** in the
 components of $\boldsymbol{X} = (X_1, \ldots, X_q)^\top$ rather than
 marginally.
 
+The mechanism has a name. `Country` is a **confounder** of income and default,
+being a common cause of both, so the pooled gradient carries an open path that
+runs from income back through country and on to default. Conditioning on
+country blocks it, which is exactly what GLM3 does below. Credit lecture C1
+takes that structure apart: it separates interaction from effect modification,
+derives an adjustment set from the graph rather than from predictive lift, and
+recovers the marginal income curve this figure cannot supply by averaging the
+country-conditional model over the observed country distribution. Standardised
+that way the curve **falls**, from 29.6 to 27.7 per cent across a fourfold
+income range, where the raw pooled curve above rises.
+
 <!-- REVIEW (Mario, round 3, 2 Sep 2026): can we also show this as a 3d graph
-     together with the 2d ggraph. Outstanding. -->
+     together with the 2d ggraph. Answered below: two panels off one `rate` array,
+     one shared colour scale and one colourbar. -->
 
 ```{python}
-#| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income. White space marks covariate combinations too thin in the portfolio to estimate. The vertical banding reflects the income effect, the hump at young ages and the deterioration at old ages are visible along the age axis."
+#| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income, shown twice off one smoothed array. Both panels share the colour scale 0.10 to 0.50 and the single colourbar, so a colour means the same default rate in each, and on the surface the height encodes that same rate as well as the colour. White space in the heatmap, and the gaps in the surface, mark covariate combinations too thin in the portfolio to estimate (fewer than eight effective loans after smoothing). The heatmap is the better panel for reading a value off a pair of covariates; the surface is the better panel for seeing that the joint shape is not additive, since the age profile changes its form as log-income moves rather than merely shifting up or down. Read the surface with age increasing to the right along the front edge and log-income increasing away from the viewer to the left, so its income axis runs in the opposite visual sense to the heatmap's vertical one."
 from scipy.ndimage import gaussian_filter
+from matplotlib.colors import Normalize
 
 x = model_dat["Age"].to_numpy().astype(float)
 y = model_dat["logIncome"].to_numpy()
@@ -997,20 +998,56 @@ cnt_s = gaussian_filter(cnt, sigma=2.0)
 dft_s = gaussian_filter(dft, sigma=2.0)
 rate = np.where(cnt_s > 8, dft_s / np.maximum(cnt_s, 1e-9), np.nan)
 
-fig, ax = plt.subplots(figsize=(6.5, 4.2))
+# Both panels are drawn from this one array on this one scale, so the surface
+# cannot disagree with the heatmap. Bin centres, not edges, carry the surface.
+x_c = 0.5 * (x_edges[:-1] + x_edges[1:])
+y_c = 0.5 * (y_edges[:-1] + y_edges[1:])
+X_g, Y_g = np.meshgrid(x_c, y_c, indexing="ij")   # both (58, 70), as rate is
+norm = Normalize(vmin=0.1, vmax=0.5)
+
+fig = plt.figure(figsize=(10.5, 4.4), layout="constrained")
+ax = fig.add_subplot(1, 2, 1)
 im = ax.imshow(
     rate.T, origin="lower", aspect="auto",
-    extent=(18, 76, 5.5, 9.0), cmap="RdYlBu_r", vmin=0.1, vmax=0.5)
+    extent=(18, 76, 5.5, 9.0), cmap="RdYlBu_r", norm=norm)
 ax.set_xlabel("age of borrower"); ax.set_ylabel("log-income")
-fig.colorbar(im, label="smoothed default rate")
-plt.tight_layout(); plt.show()
+ax.set_title("heatmap", fontsize=10)
+
+ax3 = fig.add_subplot(1, 2, 2, projection="3d")
+ax3.plot_surface(
+    X_g, Y_g, rate, cmap="RdYlBu_r", norm=norm,
+    rcount=58, ccount=70, linewidth=0, edgecolor="none", antialiased=True)
+# The z axis carries no label, since the colourbar already names the quantity and
+# a zlabel here collides with the heatmap panel's right edge.
+ax3.set_xlabel("age of borrower"); ax3.set_ylabel("log-income")
+ax3.set_zlim(0.1, 0.5)
+ax3.view_init(elev=28, azim=-125)
+ax3.set_box_aspect((1, 1, 0.62), zoom=1.18)
+ax3.set_title("surface", fontsize=10)
+for pane in (ax3.xaxis.pane, ax3.yaxis.pane, ax3.zaxis.pane):
+    pane.set_facecolor("white"); pane.set_edgecolor("0.85")
+ax3.grid(False)
+
+fig.colorbar(im, ax=(ax, ax3), shrink=0.75, label="smoothed default rate")
+plt.show()
 ```
 
-The heatmap shows the empirical default rate as a function of the two
+Both panels show the empirical default rate as a function of the two
 covariates jointly, smoothed with a Gaussian kernel; the original lecture
-uses loess smoothing for the same purpose. The colouring shows quite some
-non-linear structure, and it does not support any simple combination of the
-two marginal profiles. This requires regression modelling or machine
+uses loess smoothing for the same purpose. They are two views of one array
+on one colour scale, so they carry the same numbers and differ only in what
+they make easy to see. The heatmap is the panel to read a rate off a pair of
+covariates, since position and colour are both undistorted. The surface adds
+the one thing a flat map hides, namely the height, and with it a visual test
+of additivity. Were the joint effect additive, every slice along age would be
+the same curve, raised or lowered by the income level alone. Instead the age
+profile is pronounced at high incomes, where the rate runs at its highest
+below age 25, falls away through the middle ages and lifts again past 65,
+whereas at low incomes it is close to flat. Age therefore matters far more to
+a high-income borrower in this book than to a low-income one, and no amount
+of tilting a plane will reproduce that. Either way the colouring shows quite
+some non-linear structure, and it does not support any simple combination of
+the two marginal profiles. This requires regression modelling or machine
 learning solutions, e.g.,
 
 - generalised linear models (GLMs)
