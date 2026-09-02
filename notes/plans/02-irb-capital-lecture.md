@@ -34,9 +34,28 @@ rather than one fitted here.
 `bash scripts/render_lecture.sh credit_lectures/R2_credit-irb-capital.qmd`, never bare
 `quarto render`.
 
-**Companion:** plan 1, at `notes/plans/01-ifrs9-pit-pd-lecture.md`, builds lecture `R1`
-on IFRS 9 point-in-time PDs. The two lectures share the regulatory track and the
-notation bridge, so read plan 1's notation contract task before starting task 2 here.
+**Companion:** plan 1, at `notes/plans/01-ifrs9-pit-pd-lecture.md`, **was executed on 2
+September 2026**, so lecture `R1` already exists at
+`credit_lectures/R1_credit-ifrs9-pit-pd.qmd`. Read the plan's execution note for the
+three departures, then read `notes/ifrs9-pit-pd-research.md`, which now holds the settled
+notation contract and the methods verdicts. Prefer both over any assumption in this plan,
+since they record what actually happened.
+
+Four consequences for this plan, all worth knowing before task 2.
+
+- The notation contract exists. Three of plan 1's four proposed symbols turned out
+  redundant against symbols the series already owned, so `R1` added one. Task 2 here
+  extends that contract rather than starting a new one.
+- The IFRS 9 against IRB comparison table is already in `R1`, per decision 4, so task 6
+  step 5 cross-references it rather than building it.
+- The Eurostat extract is committed at `credit_lectures/data/macro_eurostat.csv`, 15 kB,
+  carrying harmonised unemployment, HICP annual inflation and real GDP growth for EE, FI
+  and ES from 2009. Note two properties: quarterly GDP is held constant across its three
+  months rather than interpolated, and SK is excluded because its Bondora risk set has a
+  median of 17 loans a month.
+- **The pooled macro fit returns economically backwards signs**, so `R1`'s demonstration
+  runs on Estonia alone and says why. Task 7 step 4 below must inherit that restriction
+  rather than rediscovering it, or it will repeat a known failure.
 
 ---
 
@@ -61,6 +80,7 @@ These bind every task, and they are the ones most easily lost in a fresh session
 2. **The FiT form.** The probit form is canon; the multiplier is named as the
    practitioner shortcut with its bias stated. Shared with `R1`.
 3. **Guides material.** Structure, regulatory references and transferable method only.
+   Confirmed by Mario on 2 September 2026.
    No portfolio specifics travel, and Bondora carries every worked example.
 4. **The IFRS 9 against IRB comparison table** lives in `R1`, cross-referenced here.
 5. **Scope is PD only.** LGD and EAD get one paragraph each, naming what they are and
@@ -409,8 +429,16 @@ This is the section lecture 1's hybrid callout was pointing at.
 
 ## Task 10: trim lecture 1 to a brief mention
 
-**Files:** modify `credit_lectures/01_credit-use-case.qmd`, the hybrid callout at
-lines 778 to 830.
+**Files:** modify `credit_lectures/01_credit-use-case.qmd`, the hybrid callout, which
+opens at line 723 as of commit `6303d4f`. Plan 1's execution moved it, so confirm the
+line before editing:
+
+```bash
+grep -n 'hybrid PD looks like' credit_lectures/01_credit-use-case.qmd
+```
+
+Follow the forward-reference wording lecture 1 already uses for `R1` at line 718, so the
+two references read as a pair.
 
 The comment says this can be briefly mentioned in lecture 1, so lecture 1 keeps a
 mention and loses the derivation.

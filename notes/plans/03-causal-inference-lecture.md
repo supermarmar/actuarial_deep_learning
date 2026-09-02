@@ -80,9 +80,12 @@ Mario settled all four on the day the plan was written, so nothing here blocks.
 
 ## What ground is already taken
 
-Read these first, so the lecture does not restate a neighbour.
+Read these first, so the lecture does not restate a neighbour. Note that plan 1 was
+executed on 2 September 2026, adding `credit_lectures/R1_credit-ifrs9-pit-pd.qmd` and
+trimming lecture 1's point-in-time callout, so every line number below is as of commit
+`6303d4f` and should be confirmed with a grep before editing.
 
-- `credit_lectures/01_credit-use-case.qmd`, section 3.1 at line 993, already
+- `credit_lectures/01_credit-use-case.qmd`, section 3.1 at line 938, already
   demonstrates Simpson's paradox on Bondora: within Estonia, Finland and Spain default
   risk falls with income, while pooled it rises, because the high-income countries carry
   default rates of 38 and 55 per cent against Estonia's 17. Section 3 then runs GLM1,
@@ -331,6 +334,17 @@ decision 4, as one section only.
 
 **Files:** modify `credit_lectures/01_credit-use-case.qmd`; modify `CLAUDE.md`; modify
 `notes/lecture-1-review-comments-2026-09-01.md`.
+
+Confirm the anchors first, since plan 1's execution moved them:
+
+```bash
+grep -n 'Covariates interact\|is \*\*endogenous\*\*\|lecture R1' credit_lectures/01_credit-use-case.qmd
+```
+
+Lecture 1 already carries a forward reference to `R1` at line 718. Match its wording, so
+the two point forward the same way. Note also the outstanding review comment at line 981,
+i.e. Mario's request for a 3D version of the kernel-smoothed figure, which sits inside the
+section this task edits and is a separate change.
 
 Lecture 1 keeps its section 3.1 intact here, unlike plans 1 and 2, because the figure is
 doing work where it stands. What it gains is a forward reference.
