@@ -135,7 +135,8 @@ usual name in the literature, a discrete-time survival neural network.
 
 Hence the comparison against lecture S1's logit is exact rather than indicative:
 the two models optimise the same objective over the same cells and differ only in
-the functional form allowed between the covariates and the logit.
+the functional form allowed between the covariates and the logit. Section 4.2
+verifies that claim numerically rather than leaving it as an argument.
 
 ```{python}
 def masks(df, horizon=HORIZON):
@@ -582,6 +583,34 @@ deviance moves by 0.003, which is noise at this scale. Furthermore the offsets a
 small, with a median of $-0.007$ on the logit scale, so the re-fit is a nudge rather
 than a rebuild.
 
+Those offsets also verify the masking identity of section 2.1. Fitting the same
+model the other way, as a person-period logistic regression on the expanded rows
+with the network's logit as an offset, must return the same coefficients if the two
+objectives really are the same function. The check runs on a subsample so the design
+matrix stays small.
+
+```{python}
+check = np.random.default_rng(11).choice(base.height, 5000, replace=False)
+CHECK_M = 24
+rows, cols = np.nonzero(M[check][:, :CHECK_M])
+identified = [t for t in range(1, CHECK_M + 1) if (Yd[check][:, t - 1] * M[check][:, t - 1]).sum() > 0]
+pp = pd.DataFrame({"y": Yd[check][:, :CHECK_M][rows, cols],
+                   "month": pd.Categorical(cols + 1),
+                   "off": logit_net[check][:, :CHECK_M][rows, cols]})
+pp = pp[pp["month"].isin(identified)]
+pp["month"] = pp["month"].cat.remove_unused_categories()
+by_glm = smf.glm("y ~ C(month) - 1", data=pp, family=sm.families.Binomial(),
+                 offset=pp["off"]).fit()
+by_bisection = readout_refit(logit_net, check)[[t - 1 for t in identified]]
+gap = np.abs(by_bisection - by_glm.params.to_numpy()).max()
+print(f"{len(pp):,} person-period rows, {len(identified)} identified months")
+print(f"largest gap between the two routes to the same offsets: {gap:.2e}")
+```
+
+The two agree to the tolerance of the generalised linear model's own iteration, so
+the masked objective and the person-period likelihood are the same function fitted
+two ways.
+
 Month one is the exception and it is the same exception lecture S1 met when it fitted
 a saturated baseline. No loan in the learning sample defaults in its first month, so
 exact balance there requires a hazard of zero and the offset runs to minus infinity.
@@ -833,6 +862,11 @@ counts can reach it, because those counts are conditioned on a risk set that ear
 repayment has already thinned. Discrimination meanwhile barely moves across the four,
 holding between 0.7112 and 0.7127, which is what should be expected of four models
 built from the same three covariates.
+
+Read the bias column for what it is, namely a portfolio mean against a portfolio
+mean. A model can hit the aggregate and still misplace individual loans, so the
+conditional check belongs beside it, and the reliability diagram in the next section
+supplies it.
 
 ## Auto-calibration and the score decomposition
 
