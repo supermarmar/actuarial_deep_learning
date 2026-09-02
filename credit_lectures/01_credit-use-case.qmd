@@ -1033,6 +1033,9 @@ lecture insists on estimating $\mu(\boldsymbol{X})$ **jointly** in the
 components of $\boldsymbol{X} = (X_1, \ldots, X_q)^\top$ rather than
 marginally.
 
+<!-- REVIEW (Mario, round 3, 2 Sep 2026): can we also show this as a 3d graph
+     together with the 2d ggraph. Outstanding. -->
+
 ```{python}
 #| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income. White space marks covariate combinations too thin in the portfolio to estimate. The vertical banding reflects the income effect, the hump at young ages and the deterioration at old ages are visible along the age axis."
 from scipy.ndimage import gaussian_filter
