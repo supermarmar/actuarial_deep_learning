@@ -252,7 +252,7 @@ per cent, the amount at risk given default is 65, the amount likely to be lost g
 19.5, and the expected loss is 2.93. Each factor conditions on the one before it, and confusing
 exposure at default with loss given default is the most common arithmetic error in the subject.
 
-Expected loss is not, in the framework's view, a risk. It is a forecastable cost, and a bank is
+In the framework's view expected loss is a forecastable cost rather than a risk, so a bank is
 expected to price for it and provide against it. **Capital is held against unexpected loss
 alone.**
 
@@ -398,8 +398,8 @@ cyclical movement and the default rate per grade is flat across the cycle by con
 All three are permissible. The Prudential Regulation Authority's supervisory statement SS4/24
 says so in its section on probability of default model development, and its policy statement
 PS9/24 contemplates firms choosing dynamic recalibration provided a suitable buffer accompanies
-it. The choice is a design decision the bank has to justify, not a compliance question with one
-right answer.
+it. Consequently the choice is a design decision the bank has to justify, and every philosophy
+carries the burden of showing that its calibration still meets Article 180.
 
 ## What the long-run average requirement forces on each
 
@@ -485,13 +485,13 @@ does follow is the organising structure of everything below.
 Those five split cleanly into two phases, and the split is worth holding onto because the tests
 differ completely between them.
 
-**Risk differentiation** covers steps 1 and 2, and asks a single question: does the model rank
-borrowers correctly? It is judged on discrimination, accuracy, stability and robustness, and it
-is indifferent to the level of the estimates.
+**Risk differentiation** covers steps 1 and 2 and asks whether the model ranks borrowers
+correctly. It is judged on discrimination, accuracy, stability and robustness, and it is
+indifferent to the level of the estimates.
 
-**Risk quantification** covers steps 3 to 5, and asks the opposite question: is the level right?
-It is judged on concentration, homogeneity within a grade, heterogeneity between grades,
-migration and calibration accuracy, and it takes the rank ordering as given.
+**Risk quantification** covers steps 3 to 5 and asks whether the level is right. It is judged on
+concentration, homogeneity within a grade, heterogeneity between grades, migration and
+calibration accuracy, and it takes the rank ordering as given.
 
 The division has a consequence the lecture should not lose. Strip out the long-run average
 adjustment, the margin of conservatism and the downturn adjustment, and the same models feed
@@ -1188,12 +1188,12 @@ a borrower already close to default is more likely to fail for reasons of its ow
 the economy turned, so the systematic share of its risk is lower. A weak borrower is idiosyncratically
 weak.
 
-**These are not estimated asset correlations.** They were reverse-engineered so that the formula
-reproduced the economic capital that large internationally active banks were already holding and
-the loss variability that G10 supervisory databases already showed. Calling them empirical
-estimates of a correlation overstates what they are. They are the values that make a
-model reproduce a target, and a bank whose portfolio does not resemble the calibration sample has
-no reason to expect them to fit.
+**These values were reverse-engineered from a target.** The Basel Committee took the economic
+capital that large internationally active banks were already holding, and the loss variability
+that G10 supervisory databases already showed, and searched for the correlation that made its own
+formula reproduce them. Calling the result an empirical estimate of an asset correlation
+overstates what it is, and a bank whose portfolio does not resemble the calibration sample has no
+reason to expect it to fit.
 
 ## The risk weight curve, and where it stops rising
 
@@ -1487,7 +1487,7 @@ Bondora, or for any demonstration: what decisions would change if this model cha
    $\phi = 0.66$ a twelve-year annual series is worth about two and a half independent
    observations, and a bank using the textbook standard error of the mean understates the Type C
    margin by a factor of 2.2. That is the whole content of paragraph 327 of the ECB guide.
-8. **The prescribed correlations are reverse-engineered, not estimated.** They were chosen so the
+8. **The prescribed correlations were reverse-engineered from a target.** They were chosen so the
    formula reproduced the economic capital large banks already held. A portfolio unlike the
    calibration sample has no reason to expect them to fit, and on this one the other-retail
    function has decayed to its floor before the safest grade is reached.
