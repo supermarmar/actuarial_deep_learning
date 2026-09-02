@@ -355,9 +355,117 @@ probability of default on performing loans, and loss given default in default is
 
 # Rating philosophy, and what the regulation forces
 
-*To be written: through the cycle, point in time and dynamic point in time, defined by what
-happens to grade migration and to the observed default rate per grade across the cycle; the
-long-run average requirement; and the procyclicality argument.*
+Before a bank fits anything it has to decide what a rating is supposed to mean, and the decision
+is called the rating philosophy. Definitions by intent are useless here, because every bank will
+say its ratings reflect risk. The definition that works is behavioural, and it turns on two
+observable quantities as the economy moves.
+
+**Does a borrower's grade change when the economy changes?** That is grade migration.
+
+**Does the observed default rate within a fixed grade change when the economy changes?** That is
+the grade's cyclical stability.
+
+The two are complements. A rating system that pushes all of the cyclical movement into
+migration leaves the default rate per grade flat, and one that pushes none of it into migration
+leaves the default rate per grade swinging with the cycle. Where a system sits between those
+poles is its philosophy.
+
+## Three philosophies
+
+**Through the cycle.** Grades are assigned on characteristics that do not move with the economy,
+so nobody migrates. The whole of the cycle then shows up in the observed default rate within
+each grade, which is high in a recession and low in an expansion. Capital is stable, and the
+grade tells you nothing about whether the borrower is in trouble today.
+
+**Point in time.** Grades are driven by whatever currently predicts default, including
+behavioural information such as arrears and utilisation, so borrowers migrate as their
+circumstances change. Some of the cycle is absorbed by migration and some remains in the
+grade-level default rate, which is why the observed rate per grade is described as
+semi-cyclical.
+
+**Dynamic point in time.** A point-in-time model, recalibrated periodically so the assigned
+probability tracks the realised default rate. Migration then carries essentially all of the
+cyclical movement and the default rate per grade is flat across the cycle by construction.
+
+| Philosophy | Grade migration | Default rate within a grade | The case for | The case against |
+|---|---|---|---|---|
+| Through the cycle | none | moves with the cycle | simple, cheap to maintain, needs no forecast and produces the most stable capital | says nothing about a borrower's current condition, and struggles to show that it has used the relevant information the regulation expects it to use |
+| Point in time | ratings migrate as risk drivers move | semi-cyclical | reflects current portfolio composition and current lending standards, and can score a borrower with no performance history | probabilities move, so representativeness has to be monitored continuously |
+| Dynamic point in time | ratings migrate, and the calibration moves too | flat across the cycle | closest to a true current-conditions estimate, and the most accurate short-term capital number | recalibration is a recurring operational burden on backward-looking factors, and it makes risk-weighted assets swing with the economy |
+
+: The three rating philosophies, distinguished by what each does with the cycle rather than by what each claims to measure. Rows are ordered by how much cyclical movement is absorbed into migration, from none to all. Adapted from Mario's credit risk methodology material; no portfolio-specific content is carried over.
+
+All three are permissible. The Prudential Regulation Authority's supervisory statement SS4/24
+says so in its section on probability of default model development, and its policy statement
+PS9/24 contemplates firms choosing dynamic recalibration provided a suitable buffer accompanies
+it. The choice is a design decision the bank has to justify, not a compliance question with one
+right answer.
+
+## What the long-run average requirement forces on each
+
+The binding constraint is calibration rather than philosophy. Article 180 of the Capital
+Requirements Regulation requires the probability assigned to a grade to be a **long-run average
+of one-year default rates** for that grade, estimated over a period spanning a mix of good and
+bad economic conditions, with a minimum observation period of five years. The European Banking
+Authority's 2017 estimation guidelines put the same requirement more sharply: the reference
+period must capture a representative range of economic conditions including stress, and where
+the available history falls short, the answer is a margin of conservatism rather than a longer
+window stitched together from whatever data exists.
+
+Read that against the three rows above and the pressure on each philosophy becomes visible.
+
+A **through-the-cycle** system satisfies the calibration requirement almost trivially, because a
+grade whose membership never changes has a long-run average that is exactly what the requirement
+asks for. Its difficulty lies elsewhere, in demonstrating that the rating uses the relevant
+current information available about the borrower.
+
+A **point-in-time** system has the opposite problem. Its grades are populated by different
+borrowers in different years, so an average of the grade's historical default rates is an
+average over a moving population. The requirement is satisfiable, and satisfying it takes work:
+the grade boundaries have to be stable enough that the historical rates are comparable, which is
+what the grade construction tests in section 6.2 are for.
+
+A **dynamic point-in-time** system is calibrated to track the current rate, which is the opposite
+of a long-run average, so the buffer PS9/24 contemplates is doing real work. Without it the
+calibration target and the regulatory target point in different directions.
+
+## Why a supervisor prefers the stable grade
+
+The regulation's preference for a smoothed probability is not an aesthetic one. Lowe's 2002 Bank
+for International Settlements working paper sets out the mechanism, and it separates two effects
+that are easily conflated.
+
+**Measurement procyclicality** is the obvious one. A rating system calibrated to recent
+experience assigns favourable parameters in an expansion, when defaults are low and collateral
+is expensive, so capital consumption falls and the bank looks well capitalised at exactly the
+moment credit standards are loosening. In a downturn the same machinery reverses, and the bank
+must raise capital on bad terms or contract lending, which deepens the contraction that caused
+the problem.
+
+**Structural procyclicality** is the subtler one, and it survives even a rating system whose
+estimates are perfectly stable. **The capital function is convex in the probability of default
+over the range most portfolios occupy**, so a given rise in the probability produces a more than
+proportionate rise in required capital. Section 7.4 plots that curve and shows both the
+convexity and, at very high probabilities, where it stops.
+
+Consequently the supervisor's preference for a stable grade-level probability is a preference
+about the second derivative of the capital function rather than about measurement philosophy,
+and it is why Basel III added a countercyclical buffer on top rather than trying to fix the risk
+weight itself.
+
+## The same data, calibrated twice
+
+IFRS 9 wants the philosophy this section has just argued against. It wants a probability that
+moves with current conditions and with forecasts of future ones, updated monthly, at contract
+level, out to the lifetime of the exposure. The internal ratings-based approach wants a
+probability smoothed across the cycle, updated annually, at counterparty level, at twelve
+months, with a floor under it.
+
+Lecture R1 tabulates that contrast row by row and this lecture will not repeat the table. The
+point to carry forward is the one the model documentation makes: the two regimes share a **rank
+ordering** and differ in **calibration**. A bank builds one scorecard, uses its output directly
+for the accounting number, and then puts it through steps 3 to 5 of the sequence above for the
+regulatory number. Everything that follows in this lecture is those three steps.
 
 # The five-step sequence
 

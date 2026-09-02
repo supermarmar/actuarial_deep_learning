@@ -121,7 +121,13 @@ window.Quarto = {
   <li><a href="#where-the-accounting-number-and-the-regulatory-number-meet" id="toc-where-the-accounting-number-and-the-regulatory-number-meet" class="nav-link" data-scroll-target="#where-the-accounting-number-and-the-regulatory-number-meet"><span class="header-section-number">3.4</span> Where the accounting number and the regulatory number meet</a></li>
   <li><a href="#defaulted-exposures-named-and-not-developed" id="toc-defaulted-exposures-named-and-not-developed" class="nav-link" data-scroll-target="#defaulted-exposures-named-and-not-developed"><span class="header-section-number">3.5</span> Defaulted exposures, named and not developed</a></li>
   </ul></li>
-  <li><a href="#rating-philosophy-and-what-the-regulation-forces" id="toc-rating-philosophy-and-what-the-regulation-forces" class="nav-link" data-scroll-target="#rating-philosophy-and-what-the-regulation-forces"><span class="header-section-number">4</span> Rating philosophy, and what the regulation forces</a></li>
+  <li><a href="#rating-philosophy-and-what-the-regulation-forces" id="toc-rating-philosophy-and-what-the-regulation-forces" class="nav-link" data-scroll-target="#rating-philosophy-and-what-the-regulation-forces"><span class="header-section-number">4</span> Rating philosophy, and what the regulation forces</a>
+  <ul class="collapse">
+  <li><a href="#three-philosophies" id="toc-three-philosophies" class="nav-link" data-scroll-target="#three-philosophies"><span class="header-section-number">4.1</span> Three philosophies</a></li>
+  <li><a href="#what-the-long-run-average-requirement-forces-on-each" id="toc-what-the-long-run-average-requirement-forces-on-each" class="nav-link" data-scroll-target="#what-the-long-run-average-requirement-forces-on-each"><span class="header-section-number">4.2</span> What the long-run average requirement forces on each</a></li>
+  <li><a href="#why-a-supervisor-prefers-the-stable-grade" id="toc-why-a-supervisor-prefers-the-stable-grade" class="nav-link" data-scroll-target="#why-a-supervisor-prefers-the-stable-grade"><span class="header-section-number">4.3</span> Why a supervisor prefers the stable grade</a></li>
+  <li><a href="#the-same-data-calibrated-twice" id="toc-the-same-data-calibrated-twice" class="nav-link" data-scroll-target="#the-same-data-calibrated-twice"><span class="header-section-number">4.4</span> The same data, calibrated twice</a></li>
+  </ul></li>
   <li><a href="#the-five-step-sequence" id="toc-the-five-step-sequence" class="nav-link" data-scroll-target="#the-five-step-sequence"><span class="header-section-number">5</span> The five-step sequence</a></li>
   <li><a href="#the-five-steps-on-bondora" id="toc-the-five-steps-on-bondora" class="nav-link" data-scroll-target="#the-five-steps-on-bondora"><span class="header-section-number">6</span> The five steps on Bondora</a></li>
   <li><a href="#the-capital-formula" id="toc-the-capital-formula" class="nav-link" data-scroll-target="#the-capital-formula"><span class="header-section-number">7</span> The capital formula</a></li>
@@ -256,7 +262,7 @@ Z_u = -\Phi^{-1}(0.999)
 <section id="expected-loss-unexpected-loss-and-the-gap-capital-covers" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</h1>
 <p>Everything downstream rests on one picture, so it is worth drawing before any formula. A credit portfolio has a distribution of losses over the coming year. That distribution is heavily right skewed, because most years are unremarkable and a few are catastrophic, and the framework picks two points on it.</p>
-<div id="3b610370" class="cell" data-execution_count="1">
+<div id="5a4b475b" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -273,7 +279,7 @@ Z_u = -\Phi^{-1}(0.999)
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#1F4E79"</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>N, G <span class="op">=</span> norm.cdf, norm.ppf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="2d8966c7" class="cell" data-execution_count="2">
+<div id="317c0969" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> vasicek_pdf(x, p, rho):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Density of the asymptotic single-factor loss rate."""</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> G(x), G(p)</span>
@@ -370,7 +376,79 @@ Z_u = -\Phi^{-1}(0.999)
 </section>
 <section id="rating-philosophy-and-what-the-regulation-forces" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Rating philosophy, and what the regulation forces</h1>
-<p><em>To be written: through the cycle, point in time and dynamic point in time, defined by what happens to grade migration and to the observed default rate per grade across the cycle; the long-run average requirement; and the procyclicality argument.</em></p>
+<p>Before a bank fits anything it has to decide what a rating is supposed to mean, and the decision is called the rating philosophy. Definitions by intent are useless here, because every bank will say its ratings reflect risk. The definition that works is behavioural, and it turns on two observable quantities as the economy moves.</p>
+<p><strong>Does a borrower’s grade change when the economy changes?</strong> That is grade migration.</p>
+<p><strong>Does the observed default rate within a fixed grade change when the economy changes?</strong> That is the grade’s cyclical stability.</p>
+<p>The two are complements. A rating system that pushes all of the cyclical movement into migration leaves the default rate per grade flat, and one that pushes none of it into migration leaves the default rate per grade swinging with the cycle. Where a system sits between those poles is its philosophy.</p>
+<section id="three-philosophies" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="three-philosophies"><span class="header-section-number">4.1</span> Three philosophies</h2>
+<p><strong>Through the cycle.</strong> Grades are assigned on characteristics that do not move with the economy, so nobody migrates. The whole of the cycle then shows up in the observed default rate within each grade, which is high in a recession and low in an expansion. Capital is stable, and the grade tells you nothing about whether the borrower is in trouble today.</p>
+<p><strong>Point in time.</strong> Grades are driven by whatever currently predicts default, including behavioural information such as arrears and utilisation, so borrowers migrate as their circumstances change. Some of the cycle is absorbed by migration and some remains in the grade-level default rate, which is why the observed rate per grade is described as semi-cyclical.</p>
+<p><strong>Dynamic point in time.</strong> A point-in-time model, recalibrated periodically so the assigned probability tracks the realised default rate. Migration then carries essentially all of the cyclical movement and the default rate per grade is flat across the cycle by construction.</p>
+<table class="caption-top table">
+<caption>The three rating philosophies, distinguished by what each does with the cycle rather than by what each claims to measure. Rows are ordered by how much cyclical movement is absorbed into migration, from none to all. Adapted from Mario’s credit risk methodology material; no portfolio-specific content is carried over.</caption>
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Philosophy</th>
+<th>Grade migration</th>
+<th>Default rate within a grade</th>
+<th>The case for</th>
+<th>The case against</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Through the cycle</td>
+<td>none</td>
+<td>moves with the cycle</td>
+<td>simple, cheap to maintain, needs no forecast and produces the most stable capital</td>
+<td>says nothing about a borrower’s current condition, and struggles to show that it has used the relevant information the regulation expects it to use</td>
+</tr>
+<tr class="even">
+<td>Point in time</td>
+<td>ratings migrate as risk drivers move</td>
+<td>semi-cyclical</td>
+<td>reflects current portfolio composition and current lending standards, and can score a borrower with no performance history</td>
+<td>probabilities move, so representativeness has to be monitored continuously</td>
+</tr>
+<tr class="odd">
+<td>Dynamic point in time</td>
+<td>ratings migrate, and the calibration moves too</td>
+<td>flat across the cycle</td>
+<td>closest to a true current-conditions estimate, and the most accurate short-term capital number</td>
+<td>recalibration is a recurring operational burden on backward-looking factors, and it makes risk-weighted assets swing with the economy</td>
+</tr>
+</tbody>
+</table>
+<p>All three are permissible. The Prudential Regulation Authority’s supervisory statement SS4/24 says so in its section on probability of default model development, and its policy statement PS9/24 contemplates firms choosing dynamic recalibration provided a suitable buffer accompanies it. The choice is a design decision the bank has to justify, not a compliance question with one right answer.</p>
+</section>
+<section id="what-the-long-run-average-requirement-forces-on-each" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="what-the-long-run-average-requirement-forces-on-each"><span class="header-section-number">4.2</span> What the long-run average requirement forces on each</h2>
+<p>The binding constraint is calibration rather than philosophy. Article 180 of the Capital Requirements Regulation requires the probability assigned to a grade to be a <strong>long-run average of one-year default rates</strong> for that grade, estimated over a period spanning a mix of good and bad economic conditions, with a minimum observation period of five years. The European Banking Authority’s 2017 estimation guidelines put the same requirement more sharply: the reference period must capture a representative range of economic conditions including stress, and where the available history falls short, the answer is a margin of conservatism rather than a longer window stitched together from whatever data exists.</p>
+<p>Read that against the three rows above and the pressure on each philosophy becomes visible.</p>
+<p>A <strong>through-the-cycle</strong> system satisfies the calibration requirement almost trivially, because a grade whose membership never changes has a long-run average that is exactly what the requirement asks for. Its difficulty lies elsewhere, in demonstrating that the rating uses the relevant current information available about the borrower.</p>
+<p>A <strong>point-in-time</strong> system has the opposite problem. Its grades are populated by different borrowers in different years, so an average of the grade’s historical default rates is an average over a moving population. The requirement is satisfiable, and satisfying it takes work: the grade boundaries have to be stable enough that the historical rates are comparable, which is what the grade construction tests in section 6.2 are for.</p>
+<p>A <strong>dynamic point-in-time</strong> system is calibrated to track the current rate, which is the opposite of a long-run average, so the buffer PS9/24 contemplates is doing real work. Without it the calibration target and the regulatory target point in different directions.</p>
+</section>
+<section id="why-a-supervisor-prefers-the-stable-grade" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="why-a-supervisor-prefers-the-stable-grade"><span class="header-section-number">4.3</span> Why a supervisor prefers the stable grade</h2>
+<p>The regulation’s preference for a smoothed probability is not an aesthetic one. Lowe’s 2002 Bank for International Settlements working paper sets out the mechanism, and it separates two effects that are easily conflated.</p>
+<p><strong>Measurement procyclicality</strong> is the obvious one. A rating system calibrated to recent experience assigns favourable parameters in an expansion, when defaults are low and collateral is expensive, so capital consumption falls and the bank looks well capitalised at exactly the moment credit standards are loosening. In a downturn the same machinery reverses, and the bank must raise capital on bad terms or contract lending, which deepens the contraction that caused the problem.</p>
+<p><strong>Structural procyclicality</strong> is the subtler one, and it survives even a rating system whose estimates are perfectly stable. <strong>The capital function is convex in the probability of default over the range most portfolios occupy</strong>, so a given rise in the probability produces a more than proportionate rise in required capital. Section 7.4 plots that curve and shows both the convexity and, at very high probabilities, where it stops.</p>
+<p>Consequently the supervisor’s preference for a stable grade-level probability is a preference about the second derivative of the capital function rather than about measurement philosophy, and it is why Basel III added a countercyclical buffer on top rather than trying to fix the risk weight itself.</p>
+</section>
+<section id="the-same-data-calibrated-twice" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="the-same-data-calibrated-twice"><span class="header-section-number">4.4</span> The same data, calibrated twice</h2>
+<p>IFRS 9 wants the philosophy this section has just argued against. It wants a probability that moves with current conditions and with forecasts of future ones, updated monthly, at contract level, out to the lifetime of the exposure. The internal ratings-based approach wants a probability smoothed across the cycle, updated annually, at counterparty level, at twelve months, with a floor under it.</p>
+<p>Lecture R1 tabulates that contrast row by row and this lecture will not repeat the table. The point to carry forward is the one the model documentation makes: the two regimes share a <strong>rank ordering</strong> and differ in <strong>calibration</strong>. A bank builds one scorecard, uses its output directly for the accounting number, and then puts it through steps 3 to 5 of the sequence above for the regulatory number. Everything that follows in this lecture is those three steps.</p>
+</section>
 </section>
 <section id="the-five-step-sequence" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> The five-step sequence</h1>
