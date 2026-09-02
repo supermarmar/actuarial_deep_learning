@@ -15,7 +15,7 @@ pretend otherwise.
 
 ### Conditional against unconditional names the survival axis
 
-Decision 2 of the plan is corroborated by Mario's own notation rather than by preference. The
+Decision 2 of the plan is corroborated by Mario's own notation, so it rests on evidence. The
 guides' credit risk notation table, at
 `docs/wiki/application/banking/01_internal_environment/risk_measurement/credit_risk/03_notation.md`,
 carries two adjacent rows. Verbatim:
@@ -125,8 +125,8 @@ macroeconomy enters (tutorial section 3). What it buys is every horizon from one
 macro conditioning through $\boldsymbol{x}(t)$, and no new estimation machinery, since any
 binomial likelihood fits it. What it costs is the expansion: 179,235 Bondora loans become
 2,672,193 rows at a sixty-month cap, and the exposure convention inside that expansion is a
-real modelling choice rather than a formatting one, worth 3.5 per cent of exposure on this
-book by lecture S2's measurement. Competing risks are handled by data construction rather than
+real modelling choice with a measurable cost, worth 3.5 per cent of exposure on this book by
+lecture S2's measurement. Competing risks are handled by data construction rather than
 by the estimator, so treating settlement as censoring is a decision the layout hides.
 **Verdict: the default choice, and the spine of this lecture.** It is the only method on this
 list that gives a loan-level term structure and native macro conditioning together without a
@@ -425,7 +425,7 @@ worse kind, a second name for something already named.
 | $\mathrm{PD}^{\rm cum}_k$ | Reject as redundant. Lecture 1's $\mathrm{PD}_k$ and S1's $\mathrm{PD}_k = 1 - {}_k p_{i,0}$ already **are** the cumulative PD | $\mathrm{PD}_k$, unchanged |
 
 So the lecture adds exactly one symbol, $f_{i,t} = {}_{t-1}p_{i,0} \cdot q_{i,t}$, and it is
-inherited rather than invented: it is Botha's third identity, $f(t_{(k)}) = S(t_{(k-1)}) \cdot
+inherited: it is Botha's third identity, $f(t_{(k)}) = S(t_{(k-1)}) \cdot
 h(t_{(k)})$, written with the subscripts this track uses. Everything else the lecture needs is
 already defined somewhere in the series, which is the outcome the plan wanted and a better one
 than four new symbols.
