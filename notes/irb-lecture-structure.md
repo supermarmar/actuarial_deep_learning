@@ -486,3 +486,70 @@ and the EL shortfall threshold.
 `Regulation (EU) No 575/2013` and PRA SS4/24 in the vault would settle all four at once and would
 serve every future piece of IRB work rather than this lecture alone. Recorded here as a
 follow-up, not a blocker: `R2` can be written in full without them by citing at the levels above.
+
+---
+
+# Handover to the writing session
+
+Tasks 1 to 3 are done and committed. Tasks 4 to 11 write and render the lecture, and they run
+on Sonnet. Five things a fresh session needs that the register above does not already carry.
+
+## 1. Another session is committing to this branch
+
+Commits `7b2ce01`, `9a0f7d4` and `6055734` landed on `feat/credit-survival-lectures` interleaved
+with tasks 1 to 3 on 2 September 2026, from a session working on credit lecture 2 and on the
+causal-inference research note. The working tree was clean afterwards and nothing was lost.
+
+**Two tasks are collision points.** Task 10 edits `credit_lectures/01_credit-use-case.qmd` and
+task 11 edits `CLAUDE.md`, both of which another session may hold. Re-read each file immediately
+before editing rather than trusting a line number, `git pull` where the branch has a remote, and
+keep task 10's commit separate from `R2`'s as the plan already requires.
+
+## 2. `R1` asserts a PD floor this register marks unverified
+
+`R1`'s IFRS 9 against IRB comparison table gives the IRB floor as 0.03 per cent. The vault
+verifies 0.03 per cent for non-defaulted **corporate, institution and central government**
+exposures under CRR 2013 and says nothing about retail, and the same vault reports CRR3 raising
+the floor to 0.05 per cent.
+
+So a retail-relevant floor is asserted in one committed lecture and unverified in this register.
+**Do not silently inherit `R1`'s number as verified when writing task 8.** State the floor with
+its exposure class and its vintage, or state it as the widely applied Basel II value and say the
+CRR3 figure differs. Leave `R1` alone; this is a note for the writer, not an erratum.
+
+## 3. Three arrangements of the same formula, so name the canon
+
+The task 2 substitution targets the CRR's arrangement,
+$N\!\left(\left(G(\mathrm{PD}) + \sqrt{R}\,G(0.999)\right)/\sqrt{1-R}\right)$. The BCBS
+explanatory note writes the same quantity as
+$N\!\left((1-R)^{-0.5}G(\mathrm{PD}) + \left(R/(1-R)\right)^{0.5}G(0.999)\right)$. Lecture 1
+writes it a third way, as $\Phi\!\left(\left(\Phi^{-1}(\mathrm{PD}^{\rm TTC}) - \sqrt{\rho}\,
+Z_u\right)/\sqrt{1-\rho}\right)$ with the factor unstressed.
+
+All three are the same expression. **`R2` displays lecture 1's arrangement as canon**, since the
+series already owns it and it is the one the reader has met, then shows the other two as
+one-line rearrangements. The equality is trivial and the point of showing it is that a reader
+meeting the BCBS note or the CRR will otherwise think they have found a different formula.
+
+## 4. The other-retail correlation moves along the x-axis
+
+Task 8 step 4 plots the risk weight against PD. For residential mortgages and qualifying
+revolving retail the correlation is a constant and the curve is straightforward. For **other
+retail**, which is the class Bondora falls in,
+$R = 0.03\,w + 0.16(1-w)$ with $w = (1-e^{-35\,\mathrm{PD}})/(1-e^{-35})$, so $R$ has to be
+recomputed at every PD on the axis.
+
+Holding $R$ fixed at some average produces a plausible-looking curve that is not the
+regulation's. Compute $R$ per point, and plot all three retail curves together so the reader
+sees what the PD dependence does to the shape.
+
+## 5. Grade construction on Bondora will bind on monotonicity, not volume
+
+Task 7 step 2 has 148,733 seasoned loans, a floor of seven non-default grades, and a per-grade
+bound of 1 to 30 per cent of the population. Volume is not the binding constraint at that sample
+size: 1 per cent is 1,487 loans and seven grades is easily cleared.
+
+**The binding constraint will be monotone observed default rates in the thin high-risk grades**,
+where a few hundred defaults drive the rate and adjacent grades cross over. Size the grades
+against default counts rather than against volume alone, and expect the iterative merge step the
+guides describe to be doing real work rather than being a formality.
