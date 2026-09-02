@@ -24,7 +24,7 @@ models and in-context learning.
 | Path | Purpose |
 |---|---|
 | `lectures/` | Ten lecture documents (`.html`) plus `lecture.css`, the shared presentation layer. Seven were Quarto-rendered by the course authors and downloaded from the course site; lectures 3, 8 and 12 are reconstructions from the PDF decks, and carry a `.qmd` source beside them. The authors' figures live in `lectures/figures/`, gitignored; the reconstructed ones live in `lectures/figures-reconstructed/` and are committed, see below |
-| `scripts/` | Repo utilities: the lecture figure fetcher, the PDF figure extractor, the Quarto render wrapper, the credit data converter and the Eurostat macro fetcher |
+| `scripts/` | Repo utilities: the lecture figure fetcher, the PDF figure extractor, the Quarto render wrapper, the HTML-to-PDF printer, the credit data converter and the Eurostat macro fetcher |
 | `credit_lectures/` | Mario's credit risk companion lectures: Quarto `.qmd` sources and their rendered HTML, one per course lecture and **numbered to match the course**, so `03_credit-deep-learning-overview` answers `lectures/03_deep-learning-overview` and `04-05_credit-fnn` answers `lectures/04-05_fnn`. Most adapt their course lecture to the Bondora PD problem; lecture 3 uses the wide credit card portfolio instead, because Bondora's 45 interpretable columns make no case for automated feature extraction. Render with `bash scripts/render_lecture.sh credit_lectures/*.qmd`, never bare `quarto render`: the script strips Quarto's Bootstrap/JS assets so `lecture.css` gets the bare structure it lays out. Lecture 1 reads `bondora_raw.parquet` for its censoring and outcome-window illustrations, which need `DefaultDate`, `Status` and `ReportAsOfEOD`; the modelling table `bondora_pd.parquet` stays leak-free and is never the source for those. Lectures prefixed `S` are a **survival analysis track numbered outside the course sequence**, because no course lecture answers them: `S1_credit-survival-bridge` picks up the discrete-hazard exposure convention lecture 1 defines but does not use, and `S2_survival-insurance-to-credit` supplies the actuarial-to-statistical translation and the Fine-Gray correction S1 defers. `S3_deep-survival-credit` replaces S1's logistic regression with a network, so the whole term structure comes out of one forward pass with a mask instead of the 2.7 million-row expansion, and asks lecture 7's balance and auto-calibration questions of a survival head. All three read `bondora_survival.parquet`. Lectures prefixed `R` are a **regulatory track, also numbered outside the course sequence**, and they grow out of review comments on lecture 1 asking for two of its callouts to become lectures: `R1_credit-ifrs9-pit-pd` separates the survival conditioning axis from the macro one, reviews eleven ways to estimate a point-in-time PD term structure, and demonstrates one on Bondora expanded to person-periods with real Eurostat series attached, so it reads `bondora_survival.parquet` **and** `credit_lectures/data/macro_eurostat.csv`. `R2_credit-irb-capital` takes lecture 1's hybrid PD callout into the IRB world, running the five-step production sequence from a point-in-time scorecard through risk grades, a long-run average and a margin of conservatism to the regulatory PD, then through the single-factor model to the worst-case default rate and the risk weight. It reads `bondora_pd.parquet` **and** `credit_lectures/data/macro_eurostat.csv`, reuses lecture 1's GLM3 unchanged as its scorecard, and takes its structure, regulatory references and transferable method from Mario's A-IRB guides material with no portfolio specifics carried over. Its outline, the notation bridge resolving the three symbol clashes against the guides, and the register of which regulatory citations survived verification are in `notes/irb-lecture-structure.md`; four citations could not be verified locally and the lecture cites around them. Lectures prefixed `C` are a **causal track, numbered outside the course sequence for the same reason**, and answer the third of those review comments, which asked for research into how medical statistics handles interactions, covariates and causation: `C1_credit-interaction-and-causation` separates interaction from effect modification and shows the scale-dependence numerically, derives an adjustment set from a causal diagram rather than from predictive lift, walks every row of lecture 1's own GLM3 table asking what it may be read as, standardises that model over the observed country and age distribution to recover the marginal income curve lecture 1 could not assemble, and prices the result's exposure to unmeasured confounding at an E-value of 1.34. It reads `bondora_pd.parquet` alone. `C2` is named and deferred, covering attribution read causally, i.e. SHAP, LocalGLMnet and ICE marginal effects against the Table 2 fallacy, and it belongs beside the course's LocalGLMnet lectures rather than here. The eleven epidemiology sources behind `C1` were ingested into the vault on 2 September 2026 and the verification contract is `notes/causation-research.md` |
 | `exercises/` | The three 2026 exercise notebooks, exactly as issued |
 | `exercises/solutions/` | Mario's worked solutions. Never edit an issued exercise in place |
@@ -194,6 +194,37 @@ are vector drawings that `pdfimages` never sees and every embedded raster carrie
 mask. It expects the decks in `~/Downloads`; edit `PDF_DIR` if they move. Per-figure `top`,
 `bottom`, `left` and `right` fractions trim the beamer furniture before the white margins are
 cropped, and the page counter is masked so it does not survive as a stray "10/36" beside a plot.
+
+### Lecture PDFs
+
+Every lecture in `lectures/` and `credit_lectures/` carries a committed `.pdf` beside its
+`.html`, so the material reads offline and on a tablet. Printing the PDF is therefore part of
+landing a lecture: a new one is not finished until its PDF sits beside it. Rebuild one, or all
+of them, with:
+
+```bash
+bash scripts/html_to_pdf.sh credit_lectures/R2_credit-irb-capital.html
+bash scripts/html_to_pdf.sh lectures/*.html credit_lectures/*.html   # all 22, roughly 20 minutes
+```
+
+Headless Chrome does the printing, because every lecture pulls MathJax from a CDN and typesets
+its mathematics in JavaScript; weasyprint and wkhtmltopdf have no script runtime, so they emit
+the raw `\frac{}{}` and the failure looks like a successful conversion until somebody reads
+page four. Consequently the script needs a network connection, and that is the one failure the
+script cannot gate on: a slow CDN response yields raw TeX in a PDF that still exits zero, still
+carries its `%%EOF` trailer and is still A4. Checking it would mean a PDF text extractor, which
+is a dependency this repo does not carry, so open a rebuilt file and look at a page of
+mathematics before trusting it.
+
+A4, the margins and the print-colour treatment live in the `@page` and `@media print` blocks of
+`lectures/lecture.css` rather than in the script's flags, so Cmd-P from the browser produces the
+same page. Note that Chrome 152 writes the PDF and then declines to exit, and macOS ships no
+`timeout(1)`, so the script waits for the file to settle and then terminates the browser itself;
+it checks for a `%%EOF` trailer afterwards rather than trusting a file that merely stopped
+growing. Raise `WATCHDOG` if that check ever fires.
+
+Re-render the HTML before rebuilding a PDF from it. The PDF is downstream of the `.qmd` by two
+steps, so `scripts/render_lecture.sh` comes first.
 
 ### Never reformat the authors' files
 

@@ -765,13 +765,30 @@ mjx-container { min-width: 0 !important; }
    17. Print
    ========================================================================== */
 
+/* A4 is stated here rather than passed to the PDF tool, so that Cmd-P from the
+   browser and scripts/html_to_pdf.sh produce the same page. print-color-adjust
+   keeps the code-block and callout fills, which a print engine drops by
+   default and which carry meaning in this design. */
+@page { size: A4; margin: 18mm 16mm; }
+
 @media print {
   :root { --paper: #FFFFFF; --paper-sunk: #F4F4F4; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   #quarto-margin-sidebar { display: none; }
   #quarto-content { display: block; max-width: none; padding: 0; }
   main.content { padding-left: 0; max-width: none; }
   a { color: var(--ink); text-decoration-color: var(--rule); }
   hr { margin: var(--sp-6) auto; }
+  /* Paper does not scroll, so the three overflow-x boxes above clip instead,
+     and a long line loses its tail with nothing on the page to say so. The
+     course lectures were rendered with Quarto's code-overflow: wrap and are
+     already safe; the credit lectures were not, which cost R2 the end of two
+     printed output lines. Wrapping mangles the column alignment of a wide
+     pandas frame, which is the lesser loss against dropping its last column. */
+  pre.sourceCode, .cell-output > pre {
+    overflow: visible; white-space: pre-wrap; overflow-wrap: break-word;
+  }
+  .math.display, mjx-container[display="true"] { overflow: visible; }
   section.level1 > h1, section.level2 > h2 { break-after: avoid; }
   .cell, .callout, table, figure { break-inside: avoid; }
 }
