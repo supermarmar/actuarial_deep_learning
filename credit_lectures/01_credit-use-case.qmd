@@ -418,7 +418,10 @@ $$
 
 which at $k = 12$ is the portfolio default rate the previous section tabulated. The fixed-horizon
 flag is the first row of this table and nothing more, and the rows beneath it are the term
-structure lecture S1 goes after.
+structure lecture S1 goes after. Read ${}_k q_0$ there as the pure-default probability, since
+$D_i^{(k)}$ is built from the monthly flags $y_{i,t}$ rather than from the counts $l_t$; the ratio
+$(l_0 - l_k) / l_0$ recovers the same number only under the assumption the next paragraph
+examines.
 
 Settlement, however, is common. The survival table built in `scripts/convert_credit_data.py`
 counts 42,144 loans settling against 71,416 defaulting, so $l_{k+t} / l_t$ as measured on Bondora
