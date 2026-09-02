@@ -369,8 +369,8 @@ for label, q in (("null (Kaplan-Meier hazards)", q_null),
 ```
 
 The head improves on the logit out of sample, and the margin is best read against
-what there was to win. The null model leaves 1.1739 of deviance for the head to
-explain and 1.0227 for the logit, so the network recovers about fifteen per cent
+what there was to win. The null model leaves 1.1788 of deviance for the head to
+explain and 1.0276 for the logit, so the network recovers about fifteen per cent
 more of the covariate signal than the linear predictor does. That is a smaller
 advantage than the summer school's French motor example produces, which is what
 three covariates and four countries should be expected to yield.
@@ -421,11 +421,19 @@ plt.tight_layout(); plt.show()
 
 The left panel shows what the extra fifty-one output units bought. The logit's
 baseline is a step function on nine bands, so its fitted hazard is flat across
-months four to six and again across months thirteen to eighteen, whereas the head
-follows the peak at month five and the decline after it month by month. The right
-panel shows what they did not buy: the three cumulative curves are within half a
-percentage point of each other at every horizon, because all three are anchored to
-the same marginal event counts.
+months four to six and again across months thirteen to eighteen, moving only as the
+composition of the risk set moves, whereas the head follows the peak at month five
+and the decline after it month by month. The right panel shows what they did not buy.
+The three cumulative curves span 0.14 percentage points at twelve months and 0.71 at
+sixty, because all three are anchored to the same marginal event counts.
+
+One cost of the wide readout is visible in the same panel. Beyond month forty-eight
+the head follows the month-to-month jitter of the Kaplan-Meier hazard rather than
+smoothing through it, which is what a free parameter per month permits when the risk
+set has thinned to a few thousand loans. Early stopping limits that and does not
+remove it, and a penalty on the differences $\alpha_{t+1} - \alpha_t$ would be the
+natural remedy, in the spirit of the regularisation lecture 8 applies to an ICE
+network.
 
 ## Does the advantage survive the out-of-time split?
 
@@ -501,7 +509,7 @@ pred_net, obs_cell = balance("survival head", q_net)
 pred_log, _ = balance("DtH logit    ", q_logit)
 ```
 
-Three readings, three different verdicts. The logit satisfies overall balance to the
+Each reading returns a different verdict. The logit satisfies overall balance to the
 last decimal, because a generalised linear model with a canonical link and a full set
 of categorical indicators has the balance property built into its score equations,
 which is the result lecture 7 proves. It satisfies balance per band for the same
@@ -509,7 +517,7 @@ reason, exactly. Nevertheless it misses balance per month by up to 1,273 default
 because its baseline was banded into nine intervals and a step function cannot match
 sixty targets.
 
-The head fails all three, overstating the learning sample's defaults by 676.7 on
+The head fails all three, overstating the learning sample's defaults by 676.5 on
 56,893, a ratio of 1.0119. Yet its largest monthly gap is 238.0 against the logit's
 1,273.5, and its mean monthly gap is 15.2 against 72.6. Hence the two models fail in
 opposite directions: the logit is exactly right at the resolution it was given and
@@ -568,10 +576,11 @@ print(f"\ntest deviance: head {deviance(q_net, idx_test):.4f}, "
       f"after re-fit {deviance(q_bal, idx_test):.4f}")
 ```
 
-Balance now holds overall and at every identified month, to the precision of the
-root finder, and the out-of-sample deviance is unchanged in the fourth decimal.
-Furthermore the offsets are small, with a median of $-0.007$ on the logit scale, so
-the re-fit is a nudge rather than a rebuild.
+Balance now holds at every identified month to the precision of the root finder, and
+the 2.1 defaults still unaccounted for overall are month one alone. The out-of-sample
+deviance moves by 0.003, which is noise at this scale. Furthermore the offsets are
+small, with a median of $-0.007$ on the logit scale, so the re-fit is a nudge rather
+than a rebuild.
 
 Month one is the exception and it is the same exception lecture S1 met when it fitted
 a saturated baseline. No loan in the learning sample defaults in its first month, so
@@ -580,7 +589,7 @@ The month is left at the network's own value and flagged rather than clamped
 silently.
 
 ```{python}
-#| fig-cap: "Predicted against observed default counts per month on the learning sample. The logit's banded baseline forces a step function through the peak at month five, which is where its largest errors sit; the head tracks the shape without matching any month exactly; the re-fitted head matches every month by construction, so its curve lies under the observed counts. The inset scale is deliberately shared, because the whole point of the comparison is the relative size of the misses."
+#| fig-cap: "Predicted against observed default counts per month on the learning sample. The logit's banded baseline forces a step function through the peak at month five, which is where its largest errors sit; the head tracks the shape without matching any month exactly; the re-fitted head matches every month by construction, so its dashed line traces the observed curve throughout."
 fig, ax = plt.subplots(figsize=(7.5, 3.8))
 ax.plot(months, obs_cell, color=GREY, lw=2.4, label="observed defaults")
 ax.plot(months, pred_log, color=BLUE, lw=1.3, label="DtH logit")
@@ -737,7 +746,7 @@ for k in (12, 60):
           f"difference {100 * (cif_def[k-1] - cif_km[k-1]):+.2f}pp")
 ```
 
-The three probabilities sum to one to nine decimal places, which is the completeness
+The three probabilities sum to one to eight decimal places, which is the completeness
 check lecture S1 applied to the non-parametric estimator, now applied to a network.
 The fitted cumulative incidence sits within 0.60 percentage points of Aalen-Johansen
 at twelve months and 0.33 at sixty, so the head recovers the non-parametric estimate
@@ -854,15 +863,17 @@ Two readings. The head is better calibrated than the logit as well as more
 discriminating, at 0.000154 against 0.000203 and 0.012879 against 0.012172, so the
 flexibility bought accuracy on both terms rather than trading one for the other.
 Nevertheless the readout re-fit moved miscalibration the wrong way, from 0.000154 to
-0.000161, which is the familiar result that imposing an in-sample moment condition
+0.000162, which is the familiar result that imposing an in-sample moment condition
 carries no guarantee out of sample. Balance and auto-calibration are separate
 properties, and the second is the one that survives a change of sample.
 
 ```{python}
-#| fig-cap: "(lhs): bias by month on the test at-risk cells for the survival head, with the vertical bars covering one standard error either side of each binned estimate. No systematic drift with months on book survives, which is what auto-calibration in the time dimension looks like. (rhs): reliability diagram for the twelve-month PD on the seasoned test loans. The single-risk head sits above the diagonal across the range, because it is estimating the wrong quantity; the cause-specific head's cumulative incidence tracks it."
+#| fig-cap: "(lhs): bias by month on the test at-risk cells for the survival head, with the vertical bars covering one standard error either side of each binned estimate. Every bin sits within 0.52 percentage points of zero and one clears the five per cent level, which is the count a set of this many tests returns by chance, so no drift with months on book survives. (rhs): reliability diagram for the twelve-month PD on the seasoned test loans. The single-risk head runs below the diagonal from a predicted 0.25 upwards, meaning it promises more default than arrives; the cause-specific head's cumulative incidence sits on the diagonal over the same range."
 bias_feature = np.tile(months, (len(idx_test), 1))[cells]
 bias = compute_bias(y_obs=y_cells, y_pred=q_net[idx_test][cells],
                     feature=bias_feature, n_bins=12)
+print(f"bias bins {len(bias)}, of which significant at 5 per cent: "
+      f"{int((bias['p_value'] < 0.05).sum())}")
 
 fig, axs = plt.subplots(1, 2, figsize=(9, 3.8))
 ax = axs[0]
@@ -875,9 +886,17 @@ ax.set_title("bias by month, test cells", fontsize=10)
 
 ax = axs[1]
 p_single = 1 - np.cumprod(1 - q_net, axis=1)[:, 11]
-plot_reliability_diagram(y_obs=observed[sel].astype(float), y_pred=p_single[sel], ax=ax)
-plot_reliability_diagram(y_obs=observed[sel].astype(float),
-                         y_pred=cif_def_i[sel, 11], ax=ax)
+truth_sel = observed[sel].astype(float)
+plot_reliability_diagram(y_obs=truth_sel, y_pred=p_single[sel], ax=ax)
+plot_reliability_diagram(y_obs=truth_sel, y_pred=cif_def_i[sel, 11], ax=ax)
+for line in ax.lines:  # the package draws in its own palette; restyle to ours
+    if line.get_color() == "#1f77b4":
+        line.set_color(OX); line.set_label("single-risk head")
+    elif line.get_color() == "#ff7f0e":
+        line.set_color(BLUE); line.set_label("cause-specific head, CIF")
+    else:
+        line.set_color(RULE); line.set_label("_none")
+ax.legend(frameon=False, fontsize=8, loc="upper left")
 ax.set_title(r"reliability, $\mathrm{PD}_{12}$, seasoned test loans", fontsize=10)
 plt.tight_layout(); plt.show()
 ```
@@ -896,9 +915,9 @@ baseline away, so absolute risk needs a separate Breslow estimator before any PD
 be quoted. Proportional hazards is imposed rather than tested, and a lifecycle whose
 hazard peaks at month five and decays thereafter is exactly the shape that assumption
 struggles with when a covariate acts differently early and late. Above all, this data
-is heavily tied: durations are recorded in whole months, so 71,416 events fall into at
-most 105 distinct times and the partial likelihood needs a tie-handling approximation
-in almost every risk set. The discrete-time formulation has no ties to approximate,
+is heavily tied. Durations are recorded in whole months, so the 71,180 events in this
+sample fall into at most sixty distinct times and the partial likelihood needs a
+tie-handling approximation in almost every risk set. The discrete-time formulation has no ties to approximate,
 because it was discrete to begin with.
 
 **DeepHit** (Lee et al. 2018) is closer to what section 5 built. It outputs a joint
@@ -910,8 +929,9 @@ conditional hazards given survival, which keeps the Aalen-Johansen recursion of
 lecture S2 available and keeps every quantity interpretable as a hazard. And the
 ranking term trades calibration for discrimination by design, which makes DeepHit an
 awkward instrument for a lecture whose whole subject is calibration. Where the
-question is which loans to decline, that trade is a good one; where the question is
-what the expected credit loss is, it is not.
+question is which loans to decline, that trade is a good one. Where the question is
+the size of the expected credit loss, calibration is the whole answer and the trade
+runs the wrong way.
 
 The wider map is lecture S2's. Anything that produces a hazard per loan per month can
 be dropped into the identities of lecture S1, and the choice among them is a choice
