@@ -352,8 +352,8 @@ Nothing new was downloaded for this lecture, so this list is short and consists 
 vault could usefully close. None is needed for R1 to be written, and none should be ingested
 from here: `kb-ingest` in the vault owns that, with its audit entry per file.
 
-- **Schutte, W.D., Verster, T., Doubell, D. and Raubenheimer, H. (2020)**, on segmented
-  empirical PD term structures. The guides' PD methodology file cites it and links
+- **Schutte et al. (2020)**, on segmented empirical PD term structures. The guides cite it as
+  "Schutte et al. 2020" and give no fuller reference, so the author list is unverified here. The guides' PD methodology file cites it and links
   <https://mpra.ub.uni-muenchen.de/76271/1/MPRA_paper_76271.pdf>. The vault has no
   registration for it, and it is the primary source for the empirical term structure method
   above.

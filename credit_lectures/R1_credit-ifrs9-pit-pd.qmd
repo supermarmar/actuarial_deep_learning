@@ -816,7 +816,10 @@ the estimates' quality rests entirely on a judgement the method itself gives no 
 it exposes the PiT-to-TTC axis as a dial.**
 
 **Run-off triangles and the chain ladder.** The reserving triangle applied to defaults and
-closures instead of claims, with the chain ladder projecting the incomplete diagonals. What it
+closures instead of claims, with the chain ladder projecting the incomplete diagonals. Mario's
+methodology cites Braun (2004) for the triangle and England and Verrall (2002) for the chain
+ladder, which is the same British Actuarial Journal paper an actuarial reader met in a
+reserving course. What it
 buys is ease of design and automation, and point-in-time estimates that predict the near
 future well. What it costs is that account-level term structures then need crude linear
 scaling of a segment-level curve, which fits badly, and that recent structural change in the
@@ -875,28 +878,530 @@ the ordering transfers. A method's fit is a property of the book it was fitted t
 
 # The demonstration on Bondora
 
-<!-- Intent: prove the point-in-time claim rather than assert it. Expand to
-person-periods, index by calendar month, attach Eurostat series, fit with and
-without the macro block, and show the term structure move under two macro
-paths. -->
+Lecture 1 said this portfolio could not yield a point-in-time PD. This section shows that the
+obstacle was the shape of lecture 1's table rather than a property of the book, fits a macro
+coefficient, and then finds a second obstacle that the first three sections predicted.
+
+```{python}
+import numpy as np
+import polars as pl
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from scipy import stats as sps
+
+plt.rcParams.update({
+    "figure.figsize": (9, 4), "figure.dpi": 150, "font.size": 9,
+    "axes.spines.top": False, "axes.spines.right": False,
+})
+OX, GREY, RULE, BLUE = "#8C2F1E", "#B0B0B0", "#444444", "#1F4E79"
+
+surv = pl.read_parquet("../data/bondora_survival.parquet")
+macro = pl.read_csv("data/macro_eurostat.csv", comment_prefix="#")
+
+HORIZON = 60
+COUNTRIES = ["EE", "FI", "ES"]
+SNAPSHOT = 2021 * 12 + 7 - 1          # July 2021, the extract date
+MONTHS = np.arange(1, HORIZON + 1)
+
+def as_month(u):
+    """Calendar month index back to a YYYY-MM label."""
+    return f"{u // 12}-{u % 12 + 1:02d}"
+
+macro = (macro
+    .with_columns(u=(pl.col("month").str.slice(0, 4).cast(pl.Int32) * 12
+                     + pl.col("month").str.slice(5, 2).cast(pl.Int32) - 1))
+    .rename({"country": "Country"}))
+print(f"{surv.height:,} loans; macro covers {macro['month'].min()} to {macro['month'].max()}")
+```
 
 ## The person-period expansion, indexed by calendar month
 
+The expansion is lecture S1's, unchanged, because a silent difference in the exposure
+convention would make the two lectures disagree about the same book. The one addition is the
+calendar month, and it is the identity of section 2.1 rather than a new column of data.
+
+```{python}
+def person_period(df, horizon=HORIZON):
+    """S1's expansion: one row per loan-month at risk, plus the calendar month u."""
+    return (
+        df.with_columns(n_periods=pl.min_horizontal(pl.col("t_obs_m"), pl.lit(horizon)))
+        .with_columns(t=pl.int_ranges(1, pl.col("n_periods") + 1))
+        .explode("t")
+        .with_columns(
+            y=((pl.col("t") == pl.col("t_obs_m"))
+               & (pl.col("exit_kind") == "default")).cast(pl.Int8),
+            # u = g_i + t, with g_i the origination month as a month index
+            u=(pl.col("LoanDate").dt.year() * 12 + pl.col("LoanDate").dt.month() - 1
+               + pl.col("t")),
+        )
+    )
+
+pp = person_period(surv)
+print(f"{surv.height:,} loans become {pp.height:,} loan-months, {pp['y'].sum():,} events")
+print(f"calendar months u run {as_month(pp['u'].min())} to {as_month(pp['u'].max())}")
+
+depth = (pp.group_by(["Country", "u"]).agg(n=pl.len())
+           .group_by("Country").agg(
+               months=pl.len(),
+               first=pl.col("u").min(), last=pl.col("u").max(),
+               median_at_risk=pl.col("n").median())
+           .sort("months", descending=True))
+print(depth.with_columns(first=pl.col("first").map_elements(as_month, return_dtype=pl.String),
+                         last=pl.col("last").map_elements(as_month, return_dtype=pl.String)))
+```
+
+That table is the whole answer to lecture 1's objection. Estonia is observed over 150 distinct
+calendar months with a median of nearly six thousand loans at risk in each, and within any one
+of those months the book holds loans of many different ages, because vintages from 2009 onwards
+all pass through it. Consequently the age effect and the calendar effect are separately
+identified, and $u = g_i + t$ stops being a constraint that binds the design matrix.
+
+Slovakia is the counter-example and it is excluded from everything that follows. Its 296 loans
+give a median risk set of seventeen a month, and a monthly default rate on seventeen loans is
+noise with a decimal point.
+
 ## The portfolio default rate as a time series
+
+Lecture 1 defined $\mathrm{DR}^{(k)}_u$ and had no data to compute it on. Here it is, at
+$k = 12$, from the same window-start flag.
+
+Two conventions need stating before the series can be read. First, the window has to be
+observable: a flag for the twelve months after $u$ can only be scored where the extract
+covers them, so the series stops twelve months before the July 2021 snapshot. Second, a
+censored loan inside the window contributes a zero, which is the standard bias in a
+fixed-horizon rate and the reason the cut-off is enforced rather than assumed away.
+
+```{python}
+LAST_FULL = SNAPSHOT - 12
+print(f"last fully observed 12-month window opens {as_month(LAST_FULL)}")
+
+dr = (
+    surv.filter(pl.col("Country").is_in(COUNTRIES))
+    .with_columns(g=pl.col("LoanDate").dt.year() * 12 + pl.col("LoanDate").dt.month() - 1)
+    .with_columns(n_periods=pl.min_horizontal(pl.col("t_obs_m"), pl.lit(HORIZON)))
+    .with_columns(t=pl.int_ranges(0, pl.col("n_periods")))     # a window opens at each t
+    .explode("t")
+    .with_columns(u=pl.col("g") + pl.col("t"))
+    .filter(pl.col("u") <= LAST_FULL)
+    .with_columns(                                             # D^{(12)}_{i,t}
+        d12=((pl.col("exit_kind") == "default")
+             & (pl.col("t_obs_m") > pl.col("t"))
+             & (pl.col("t_obs_m") <= pl.col("t") + 12)).cast(pl.Int8))
+    .group_by(["Country", "u"]).agg(n=pl.len(), d=pl.col("d12").sum())
+    .with_columns(rate=pl.col("d") / pl.col("n"))
+    .sort(["Country", "u"])
+)
+
+port = (dr.group_by("u").agg(n=pl.col("n").sum(), d=pl.col("d").sum())
+          .sort("u").with_columns(rate=pl.col("d") / pl.col("n")))
+peak = port.filter(pl.col("rate") == pl.col("rate").max())
+print(f"portfolio series: {port.height} months, {as_month(port['u'].min())} "
+      f"to {as_month(port['u'].max())}")
+print(f"DR^(12)_u mean {port['rate'].mean():.3f}, "
+      f"peak {peak['rate'][0]:.3f} in {as_month(peak['u'][0])}")
+print(f"months with fewer than 500 loans at risk: {dr.filter(pl.col('n') < 500).height}")
+```
+
+```{python}
+#| fig-cap: "The twelve-month portfolio default rate $\\mathrm{DR}^{(12)}_u$ on the Bondora book, by calendar month of window opening, for the three markets with a usable panel. (lhs): the rate, with Estonia in bronze as the only market observed across the 2009 downturn. (rhs): the number of loans at risk behind each point, on a log scale, since a rate computed on a thin risk set is noise and the reader needs to see which points to distrust. Both panels stop in July 2020, twelve months before the extract snapshot, because a later window is not fully observed. Early repayment is treated as censoring throughout."
+fig, axs = plt.subplots(1, 2)
+style = {"EE": (OX, 1.6), "FI": (BLUE, 1.1), "ES": (GREY, 1.1)}
+
+ax = axs[0]
+for c, (colour, lw) in style.items():
+    s = dr.filter(pl.col("Country") == c)
+    ax.plot(s["u"].to_numpy(), s["rate"].to_numpy() * 100, color=colour, lw=lw, label=c)
+ax.set_ylabel("$\\mathrm{DR}^{(12)}_u$ (%)")
+ax.set_title("twelve-month default rate by calendar month", fontsize=10)
+ax.legend(frameon=False, fontsize=8)
+
+ax = axs[1]
+for c, (colour, lw) in style.items():
+    s = dr.filter(pl.col("Country") == c)
+    ax.plot(s["u"].to_numpy(), s["n"].to_numpy(), color=colour, lw=lw, label=c)
+ax.axhline(500, color=RULE, ls="--", lw=1)
+ax.set_yscale("log"); ax.set_ylabel("loans at risk $n_u$")
+ax.set_title("risk set behind each point", fontsize=10)
+
+ticks = [u for u in range(2010 * 12, LAST_FULL, 24)]
+for ax in axs:
+    ax.set_xticks(ticks)
+    ax.set_xticklabels([as_month(u)[:4] for u in ticks])
+    ax.set_xlabel("calendar month $u$")
+plt.tight_layout(); plt.show()
+```
+
+The series is the object section 3.2 called $\mathrm{DR}^{(12)}_u$ and used twice over.
+Averaging it across $u$ gives the regulatory through-the-cycle estimator. Regressing it on
+$\boldsymbol{Z}_u$, or putting $\boldsymbol{Z}_u$ inside the hazard as the next section does,
+gives the point-in-time PD. One series, two uses.
+
+Two features of it deserve comment before any model is fitted. The level is very high for a
+retail book, averaging around 25 per cent over the window, which is what a peer-to-peer lender
+charging up to 100 per cent interest looks like from the inside. And the shape does not obey
+the European credit cycle: the peak sits in late 2017, in the middle of a long expansion, and
+the early years of high unemployment carry the lowest rates in the sample.
 
 ## Attaching the macroeconomy
 
+Three Eurostat series join by country and calendar month, all of them named in IFRS 9
+B5.5.52 or in the EBA's list of the variables EU institutions actually use.
+
+```{python}
+MV = ["unemployment", "inflation", "gdp_growth"]
+joined = dr.join(macro.drop("month"), on=["Country", "u"], how="inner")
+print(f"{joined.height} country-months joined, "
+      f"{joined.select(MV).null_count().sum_horizontal()[0]} missing values")
+
+print("\ncorrelation of DR^(12)_u with each series, within each market:")
+for c in COUNTRIES:
+    s = joined.filter(pl.col("Country") == c)
+    cors = "  ".join(f"{v[:5]} {np.corrcoef(s['rate'], s[v])[0, 1]:+.3f}" for v in MV)
+    print(f"  {c}  n={s.height:3d}   {cors}")
+```
+
+The correlation table is the warning sign, and it is worth reading before the model rather
+than after it. In Estonia the twelve-month default rate moves **with** unemployment, at
+$+0.47$, which is the sign economics expects. In Finland and Spain it moves **against**
+unemployment, at about $-0.38$ in both. A single pooled coefficient asserts one common slope
+across the three, and no common slope can be right when the within-market slopes disagree in
+sign.
+
+The reason is Bondora's own history rather than Europe's. The Finnish and Spanish books opened
+in 2013 and expanded hard through 2017 to 2019, which was a period of steadily falling
+unemployment across the euro area. Within those two markets, therefore, the lender's own move
+down the credit spectrum runs in the opposite direction to the cycle, and a macro variable
+picks up the commercial trajectory.
+
+Fitting the pooled model anyway is the honest way to show what that does.
+
+```{python}
+BANDS = [0, 3, 6, 9, 12, 18, 24, 36, 48, 60]
+BAND_LABELS = [f"{a + 1}-{b}" for a, b in zip(BANDS[:-1], BANDS[1:])]
+AGE_CUTS = [18, 20, 25, 30, 40, 50, 60, 70, 101]
+AGE_LABELS = ["18-20", "21-25", "26-30", "31-40", "41-50", "51-60", "61-70", "71+"]
+BASE_FORMULA = "y ~ C(period) + AgeClass + logIncome"
+
+def design(countries):
+    """Lecture 1's cleaning filter, then S1's expansion, then the macro join."""
+    loans = (surv.filter(pl.col("Age").is_not_null() & (pl.col("IncomeTotal") > 0)
+                         & pl.col("Country").is_in(countries))
+                 .with_columns(logIncome=pl.col("IncomeTotal").log()))
+    frame = (person_period(loans)
+             .join(macro.drop("month"), on=["Country", "u"], how="left")
+             .select(["y", "t", "u", "Age", "logIncome", "Country"] + MV)
+             .drop_nulls().to_pandas())
+    frame["AgeClass"] = pd.cut(frame["Age"], AGE_CUTS, labels=AGE_LABELS,
+                               include_lowest=True)
+    frame["period"] = pd.cut(frame["t"], BANDS, labels=BAND_LABELS)
+    moments = {v: (frame[v].mean(), frame[v].std()) for v in MV}
+    for v in MV:
+        frame[v + "_z"] = (frame[v] - moments[v][0]) / moments[v][1]
+    return loans, frame, moments
+
+def report(fit, label):
+    print(f"[{label}] deviance {fit.deviance:,.1f} on {int(fit.nobs):,} loan-months")
+    for v in MV:
+        z = v + "_z"
+        print(f"   {v:13s} {fit.params[z]:+.4f}   se {fit.bse[z]:.4f}   "
+              f"p {fit.pvalues[z]:.2e}")
+
+MACRO_TERMS = " + " + " + ".join(v + "_z" for v in MV)
+_, pooled, _ = design(COUNTRIES)
+pooled_fit = smf.glm(BASE_FORMULA + " + Country - 1" + MACRO_TERMS,
+                     data=pooled, family=sm.families.Binomial()).fit()
+report(pooled_fit, "pooled, three markets")
+```
+
+Both signs that matter come out backwards. Higher unemployment **lowers** the fitted default
+hazard, and faster GDP growth **raises** it, each with a p-value small enough to be reported
+as decisive by any automatic screen. Inflation is indistinguishable from zero. A model that
+passed a significance test and failed economics is exactly the outcome section 3.4 warned
+about, and it is the case for the sign-constrained regression named there: a constraint would
+have refused this fit rather than reporting it.
+
+Estonia alone is the specification the data can support, and it is the only market observed
+across a genuine downturn, since the 2009 collapse took Estonian GDP down 18.6 per cent year
+on year and unemployment to nearly 19 per cent.
+
+```{python}
+ee_loans, ee, ee_moments = design(["EE"])
+ee_null = smf.glm(BASE_FORMULA + " - 1", data=ee,
+                  family=sm.families.Binomial()).fit()
+ee_fit = smf.glm(BASE_FORMULA + " - 1" + MACRO_TERMS, data=ee,
+                 family=sm.families.Binomial()).fit()
+
+drop = ee_null.deviance - ee_fit.deviance
+print(f"Estonia: {ee_loans.height:,} loans, {int(ee_fit.nobs):,} loan-months, "
+      f"{int(ee['y'].sum()):,} events")
+print(f"deviance without macro {ee_null.deviance:,.1f}, with macro "
+      f"{ee_fit.deviance:,.1f}, drop {drop:,.1f} on 3 df "
+      f"(p {sps.chi2.sf(drop, 3):.1e})\n")
+report(ee_fit, "Estonia only")
+```
+
+Now the coefficients read as economics. Real GDP growth carries a **negative** coefficient at
+$-0.083$ per standard deviation, so a stronger economy lowers the monthly default hazard, and
+the effect is decisive at $p \approx 10^{-22}$. Inflation carries a **positive** coefficient at
+$+0.093$, which is the real-income squeeze on a borrower whose instalment is fixed in nominal
+terms, and it is the largest of the three. Unemployment keeps the expected positive sign at
+$+0.011$ and fails to reach significance, with $p \approx 0.11$.
+
+That last result is worth a sentence rather than a footnote, because unemployment is the
+variable EU institutions select most often and the one IFRS 9 names first. Unemployment lags
+output, and in Estonia it peaked in early 2010 while Bondora's book was still tiny, so the
+market's most informative unemployment months carry almost no exposure. The failure belongs to this
+window and to this book's size rather than to the variable.
+
 ## Two macro paths, two term structures
+
+The payoff is that one fitted model now produces a different term structure for every
+macroeconomic path, which is the whole content of the phrase "point in time". Taking the
+harshest and mildest months the Estonian panel actually contains, and holding each flat across
+the horizon, gives two curves from identical loans at identical ages.
+
+```{python}
+severity = (ee.groupby("u")[MV].first()
+              .assign(sev=lambda f: f["unemployment"] / f["unemployment"].std()
+                                     - f["gdp_growth"] / f["gdp_growth"].std()))
+harsh_u, mild_u = int(severity["sev"].idxmax()), int(severity["sev"].idxmin())
+for label, u in (("harshest", harsh_u), ("mildest", mild_u)):
+    row = severity.loc[u]
+    print(f"{label:9s} {as_month(u)}   unemployment {row['unemployment']:5.1f}%   "
+          f"inflation {row['inflation']:+5.1f}%   GDP growth {row['gdp_growth']:+6.1f}%")
+
+grid = ee_loans.select(["Age", "logIncome"]).to_pandas()
+grid["AgeClass"] = pd.cut(grid["Age"], AGE_CUTS, labels=AGE_LABELS, include_lowest=True)
+grid = grid.dropna(subset=["AgeClass"])
+
+def term_structure(fit, macro_row=None):
+    """Chain the fitted hazards per loan, then average PD_k over the portfolio."""
+    frame = grid.copy()
+    if macro_row is not None:
+        for v in MV:
+            mean, sd = ee_moments[v]
+            frame[v + "_z"] = (macro_row[v] - mean) / sd
+    survival = np.ones(len(frame))
+    curve = np.empty(HORIZON)
+    for k in MONTHS:
+        frame["period"] = pd.cut([k] * len(frame), BANDS, labels=BAND_LABELS)
+        survival = survival * (1 - fit.predict(frame).to_numpy())
+        curve[k - 1] = 1 - survival.mean()
+    return curve
+
+curves = {
+    "harsh": term_structure(ee_fit, severity.loc[harsh_u]),
+    "mild": term_structure(ee_fit, severity.loc[mild_u]),
+    "no macro block": term_structure(ee_null),
+}
+for label, curve in curves.items():
+    print(f"{label:15s} PD_12 {curve[11]:.4f}   PD_24 {curve[23]:.4f}   "
+          f"PD_60 {curve[59]:.4f}")
+gap = (curves["harsh"][11] - curves["mild"][11]) * 100
+print(f"\ntwelve-month gap {gap:.1f} percentage points, "
+      f"ratio {curves['harsh'][11] / curves['mild'][11]:.2f}")
+```
+
+```{python}
+#| fig-cap: "The term structure of default risk from the Estonian discrete-time hazard model, averaged over the 110,651 loans in the design, under two macroeconomic states held flat across the horizon. (lhs): cumulative PD by horizon. Bronze is August 2009, the harshest month in the panel, with unemployment at 14.9 per cent and GDP contracting 18.6 per cent year on year; grey is April 2021, the mildest, at 6.3 per cent and plus 12.9 per cent; the dashed line is the same model fitted without the macro block, which lands between the two. (rhs): the twelve-month cumulative PD as the horizon is read off, marking the 9.1 percentage point gap the macro state alone produces. Both panels treat early repayment as censoring, so both overstate the level that an expected credit loss needs, by the margin lecture S2 measures."
+fig, axs = plt.subplots(1, 2)
+
+ax = axs[0]
+ax.plot(MONTHS, curves["harsh"] * 100, color=OX, lw=1.6, label="Aug 2009, harsh")
+ax.plot(MONTHS, curves["mild"] * 100, color=GREY, lw=1.6, label="Apr 2021, mild")
+ax.plot(MONTHS, curves["no macro block"] * 100, color=RULE, lw=1.1, ls="--",
+        label="no macro block")
+ax.axvline(12, color=RULE, ls=":", lw=1)
+ax.set_xlabel("horizon $k$ (months)"); ax.set_ylabel("$\\mathrm{PD}_k$ (%)")
+ax.set_title("cumulative PD by horizon", fontsize=10)
+ax.legend(frameon=False, fontsize=8, loc="lower right")
+
+ax = axs[1]
+labels = ["Aug 2009\nharsh", "no macro\nblock", "Apr 2021\nmild"]
+values = [curves["harsh"][11] * 100, curves["no macro block"][11] * 100,
+          curves["mild"][11] * 100]
+ax.bar(labels, values, color=[OX, RULE, GREY], width=0.55)
+for x, v in enumerate(values):
+    ax.annotate(f"{v:.1f}%", xy=(x, v), xytext=(0, 3), textcoords="offset points",
+                ha="center", fontsize=8, color=RULE)
+ax.set_ylabel("$\\mathrm{PD}_{12}$ (%)")
+ax.set_title("twelve-month PD under each state", fontsize=10)
+plt.tight_layout(); plt.show()
+```
+
+The two curves are the same loans, the same ages and the same coefficients on age and income.
+Everything separating them is $\boldsymbol{Z}_u$. At twelve months the harsh state gives a
+cumulative PD of 24.5 per cent against 15.4 per cent in the mild state, a gap of 9.1
+percentage points and a ratio of 1.59. By sixty months the ratio falls to 1.34, because
+cumulative probabilities compress as they approach one, which is a reason to compare term
+structures at the short end and a reason IFRS 9's twelve-month and lifetime measures behave
+differently under stress.
+
+So the point-in-time claim is demonstrated rather than asserted. **Lecture 1 was right that
+its own table could not do this, and wrong to conclude that the portfolio could not.** The
+expansion to person-periods was the whole difference.
 
 ## What this demonstration does not show
 
+Five limitations, and the first two are the ones that would matter to a validator.
+
+The two macro states are the **extremes of the observed range**, held flat for sixty months.
+No scenario generator would produce either: an economy does not contract 18.6 per cent for
+five years. The 9.1 percentage point gap is therefore the full span of the effect the model
+has learned rather than the span between a plausible baseline and a plausible downside, which
+would be a fraction of it.
+
+The specification survived only by **dropping two thirds of the book**, and that is a finding
+about the method as much as about Bondora. Pooling was rejected because the within-market
+slopes disagreed in sign, and the diagnosis pointed at the lender's commercial trajectory
+running against the cycle. Estonia escapes because it was observed through 2009, when the
+cycle moved further and faster than any lender's credit policy. A book without a downturn in
+it cannot identify a downturn coefficient, however many loan-months it carries, and this is
+the short-series problem of section 3.4 arriving in the guise of a country filter.
+
+Furthermore, the macro series are **national rather than borrower-specific**. Every Estonian
+borrower in a given month gets the same unemployment rate, so the coefficient measures the
+common component of risk and can say nothing about which borrowers a downturn hits. That is
+the correct division of labour in this specification, since $\boldsymbol{X}_i$ carries the
+idiosyncratic part, and it is worth knowing that the model has no interaction between the two.
+
+The window contains **2020**, and the pandemic months are not a normal draw from the cycle.
+Estonian GDP fell sharply and recovered within a year while government support suppressed the
+default rate that would otherwise have followed, so the relationship the model estimates
+across those months is a policy response as much as an economic one. Post-model adjustments
+exist for precisely this, and the EBA found their release across the sector was driven more by
+reported results than by evidence that the risk had gone.
+
+Finally, this is a **peer-to-peer book** with a concentrated country mix, no secured lending,
+and its own selection story on both sides of the platform. Nothing here transfers to a
+mortgage portfolio, and the demonstration is a demonstration of the method.
+
 # What stays with the IRB lecture
 
-<!-- Intent: hand the hybrid PD, the long-run average and the capital formula to
-R2, so the two lectures do not overlap. -->
+Lecture 1's callout carried a second half that this lecture has used without developing, and
+it belongs to lecture R2. Three things go there.
+
+The **hybrid PD** and its dial. Section 3.2 borrowed Vasicek's conditional default probability
+as the closed form for a FiT PD, and R2 owns the question of where $\rho$ and the logit-scale
+weight $\lambda$ come from, what a validator asks about each, and what "how point in time is
+this model" means as a measurable property rather than a slogan.
+
+The **long-run average**. Section 3.2 wrote $\overline{\mathrm{DR}}^{(12)}$ down and cited
+Article 180 of the Capital Requirements Regulation for the representativeness it forces. The
+mechanics belong to R2: which years enter the window, what a downturn period is, how the
+margin of conservatism is sized, and how the grade-level calibration is done.
+
+The **capital formula**. The same probit expression evaluated at $Z_u = -\Phi^{-1}(0.999)$
+rather than at the middle of the factor distribution is the IRB risk weight, with $\rho$
+prescribed by exposure class rather than fitted. That is one substitution away from
+section 3.2 and a whole lecture's worth of consequences.
+
+Consequently the division between the two is by purpose rather than by mathematics. The same
+Vasicek machinery serves an accounting provision measured at the mean of the cycle and a
+capital requirement measured in its tail, and knowing that the two differ by where the factor
+is evaluated is worth more than either formula on its own.
 
 # Takeaways
 
+1. **Two axes, and confusing them is the standard error.** Conditional against unconditional
+   asks whether survival to the window is inside the number. Point in time against through the
+   cycle asks what to do with the macro state. A PD sits in one of four cells and the word
+   "unconditional" names the survival axis here and the macro axis in the Vasicek literature.
+2. **Lecture 1's flag was the survival machinery in disguise.**
+   $\mathbb{P}(D^{(k)}_{i,t} = 1 \mid \text{performing at } t) = 1 - {}_k p_{i,t}$, so the
+   twelve-month PD is the cumulative PD at one chosen horizon and the term structure is what
+   the same hazards give at every other horizon for free.
+3. **The marginal PD is the quantity accounting consumes.** An ECL sum weights each period by
+   $f_{i,t} = {}_{t-1}p_{i,0} \cdot q_{i,t}$, because a loss has to be dated before it can be
+   discounted. A cumulative PD cannot enter that sum and a hazard has already spent the
+   survival the sum needs.
+4. **A FiT PD belongs inside a probit rather than beside a probability.** A multiplicative FLI
+   factor leaves the unit interval and gets capped exactly where the downside scenario was
+   meant to bite. The Vasicek form is bounded, reduces to the through-the-cycle PD at
+   $\rho = 0$, and averages back to it exactly.
+5. **Averaging happens on the output.** Feeding mean macro conditions into a fitted
+   point-in-time model understates the through-the-cycle PD by nearly a third at a PD of 3 per
+   cent and $\rho = 0.15$, and Jensen's inequality is the whole reason.
+6. **Eleven methods, and the choice is a data question.** The discrete-time hazard model is the
+   only one giving a loan-level term structure with native macro conditioning from a single
+   fit. Multistate models buy stage migration and demand monthly delinquency states.
+   Recurrent-event Cox models buy redefaults and buy no measurable discrimination. Vasicek
+   scaling converts a level and has no loan-age dimension at all.
+7. **Identification is necessary and it is not sufficient.** Expanding Bondora to 2.67 million
+   loan-months breaks the collinearity lecture 1 complained about, and the pooled fit still
+   returns a lower default hazard at higher unemployment, because within Finland and Spain the
+   lender's own expansion ran against the cycle. Estonia, the one market observed through 2009,
+   gives GDP growth at $-0.083$ and inflation at $+0.093$ per standard deviation, and a
+   twelve-month PD swinging 9.1 percentage points on the macro state alone.
+8. **A significance test is not an economics test.** Every implausible coefficient in the
+   pooled fit was decisive by p-value. Sign-constrained regression would have refused it, which
+   is the argument for the constraint.
+
 # Copyright and attribution {.unnumbered}
 
+This lecture answers no lecture of the summer school **Deep Learning for Actuarial Modeling**
+and is original to this repository. It grows out of a review comment on credit lecture 1 asking
+for the point-in-time callout to become a lecture of its own.
+
+The conditional and unconditional definitions, the FiT label and the notation bridge follow
+Mario's own credit risk notation and IFRS 9 methodology material. The term-structure identities
+and the discrete-time specification follow Botha and Verster (2025); the multistate comparison
+follows Botha, Verster and Breedt (2025); the recurrent-event subtypes follow Botha, Verster
+and Scheepers (2025). The case for macroeconomic covariates in a hazard model is Bellotti and
+Crook (2009), the systematic-factor construction is Belkin, Suchower and Forest (1998) and
+Vasicek, and the age-period-cohort decomposition is Breeden (2016). Quotations from IFRS 9 are
+the IASB's.
+
+The Bondora loan book is public. The macroeconomic series are Eurostat's, public and free,
+fetched by `scripts/fetch_macro_eurostat.py` and committed at
+`credit_lectures/data/macro_eurostat.csv` so the lecture renders on a fresh clone.
+
 # References {.unnumbered}
+
+- Belkin, B., Suchower, S. and Forest, L.R. (1998). *A One-Parameter Representation of Credit
+  Risk and Transition Matrices*. CreditMetrics Monitor, Third Quarter 1998.
+- Bellotti, T. and Crook, J. (2009). *Credit scoring with macroeconomic variables using
+  survival analysis*. Journal of the Operational Research Society 60(12).
+- Bondora AS. *Loan dataset (public reports)*. <https://www.bondora.com/en/public-reports>
+- Botha, A. and Verster, T. (2025). *Approaches for modelling the term-structure of default
+  risk under IFRS 9: a tutorial using discrete-time survival analysis*.
+- Botha, A., Verster, T. and Breedt, R. (2025). *Modelling the term-structure of default risk
+  under IFRS 9 within a multistate regression framework*.
+- Botha, A., Verster, T. and Scheepers, B. (2025). *Exploring different subtypes of recurrent
+  event Cox-regression models in modelling lifetime default risk: a tutorial*.
+- Breeden, J.L. (2016). *Incorporating lifecycle and environment in loan-level forecasts and
+  stress tests*. European Journal of Operational Research 255, pp. 649-658.
+- Cox, D.R. (1972). *Regression models and life-tables*. Journal of the Royal Statistical
+  Society, Series B.
+- Djurovic, A. (2025). *IFRS9 Forward-Looking Modeling: Do We Use OLS Regression Efficiently?*
+  Industry paper.
+- Djurovic, A. (2025). *IFRS9 Forward-Looking Modeling: Dynamic Regression Models and
+  Estimation Uncertainty*. Industry paper.
+- Djurovic, A. (2025). *IFRS9 Forward-Looking Modeling and Stationarity Testing: How Reliable
+  Is the Augmented Dickey-Fuller Test?* Industry paper.
+- Djurovic, A. (2025). *The Vasicek PD Model and Transition Matrices: Optimisation of the
+  Systemic Factor Z*. Industry paper.
+- EBA (2017). *Guidelines on credit institutions' credit risk management practices and
+  accounting for expected credit losses (EBA/GL/2017/06)*.
+- EBA (2017). *Guidelines on PD estimation, LGD estimation and the treatment of defaulted
+  exposures (EBA/GL/2017/16)*.
+- EBA (2023). *IFRS 9 Implementation by EU Institutions: 2023 Monitoring Report
+  (EBA/Rep/2023/36)*.
+- Eurostat. *Unemployment by sex and age, monthly data* (`une_rt_m`); *HICP, annual rate of
+  change* (`prc_hicp_manr`); *GDP and main aggregates, quarterly* (`namq_10_gdp`).
+  <https://ec.europa.eu/eurostat>
+- European Union (2013). *Regulation (EU) No 575/2013 (Capital Requirements Regulation)*,
+  Articles 178 and 180.
+- IASB (2014, effective 2018). *IFRS 9 Financial Instruments*, section 5.5 and application
+  guidance B5.5.
+- England, P.D. and Verrall, R.J. (2002). *Stochastic claims reserving in general insurance*.
+  British Actuarial Journal.
+- Schutte et al. (2020), on segmented empirical PD term structures, and Yang (2017) on the
+  cumulative and marginal PD definitions, both cited here as Mario's IFRS 9 PD methodology
+  cites them, since neither carries a full reference there.
+  <https://mpra.ub.uni-muenchen.de/76271/1/MPRA_paper_76271.pdf>
+- Singer, J.D. and Willett, J.B. (1993). *It's about time: using discrete-time survival
+  analysis to study duration and the timing of events*. Journal of Educational Statistics.
+- Vasicek, O. (2002). *The Distribution of Loan Portfolio Value*.

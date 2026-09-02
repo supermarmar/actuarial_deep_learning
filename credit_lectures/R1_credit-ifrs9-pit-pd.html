@@ -28,6 +28,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -539,7 +574,7 @@ p^m_{k,t} = \frac{d_{k,t}}{n_{k,0}} ,
 p^c_{k,t} = \sum_{s \le t} \frac{d_{k,s}}{n_{k,0}} ,
 \]</span></p>
 <p>then average over the most recent <span class="math inline">\(R\)</span> observation months. What it buys is intuitiveness, no forecasting step, and native treatment of attrition and redefaults, so a lifetime PD may exceed 100 per cent for a high-risk account, which the method intends rather than tolerates. It also makes the point-in-time axis a single tunable parameter, which is the reason it belongs in this lecture: <strong>a short reference period <span class="math inline">\(R\)</span> gives a point-in-time estimate with unwanted volatility, and an <span class="math inline">\(R\)</span> spanning a full cycle gives a through-the-cycle one.</strong> What it costs is that the whole model is the segment definition, and granular segments run out of defaults, so the estimates’ quality rests entirely on a judgement the method itself gives no help with. <strong>Verdict: worth knowing because it is what many production stacks actually run, and because it exposes the PiT-to-TTC axis as a dial.</strong></p>
-<p><strong>Run-off triangles and the chain ladder.</strong> The reserving triangle applied to defaults and closures instead of claims, with the chain ladder projecting the incomplete diagonals. What it buys is ease of design and automation, and point-in-time estimates that predict the near future well. What it costs is that account-level term structures then need crude linear scaling of a segment-level curve, which fits badly, and that recent structural change in the portfolio distorts the triangle in ways that are correctable only if somebody notices. <strong>Verdict: include it for one reason, that an actuarial audience already owns the technique and can therefore see immediately what a credit term structure is.</strong></p>
+<p><strong>Run-off triangles and the chain ladder.</strong> The reserving triangle applied to defaults and closures instead of claims, with the chain ladder projecting the incomplete diagonals. Mario’s methodology cites Braun (2004) for the triangle and England and Verrall (2002) for the chain ladder, which is the same British Actuarial Journal paper an actuarial reader met in a reserving course. What it buys is ease of design and automation, and point-in-time estimates that predict the near future well. What it costs is that account-level term structures then need crude linear scaling of a segment-level curve, which fits badly, and that recent structural change in the portfolio distorts the triangle in ways that are correctable only if somebody notices. <strong>Verdict: include it for one reason, that an actuarial audience already owns the technique and can therefore see immediately what a credit term structure is.</strong></p>
 <p>Four further methods in that file are out of scope here, since none is a Botha method and none bears on the point-in-time question: ARIMA on the default rate series, Lorenz curve calibration, gradient-boosted direct PD prediction, and market-implied PDs from credit spreads.</p>
 </section>
 <section id="the-comparison" class="level2" data-number="4.10">
@@ -664,39 +699,421 @@ p^c_{k,t} = \sum_{s \le t} \frac{d_{k,s}}{n_{k,0}} ,
 </section>
 <section id="the-demonstration-on-bondora" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> The demonstration on Bondora</h1>
-<!-- Intent: prove the point-in-time claim rather than assert it. Expand to
-person-periods, index by calendar month, attach Eurostat series, fit with and
-without the macro block, and show the term structure move under two macro
-paths. -->
+<p>Lecture 1 said this portfolio could not yield a point-in-time PD. This section shows that the obstacle was the shape of lecture 1’s table rather than a property of the book, fits a macro coefficient, and then finds a second obstacle that the first three sections predicted.</p>
+<div id="1f9512bb" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> stats <span class="im">as</span> sps</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">9</span>, <span class="dv">4</span>), <span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#1F4E79"</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>surv <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_survival.parquet"</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>macro <span class="op">=</span> pl.read_csv(<span class="st">"data/macro_eurostat.csv"</span>, comment_prefix<span class="op">=</span><span class="st">"#"</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="op">=</span> <span class="dv">60</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>COUNTRIES <span class="op">=</span> [<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>]</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>SNAPSHOT <span class="op">=</span> <span class="dv">2021</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">7</span> <span class="op">-</span> <span class="dv">1</span>          <span class="co"># July 2021, the extract date</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>MONTHS <span class="op">=</span> np.arange(<span class="dv">1</span>, HORIZON <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> as_month(u):</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Calendar month index back to a YYYY-MM label."""</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"</span><span class="sc">{</span>u <span class="op">//</span> <span class="dv">12</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>u <span class="op">%</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">1</span><span class="sc">:02d}</span><span class="ss">"</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>macro <span class="op">=</span> (macro</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>    .with_columns(u<span class="op">=</span>(pl.col(<span class="st">"month"</span>).<span class="bu">str</span>.<span class="bu">slice</span>(<span class="dv">0</span>, <span class="dv">4</span>).cast(pl.Int32) <span class="op">*</span> <span class="dv">12</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>                     <span class="op">+</span> pl.col(<span class="st">"month"</span>).<span class="bu">str</span>.<span class="bu">slice</span>(<span class="dv">5</span>, <span class="dv">2</span>).cast(pl.Int32) <span class="op">-</span> <span class="dv">1</span>))</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>    .rename({<span class="st">"country"</span>: <span class="st">"Country"</span>}))</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>surv<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loans; macro covers </span><span class="sc">{</span>macro[<span class="st">'month'</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>macro[<span class="st">'month'</span>]<span class="sc">.</span><span class="bu">max</span>()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>179,235 loans; macro covers 2009-01 to 2026-07</code></pre>
+</div>
+</div>
 <section id="the-person-period-expansion-indexed-by-calendar-month" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="the-person-period-expansion-indexed-by-calendar-month"><span class="header-section-number">5.1</span> The person-period expansion, indexed by calendar month</h2>
+<p>The expansion is lecture S1’s, unchanged, because a silent difference in the exposure convention would make the two lectures disagree about the same book. The one addition is the calendar month, and it is the identity of section 2.1 rather than a new column of data.</p>
+<div id="9a7d045e" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> person_period(df, horizon<span class="op">=</span>HORIZON):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""S1's expansion: one row per loan-month at risk, plus the calendar month u."""</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        df.with_columns(n_periods<span class="op">=</span>pl.min_horizontal(pl.col(<span class="st">"t_obs_m"</span>), pl.lit(horizon)))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        .with_columns(t<span class="op">=</span>pl.int_ranges(<span class="dv">1</span>, pl.col(<span class="st">"n_periods"</span>) <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        .explode(<span class="st">"t"</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        .with_columns(</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>            y<span class="op">=</span>((pl.col(<span class="st">"t"</span>) <span class="op">==</span> pl.col(<span class="st">"t_obs_m"</span>))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>               <span class="op">&amp;</span> (pl.col(<span class="st">"exit_kind"</span>) <span class="op">==</span> <span class="st">"default"</span>)).cast(pl.Int8),</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>            <span class="co"># u = g_i + t, with g_i the origination month as a month index</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            u<span class="op">=</span>(pl.col(<span class="st">"LoanDate"</span>).dt.year() <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> pl.col(<span class="st">"LoanDate"</span>).dt.month() <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>               <span class="op">+</span> pl.col(<span class="st">"t"</span>)),</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>pp <span class="op">=</span> person_period(surv)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>surv<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loans become </span><span class="sc">{</span>pp<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loan-months, </span><span class="sc">{</span>pp[<span class="st">'y'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> events"</span>)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"calendar months u run </span><span class="sc">{</span>as_month(pp[<span class="st">'u'</span>].<span class="bu">min</span>())<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>as_month(pp[<span class="st">'u'</span>].<span class="bu">max</span>())<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>depth <span class="op">=</span> (pp.group_by([<span class="st">"Country"</span>, <span class="st">"u"</span>]).agg(n<span class="op">=</span>pl.<span class="bu">len</span>())</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>           .group_by(<span class="st">"Country"</span>).agg(</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>               months<span class="op">=</span>pl.<span class="bu">len</span>(),</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>               first<span class="op">=</span>pl.col(<span class="st">"u"</span>).<span class="bu">min</span>(), last<span class="op">=</span>pl.col(<span class="st">"u"</span>).<span class="bu">max</span>(),</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>               median_at_risk<span class="op">=</span>pl.col(<span class="st">"n"</span>).median())</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>           .sort(<span class="st">"months"</span>, descending<span class="op">=</span><span class="va">True</span>))</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(depth.with_columns(first<span class="op">=</span>pl.col(<span class="st">"first"</span>).map_elements(as_month, return_dtype<span class="op">=</span>pl.String),</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>                         last<span class="op">=</span>pl.col(<span class="st">"last"</span>).map_elements(as_month, return_dtype<span class="op">=</span>pl.String)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>179,235 loans become 2,672,193 loan-months, 71,208 events
+calendar months u run 2009-03 to 2021-08
+shape: (4, 5)
+┌─────────┬────────┬─────────┬─────────┬────────────────┐
+│ Country ┆ months ┆ first   ┆ last    ┆ median_at_risk │
+│ ---     ┆ ---    ┆ ---     ┆ ---     ┆ ---            │
+│ str     ┆ u32    ┆ str     ┆ str     ┆ f64            │
+╞═════════╪════════╪═════════╪═════════╪════════════════╡
+│ EE      ┆ 150    ┆ 2009-03 ┆ 2021-08 ┆ 5862.5         │
+│ FI      ┆ 97     ┆ 2013-08 ┆ 2021-08 ┆ 2936.0         │
+│ ES      ┆ 94     ┆ 2013-11 ┆ 2021-08 ┆ 2122.0         │
+│ SK      ┆ 69     ┆ 2014-04 ┆ 2019-12 ┆ 17.0           │
+└─────────┴────────┴─────────┴─────────┴────────────────┘</code></pre>
+</div>
+</div>
+<p>That table is the whole answer to lecture 1’s objection. Estonia is observed over 150 distinct calendar months with a median of nearly six thousand loans at risk in each, and within any one of those months the book holds loans of many different ages, because vintages from 2009 onwards all pass through it. Consequently the age effect and the calendar effect are separately identified, and <span class="math inline">\(u = g_i + t\)</span> stops being a constraint that binds the design matrix.</p>
+<p>Slovakia is the counter-example and it is excluded from everything that follows. Its 296 loans give a median risk set of seventeen a month, and a monthly default rate on seventeen loans is noise with a decimal point.</p>
 </section>
 <section id="the-portfolio-default-rate-as-a-time-series" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="the-portfolio-default-rate-as-a-time-series"><span class="header-section-number">5.2</span> The portfolio default rate as a time series</h2>
+<p>Lecture 1 defined <span class="math inline">\(\mathrm{DR}^{(k)}_u\)</span> and had no data to compute it on. Here it is, at <span class="math inline">\(k = 12\)</span>, from the same window-start flag.</p>
+<p>Two conventions need stating before the series can be read. First, the window has to be observable: a flag for the twelve months after <span class="math inline">\(u\)</span> can only be scored where the extract covers them, so the series stops twelve months before the July 2021 snapshot. Second, a censored loan inside the window contributes a zero, which is the standard bias in a fixed-horizon rate and the reason the cut-off is enforced rather than assumed away.</p>
+<div id="76240f5c" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>LAST_FULL <span class="op">=</span> SNAPSHOT <span class="op">-</span> <span class="dv">12</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"last fully observed 12-month window opens </span><span class="sc">{</span>as_month(LAST_FULL)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>dr <span class="op">=</span> (</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    surv.<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>).is_in(COUNTRIES))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    .with_columns(g<span class="op">=</span>pl.col(<span class="st">"LoanDate"</span>).dt.year() <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> pl.col(<span class="st">"LoanDate"</span>).dt.month() <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    .with_columns(n_periods<span class="op">=</span>pl.min_horizontal(pl.col(<span class="st">"t_obs_m"</span>), pl.lit(HORIZON)))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    .with_columns(t<span class="op">=</span>pl.int_ranges(<span class="dv">0</span>, pl.col(<span class="st">"n_periods"</span>)))     <span class="co"># a window opens at each t</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    .explode(<span class="st">"t"</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    .with_columns(u<span class="op">=</span>pl.col(<span class="st">"g"</span>) <span class="op">+</span> pl.col(<span class="st">"t"</span>))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"u"</span>) <span class="op">&lt;=</span> LAST_FULL)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    .with_columns(                                             <span class="co"># D^{(12)}_{i,t}</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        d12<span class="op">=</span>((pl.col(<span class="st">"exit_kind"</span>) <span class="op">==</span> <span class="st">"default"</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>             <span class="op">&amp;</span> (pl.col(<span class="st">"t_obs_m"</span>) <span class="op">&gt;</span> pl.col(<span class="st">"t"</span>))</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>             <span class="op">&amp;</span> (pl.col(<span class="st">"t_obs_m"</span>) <span class="op">&lt;=</span> pl.col(<span class="st">"t"</span>) <span class="op">+</span> <span class="dv">12</span>)).cast(pl.Int8))</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>    .group_by([<span class="st">"Country"</span>, <span class="st">"u"</span>]).agg(n<span class="op">=</span>pl.<span class="bu">len</span>(), d<span class="op">=</span>pl.col(<span class="st">"d12"</span>).<span class="bu">sum</span>())</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    .with_columns(rate<span class="op">=</span>pl.col(<span class="st">"d"</span>) <span class="op">/</span> pl.col(<span class="st">"n"</span>))</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    .sort([<span class="st">"Country"</span>, <span class="st">"u"</span>])</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>port <span class="op">=</span> (dr.group_by(<span class="st">"u"</span>).agg(n<span class="op">=</span>pl.col(<span class="st">"n"</span>).<span class="bu">sum</span>(), d<span class="op">=</span>pl.col(<span class="st">"d"</span>).<span class="bu">sum</span>())</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>          .sort(<span class="st">"u"</span>).with_columns(rate<span class="op">=</span>pl.col(<span class="st">"d"</span>) <span class="op">/</span> pl.col(<span class="st">"n"</span>)))</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>peak <span class="op">=</span> port.<span class="bu">filter</span>(pl.col(<span class="st">"rate"</span>) <span class="op">==</span> pl.col(<span class="st">"rate"</span>).<span class="bu">max</span>())</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"portfolio series: </span><span class="sc">{</span>port<span class="sc">.</span>height<span class="sc">}</span><span class="ss"> months, </span><span class="sc">{</span>as_month(port[<span class="st">'u'</span>].<span class="bu">min</span>())<span class="sc">}</span><span class="ss"> "</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"to </span><span class="sc">{</span>as_month(port[<span class="st">'u'</span>].<span class="bu">max</span>())<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"DR^(12)_u mean </span><span class="sc">{</span>port[<span class="st">'rate'</span>]<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">, "</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"peak </span><span class="sc">{</span>peak[<span class="st">'rate'</span>][<span class="dv">0</span>]<span class="sc">:.3f}</span><span class="ss"> in </span><span class="sc">{</span>as_month(peak[<span class="st">'u'</span>][<span class="dv">0</span>])<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"months with fewer than 500 loans at risk: </span><span class="sc">{</span>dr<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'n'</span>) <span class="op">&lt;</span> <span class="dv">500</span>)<span class="sc">.</span>height<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>last fully observed 12-month window opens 2020-07
+portfolio series: 138 months, 2009-02 to 2020-07
+DR^(12)_u mean 0.247, peak 0.349 in 2017-10
+months with fewer than 500 loans at risk: 29</code></pre>
+</div>
+</div>
+<div id="aba13836" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>style <span class="op">=</span> {<span class="st">"EE"</span>: (OX, <span class="fl">1.6</span>), <span class="st">"FI"</span>: (BLUE, <span class="fl">1.1</span>), <span class="st">"ES"</span>: (GREY, <span class="fl">1.1</span>)}</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c, (colour, lw) <span class="kw">in</span> style.items():</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> dr.<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>) <span class="op">==</span> c)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    ax.plot(s[<span class="st">"u"</span>].to_numpy(), s[<span class="st">"rate"</span>].to_numpy() <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>colour, lw<span class="op">=</span>lw, label<span class="op">=</span>c)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$</span><span class="ch">\\</span><span class="st">mathrm</span><span class="sc">{DR}</span><span class="st">^{(12)}_u$ (%)"</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"twelve-month default rate by calendar month"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">1</span>]</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c, (colour, lw) <span class="kw">in</span> style.items():</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> dr.<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>) <span class="op">==</span> c)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    ax.plot(s[<span class="st">"u"</span>].to_numpy(), s[<span class="st">"n"</span>].to_numpy(), color<span class="op">=</span>colour, lw<span class="op">=</span>lw, label<span class="op">=</span>c)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">500</span>, color<span class="op">=</span>RULE, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>ax.set_yscale(<span class="st">"log"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"loans at risk $n_u$"</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"risk set behind each point"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>ticks <span class="op">=</span> [u <span class="cf">for</span> u <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2010</span> <span class="op">*</span> <span class="dv">12</span>, LAST_FULL, <span class="dv">24</span>)]</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax <span class="kw">in</span> axs:</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    ax.set_xticks(ticks)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    ax.set_xticklabels([as_month(u)[:<span class="dv">4</span>] <span class="cf">for</span> u <span class="kw">in</span> ticks])</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"calendar month $u$"</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="R1_credit-ifrs9-pit-pd_files/figure-html/cell-5-output-1.png" width="1336" height="588" class="figure-img"></p>
+<figcaption>The twelve-month portfolio default rate <span class="math inline">\(\mathrm{DR}^{(12)}_u\)</span> on the Bondora book, by calendar month of window opening, for the three markets with a usable panel. (lhs): the rate, with Estonia in bronze as the only market observed across the 2009 downturn. (rhs): the number of loans at risk behind each point, on a log scale, since a rate computed on a thin risk set is noise and the reader needs to see which points to distrust. Both panels stop in July 2020, twelve months before the extract snapshot, because a later window is not fully observed. Early repayment is treated as censoring throughout.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The series is the object section 3.2 called <span class="math inline">\(\mathrm{DR}^{(12)}_u\)</span> and used twice over. Averaging it across <span class="math inline">\(u\)</span> gives the regulatory through-the-cycle estimator. Regressing it on <span class="math inline">\(\boldsymbol{Z}_u\)</span>, or putting <span class="math inline">\(\boldsymbol{Z}_u\)</span> inside the hazard as the next section does, gives the point-in-time PD. One series, two uses.</p>
+<p>Two features of it deserve comment before any model is fitted. The level is very high for a retail book, averaging around 25 per cent over the window, which is what a peer-to-peer lender charging up to 100 per cent interest looks like from the inside. And the shape does not obey the European credit cycle: the peak sits in late 2017, in the middle of a long expansion, and the early years of high unemployment carry the lowest rates in the sample.</p>
 </section>
 <section id="attaching-the-macroeconomy" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="attaching-the-macroeconomy"><span class="header-section-number">5.3</span> Attaching the macroeconomy</h2>
+<p>Three Eurostat series join by country and calendar month, all of them named in IFRS 9 B5.5.52 or in the EBA’s list of the variables EU institutions actually use.</p>
+<div id="5acd0030" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>MV <span class="op">=</span> [<span class="st">"unemployment"</span>, <span class="st">"inflation"</span>, <span class="st">"gdp_growth"</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> dr.join(macro.drop(<span class="st">"month"</span>), on<span class="op">=</span>[<span class="st">"Country"</span>, <span class="st">"u"</span>], how<span class="op">=</span><span class="st">"inner"</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>joined<span class="sc">.</span>height<span class="sc">}</span><span class="ss"> country-months joined, "</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>joined<span class="sc">.</span>select(MV)<span class="sc">.</span>null_count()<span class="sc">.</span>sum_horizontal()[<span class="dv">0</span>]<span class="sc">}</span><span class="ss"> missing values"</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">correlation of DR^(12)_u with each series, within each market:"</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> COUNTRIES:</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> joined.<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>) <span class="op">==</span> c)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    cors <span class="op">=</span> <span class="st">"  "</span>.join(<span class="ss">f"</span><span class="sc">{</span>v[:<span class="dv">5</span>]<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>np<span class="sc">.</span>corrcoef(s[<span class="st">'rate'</span>], s[v])[<span class="dv">0</span>, <span class="dv">1</span>]<span class="sc">:+.3f}</span><span class="ss">"</span> <span class="cf">for</span> v <span class="kw">in</span> MV)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">  n=</span><span class="sc">{</span>s<span class="sc">.</span>height<span class="sc">:3d}</span><span class="ss">   </span><span class="sc">{</span>cors<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>305 country-months joined, 0 missing values
+
+correlation of DR^(12)_u with each series, within each market:
+  EE  n=138   unemp +0.470  infla -0.030  gdp_g -0.196
+  FI  n= 85   unemp -0.376  infla -0.132  gdp_g +0.275
+  ES  n= 82   unemp -0.375  infla +0.116  gdp_g -0.150</code></pre>
+</div>
+</div>
+<p>The correlation table is the warning sign, and it is worth reading before the model rather than after it. In Estonia the twelve-month default rate moves <strong>with</strong> unemployment, at <span class="math inline">\(+0.47\)</span>, which is the sign economics expects. In Finland and Spain it moves <strong>against</strong> unemployment, at about <span class="math inline">\(-0.38\)</span> in both. A single pooled coefficient asserts one common slope across the three, and no common slope can be right when the within-market slopes disagree in sign.</p>
+<p>The reason is Bondora’s own history rather than Europe’s. The Finnish and Spanish books opened in 2013 and expanded hard through 2017 to 2019, which was a period of steadily falling unemployment across the euro area. Within those two markets, therefore, the lender’s own move down the credit spectrum runs in the opposite direction to the cycle, and a macro variable picks up the commercial trajectory.</p>
+<p>Fitting the pooled model anyway is the honest way to show what that does.</p>
+<div id="ed06612f" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>BANDS <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">9</span>, <span class="dv">12</span>, <span class="dv">18</span>, <span class="dv">24</span>, <span class="dv">36</span>, <span class="dv">48</span>, <span class="dv">60</span>]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>BAND_LABELS <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>a <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(BANDS[:<span class="op">-</span><span class="dv">1</span>], BANDS[<span class="dv">1</span>:])]</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>AGE_CUTS <span class="op">=</span> [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>AGE_LABELS <span class="op">=</span> [<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>]</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>BASE_FORMULA <span class="op">=</span> <span class="st">"y ~ C(period) + AgeClass + logIncome"</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> design(countries):</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Lecture 1's cleaning filter, then S1's expansion, then the macro join."""</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    loans <span class="op">=</span> (surv.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                         <span class="op">&amp;</span> pl.col(<span class="st">"Country"</span>).is_in(countries))</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>                 .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log()))</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    frame <span class="op">=</span> (person_period(loans)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>             .join(macro.drop(<span class="st">"month"</span>), on<span class="op">=</span>[<span class="st">"Country"</span>, <span class="st">"u"</span>], how<span class="op">=</span><span class="st">"left"</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>             .select([<span class="st">"y"</span>, <span class="st">"t"</span>, <span class="st">"u"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>] <span class="op">+</span> MV)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>             .drop_nulls().to_pandas())</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    frame[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(frame[<span class="st">"Age"</span>], AGE_CUTS, labels<span class="op">=</span>AGE_LABELS,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>                               include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    frame[<span class="st">"period"</span>] <span class="op">=</span> pd.cut(frame[<span class="st">"t"</span>], BANDS, labels<span class="op">=</span>BAND_LABELS)</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    moments <span class="op">=</span> {v: (frame[v].mean(), frame[v].std()) <span class="cf">for</span> v <span class="kw">in</span> MV}</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v <span class="kw">in</span> MV:</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>        frame[v <span class="op">+</span> <span class="st">"_z"</span>] <span class="op">=</span> (frame[v] <span class="op">-</span> moments[v][<span class="dv">0</span>]) <span class="op">/</span> moments[v][<span class="dv">1</span>]</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> loans, frame, moments</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> report(fit, label):</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"[</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">] deviance </span><span class="sc">{</span>fit<span class="sc">.</span>deviance<span class="sc">:,.1f}</span><span class="ss"> on </span><span class="sc">{</span><span class="bu">int</span>(fit.nobs)<span class="sc">:,}</span><span class="ss"> loan-months"</span>)</span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> v <span class="kw">in</span> MV:</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>        z <span class="op">=</span> v <span class="op">+</span> <span class="st">"_z"</span></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"   </span><span class="sc">{</span>v<span class="sc">:13s}</span><span class="ss"> </span><span class="sc">{</span>fit<span class="sc">.</span>params[z]<span class="sc">:+.4f}</span><span class="ss">   se </span><span class="sc">{</span>fit<span class="sc">.</span>bse[z]<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"p </span><span class="sc">{</span>fit<span class="sc">.</span>pvalues[z]<span class="sc">:.2e}</span><span class="ss">"</span>)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>MACRO_TERMS <span class="op">=</span> <span class="st">" + "</span> <span class="op">+</span> <span class="st">" + "</span>.join(v <span class="op">+</span> <span class="st">"_z"</span> <span class="cf">for</span> v <span class="kw">in</span> MV)</span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>_, pooled, _ <span class="op">=</span> design(COUNTRIES)</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>pooled_fit <span class="op">=</span> smf.glm(BASE_FORMULA <span class="op">+</span> <span class="st">" + Country - 1"</span> <span class="op">+</span> MACRO_TERMS,</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>                     data<span class="op">=</span>pooled, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>report(pooled_fit, <span class="st">"pooled, three markets"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[pooled, three markets] deviance 591,517.8 on 2,667,975 loan-months
+   unemployment  -0.0829   se 0.0094   p 1.48e-18
+   inflation     +0.0017   se 0.0062   p 7.89e-01
+   gdp_growth    +0.0653   se 0.0045   p 7.32e-48</code></pre>
+</div>
+</div>
+<p>Both signs that matter come out backwards. Higher unemployment <strong>lowers</strong> the fitted default hazard, and faster GDP growth <strong>raises</strong> it, each with a p-value small enough to be reported as decisive by any automatic screen. Inflation is indistinguishable from zero. A model that passed a significance test and failed economics is exactly the outcome section 3.4 warned about, and it is the case for the sign-constrained regression named there: a constraint would have refused this fit rather than reporting it.</p>
+<p>Estonia alone is the specification the data can support, and it is the only market observed across a genuine downturn, since the 2009 collapse took Estonian GDP down 18.6 per cent year on year and unemployment to nearly 19 per cent.</p>
+<div id="52cdff90" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ee_loans, ee, ee_moments <span class="op">=</span> design([<span class="st">"EE"</span>])</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>ee_null <span class="op">=</span> smf.glm(BASE_FORMULA <span class="op">+</span> <span class="st">" - 1"</span>, data<span class="op">=</span>ee,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                  family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>ee_fit <span class="op">=</span> smf.glm(BASE_FORMULA <span class="op">+</span> <span class="st">" - 1"</span> <span class="op">+</span> MACRO_TERMS, data<span class="op">=</span>ee,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                 family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>drop <span class="op">=</span> ee_null.deviance <span class="op">-</span> ee_fit.deviance</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Estonia: </span><span class="sc">{</span>ee_loans<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loans, </span><span class="sc">{</span><span class="bu">int</span>(ee_fit.nobs)<span class="sc">:,}</span><span class="ss"> loan-months, "</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">int</span>(ee[<span class="st">'y'</span>].<span class="bu">sum</span>())<span class="sc">:,}</span><span class="ss"> events"</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"deviance without macro </span><span class="sc">{</span>ee_null<span class="sc">.</span>deviance<span class="sc">:,.1f}</span><span class="ss">, with macro "</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>ee_fit<span class="sc">.</span>deviance<span class="sc">:,.1f}</span><span class="ss">, drop </span><span class="sc">{</span>drop<span class="sc">:,.1f}</span><span class="ss"> on 3 df "</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(p </span><span class="sc">{</span>sps<span class="sc">.</span>chi2<span class="sc">.</span>sf(drop, <span class="dv">3</span>)<span class="sc">:.1e}</span><span class="ss">)</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>report(ee_fit, <span class="st">"Estonia only"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Estonia: 110,651 loans, 1,863,025 loan-months, 30,841 events
+deviance without macro 300,434.9, with macro 300,307.9, drop 127.1 on 3 df (p 2.3e-27)
+
+[Estonia only] deviance 300,307.9 on 1,863,025 loan-months
+   unemployment  +0.0105   se 0.0065   p 1.08e-01
+   inflation     +0.0932   se 0.0088   p 2.90e-26
+   gdp_growth    -0.0823   se 0.0084   p 1.96e-22</code></pre>
+</div>
+</div>
+<p>Now the coefficients read as economics. Real GDP growth carries a <strong>negative</strong> coefficient at <span class="math inline">\(-0.083\)</span> per standard deviation, so a stronger economy lowers the monthly default hazard, and the effect is decisive at <span class="math inline">\(p \approx 10^{-22}\)</span>. Inflation carries a <strong>positive</strong> coefficient at <span class="math inline">\(+0.093\)</span>, which is the real-income squeeze on a borrower whose instalment is fixed in nominal terms, and it is the largest of the three. Unemployment keeps the expected positive sign at <span class="math inline">\(+0.011\)</span> and fails to reach significance, with <span class="math inline">\(p \approx 0.11\)</span>.</p>
+<p>That last result is worth a sentence rather than a footnote, because unemployment is the variable EU institutions select most often and the one IFRS 9 names first. Unemployment lags output, and in Estonia it peaked in early 2010 while Bondora’s book was still tiny, so the market’s most informative unemployment months carry almost no exposure. The failure belongs to this window and to this book’s size rather than to the variable.</p>
 </section>
 <section id="two-macro-paths-two-term-structures" class="level2" data-number="5.4">
 <h2 data-number="5.4" class="anchored" data-anchor-id="two-macro-paths-two-term-structures"><span class="header-section-number">5.4</span> Two macro paths, two term structures</h2>
+<p>The payoff is that one fitted model now produces a different term structure for every macroeconomic path, which is the whole content of the phrase “point in time”. Taking the harshest and mildest months the Estonian panel actually contains, and holding each flat across the horizon, gives two curves from identical loans at identical ages.</p>
+<div id="2d17172c" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>severity <span class="op">=</span> (ee.groupby(<span class="st">"u"</span>)[MV].first()</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>              .assign(sev<span class="op">=</span><span class="kw">lambda</span> f: f[<span class="st">"unemployment"</span>] <span class="op">/</span> f[<span class="st">"unemployment"</span>].std()</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="op">-</span> f[<span class="st">"gdp_growth"</span>] <span class="op">/</span> f[<span class="st">"gdp_growth"</span>].std()))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>harsh_u, mild_u <span class="op">=</span> <span class="bu">int</span>(severity[<span class="st">"sev"</span>].idxmax()), <span class="bu">int</span>(severity[<span class="st">"sev"</span>].idxmin())</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, u <span class="kw">in</span> ((<span class="st">"harshest"</span>, harsh_u), (<span class="st">"mildest"</span>, mild_u)):</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    row <span class="op">=</span> severity.loc[u]</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:9s}</span><span class="ss"> </span><span class="sc">{</span>as_month(u)<span class="sc">}</span><span class="ss">   unemployment </span><span class="sc">{</span>row[<span class="st">'unemployment'</span>]<span class="sc">:5.1f}</span><span class="ss">%   "</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"inflation </span><span class="sc">{</span>row[<span class="st">'inflation'</span>]<span class="sc">:+5.1f}</span><span class="ss">%   GDP growth </span><span class="sc">{</span>row[<span class="st">'gdp_growth'</span>]<span class="sc">:+6.1f}</span><span class="ss">%"</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> ee_loans.select([<span class="st">"Age"</span>, <span class="st">"logIncome"</span>]).to_pandas()</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>grid[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(grid[<span class="st">"Age"</span>], AGE_CUTS, labels<span class="op">=</span>AGE_LABELS, include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> grid.dropna(subset<span class="op">=</span>[<span class="st">"AgeClass"</span>])</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> term_structure(fit, macro_row<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Chain the fitted hazards per loan, then average PD_k over the portfolio."""</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    frame <span class="op">=</span> grid.copy()</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> macro_row <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> v <span class="kw">in</span> MV:</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>            mean, sd <span class="op">=</span> ee_moments[v]</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>            frame[v <span class="op">+</span> <span class="st">"_z"</span>] <span class="op">=</span> (macro_row[v] <span class="op">-</span> mean) <span class="op">/</span> sd</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    survival <span class="op">=</span> np.ones(<span class="bu">len</span>(frame))</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>    curve <span class="op">=</span> np.empty(HORIZON)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> MONTHS:</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>        frame[<span class="st">"period"</span>] <span class="op">=</span> pd.cut([k] <span class="op">*</span> <span class="bu">len</span>(frame), BANDS, labels<span class="op">=</span>BAND_LABELS)</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>        survival <span class="op">=</span> survival <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> fit.predict(frame).to_numpy())</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>        curve[k <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> survival.mean()</span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> curve</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>curves <span class="op">=</span> {</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>    <span class="st">"harsh"</span>: term_structure(ee_fit, severity.loc[harsh_u]),</span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mild"</span>: term_structure(ee_fit, severity.loc[mild_u]),</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>    <span class="st">"no macro block"</span>: term_structure(ee_null),</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, curve <span class="kw">in</span> curves.items():</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:15s}</span><span class="ss"> PD_12 </span><span class="sc">{</span>curve[<span class="dv">11</span>]<span class="sc">:.4f}</span><span class="ss">   PD_24 </span><span class="sc">{</span>curve[<span class="dv">23</span>]<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"PD_60 </span><span class="sc">{</span>curve[<span class="dv">59</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>gap <span class="op">=</span> (curves[<span class="st">"harsh"</span>][<span class="dv">11</span>] <span class="op">-</span> curves[<span class="st">"mild"</span>][<span class="dv">11</span>]) <span class="op">*</span> <span class="dv">100</span></span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">twelve-month gap </span><span class="sc">{</span>gap<span class="sc">:.1f}</span><span class="ss"> percentage points, "</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"ratio </span><span class="sc">{</span>curves[<span class="st">'harsh'</span>][<span class="dv">11</span>] <span class="op">/</span> curves[<span class="st">'mild'</span>][<span class="dv">11</span>]<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>harshest  2009-08   unemployment  14.9%   inflation  -0.7%   GDP growth  -18.6%
+mildest   2021-04   unemployment   6.3%   inflation  +1.6%   GDP growth  +12.9%
+harsh           PD_12 0.2452   PD_24 0.4734   PD_60 0.7283
+mild            PD_12 0.1538   PD_24 0.3177   PD_60 0.5425
+no macro block  PD_12 0.1821   PD_24 0.3662   PD_60 0.6059
+
+twelve-month gap 9.1 percentage points, ratio 1.59</code></pre>
+</div>
+</div>
+<div id="5f554ff2" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>ax.plot(MONTHS, curves[<span class="st">"harsh"</span>] <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.6</span>, label<span class="op">=</span><span class="st">"Aug 2009, harsh"</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>ax.plot(MONTHS, curves[<span class="st">"mild"</span>] <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">1.6</span>, label<span class="op">=</span><span class="st">"Apr 2021, mild"</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>ax.plot(MONTHS, curves[<span class="st">"no macro block"</span>] <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.1</span>, ls<span class="op">=</span><span class="st">"--"</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"no macro block"</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">12</span>, color<span class="op">=</span>RULE, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"horizon $k$ (months)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"$</span><span class="ch">\\</span><span class="st">mathrm</span><span class="sc">{PD}</span><span class="st">_k$ (%)"</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"cumulative PD by horizon"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">1</span>]</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>labels <span class="op">=</span> [<span class="st">"Aug 2009</span><span class="ch">\n</span><span class="st">harsh"</span>, <span class="st">"no macro</span><span class="ch">\n</span><span class="st">block"</span>, <span class="st">"Apr 2021</span><span class="ch">\n</span><span class="st">mild"</span>]</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>values <span class="op">=</span> [curves[<span class="st">"harsh"</span>][<span class="dv">11</span>] <span class="op">*</span> <span class="dv">100</span>, curves[<span class="st">"no macro block"</span>][<span class="dv">11</span>] <span class="op">*</span> <span class="dv">100</span>,</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>          curves[<span class="st">"mild"</span>][<span class="dv">11</span>] <span class="op">*</span> <span class="dv">100</span>]</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>ax.bar(labels, values, color<span class="op">=</span>[OX, RULE, GREY], width<span class="op">=</span><span class="fl">0.55</span>)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x, v <span class="kw">in</span> <span class="bu">enumerate</span>(values):</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:.1f}</span><span class="ss">%"</span>, xy<span class="op">=</span>(x, v), xytext<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">3</span>), textcoords<span class="op">=</span><span class="st">"offset points"</span>,</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>                ha<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span>RULE)</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"$</span><span class="ch">\\</span><span class="st">mathrm</span><span class="sc">{PD}</span><span class="st">_</span><span class="sc">{12}</span><span class="st">$ (%)"</span>)</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"twelve-month PD under each state"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="R1_credit-ifrs9-pit-pd_files/figure-html/cell-10-output-1.png" width="1336" height="587" class="figure-img"></p>
+<figcaption>The term structure of default risk from the Estonian discrete-time hazard model, averaged over the 110,651 loans in the design, under two macroeconomic states held flat across the horizon. (lhs): cumulative PD by horizon. Bronze is August 2009, the harshest month in the panel, with unemployment at 14.9 per cent and GDP contracting 18.6 per cent year on year; grey is April 2021, the mildest, at 6.3 per cent and plus 12.9 per cent; the dashed line is the same model fitted without the macro block, which lands between the two. (rhs): the twelve-month cumulative PD as the horizon is read off, marking the 9.1 percentage point gap the macro state alone produces. Both panels treat early repayment as censoring, so both overstate the level that an expected credit loss needs, by the margin lecture S2 measures.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The two curves are the same loans, the same ages and the same coefficients on age and income. Everything separating them is <span class="math inline">\(\boldsymbol{Z}_u\)</span>. At twelve months the harsh state gives a cumulative PD of 24.5 per cent against 15.4 per cent in the mild state, a gap of 9.1 percentage points and a ratio of 1.59. By sixty months the ratio falls to 1.34, because cumulative probabilities compress as they approach one, which is a reason to compare term structures at the short end and a reason IFRS 9’s twelve-month and lifetime measures behave differently under stress.</p>
+<p>So the point-in-time claim is demonstrated rather than asserted. <strong>Lecture 1 was right that its own table could not do this, and wrong to conclude that the portfolio could not.</strong> The expansion to person-periods was the whole difference.</p>
 </section>
 <section id="what-this-demonstration-does-not-show" class="level2" data-number="5.5">
 <h2 data-number="5.5" class="anchored" data-anchor-id="what-this-demonstration-does-not-show"><span class="header-section-number">5.5</span> What this demonstration does not show</h2>
+<p>Five limitations, and the first two are the ones that would matter to a validator.</p>
+<p>The two macro states are the <strong>extremes of the observed range</strong>, held flat for sixty months. No scenario generator would produce either: an economy does not contract 18.6 per cent for five years. The 9.1 percentage point gap is therefore the full span of the effect the model has learned rather than the span between a plausible baseline and a plausible downside, which would be a fraction of it.</p>
+<p>The specification survived only by <strong>dropping two thirds of the book</strong>, and that is a finding about the method as much as about Bondora. Pooling was rejected because the within-market slopes disagreed in sign, and the diagnosis pointed at the lender’s commercial trajectory running against the cycle. Estonia escapes because it was observed through 2009, when the cycle moved further and faster than any lender’s credit policy. A book without a downturn in it cannot identify a downturn coefficient, however many loan-months it carries, and this is the short-series problem of section 3.4 arriving in the guise of a country filter.</p>
+<p>Furthermore, the macro series are <strong>national rather than borrower-specific</strong>. Every Estonian borrower in a given month gets the same unemployment rate, so the coefficient measures the common component of risk and can say nothing about which borrowers a downturn hits. That is the correct division of labour in this specification, since <span class="math inline">\(\boldsymbol{X}_i\)</span> carries the idiosyncratic part, and it is worth knowing that the model has no interaction between the two.</p>
+<p>The window contains <strong>2020</strong>, and the pandemic months are not a normal draw from the cycle. Estonian GDP fell sharply and recovered within a year while government support suppressed the default rate that would otherwise have followed, so the relationship the model estimates across those months is a policy response as much as an economic one. Post-model adjustments exist for precisely this, and the EBA found their release across the sector was driven more by reported results than by evidence that the risk had gone.</p>
+<p>Finally, this is a <strong>peer-to-peer book</strong> with a concentrated country mix, no secured lending, and its own selection story on both sides of the platform. Nothing here transfers to a mortgage portfolio, and the demonstration is a demonstration of the method.</p>
 </section>
 </section>
 <section id="what-stays-with-the-irb-lecture" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> What stays with the IRB lecture</h1>
-<!-- Intent: hand the hybrid PD, the long-run average and the capital formula to
-R2, so the two lectures do not overlap. -->
+<p>Lecture 1’s callout carried a second half that this lecture has used without developing, and it belongs to lecture R2. Three things go there.</p>
+<p>The <strong>hybrid PD</strong> and its dial. Section 3.2 borrowed Vasicek’s conditional default probability as the closed form for a FiT PD, and R2 owns the question of where <span class="math inline">\(\rho\)</span> and the logit-scale weight <span class="math inline">\(\lambda\)</span> come from, what a validator asks about each, and what “how point in time is this model” means as a measurable property rather than a slogan.</p>
+<p>The <strong>long-run average</strong>. Section 3.2 wrote <span class="math inline">\(\overline{\mathrm{DR}}^{(12)}\)</span> down and cited Article 180 of the Capital Requirements Regulation for the representativeness it forces. The mechanics belong to R2: which years enter the window, what a downturn period is, how the margin of conservatism is sized, and how the grade-level calibration is done.</p>
+<p>The <strong>capital formula</strong>. The same probit expression evaluated at <span class="math inline">\(Z_u = -\Phi^{-1}(0.999)\)</span> rather than at the middle of the factor distribution is the IRB risk weight, with <span class="math inline">\(\rho\)</span> prescribed by exposure class rather than fitted. That is one substitution away from section 3.2 and a whole lecture’s worth of consequences.</p>
+<p>Consequently the division between the two is by purpose rather than by mathematics. The same Vasicek machinery serves an accounting provision measured at the mean of the cycle and a capital requirement measured in its tail, and knowing that the two differ by where the factor is evaluated is worth more than either formula on its own.</p>
 </section>
 <section id="takeaways" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Takeaways</h1>
+<ol type="1">
+<li><strong>Two axes, and confusing them is the standard error.</strong> Conditional against unconditional asks whether survival to the window is inside the number. Point in time against through the cycle asks what to do with the macro state. A PD sits in one of four cells and the word “unconditional” names the survival axis here and the macro axis in the Vasicek literature.</li>
+<li><strong>Lecture 1’s flag was the survival machinery in disguise.</strong> <span class="math inline">\(\mathbb{P}(D^{(k)}_{i,t} = 1 \mid \text{performing at } t) = 1 - {}_k p_{i,t}\)</span>, so the twelve-month PD is the cumulative PD at one chosen horizon and the term structure is what the same hazards give at every other horizon for free.</li>
+<li><strong>The marginal PD is the quantity accounting consumes.</strong> An ECL sum weights each period by <span class="math inline">\(f_{i,t} = {}_{t-1}p_{i,0} \cdot q_{i,t}\)</span>, because a loss has to be dated before it can be discounted. A cumulative PD cannot enter that sum and a hazard has already spent the survival the sum needs.</li>
+<li><strong>A FiT PD belongs inside a probit rather than beside a probability.</strong> A multiplicative FLI factor leaves the unit interval and gets capped exactly where the downside scenario was meant to bite. The Vasicek form is bounded, reduces to the through-the-cycle PD at <span class="math inline">\(\rho = 0\)</span>, and averages back to it exactly.</li>
+<li><strong>Averaging happens on the output.</strong> Feeding mean macro conditions into a fitted point-in-time model understates the through-the-cycle PD by nearly a third at a PD of 3 per cent and <span class="math inline">\(\rho = 0.15\)</span>, and Jensen’s inequality is the whole reason.</li>
+<li><strong>Eleven methods, and the choice is a data question.</strong> The discrete-time hazard model is the only one giving a loan-level term structure with native macro conditioning from a single fit. Multistate models buy stage migration and demand monthly delinquency states. Recurrent-event Cox models buy redefaults and buy no measurable discrimination. Vasicek scaling converts a level and has no loan-age dimension at all.</li>
+<li><strong>Identification is necessary and it is not sufficient.</strong> Expanding Bondora to 2.67 million loan-months breaks the collinearity lecture 1 complained about, and the pooled fit still returns a lower default hazard at higher unemployment, because within Finland and Spain the lender’s own expansion ran against the cycle. Estonia, the one market observed through 2009, gives GDP growth at <span class="math inline">\(-0.083\)</span> and inflation at <span class="math inline">\(+0.093\)</span> per standard deviation, and a twelve-month PD swinging 9.1 percentage points on the macro state alone.</li>
+<li><strong>A significance test is not an economics test.</strong> Every implausible coefficient in the pooled fit was decisive by p-value. Sign-constrained regression would have refused it, which is the argument for the constraint.</li>
+</ol>
 </section>
 <section id="copyright-and-attribution" class="level1 unnumbered">
 <h1 class="unnumbered">Copyright and attribution</h1>
+<p>This lecture answers no lecture of the summer school <strong>Deep Learning for Actuarial Modeling</strong> and is original to this repository. It grows out of a review comment on credit lecture 1 asking for the point-in-time callout to become a lecture of its own.</p>
+<p>The conditional and unconditional definitions, the FiT label and the notation bridge follow Mario’s own credit risk notation and IFRS 9 methodology material. The term-structure identities and the discrete-time specification follow Botha and Verster (2025); the multistate comparison follows Botha, Verster and Breedt (2025); the recurrent-event subtypes follow Botha, Verster and Scheepers (2025). The case for macroeconomic covariates in a hazard model is Bellotti and Crook (2009), the systematic-factor construction is Belkin, Suchower and Forest (1998) and Vasicek, and the age-period-cohort decomposition is Breeden (2016). Quotations from IFRS 9 are the IASB’s.</p>
+<p>The Bondora loan book is public. The macroeconomic series are Eurostat’s, public and free, fetched by <code>scripts/fetch_macro_eurostat.py</code> and committed at <code>credit_lectures/data/macro_eurostat.csv</code> so the lecture renders on a fresh clone.</p>
 </section>
 <section id="references" class="level1 unnumbered">
 <h1 class="unnumbered">References</h1>
+<ul>
+<li>Belkin, B., Suchower, S. and Forest, L.R. (1998). <em>A One-Parameter Representation of Credit Risk and Transition Matrices</em>. CreditMetrics Monitor, Third Quarter 1998.</li>
+<li>Bellotti, T. and Crook, J. (2009). <em>Credit scoring with macroeconomic variables using survival analysis</em>. Journal of the Operational Research Society 60(12).</li>
+<li>Bondora AS. <em>Loan dataset (public reports)</em>. <a href="https://www.bondora.com/en/public-reports" class="uri">https://www.bondora.com/en/public-reports</a></li>
+<li>Botha, A. and Verster, T. (2025). <em>Approaches for modelling the term-structure of default risk under IFRS 9: a tutorial using discrete-time survival analysis</em>.</li>
+<li>Botha, A., Verster, T. and Breedt, R. (2025). <em>Modelling the term-structure of default risk under IFRS 9 within a multistate regression framework</em>.</li>
+<li>Botha, A., Verster, T. and Scheepers, B. (2025). <em>Exploring different subtypes of recurrent event Cox-regression models in modelling lifetime default risk: a tutorial</em>.</li>
+<li>Breeden, J.L. (2016). <em>Incorporating lifecycle and environment in loan-level forecasts and stress tests</em>. European Journal of Operational Research 255, pp.&nbsp;649-658.</li>
+<li>Cox, D.R. (1972). <em>Regression models and life-tables</em>. Journal of the Royal Statistical Society, Series B.</li>
+<li>Djurovic, A. (2025). <em>IFRS9 Forward-Looking Modeling: Do We Use OLS Regression Efficiently?</em> Industry paper.</li>
+<li>Djurovic, A. (2025). <em>IFRS9 Forward-Looking Modeling: Dynamic Regression Models and Estimation Uncertainty</em>. Industry paper.</li>
+<li>Djurovic, A. (2025). <em>IFRS9 Forward-Looking Modeling and Stationarity Testing: How Reliable Is the Augmented Dickey-Fuller Test?</em> Industry paper.</li>
+<li>Djurovic, A. (2025). <em>The Vasicek PD Model and Transition Matrices: Optimisation of the Systemic Factor Z</em>. Industry paper.</li>
+<li>EBA (2017). <em>Guidelines on credit institutions’ credit risk management practices and accounting for expected credit losses (EBA/GL/2017/06)</em>.</li>
+<li>EBA (2017). <em>Guidelines on PD estimation, LGD estimation and the treatment of defaulted exposures (EBA/GL/2017/16)</em>.</li>
+<li>EBA (2023). <em>IFRS 9 Implementation by EU Institutions: 2023 Monitoring Report (EBA/Rep/2023/36)</em>.</li>
+<li>Eurostat. <em>Unemployment by sex and age, monthly data</em> (<code>une_rt_m</code>); <em>HICP, annual rate of change</em> (<code>prc_hicp_manr</code>); <em>GDP and main aggregates, quarterly</em> (<code>namq_10_gdp</code>). <a href="https://ec.europa.eu/eurostat" class="uri">https://ec.europa.eu/eurostat</a></li>
+<li>European Union (2013). <em>Regulation (EU) No 575/2013 (Capital Requirements Regulation)</em>, Articles 178 and 180.</li>
+<li>IASB (2014, effective 2018). <em>IFRS 9 Financial Instruments</em>, section 5.5 and application guidance B5.5.</li>
+<li>England, P.D. and Verrall, R.J. (2002). <em>Stochastic claims reserving in general insurance</em>. British Actuarial Journal.</li>
+<li>Schutte et al.&nbsp;(2020), on segmented empirical PD term structures, and Yang (2017) on the cumulative and marginal PD definitions, both cited here as Mario’s IFRS 9 PD methodology cites them, since neither carries a full reference there. <a href="https://mpra.ub.uni-muenchen.de/76271/1/MPRA_paper_76271.pdf" class="uri">https://mpra.ub.uni-muenchen.de/76271/1/MPRA_paper_76271.pdf</a></li>
+<li>Singer, J.D. and Willett, J.B. (1993). <em>It’s about time: using discrete-time survival analysis to study duration and the timing of events</em>. Journal of Educational Statistics.</li>
+<li>Vasicek, O. (2002). <em>The Distribution of Loan Portfolio Value</em>.</li>
+</ul>
 </section>
 
 </main>
