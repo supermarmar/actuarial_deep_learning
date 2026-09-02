@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-02">
+
+<title>Credit Lecture C1: Interaction, Confounding and What a Coefficient Means</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#the-argument-lecture-1-already-made" id="toc-the-argument-lecture-1-already-made" class="nav-link active" data-scroll-target="#the-argument-lecture-1-already-made"><span class="header-section-number">1</span> The argument lecture 1 already made</a>
+  <ul class="collapse">
+  <li><a href="#what-this-lecture-owns" id="toc-what-this-lecture-owns" class="nav-link" data-scroll-target="#what-this-lecture-owns"><span class="header-section-number">1.1</span> What this lecture owns</a></li>
+  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation"><span class="header-section-number">1.2</span> Notation</a></li>
+  </ul></li>
+  <li><a href="#setting-up" id="toc-setting-up" class="nav-link" data-scroll-target="#setting-up"><span class="header-section-number">2</span> Setting up</a></li>
+  <li><a href="#the-three-identification-conditions-on-a-credit-portfolio" id="toc-the-three-identification-conditions-on-a-credit-portfolio" class="nav-link" data-scroll-target="#the-three-identification-conditions-on-a-credit-portfolio"><span class="header-section-number">3</span> The three identification conditions on a credit portfolio</a></li>
+  <li><a href="#interaction-effect-modification-and-the-scale-nobody-states" id="toc-interaction-effect-modification-and-the-scale-nobody-states" class="nav-link" data-scroll-target="#interaction-effect-modification-and-the-scale-nobody-states"><span class="header-section-number">4</span> Interaction, effect modification, and the scale nobody states</a></li>
+  <li><a href="#choosing-an-adjustment-set" id="toc-choosing-an-adjustment-set" class="nav-link" data-scroll-target="#choosing-an-adjustment-set"><span class="header-section-number">5</span> Choosing an adjustment set</a></li>
+  <li><a href="#the-table-2-fallacy-on-lecture-1s-own-model" id="toc-the-table-2-fallacy-on-lecture-1s-own-model" class="nav-link" data-scroll-target="#the-table-2-fallacy-on-lecture-1s-own-model"><span class="header-section-number">6</span> The Table 2 fallacy on lecture 1’s own model</a></li>
+  <li><a href="#standardisation-the-marginal-effect-lecture-1-said-could-not-be-assembled" id="toc-standardisation-the-marginal-effect-lecture-1-said-could-not-be-assembled" class="nav-link" data-scroll-target="#standardisation-the-marginal-effect-lecture-1-said-could-not-be-assembled"><span class="header-section-number">7</span> Standardisation: the marginal effect lecture 1 said could not be assembled</a></li>
+  <li><a href="#how-much-confounding-would-overturn-this" id="toc-how-much-confounding-would-overturn-this" class="nav-link" data-scroll-target="#how-much-confounding-would-overturn-this"><span class="header-section-number">8</span> How much confounding would overturn this</a></li>
+  <li><a href="#fairness-is-a-causal-claim" id="toc-fairness-is-a-causal-claim" class="nav-link" data-scroll-target="#fairness-is-a-causal-claim"><span class="header-section-number">9</span> Fairness is a causal claim</a></li>
+  <li><a href="#what-this-means-for-a-model-built-to-predict" id="toc-what-this-means-for-a-model-built-to-predict" class="nav-link" data-scroll-target="#what-this-means-for-a-model-built-to-predict"><span class="header-section-number">10</span> What this means for a model built to predict</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture C1: Interaction, Confounding and What a Coefficient Means</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 2, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Credit lecture 1 showed the Bondora income gradient pointing the wrong way, named the mechanism composition, fixed it by adding country to the model, and moved on. That was a causal argument, made correctly and without a single causal word. This lecture supplies the vocabulary and then spends it. It separates interaction from effect modification, shows that a claim of no interaction is always a claim about one scale, and derives an adjustment set from a graph rather than from predictive lift, which separates the confounder lecture 1 adjusted for from the mediator it deliberately excluded. It then walks lecture 1’s own GLM3 coefficient table asking of each row what would have to hold for it to be read as an effect, standardises the fitted model over the observed country distribution to obtain the marginal income curve lecture 1 said could not be assembled from marginal rates, and closes on how much unmeasured confounding would be needed to overturn the result.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="the-argument-lecture-1-already-made" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> The argument lecture 1 already made</h1>
+<p>Credit lecture 1 put a figure on screen that no underwriter believes. Default risk rose with declared income across most of the Bondora book, from below 20 per cent at the bottom to peaks above 34 per cent. The lecture then split the same data by country, found the rate falling with income inside Estonia, Finland and Spain separately, and explained the pooled curve as composition: the two high-income markets carry default rates of 38 and 55 per cent against Estonia’s 17. Adding <code>Country</code> to the regression flipped the income coefficient negative, and the lecture recorded that the wrongly signed coefficient had been evidence about the portfolio’s composition all along.</p>
+<p>Every step of that is right. It is also a causal argument, and lecture 1 makes it without using the word. The claim “income does not really drive default, country does” is a claim about what would happen under intervention rather than a claim about what the data show. So is the decision to leave <code>Interest</code> out because it is “an output of the lender’s previous risk assessment rather than a property of the borrower”. So is the implicit promise that the GLM3 income coefficient, now correctly signed, may be read as the effect of income.</p>
+<p>Epidemiology has spent fifty years on exactly this problem, because a study of diet and heart disease has the same shape as a study of income and default and rather more at stake. This lecture takes the machinery that field built and points it at the Bondora book. It answers three questions a credit modeller asks constantly and usually answers by habit: what an interaction claim actually asserts and on which scale, which covariates belong in the model, and what a fitted coefficient may be quoted as.</p>
+<section id="what-this-lecture-owns" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="what-this-lecture-owns"><span class="header-section-number">1.1</span> What this lecture owns</h2>
+<p><code>C1</code> owns whether a covariate belongs in a model and what its coefficient may be read as. Lecture 1 keeps its Simpson’s paradox demonstration, which is doing work where it stands and gains only a forward reference. Lecture 6 owns how a covariate enters a model once inclusion has been decided, meaning encodings, target encoding, leakage and embeddings. Hence lecture 6 asks how and this lecture asks whether.</p>
+<p>Two things are deliberately named and not demonstrated. Propensity scores and instrumental variables are defined where they arise and left there, because the Bondora book carries no treatment variable and staging one would teach the mechanics of a method nobody should apply to this portfolio. Attribution read causally, meaning SHAP, LocalGLMnet and ICE marginal effects against the fallacy of section 6, belongs beside the course’s LocalGLMnet lectures and is deferred to <code>C2</code>.</p>
+</section>
+<section id="notation" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="notation"><span class="header-section-number">1.2</span> Notation</h2>
+<p>One rule, because the lecture makes both kinds of claim and mixing them is the error the subject is about.</p>
+<p>An estimand carries a counterfactual superscript. Writing lecture 1’s response as <span class="math inline">\(D^{(k)}_i\)</span>, the <span class="math inline">\(k\)</span>-month default indicator for loan <span class="math inline">\(i\)</span>, and its covariates as <span class="math inline">\(\boldsymbol{X}_i\)</span>, the counterfactual <span class="math inline">\(D^{(k),\,a}_i\)</span> is the indicator loan <span class="math inline">\(i\)</span> would have shown under intervention <span class="math inline">\(a\)</span> on the covariate under discussion. Identification, by contrast, is argued on a graph, in the vocabulary of paths, arrowheads, colliders and blocking. Consequently “adjust for <code>Country</code>” is never written as an intervention on <code>Country</code>: it is conditioning on a set that blocks a backdoor path. Keeping those two apart is the entire content of section 3, so the notation has to respect it from the start. There is no <code>do</code>-notation in this lecture, since the vault article the sources extend already speaks counterfactuals and two notations for one idea cost more than either saves.</p>
+</section>
+</section>
+<section id="setting-up" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Setting up</h1>
+<p>Intent: load <code>bondora_pd.parquet</code>, rebuild lecture 1’s <code>logIncome</code> and age classes so every number below is comparable with lecture 1’s, and fix the plotting conventions.</p>
+</section>
+<section id="the-three-identification-conditions-on-a-credit-portfolio" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The three identification conditions on a credit portfolio</h1>
+<p>Intent: state exchangeability, positivity and consistency, and give each a failure a credit modeller has actually seen. Positivity is the tractable one and this portfolio lets us measure it. Consistency is the hard one, because “reduce the interest rate” is not one intervention.</p>
+</section>
+<section id="interaction-effect-modification-and-the-scale-nobody-states" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Interaction, effect modification, and the scale nobody states</h1>
+<p>Intent: separate the two concepts with a credit example each, then demonstrate numerically that a logit fit carrying no interaction term still produces unequal risk differences by stratum, and report the stronger result that interaction is present on some scale whenever both covariates matter.</p>
+</section>
+<section id="choosing-an-adjustment-set" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Choosing an adjustment set</h1>
+<p>Intent: draw lecture 1’s confounding structure as a graph, then separate the three roles a covariate can play. <code>Country</code> is the confounder to condition on, <code>Interest</code> is the mediator lecture 1 was right to exclude, and a constructed collider shows what conditioning on the wrong variable costs, with numbers rather than assertion.</p>
+</section>
+<section id="the-table-2-fallacy-on-lecture-1s-own-model" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> The Table 2 fallacy on lecture 1’s own model</h1>
+<p>Intent: refit GLM3, print the coefficient table exactly as a model document would, and walk it row by row asking what adjustment set each coefficient would need to be read as an effect and whether GLM3 supplies it. Then state the constructive version, that a predictive model needs no causal reading and stays valid without one.</p>
+</section>
+<section id="standardisation-the-marginal-effect-lecture-1-said-could-not-be-assembled" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Standardisation: the marginal effect lecture 1 said could not be assembled</h1>
+<p>Intent: average the country-conditional model over the observed country distribution and compare the result with lecture 1’s raw pooled curve. Report the positivity check on the fifteen country-by-quintile cells first, since the average is only as good as its thinnest cell.</p>
+</section>
+<section id="how-much-confounding-would-overturn-this" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> How much confounding would overturn this</h1>
+<p>Intent: apply the assumption-free bounding factor to the standardised income effect, on the risk ratio scale rather than the odds ratio the logit hands us, and say plainly what the resulting number does and does not license.</p>
+</section>
+<section id="fairness-is-a-causal-claim" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Fairness is a causal claim</h1>
+<p>Intent: work the Bondora gender differential honestly, show what a raw differential does and does not license, and cite why the candidate fairness criteria cannot all hold at once. One section, and no metrics tournament.</p>
+</section>
+<section id="what-this-means-for-a-model-built-to-predict" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> What this means for a model built to predict</h1>
+<p>Intent: close on the constructive position. Nothing here says the model is wrong. It says which sentences in the model document are unsupported by the model that produced them.</p>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

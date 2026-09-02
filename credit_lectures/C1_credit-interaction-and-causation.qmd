@@ -1,0 +1,146 @@
+---
+title: "Credit Lecture C1: Interaction, Confounding and What a Coefficient Means"
+subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
+author: "Mario Ervedosa"
+date: "2026-09-02"
+abstract: >
+  Credit lecture 1 showed the Bondora income gradient pointing the wrong way,
+  named the mechanism composition, fixed it by adding country to the model, and
+  moved on. That was a causal argument, made correctly and without a single
+  causal word. This lecture supplies the vocabulary and then spends it. It
+  separates interaction from effect modification, shows that a claim of no
+  interaction is always a claim about one scale, and derives an adjustment set
+  from a graph rather than from predictive lift, which separates the confounder
+  lecture 1 adjusted for from the mediator it deliberately excluded. It then
+  walks lecture 1's own GLM3 coefficient table asking of each row what would have
+  to hold for it to be read as an effect, standardises the fitted model over the
+  observed country distribution to obtain the marginal income curve lecture 1
+  said could not be assembled from marginal rates, and closes on how much
+  unmeasured confounding would be needed to overturn the result.
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    # Render with scripts/render_lecture.sh, not bare `quarto render`.
+    css: ../lectures/lecture.css
+    embed-resources: false
+    fig-width: 9
+    fig-height: 4
+    fig-dpi: 150
+execute:
+  echo: true
+  warning: false
+jupyter: python3
+---
+
+# The argument lecture 1 already made
+
+Credit lecture 1 put a figure on screen that no underwriter believes. Default risk rose with
+declared income across most of the Bondora book, from below 20 per cent at the bottom to peaks
+above 34 per cent. The lecture then split the same data by country, found the rate falling with
+income inside Estonia, Finland and Spain separately, and explained the pooled curve as
+composition: the two high-income markets carry default rates of 38 and 55 per cent against
+Estonia's 17. Adding `Country` to the regression flipped the income coefficient negative, and
+the lecture recorded that the wrongly signed coefficient had been evidence about the portfolio's
+composition all along.
+
+Every step of that is right. It is also a causal argument, and lecture 1 makes it without using
+the word. The claim "income does not really drive default, country does" is a claim about what
+would happen under intervention rather than a claim about what the data show. So is the decision
+to leave `Interest` out because it is "an output of the lender's previous risk assessment rather
+than a property of the borrower". So is the implicit promise that the GLM3 income coefficient,
+now correctly signed, may be read as the effect of income.
+
+Epidemiology has spent fifty years on exactly this problem, because a study of diet and heart
+disease has the same shape as a study of income and default and rather more at stake. This
+lecture takes the machinery that field built and points it at the Bondora book. It answers three
+questions a credit modeller asks constantly and usually answers by habit: what an interaction
+claim actually asserts and on which scale, which covariates belong in the model, and what a
+fitted coefficient may be quoted as.
+
+## What this lecture owns
+
+`C1` owns whether a covariate belongs in a model and what its coefficient may be read as.
+Lecture 1 keeps its Simpson's paradox demonstration, which is doing work where it stands and
+gains only a forward reference. Lecture 6 owns how a covariate enters a model once inclusion has
+been decided, meaning encodings, target encoding, leakage and embeddings. Hence lecture 6 asks
+how and this lecture asks whether.
+
+Two things are deliberately named and not demonstrated. Propensity scores and instrumental
+variables are defined where they arise and left there, because the Bondora book carries no
+treatment variable and staging one would teach the mechanics of a method nobody should apply to
+this portfolio. Attribution read causally, meaning SHAP, LocalGLMnet and ICE marginal effects
+against the fallacy of section 6, belongs beside the course's LocalGLMnet lectures and is
+deferred to `C2`.
+
+## Notation
+
+One rule, because the lecture makes both kinds of claim and mixing them is the error the
+subject is about.
+
+An estimand carries a counterfactual superscript. Writing lecture 1's response as $D^{(k)}_i$,
+the $k$-month default indicator for loan $i$, and its covariates as $\boldsymbol{X}_i$, the
+counterfactual $D^{(k),\,a}_i$ is the indicator loan $i$ would have shown under intervention
+$a$ on the covariate under discussion. Identification, by contrast, is argued on a graph, in the
+vocabulary of paths, arrowheads, colliders and blocking. Consequently "adjust for `Country`" is
+never written as an intervention on `Country`: it is conditioning on a set that blocks a backdoor
+path. Keeping those two apart is the entire content of section 3, so the notation has to respect
+it from the start. There is no `do`-notation in this lecture, since the vault article the
+sources extend already speaks counterfactuals and two notations for one idea cost more than
+either saves.
+
+# Setting up
+
+Intent: load `bondora_pd.parquet`, rebuild lecture 1's `logIncome` and age classes so every
+number below is comparable with lecture 1's, and fix the plotting conventions.
+
+# The three identification conditions on a credit portfolio
+
+Intent: state exchangeability, positivity and consistency, and give each a failure a credit
+modeller has actually seen. Positivity is the tractable one and this portfolio lets us measure
+it. Consistency is the hard one, because "reduce the interest rate" is not one intervention.
+
+# Interaction, effect modification, and the scale nobody states
+
+Intent: separate the two concepts with a credit example each, then demonstrate numerically that
+a logit fit carrying no interaction term still produces unequal risk differences by stratum, and
+report the stronger result that interaction is present on some scale whenever both covariates
+matter.
+
+# Choosing an adjustment set
+
+Intent: draw lecture 1's confounding structure as a graph, then separate the three roles a
+covariate can play. `Country` is the confounder to condition on, `Interest` is the mediator
+lecture 1 was right to exclude, and a constructed collider shows what conditioning on the wrong
+variable costs, with numbers rather than assertion.
+
+# The Table 2 fallacy on lecture 1's own model
+
+Intent: refit GLM3, print the coefficient table exactly as a model document would, and walk it
+row by row asking what adjustment set each coefficient would need to be read as an effect and
+whether GLM3 supplies it. Then state the constructive version, that a predictive model needs no
+causal reading and stays valid without one.
+
+# Standardisation: the marginal effect lecture 1 said could not be assembled
+
+Intent: average the country-conditional model over the observed country distribution and compare
+the result with lecture 1's raw pooled curve. Report the positivity check on the fifteen
+country-by-quintile cells first, since the average is only as good as its thinnest cell.
+
+# How much confounding would overturn this
+
+Intent: apply the assumption-free bounding factor to the standardised income effect, on the risk
+ratio scale rather than the odds ratio the logit hands us, and say plainly what the resulting
+number does and does not license.
+
+# Fairness is a causal claim
+
+Intent: work the Bondora gender differential honestly, show what a raw differential does and
+does not license, and cite why the candidate fairness criteria cannot all hold at once. One
+section, and no metrics tournament.
+
+# What this means for a model built to predict
+
+Intent: close on the constructive position. Nothing here says the model is wrong. It says which
+sentences in the model document are unsupported by the model that produced them.
