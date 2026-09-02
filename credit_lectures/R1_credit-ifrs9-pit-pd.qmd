@@ -126,8 +126,8 @@ f_{i,t} = {}_{t-1} p_{i,0} \cdot q_{i,t} .
 $$
 
 That is Botha and Verster's third identity, $f(t_{(k)}) = S(t_{(k-1)}) \cdot h(t_{(k)})$,
-written with the subscripts this series uses. The letter is theirs too, so the notation is
-inherited rather than invented.
+written with the subscripts this series uses. The letter is theirs too, so the series inherits
+the notation.
 
 ::: {.callout-warning icon=false title="The two lectures agree, and here is the proof"}
 Lecture 1's window flag $D^{(k)}_{i,t} = \max(y_{i,t+1}, \ldots, y_{i,t+k})$ is the worst-ever
@@ -203,8 +203,8 @@ fitted point-in-time model returns something other than the through-the-cycle PD
 
 ## The map
 
-Crossing the two axes gives four cells. The naming is the literature's rather than this
-lecture's, and one cell carries a warning.
+Crossing the two axes gives four cells. Each carries the literature's own name for it, and one
+carries a warning.
 
 ::: {.callout-note icon=false title="The four cells, and the word that means two things"}
 
@@ -257,7 +257,7 @@ has to be forecast.
 
 ## What the standard actually requires
 
-The requirement is worth reading rather than paraphrasing. IFRS 9 paragraph 5.5.17 obliges an
+The requirement rewards a direct reading, so here it is in full. IFRS 9 paragraph 5.5.17 obliges an
 entity to measure expected credit losses in a way that reflects
 
 > (a) an unbiased and probability-weighted amount that is determined by evaluating a range of
@@ -268,7 +268,7 @@ entity to measure expected credit losses in a way that reflects
 Three obligations sit in that sentence and each forces a piece of machinery. Probability
 weighting over a range of outcomes forces scenarios. The time value of money forces
 discounting, and therefore forces the loss to be dated, which is what makes a **term
-structure** unavoidable rather than a refinement. And "forecasts of future economic
+structure** unavoidable. And "forecasts of future economic
 conditions" forces the macro conditioning this section is about.
 
 The standard's own name for the third of those is **forward-looking information**, universally
@@ -352,9 +352,8 @@ bounded by construction, it reduces to the through-the-cycle PD at $\rho = 0$, a
 back to the through-the-cycle PD exactly, which the scaling route does not.
 
 **This series adopts the probit form as the definition of a FiT PD** and treats the
-multiplicative factor as the practitioner shortcut it is. The guides' notation carries both,
-which is a genuine ambiguity in the source rather than a misreading, and the reason for
-choosing this way round is that the guides' own FLI methodology derives
+multiplicative factor as the practitioner shortcut it is. The guides' notation carries both, so the
+ambiguity is genuinely in the source, and the reason for choosing this way round is that the guides' own FLI methodology derives
 $\mathrm{FLI}_u$ as a **ratio of two fitted PDs**, i.e. as an output of the scenario
 regression. An output cannot also be the primitive that enters a probit as a factor
 realisation.
@@ -381,7 +380,7 @@ conditions into a fitted point-in-time model returns a number that is not the
 through-the-cycle PD, and the discrepancy grows with the curvature of the link over the range
 the cycle covers.
 
-The probit form makes the size of the error concrete rather than abstract. Setting $Z_u$ to
+The probit form puts a number on the error. Setting $Z_u$ to
 its mean of zero gives
 $\Phi\left( \Phi^{-1}(\mathrm{PD}^{\rm TTC}_k) / \sqrt{1 - \rho} \right)$, which understates
 the through-the-cycle PD whenever that PD sits below one half. At a through-the-cycle PD of 3
@@ -489,8 +488,7 @@ into a GLM scorecard as additional predictors, which keeps the interpretability 
 needs and produces a PD conditioned on both loan age and the economy. On a US auto book the
 augmented scorecard holds its rank-ordering out of time where a plain scorecard decays.
 
-Breeden's answer to the residual identification problem deserves scrutiny rather than
-applause. It is **augmented macroeconomic history**: anchor the environment sensitivity to an
+Breeden's answer to the residual identification problem invites scrutiny. It is **augmented macroeconomic history**: anchor the environment sensitivity to an
 external series spanning several cycles, longer than the portfolio's own history, then
 back-project onto the portfolio's vintages. That stabilises coefficients which would otherwise
 be confounded on a short book, and it does so by importing a sensitivity estimated somewhere
@@ -538,8 +536,8 @@ response, so anything that maximises a binomial likelihood fits it, up to and in
 network of lecture S3.
 
 **What it costs.** The expansion. Bondora's 179,235 loans become 2,672,193 rows at a
-sixty-month cap, and the exposure convention inside that expansion is a modelling choice
-rather than a formatting one: lecture S2 measures the person-period denominator running 3.5
+sixty-month cap, and the exposure convention inside that expansion is a modelling
+choice with a measurable cost. Lecture S2 measures the person-period denominator running 3.5
 per cent above the exposure the loans actually lived, because a loan exiting mid-month
 contributes a whole row. Competing risks are handled by how the table is built rather than by
 the estimator, so treating settlement as censoring is a decision the layout conceals. And the
@@ -716,7 +714,7 @@ second and third spells to estimate, and the portfolio-level term structure now 
 aggregating spell-level marginals back to the loan.
 
 **Verdict: PWP is the theoretically right recurrent-event choice and Andersen-Gill is
-dominated, though the honest note is what the comparison shows.** Time-to-first-default and
+dominated, with one honest caveat from the comparison itself.** Time-to-first-default and
 PWP produce broadly similar discriminatory performance, measured by Harrell's c-statistic and
 by time-dependent ROC analysis, while Andersen-Gill underperforms both. Consequently the
 recurrent-event machinery buys correctness of the estimand rather than discrimination, and it
@@ -775,8 +773,7 @@ $$
 with the environment term anchored to an external macro series spanning several cycles and
 back-projected onto the portfolio's vintages.
 
-**What it buys.** The collinearity break, explicitly and by construction rather than
-incidentally. A named, traceable macro coefficient a validator can challenge, which is a
+**What it buys.** The collinearity break, explicitly and by construction. A named, traceable macro coefficient a validator can challenge, which is a
 governance argument that beats a more accurate black box in practice. Reported stability of
 rank-ordering out of time on a US auto book where a plain scorecard decays. And a form that
 drops into an existing scorecard stack, so the bank keeps its infrastructure.
@@ -807,7 +804,7 @@ $$
 
 then average over the most recent $R$ observation months. What it buys is intuitiveness, no
 forecasting step, and native treatment of attrition and redefaults, so a lifetime PD may
-exceed 100 per cent for a high-risk account, which the method intends rather than tolerates.
+exceed 100 per cent for a high-risk account, which the method intends.
 It also makes the point-in-time axis a single tunable parameter, which is the reason it belongs
 in this lecture: **a short reference period $R$ gives a point-in-time estimate with unwanted
 volatility, and an $R$ spanning a full cycle gives a through-the-cycle one.** What it costs is
@@ -870,8 +867,8 @@ On the **recurrent-event** family, Botha, Verster and Scheepers (2025) report th
 time-to-first-default and Prentice-Williams-Peterson perform comparably while Andersen-Gill
 underperforms, measured by Harrell's c-statistic and time-dependent ROC analysis. The section
 map in this repository's source registration for that paper does not cover its empirical
-results, so the attribution here names the paper and the two diagnostics rather than a section
-number, which is the honest form of the citation.
+results, so the attribution here names the paper and the two diagnostics, and leaves the section
+number out, which is the honest form of the citation.
 
 Both orderings come with the same caveat, and it is the caveat that matters most for anyone
 choosing a method on this basis. Each was measured on one portfolio, and neither paper claims
@@ -921,7 +918,7 @@ print(f"{surv.height:,} loans; macro covers {macro['month'].min()} to {macro['mo
 
 The expansion is lecture S1's, unchanged, because a silent difference in the exposure
 convention would make the two lectures disagree about the same book. The one addition is the
-calendar month, and it is the identity of section 2.1 rather than a new column of data.
+calendar month, and section 2.1's identity supplies it from columns already present.
 
 ```{python}
 def person_period(df, horizon=HORIZON):
@@ -972,7 +969,7 @@ Two conventions need stating before the series can be read. First, the window ha
 observable: a flag for the twelve months after $u$ can only be scored where the extract
 covers them, so the series stops twelve months before the July 2021 snapshot. Second, a
 censored loan inside the window contributes a zero, which is the standard bias in a
-fixed-horizon rate and the reason the cut-off is enforced rather than assumed away.
+fixed-horizon rate and the reason the cut-off above is enforced in the code.
 
 ```{python}
 LAST_FULL = SNAPSHOT - 12
@@ -1134,7 +1131,7 @@ hazard, and faster GDP growth **raises** it, each with a p-value small enough to
 as decisive by any automatic screen. Inflation is indistinguishable from zero. A model that
 passed a significance test and failed economics is exactly the outcome section 3.4 warned
 about, and it is the case for the sign-constrained regression named there: a constraint would
-have refused this fit rather than reporting it.
+have refused this fit.
 
 Estonia alone is the specification the data can support, and it is the only market observed
 across a genuine downturn, since the 2009 collapse took Estonian GDP down 18.6 per cent year
@@ -1163,7 +1160,7 @@ $+0.093$, which is the real-income squeeze on a borrower whose instalment is fix
 terms, and it is the largest of the three. Unemployment keeps the expected positive sign at
 $+0.011$ and fails to reach significance, with $p \approx 0.11$.
 
-That last result is worth a sentence rather than a footnote, because unemployment is the
+That last result deserves a sentence of its own, because unemployment is the
 variable EU institutions select most often and the one IFRS 9 names first. Unemployment lags
 output, and in Estonia it peaked in early 2010 while Bondora's book was still tiny, so the
 market's most informative unemployment months carry almost no exposure. The failure belongs to this
@@ -1253,7 +1250,7 @@ cumulative probabilities compress as they approach one, which is a reason to com
 structures at the short end and a reason IFRS 9's twelve-month and lifetime measures behave
 differently under stress.
 
-So the point-in-time claim is demonstrated rather than asserted. **Lecture 1 was right that
+So the point-in-time claim now rests on evidence. **Lecture 1 was right that
 its own table could not do this, and wrong to conclude that the portfolio could not.** The
 expansion to person-periods was the whole difference.
 
@@ -1296,8 +1293,7 @@ mortgage portfolio, and the demonstration is a demonstration of the method.
 
 The two regimes ask for a PD in the same three words and mean something different by each, so
 the contrast is worth having in one place. It sits here rather than in R2 because a reader
-meets IFRS 9 in this lecture while IRB is still the unknown half, and R2 cross-references it
-rather than repeating it.
+meets IFRS 9 in this lecture while IRB is still the unknown half, and R2 cross-references it.
 
 | Feature | IFRS 9 | IRB |
 |---|---|---|
@@ -1323,8 +1319,8 @@ it belongs to lecture R2. Three things go there.
 
 The **hybrid PD** and its dial. Section 3.2 borrowed Vasicek's conditional default probability
 as the closed form for a FiT PD, and R2 owns the question of where $\rho$ and the logit-scale
-weight $\lambda$ come from, what a validator asks about each, and what "how point in time is
-this model" means as a measurable property rather than a slogan.
+weight $\lambda$ come from, what a validator asks about each, and how to turn "how point in time is
+this model" into a measurable property.
 
 The **long-run average**. Section 3.2 wrote $\overline{\mathrm{DR}}^{(12)}$ down and cited
 Article 180 of the Capital Requirements Regulation for the representativeness it forces. The
@@ -1336,7 +1332,7 @@ rather than at the middle of the factor distribution is the IRB risk weight, wit
 prescribed by exposure class rather than fitted. That is one substitution away from
 section 3.2 and a whole lecture's worth of consequences.
 
-Consequently the division between the two is by purpose rather than by mathematics. The same
+Consequently purpose divides the two lectures while the mathematics stays common. The same
 Vasicek machinery serves an accounting provision measured at the mean of the cycle and a
 capital requirement measured in its tail, and knowing that the two differ by where the factor
 is evaluated is worth more than either formula on its own.
