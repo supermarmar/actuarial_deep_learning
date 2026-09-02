@@ -732,32 +732,27 @@ $$
 \qquad \lambda \in [0, 1] ,
 $$
 
-with $\lambda = 0$ fully through the cycle and $\lambda = 1$ fully point in time. It is easy to
-explain and it leaves $\lambda$ with no meaning beyond itself, which is why a validator will ask
-how it was set.
+with $\lambda = 0$ fully through the cycle and $\lambda = 1$ fully point in time. It leaves
+$\lambda$ with no meaning beyond itself, which is why a validator will ask how it was set.
 
-The one-factor version gives the dial a meaning. Let $Z_u \sim {\cal N}(0, 1)$ be a systematic
-factor for calendar month $u$, high values benign, and let $\rho \in [0, 1)$ be the loan's loading
-on it. Then
+The one-factor version gives the dial a meaning, writing $Z_u \sim {\cal N}(0, 1)$ for a
+systematic factor in calendar month $u$, high values benign, and $\rho \in [0, 1)$ for the loan's
+loading on it:
 
 $$
 \mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z_u \right)
 = \Phi\left( \frac{ \Phi^{-1}\left( \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) \right)
-- \sqrt{\rho} \, Z_u }{ \sqrt{1 - \rho} } \right) ,
+- \sqrt{\rho} \, Z_u }{ \sqrt{1 - \rho} } \right) .
 $$
 
-which is Vasicek's conditional default probability. At $\rho = 0$ the TTC PD passes through
-unmoved; as $\rho$ rises the same input swings further with the cycle, so $\rho$ is a measure of
-how point-in-time the model is.
+This is Vasicek's conditional default probability, and $\rho$ has replaced $\lambda$ as the dial,
+measuring how far the same input swings with the cycle.
 
-Two properties earn the extra notation, and both belong to the regulatory lectures rather than to
-this one. Averaging the output over $Z$ returns the TTC PD **exactly**, which is what makes the
-probit form the right home for the previous callout's definition, and lecture R2 gives the
-identity that does it. Stressing the factor instead of averaging it, at
-$Z_u = -\Phi^{-1}(0.999)$, turns the same expression into the IRB capital formula, where $\rho$
-is the asset correlation the CRR prescribes by exposure class rather than something the modeller
-fits. Credit lecture R2 follows that substitution through the whole production sequence, from
-this scorecard to a risk weight.
+Both of its useful properties belong to lecture R2. Averaging the output over $Z$ returns the TTC
+PD **exactly**, and stressing the factor instead, at $Z_u = -\Phi^{-1}(0.999)$, turns the same
+expression into the IRB capital formula with $\rho$ prescribed by exposure class rather than
+fitted. R2 takes that substitution through the whole production sequence, from this scorecard to a
+risk weight.
 :::
 
 ## Regression modelling
