@@ -300,3 +300,56 @@ one of them traces to the published abstract, and each citing article says so in
 `fact_check_notes`. The lecture inherits that limit and must attribute those claims to the
 abstract in the same way, above all Greenland 2003's magnitude comparison, which has no
 substitute anywhere on the list.
+
+## The two checks run before writing, 2 September 2026
+
+Both were run ahead of task 6 rather than inside it, because either could have changed the
+lecture's shape.
+
+### Positivity holds, with a caveat at the tails
+
+The plan warned that standardising across EE, FI and ES might come out unstable on thin cells,
+and told the lecture to report that rather than reach for a tidier number. It does not come out
+unstable. All fifteen country-by-pooled-income-quintile cells are populated, and the thinnest is
+Finland's bottom quintile at 630 loans against Estonia's bottom quintile at 30,218. The risk set
+splits 58.1 per cent Estonia, 24.2 per cent Finland and 17.7 per cent Spain over 148,437 loans.
+
+The caveat is at the ends rather than in the middle. Log-income runs from a first percentile of
+5.72 in Estonia, 6.62 in Finland and 6.31 in Spain, so the bottom of the pooled range is
+essentially Estonian and the top is essentially Finnish. Standardising over the pooled fifth to
+ninety-fifth percentile therefore extrapolates each country's fitted model outside its own
+support at both ends, which is positivity failing quietly rather than loudly. The lecture states
+the common-support region and shows the curve both ways.
+
+### The standardisation flips the sign, which is the whole point
+
+Refitting lecture 1's GLM3 gives a log-income coefficient of -0.0766, an odds ratio of 0.926,
+against country coefficients of +1.905 for Spain and +1.253 for Finland on the logit scale.
+Averaging the country-conditional model over the observed country distribution across the
+pooled fifth to ninety-fifth percentile of log-income gives a standardised default probability
+falling monotonically from 29.8 to 27.2 per cent, a change of -2.6 percentage points. The raw
+pooled empirical curve over the same grid rises from 20.1 to 27.9 per cent, a change of
++7.8 points. Same data, same range, opposite sign.
+
+Two further observations worth a paragraph each in the lecture. The standardised income effect
+is small next to the country effect, so the honest reading is that income matters and country
+dominates. And lecture 1's claim that the rate falls with income within every country holds on
+**within-country** quintiles (Estonia 18.6 to 16.6, Finland 39.5 to 31.5, Spain 59.1 to 47.4)
+while on **pooled** quintiles Finland's gradient is a hump, rising from 34.3 through 40.3 before
+falling to 35.7. Nothing is wrong with either computation; the banding is doing the work, which
+is a useful aside on how a stratified result depends on how the strata were cut.
+
+## Notation, settled before task 4
+
+One rule, stated because the plan's task 3 anticipated the ambiguity and the lecture's three
+graph arguments are where it would surface.
+
+- **An estimand is written with the counterfactual superscript.** $D^{(k),\,a}_i$ is the
+  $k$-month default indicator loan $i$ would have shown under intervention $a$, mapping onto
+  lecture 1's $D^{(k)}_i$ and $\boldsymbol{X}_i$.
+- **Identification is argued on the graph**, in the vocabulary of Greenland and Pearl: paths,
+  arrowheads, colliders, blocking, and conditioning sets.
+- **"Adjust for `Country`" is never written as an intervention on `Country`.** It is conditioning
+  on a set that blocks a backdoor path. Keeping those two apart is the whole content of the
+  interaction against effect modification distinction, so the notation has to respect it.
+- **No `do`-notation**, per the plan.
