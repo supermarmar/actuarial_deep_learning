@@ -6,6 +6,16 @@
 > `/Users/mervedosa/Documents/Repos/actuarial_deep_learning`; every path below is
 > relative to it unless it starts with `~` or `/`.
 
+> **Executed 2 September 2026.** All nine tasks are done and committed, plus decision 5.
+> The lecture is `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`. Three findings depart from
+> what the plan assumed, and each is recorded in `notes/ifrs9-pit-pd-research.md`: three of
+> task 2's four proposed symbols were redundant against symbols the series already owns, so
+> the lecture adds one; the vault's footnote labels for the recurrent-event Cox paper drift
+> from its own registration, so the performance ordering carries no section number; and the
+> pooled macro fit in task 7 returns economically backwards signs, so the demonstration runs
+> on Estonia alone and says why. Task 8's callout came out at 43 per cent of its length
+> rather than under a third, because going lower meant deleting something step 1 says to keep.
+
 **Answers:** review comment 1 of round 3, recorded verbatim in
 `notes/lecture-1-review-comments-2026-09-01.md`. The comment reads:
 
@@ -196,29 +206,29 @@ render is worse than a 30 kB CSV in git. Say so in a comment at the top of the C
 The comment asks for deep research. Most of it is already done inside the vault, so this
 task selects and fills two gaps rather than starting from nothing.
 
-- [ ] **Step 1.** Read every vault and guides file listed above. Take the exact titles,
+- [x] **Step 1.** Read every vault and guides file listed above. Take the exact titles,
       authors and years from the `_meta/sources/` registrations rather than from prose.
-- [ ] **Step 2.** Write `notes/ifrs9-pit-pd-research.md` with one paragraph per method,
+- [x] **Step 2.** Write `notes/ifrs9-pit-pd-research.md` with one paragraph per method,
       each ending on a verdict. The methods to cover are the discrete-time hazard model,
       the non-stationary semi-Markov chain, beta regression on transition cells,
       multinomial logistic regression on transitions, the Cox proportional hazards model
       with time-varying macro covariates, its Andersen-Gill and
       Prentice-Williams-Peterson recurrent-event subtypes, Vasicek Z-factor scaling of a
       TTC grade PD, and the age-period-cohort decomposition.
-- [ ] **Step 3.** Corroborate decision 2. The survival reading is settled, so this step
+- [x] **Step 3.** Corroborate decision 2. The survival reading is settled, so this step
       records the evidence for it rather than choosing: find the primary usage in the
       Botha tutorial and in the guides' IFRS 9 PD methodology, quote it with a section
       reference, and flag loudly in the note if either source uses the macro reading
       instead, since the lecture would then have to say so explicitly.
-- [ ] **Step 4.** Fill gap two, the FiT and FLI naming. Confirm against IFRS 9 itself,
+- [x] **Step 4.** Fill gap two, the FiT and FLI naming. Confirm against IFRS 9 itself,
       i.e. the standard's own wording on forward-looking information, and against the
       guides FLI methodology file. Record whether "forward in time" appears anywhere in
       the literature.
-- [ ] **Step 5.** Where a search turns up a paper the vault does not hold, do not ingest
+- [x] **Step 5.** Where a search turns up a paper the vault does not hold, do not ingest
       it here. Record it in the note under a heading "For vault ingest", with title,
       authors, year and URL, so the vault's own `kb-ingest` workflow can take it with
       its required audit entry.
-- [ ] **Step 6.** Commit.
+- [x] **Step 6.** Commit.
 
 ```bash
 git add notes/ifrs9-pit-pd-research.md
@@ -235,14 +245,14 @@ gaps carry a sourced answer or an explicit "no primary usage found".
 A fresh session will otherwise reinvent symbols that lecture 1 and the S track already
 own, and a clash is the single most expensive mistake available here.
 
-- [ ] **Step 1.** Extract the inherited symbols from `01_credit-use-case.qmd` and record
+- [x] **Step 1.** Extract the inherited symbols from `01_credit-use-case.qmd` and record
       each with its meaning: $y_{i,t}$, $D^{(k)}_i$, $D^{(k)}_{i,t}$, $g_i$, $A_i$,
       $T_i$, ${\cal W}_k$, ${\cal P}_u$, $n_u$, $\mathrm{DR}^{(k)}_u$, $\boldsymbol{X}_i$,
       $\boldsymbol{Z}_u$, $u = g_i + t$, $\lambda$, $\rho$, $\mathrm{PD}_k$.
-- [ ] **Step 2.** Extract what `S1` and `S3` own, above all $l_t$, the decrements
+- [x] **Step 2.** Extract what `S1` and `S3` own, above all $l_t$, the decrements
       $d^{\rm def}_t$ and $d^{\rm set}_t$, and ${}_k p_t$. Record that $d$ alone is
       Botha's delinquency threshold from lecture 1 section 2.1 and is therefore spent.
-- [ ] **Step 3.** Declare the new symbols this lecture needs and check each against the
+- [x] **Step 3.** Declare the new symbols this lecture needs and check each against the
       two lists above. The proposal is $h_{i,t}$ for the discrete hazard in month $t$,
       $S_{i,t}$ for survival to $t$, $m^{(k)}_{i,t}$ for the marginal PD of period $t+k$
       and $\mathrm{PD}^{\rm cum}_{k}$ for the cumulative PD to horizon $k$. Confirm none
@@ -252,7 +262,7 @@ own, and a clash is the single most expensive mistake available here.
 grep -n 'h_{i,t}\|S_{i,t}\|m\^{(k)}' credit_lectures/*.qmd
 ```
 
-- [ ] **Step 4.** Commit the appended section.
+- [x] **Step 4.** Commit the appended section.
 
 **Done when** the grep returns nothing, or every hit is accounted for in the note.
 
@@ -260,24 +270,24 @@ grep -n 'h_{i,t}\|S_{i,t}\|m\^{(k)}' credit_lectures/*.qmd
 
 **Files:** create `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`.
 
-- [ ] **Step 1.** Copy the YAML header and the provenance comment pattern from
+- [x] **Step 1.** Copy the YAML header and the provenance comment pattern from
       `credit_lectures/S2_survival-insurance-to-credit.qmd`, which is the closest
       structural match, and adjust the title, abstract and bibliography.
-- [ ] **Step 2.** Write the abstract, three or four sentences, stating what the lecture
+- [x] **Step 2.** Write the abstract, three or four sentences, stating what the lecture
       adds to lecture 1 and naming the two conditioning axes.
-- [ ] **Step 3.** Lay out the section headings with one sentence of intent under each,
+- [x] **Step 3.** Lay out the section headings with one sentence of intent under each,
       no content yet. The proposed spine is: the two conditioning axes; the term
       structure from a hazard; macro conditioning and FiT; the ECL identity this serves;
       how the estimate is actually produced, i.e. the methods review; the demonstration
       on Bondora; and what stays with the IRB lecture.
-- [ ] **Step 4.** Render and confirm the skeleton comes out.
+- [x] **Step 4.** Render and confirm the skeleton comes out.
 
 ```bash
 bash scripts/render_lecture.sh credit_lectures/R1_credit-ifrs9-pit-pd.qmd
 open credit_lectures/R1_credit-ifrs9-pit-pd.html
 ```
 
-- [ ] **Step 5.** Commit.
+- [x] **Step 5.** Commit.
 
 **Done when** the HTML renders with `lecture.css` applied and every heading present.
 
@@ -287,21 +297,21 @@ open credit_lectures/R1_credit-ifrs9-pit-pd.html
 
 This is the section that earns the lecture. Get it right before writing anything else.
 
-- [ ] **Step 1.** Define the discrete hazard on lecture 1's outcome, i.e.
+- [x] **Step 1.** Define the discrete hazard on lecture 1's outcome, i.e.
       $h_{i,t} = \mathbb{P}(y_{i,t} = 1 \mid \text{performing at } t-1, \boldsymbol{X}_i, \boldsymbol{Z}_u)$
       with $u = g_i + t$, and state plainly that this is the conditional PD.
-- [ ] **Step 2.** Build survival, the marginal PD and the cumulative PD from it, and
+- [x] **Step 2.** Build survival, the marginal PD and the cumulative PD from it, and
       show that lecture 1's $D^{(k)}_{i,t}$ flag has $\mathbb{P}(D^{(k)}_{i,t} = 1)$
       equal to the cumulative PD over the window, so the two lectures agree.
-- [ ] **Step 3.** State the macro axis separately, i.e. conditioning on
+- [x] **Step 3.** State the macro axis separately, i.e. conditioning on
       $\boldsymbol{Z}_u$ versus averaging over $\boldsymbol{Z}$, and reuse lecture 1's
       Jensen warning by reference rather than by restating it.
-- [ ] **Step 4.** Add a two-by-two table crossing the survival axis against the macro
+- [x] **Step 4.** Add a two-by-two table crossing the survival axis against the macro
       axis, with the four cells named as the literature names them and the ambiguous
       cell flagged. This is the reader's map for the rest of the lecture.
-- [ ] **Step 5.** Add the competing-risk caveat, since Bondora loans leave two ways and
+- [x] **Step 5.** Add the competing-risk caveat, since Bondora loans leave two ways and
       `S2` owns the Fine-Gray correction. One paragraph, pointing at S2.
-- [ ] **Step 6.** Render, read it, commit.
+- [x] **Step 6.** Render, read it, commit.
 
 **Done when** a reader can say which of the four cells any given PD in lecture 1 sits in.
 
@@ -309,37 +319,37 @@ This is the section that earns the lecture. Get it right before writing anything
 
 **Files:** modify `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`.
 
-- [ ] **Step 1.** Introduce forward-looking information with IFRS 9's own wording, then
+- [x] **Step 1.** Introduce forward-looking information with IFRS 9's own wording, then
       the course's FiT label, per decision 3, and define both on first use.
-- [ ] **Step 2.** Write the scenario-weighted ECL as a formula, so the lecture states
+- [x] **Step 2.** Write the scenario-weighted ECL as a formula, so the lecture states
       why a term structure is needed at all, and cite
       `concepts/ifrs9-expected-credit-loss.md`'s sources.
-- [ ] **Step 3.** State the short-series design problem honestly, i.e. two or three
+- [x] **Step 3.** State the short-series design problem honestly, i.e. two or three
       cycles against dozens of candidate indicators, and name the three remedies the FLI
       article records: model averaging, blockwise design and sign-constrained regression.
-- [ ] **Step 4.** Add the age-period-cohort identification argument, which is what
+- [x] **Step 4.** Add the age-period-cohort identification argument, which is what
       answers lecture 1's collinearity complaint, and cite Breeden (2016).
-- [ ] **Step 5.** Render, commit.
+- [x] **Step 5.** Render, commit.
 
 ## Task 6: the methods review with a verdict on each
 
 **Files:** modify `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`.
 
-- [ ] **Step 1.** Write one subsection per method, in the order of task 1 step 2, each
+- [x] **Step 1.** Write one subsection per method, in the order of task 1 step 2, each
       giving the estimator in notation from the contract, then what it buys, then what it
       costs. The comment asks for pros and cons, so no method escapes without both.
-- [ ] **Step 2.** Add the comparison table, one row per method, columns for the unit of
+- [x] **Step 2.** Add the comparison table, one row per method, columns for the unit of
       observation, whether macro conditioning is native, whether competing risks are
       handled, whether recurrent defaults are handled, and the data the method demands.
       Design it against `~/.claude/rules/html-design.md`, i.e. numeric columns marked
       `.num` in header and body, a `<caption>` naming the basis, and no fills.
-- [ ] **Step 3.** State the empirical ordering the Botha work reports, i.e. multinomial
+- [x] **Step 3.** State the empirical ordering the Botha work reports, i.e. multinomial
       logistic beating beta regression beating a plain Markov chain, and that
       time-to-first-default and Prentice-Williams-Peterson perform comparably while
       Andersen-Gill underperforms. Attribute each to its paper and section.
-- [ ] **Step 4.** Cross-reference `S1` and `S3` where they already own a method, rather
+- [x] **Step 4.** Cross-reference `S1` and `S3` where they already own a method, rather
       than re-deriving it.
-- [ ] **Step 5.** Render, commit.
+- [x] **Step 5.** Render, commit.
 
 **Done when** every method carries a con as well as a pro, and every performance claim
 carries a paper and a section.
@@ -349,23 +359,23 @@ carries a paper and a section.
 **Files:** modify `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`; possibly create
 `credit_lectures/data/macro_eurostat.csv` per the data decision above.
 
-- [ ] **Step 1.** Reuse S1's expansion. Read it out of
+- [x] **Step 1.** Reuse S1's expansion. Read it out of
       `credit_lectures/S1_credit-survival-bridge.qmd` and keep the exposure convention
       identical, since a silent difference makes the two lectures disagree.
-- [ ] **Step 2.** Add a calendar-month column $u$ to the person-period frame and
+- [x] **Step 2.** Add a calendar-month column $u$ to the person-period frame and
       aggregate to $\mathrm{DR}^{(12)}_u$, giving lecture 1's series from real data.
       Plot it, with the count of loans at risk beneath, since a rate on a thin risk set
       is noise.
-- [ ] **Step 3.** Attach the macro series by country and month, then fit two discrete
+- [x] **Step 3.** Attach the macro series by country and month, then fit two discrete
       hazard models, one without $\boldsymbol{Z}_u$ and one with it, and report the
       coefficient, its sign and whether the sign is economically plausible.
-- [ ] **Step 4.** Show the resulting term structure for two contrasting macro paths, so
+- [x] **Step 4.** Show the resulting term structure for two contrasting macro paths, so
       the reader sees the point-in-time behaviour rather than reading about it.
-- [ ] **Step 5.** State the limitations plainly: Bondora is a P2P book with a
+- [x] **Step 5.** State the limitations plainly: Bondora is a P2P book with a
       concentrated country mix and its own selection story, the macro series are
       national rather than borrower-specific, and the 2020 pandemic months sit inside
       the window.
-- [ ] **Step 6.** Restart and render clean, then commit.
+- [x] **Step 6.** Restart and render clean, then commit.
 
 ```bash
 bash scripts/render_lecture.sh credit_lectures/R1_credit-ifrs9-pit-pd.qmd
@@ -380,21 +390,21 @@ every figure has a caption stating its basis.
 
 The comment says the section is too large for lecture 1, so lecture 1 has to get smaller.
 
-- [ ] **Step 1.** Keep the PiT and TTC definitions, the $D^{(k)}_{i,t}$ generalisation
+- [x] **Step 1.** Keep the PiT and TTC definitions, the $D^{(k)}_{i,t}$ generalisation
       and the $\mathrm{DR}^{(k)}_u$ definition, since later sections of lecture 1 use
       them.
-- [ ] **Step 2.** Move the Jensen trap, the two TTC representations and the collinearity
+- [x] **Step 2.** Move the Jensen trap, the two TTC representations and the collinearity
       discussion into the new lecture, leaving one sentence and a forward reference in
       their place.
-- [ ] **Step 3.** Qualify "This portfolio cannot yield a PiT PD" so it says what is
+- [x] **Step 3.** Qualify "This portfolio cannot yield a PiT PD" so it says what is
       true, i.e. that the twelve-month cross-section cannot, and point at the new
       lecture for what the expansion recovers.
-- [ ] **Step 4.** Replace the `amex_panel.parquet` sentence, since the thirteen-month
+- [x] **Step 4.** Replace the `amex_panel.parquet` sentence, since the thirteen-month
       span makes it wrong.
-- [ ] **Step 5.** Re-render lecture 1 and diff the computed outputs. A re-render is
+- [x] **Step 5.** Re-render lecture 1 and diff the computed outputs. A re-render is
       known safe: on 1 September 2026 all 58 computed output lines reproduced
       identically, the only diff being two statsmodels summary timestamps.
-- [ ] **Step 6.** Commit lecture 1 separately from the new lecture, since they are two
+- [x] **Step 6.** Commit lecture 1 separately from the new lecture, since they are two
       concerns.
 
 **Done when** lecture 1's callout is under a third of its current length and every
@@ -404,12 +414,12 @@ symbol it still uses is still defined in it.
 
 **Files:** modify `CLAUDE.md`; modify `notes/lecture-1-review-comments-2026-09-01.md`.
 
-- [ ] **Step 1.** Add the lecture to the `credit_lectures/` row of the key directories
+- [x] **Step 1.** Add the lecture to the `credit_lectures/` row of the key directories
       table in `CLAUDE.md`, following the wording already used for the S track, and say
       which data it reads.
-- [ ] **Step 2.** Mark round 3 comment 1 as answered in the review note, with one
+- [x] **Step 2.** Mark round 3 comment 1 as answered in the review note, with one
       paragraph on how, matching the "How each was answered" pattern already there.
-- [ ] **Step 3.** Commit.
+- [x] **Step 3.** Commit.
 
 **Done when** a fresh session reading `CLAUDE.md` alone can tell what the lecture is and
 what it reads.
