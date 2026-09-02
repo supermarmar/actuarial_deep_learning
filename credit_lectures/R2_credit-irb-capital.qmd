@@ -937,7 +937,8 @@ grades["moc_naive"] = z95 * grades.sd / np.sqrt(grades.years)
 grades["moc_c"] = z95 * grades.sd / np.sqrt(grades.n_eff)
 
 print(f"first-order autocorrelation of the annual default rate: phi = {phi:.3f}")
-print(f"an eleven-year series is worth {grades.n_eff.max():.1f} independent observations\n")
+print(f"a {grades.years.max():.0f}-year series is worth {grades.n_eff.max():.1f} "
+      "independent observations\n")
 grades[["lra", "sd", "years", "n_eff", "moc_naive", "moc_c"]].style.format({
     "lra": "{:.2%}", "sd": "{:.4f}", "years": "{:.0f}", "n_eff": "{:.1f}",
     "moc_naive": "{:.2%}", "moc_c": "{:.2%}"})
@@ -1000,9 +1001,9 @@ The **long-run average sits below both**, at 26.0 per cent, because averaging an
 un-weights the large recent cohorts that pooling had over-weighted.
 
 The **margin of conservatism then pushes the answer well above where it started**, to 34.9 per
-cent. The regulatory probability of default is roughly a third higher than the model's own
+cent. The regulatory probability of default is nearly 30 per cent higher than the model's own
 estimate for the same borrowers, and every point of that gap comes from the shortness and the
-serial correlation of an eleven-year annual series. **That is the balance property being broken
+serial correlation of a twelve-year annual series. **That is the balance property being broken
 deliberately**, which is the thing to hold onto from this section: a calibrated model is what
 step 1 delivers and a conservative model is what the regulation requires, and steps 3 to 5 are
 where the one becomes the other.
