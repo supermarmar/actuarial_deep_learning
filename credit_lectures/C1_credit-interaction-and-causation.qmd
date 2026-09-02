@@ -46,8 +46,9 @@ the lecture recorded that the wrongly signed coefficient had been evidence about
 composition all along.
 
 Every step of that is right. It is also a causal argument, and lecture 1 makes it without using
-the word. The claim "income does not really drive default, country does" is a claim about what
-would happen under intervention rather than a claim about what the data show. So is the decision
+the word. Reading the flipped coefficient as "country is the real driver and income was standing
+in for it" makes a claim about what would happen under intervention, where the data on their own
+support only a claim about association. So does the decision
 to leave `Interest` out because it is "an output of the lender's previous risk assessment rather
 than a property of the borrower". So is the implicit promise that the GLM3 income coefficient,
 now correctly signed, may be read as the effect of income.
@@ -92,28 +93,389 @@ either saves.
 
 # Setting up
 
-Intent: load `bondora_pd.parquet`, rebuild lecture 1's `logIncome` and age classes so every
-number below is comparable with lecture 1's, and fix the plotting conventions.
+We rebuild lecture 1's modelling frame exactly, so that every number below is comparable with
+one the reader has already seen. The table is `bondora_pd.parquet`, the fixed-horizon frame of
+148,733 seasoned loans and a twelve-month default flag, of which 148,437 sit in the three
+markets lecture 1 used.
+
+```{python}
+import numpy as np
+import polars as pl
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from sklearn.metrics import roc_auc_score
+
+plt.rcParams.update({
+    "figure.figsize": (9, 4), "figure.dpi": 150, "font.size": 9,
+    "axes.spines.top": False, "axes.spines.right": False,
+})
+OX, GREY, RULE, BLUE, OLIVE = "#8C2F1E", "#B0B0B0", "#444444", "#3B4A75", "#4F6333"
+
+AGE_CUTS = [18, 20, 25, 30, 40, 50, 60, 70, 101]
+AGE_LABELS = ["18-20", "21-25", "26-30", "31-40", "41-50", "51-60", "61-70", "71+"]
+COUNTRIES = ["EE", "FI", "ES"]
+
+raw = pl.read_parquet("../data/bondora_pd.parquet")
+model_dat = (raw
+    .filter(pl.col("Country").is_in(COUNTRIES))
+    .with_columns(logIncome=pl.col("IncomeTotal").clip(lower_bound=1).log()))
+
+dat = model_dat.select(
+    ["default_12m", "Age", "logIncome", "Country", "Interest"]).to_pandas()
+dat["AgeClass"] = pd.cut(dat["Age"], AGE_CUTS, labels=AGE_LABELS, include_lowest=True)
+
+print(f"{dat.shape[0]:,} loans across {COUNTRIES}")
+print(model_dat.group_by("Country")
+      .agg(pl.len().alias("n"),
+           pl.col("default_12m").mean().round(4).alias("default rate"),
+           pl.col("logIncome").median().round(3).alias("median logIncome"))
+      .sort("n", descending=True))
+```
+
+Estonia carries 58.1 per cent of the risk set at a 17.1 per cent default rate, Finland 24.2 per
+cent at 37.8 per cent, and Spain 17.7 per cent at 55.4 per cent. Those three pairs of numbers
+generate everything that follows, because the country with the lowest risk also has the lowest
+median income.
 
 # The three identification conditions on a credit portfolio
 
-Intent: state exchangeability, positivity and consistency, and give each a failure a credit
-modeller has actually seen. Positivity is the tractable one and this portfolio lets us measure
-it. Consistency is the hard one, because "reduce the interest rate" is not one intervention.
+A randomised experiment supports a causal claim by design, since randomisation makes the
+treated and untreated groups comparable in expectation. An observational credit portfolio has to
+assume what randomisation would have delivered, and that assumption decomposes into three
+conditions. Each has a credit failure mode, and they are not equally hard to check.
+
+**Exchangeability** requires that, conditional on the measured covariates, the loans at one
+income level be comparable in their counterfactual outcomes to the loans at another. Formally,
+$D^{(k),\,a}_i$ is independent of the observed income level given $\boldsymbol{X}_i$. It fails
+in credit whenever an unmeasured borrower characteristic drives both the covariate and the
+outcome, and the standard case is unrecorded financial sophistication: a borrower who
+understands amortisation both declares income accurately and repays reliably, so a model
+without that variable attributes its effect to whatever correlates with it.
+
+**Positivity** requires a non-zero probability of every covariate level within every stratum
+being conditioned on. This is the tractable one, because it is a property of the table rather
+than of the world, so it can be counted. A credit model violates it silently whenever a segment
+carries no variation in a driver, and the failure shows up as a coefficient estimated from a
+handful of loans, or from none.
+
+```{python}
+qs = np.quantile(model_dat["logIncome"], [0.2, 0.4, 0.6, 0.8])
+banded = model_dat.with_columns(
+    q=pl.col("logIncome").cut(list(qs), labels=["Q1", "Q2", "Q3", "Q4", "Q5"]))
+cells = (banded.group_by(["q", "Country"]).agg(pl.len().alias("n"))
+         .pivot(on="Country", index="q", values="n").sort("q"))
+print(cells)
+print(f"\nthinnest cell: {min(cells[c].min() for c in COUNTRIES):,} loans")
+```
+
+Positivity holds here, and comfortably. All fifteen cells are populated and the thinnest,
+Finland's bottom pooled-income quintile, carries 630 loans against Estonia's 30,218 in the same
+band. Therefore the standardisation of section 7 is supportable, which was not a foregone
+conclusion: the equivalent macroeconomic exercise in lecture R1 collapsed on exactly this
+condition and had to retreat to Estonia alone. The caveat sits at the two ends of the range
+rather than in the middle, and section 7 measures it.
+
+**Consistency** requires that the intervention be well defined before the counterfactual can be
+linked to the observed data, and it is the condition credit work assumes away most often.
+"Reduce the interest rate" sounds like one intervention and is at least three: reprice at
+origination, restructure mid-life, or forbear after arrears. Each implies a different
+counterfactual, each is available to a different population, and a coefficient on `Interest`
+answers none of them on its own. The same objection applies with more force to age and to
+country, where the intervention is unavailable altogether, which is the point section 4 turns
+on.
+
+::: {.callout-note icon=false title="Named here, and deliberately not demonstrated"}
+Two families of method exist for the case where exchangeability cannot be assumed on the
+measured covariates.
+
+A **propensity score** is the conditional probability of receiving the treatment given the
+covariates. Matching, weighting or regressing on it reduces a many-covariate balancing problem
+to a one-dimensional one, and it buys nothing that conditioning on the covariates themselves
+would not, since it still assumes no unmeasured confounder.
+
+An **instrumental variable** is a variable affecting the treatment, affecting the outcome only
+through the treatment, and sharing no cause with the outcome. Where a credible instrument
+exists, it identifies an effect without assuming exchangeability on measured covariates.
+
+Neither is demonstrated in this lecture, because the Bondora book carries no treatment variable.
+Every covariate in it is a borrower characteristic or a platform-set price, so a staged
+demonstration would teach the mechanics of a method that should not be applied to this
+portfolio, which is a worse outcome than leaving the mechanics to the reference.
+:::
 
 # Interaction, effect modification, and the scale nobody states
 
-Intent: separate the two concepts with a credit example each, then demonstrate numerically that
-a logit fit carrying no interaction term still produces unequal risk differences by stratum, and
-report the stronger result that interaction is present on some scale whenever both covariates
-matter.
+Lecture 1 says that covariates **interact**, so marginal default rates cannot simply be
+combined. The statement is correct and the word is wrong, and the difference decides what the
+finding licenses.
+
+**Interaction** concerns the joint effect of intervening on two covariates. **Effect
+modification** concerns the effect of intervening on one covariate varying across strata of a
+second covariate nobody intervenes on. Either can hold with the other absent, and there are
+settings where one is assessable and the other is not. Applied to lecture 1's figure, nobody
+intervenes on a borrower's country of residence, so what the figure shows is effect
+modification: the income gradient differs across markets. A genuine interaction claim in credit
+needs two things a lender could actually do, e.g. change the advance and change the term
+together, and those are rarer in a scorecard than the word suggests.
+
+The distinction is worth the pedantry because the two claims support different actions. Effect
+modification tells the lender where an existing model is stronger or weaker, which is a
+segmentation finding. Interaction tells the lender what happens when two levers are pulled at
+once, which is a pricing or policy finding. A model document that reports the first and is read
+as the second has overclaimed, and the reader has no way to tell from the coefficient table.
+
+## Interaction is a claim about a scale, and the scale is usually unstated
+
+Here is the result that unsettles most credit modellers, and it takes four lines of arithmetic
+to see. Fit a logit with `logIncome` and `Country` and **no interaction term at all**. By
+construction the odds ratio for income is identical in every country. The risk differences are
+not.
+
+```{python}
+no_int = smf.glm("default_12m ~ logIncome + Country",
+                 data=dat, family=sm.families.Binomial()).fit()
+
+lo, hi = np.percentile(dat["logIncome"], [25, 75])
+rows = []
+for c in COUNTRIES:
+    p_lo = float(no_int.predict(pd.DataFrame({"logIncome": [lo], "Country": [c]})).iloc[0])
+    p_hi = float(no_int.predict(pd.DataFrame({"logIncome": [hi], "Country": [c]})).iloc[0])
+    odds = (p_hi / (1 - p_hi)) / (p_lo / (1 - p_lo))
+    rows.append({"country": c, "p(Q1 income)": p_lo, "p(Q3 income)": p_hi,
+                 "risk difference": p_hi - p_lo, "odds ratio": odds})
+print(f"comparing log-income {lo:.3f} with {hi:.3f}, i.e. a {np.exp(hi - lo):.2f}x income ratio\n")
+print(pd.DataFrame(rows).set_index("country").round(4))
+```
+
+The odds ratio is 0.9107 in all three countries, to four decimal places, because a logit link
+makes the model multiplicative in the odds and the income coefficient is shared. Move to the
+risk-difference scale and the same fitted model gives -1.30 percentage points in Estonia, -2.23
+in Finland and -2.31 in Spain. The Spanish risk difference is 1.8 times the Estonian one. So
+this model carries exactly zero interaction on the multiplicative scale and material interaction
+on the additive scale, and it was never told about either.
+
+Consequently a statement that a model contains no interaction is incomplete until the scale is
+named. The general version is sharper still: provided both covariates affect the outcome, there
+will always be interaction on at least one scale, and the only way to have none on any scale is
+for one covariate to have no effect whatever. Interaction on some scale is therefore guaranteed
+in any model whose covariates all matter, and reporting its presence conveys nothing. What
+conveys something is which scale was tested and why that scale answers the question asked.
+
+Practice has settled on the multiplicative scale by convenience rather than by argument, since
+logistic regression is easy to fit and standard software returns a multiplicative interaction
+estimate with a confidence interval for free, while additive measures need extra work in most
+packages. The cost is measurable in the field that studies it: across a random sample of 25
+cohort and 50 case-control studies drawn from the five highest-ranked epidemiology journals,
+61 per cent assessed interaction at least as a secondary analysis and exactly one reported an
+additive measure. Credit modelling inherits the same default through the same link function, so
+the same silence is likely here and nobody has counted.
+
+::: {.callout-tip icon=false title="What a validator should ask to see"}
+Four items make an interaction or effect-modification claim assessable. Anything less leaves it
+unassessable rather than wrong, which is a worse position for a reviewer, since there is nothing
+to disagree with.
+
+1. The measures for each combination of the two variables, against a single reference cell taken
+   as the lowest-risk combination.
+2. The measures for the first variable within strata of the second, and for an interaction claim,
+   for the second within strata of the first as well.
+3. The interaction measures on the additive **and** the multiplicative scale.
+4. The confounders adjusted for, listed. For an interaction claim, both sets.
+
+The fourth is the one usually missing and it matters most, because the adjustment set that
+identifies one of the two effects need not identify the other. Section 6 is what that costs.
+:::
 
 # Choosing an adjustment set
 
-Intent: draw lecture 1's confounding structure as a graph, then separate the three roles a
-covariate can play. `Country` is the confounder to condition on, `Interest` is the mediator
-lecture 1 was right to exclude, and a constructed collider shows what conditioning on the wrong
-variable costs, with numbers rather than assertion.
+Which covariates a model should control for is usually decided by predictive lift, and the
+decision is defensible right up to the moment a coefficient is quoted as a driver. A causal
+diagram turns the question into a derivation. Arrows encode the assumed causal relations; paths
+through the diagram are then read to decide which conditioning sets remove confounding and which
+create it.
+
+Lecture 1's structure is the textbook case, and drawing it takes three arrows.
+
+<figure>
+<svg viewBox="0 0 560 170" width="100%" role="img"
+     aria-label="Directed graph: Country points to log-income and to default; log-income points to default. The Country-to-default arrow is the backdoor path.">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8C2F1E"></path>
+    </marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#444444"></path>
+    </marker>
+  </defs>
+  <text x="60" y="30" font-size="15" fill="#1B1A17" text-anchor="middle">Country</text>
+  <text x="60" y="140" font-size="15" fill="#1B1A17" text-anchor="middle">log-income</text>
+  <text x="470" y="140" font-size="15" fill="#1B1A17" text-anchor="middle">default</text>
+  <line x1="60" y1="42" x2="60" y2="120" stroke="#8C2F1E" stroke-width="1.6"
+        marker-end="url(#ah)"></line>
+  <path d="M 95 24 C 260 6 420 60 470 120" fill="none" stroke="#8C2F1E" stroke-width="1.6"
+        marker-end="url(#ah)"></path>
+  <line x1="130" y1="136" x2="425" y2="136" stroke="#444444" stroke-width="1.6"
+        marker-end="url(#ahg)"></line>
+  <text x="270" y="126" font-size="13" fill="#5A554B" text-anchor="middle">the effect we want</text>
+  <text x="285" y="42" font-size="13" fill="#8C2F1E" text-anchor="middle">the backdoor path</text>
+</svg>
+<figcaption>Lecture 1's confounding structure. Country is a common cause of income and of
+default, so the path from income back through country and on to default is open, and the
+marginal income gradient carries it. Conditioning on country blocks that path and leaves the
+direct path intact.</figcaption>
+</figure>
+
+Read the diagram in the vocabulary the sources use. A **backdoor path** from income to default
+is one leaving income through an arrowhead pointing into it, and here there is exactly one, back
+through `Country`. A path is open at ordinary variables and closed at a **collider**, meaning a
+variable the path enters and leaves through arrowheads. `Country` is not a collider on this
+path, so the path is open, and the pooled income gradient is the sum of the direct effect and
+whatever the open backdoor path transmits. Conditioning on `{Country}` blocks it, which is
+precisely what GLM3 did and why the coefficient's sign changed.
+
+Crucially, being a collider is a property of a path rather than of a variable. The same variable
+can be a collider on one path and an ordinary node on another. Hence "control for everything
+available" is a decision that introduces bias in identifiable cases, which section 5.3 puts a
+number on.
+
+## Three roles, and lecture 1 already had two of them
+
+A covariate can enter for three quite different reasons, and only the first improves the
+estimate.
+
+`Country` is a **confounder**: a common cause of the covariate of interest and the outcome.
+Conditioning on it is required, and lecture 1 does so.
+
+`Interest` is a **mediator**, and lecture 1 excluded it with the right instinct and a different
+word. Its argument was that the contractual rate is "an output of the lender's previous risk
+assessment rather than a property of the borrower". In graph terms the rate sits on the path from
+the borrower's characteristics to default, so conditioning on it removes part of the very effect
+the model is trying to estimate. Furthermore, `Interest` is simultaneously a collider on a
+second path, since the platform's unobserved view of the borrower's risk points into the rate
+and also into default. One variable, two roles, two independent reasons to leave it out. That is
+the collider-relative-to-a-path rule doing real work on a real portfolio.
+
+The cost of conditioning on it is measurable, and it is not where a reader would look for it.
+
+```{python}
+glm3 = smf.glm("default_12m ~ AgeClass + logIncome + Country",
+               data=dat, family=sm.families.Binomial()).fit()
+glm3i = smf.glm("default_12m ~ AgeClass + logIncome + Country + Interest",
+                data=dat, family=sm.families.Binomial()).fit()
+
+comp = pd.DataFrame({
+    "GLM3": [glm3.params["logIncome"], glm3.params["Country[T.ES]"],
+             glm3.params["Country[T.FI]"], np.nan],
+    "GLM3 + Interest": [glm3i.params["logIncome"], glm3i.params["Country[T.ES]"],
+                        glm3i.params["Country[T.FI]"], glm3i.params["Interest"]],
+}, index=["logIncome", "Country[ES]", "Country[FI]", "Interest"])
+comp["change"] = comp["GLM3 + Interest"] - comp["GLM3"]
+print(comp.round(4))
+```
+
+The income coefficient barely moves, losing 3.2 per cent of its magnitude. The country
+coefficients collapse. Spain falls from +1.905 to +1.254 on the logit scale and Finland from
++1.253 to +0.951, so roughly a third of the estimated Spanish country effect and a quarter of
+the Finnish one were travelling through the price. That is the mediator argument made
+quantitative: the platform had already priced the country risk into the coupon, and conditioning
+on the coupon takes the credit for it away from the country. A modeller who added `Interest`
+looking at the income row would have seen almost nothing change and concluded the addition was
+harmless.
+
+## What a collider costs, with numbers
+
+A confounder omitted biases the estimate. A collider included biases it too, and the second is
+the less familiar failure. To make the sign visible we construct the collider explicitly rather
+than hunt for one, because a constructed example proves the mechanism where a found one only
+illustrates it.
+
+Suppose the lender holds an operational **affordability review** flag, raised with high
+probability when declared income is low and also raised when the loan goes bad. Both arrows
+point into the flag, so it is a collider on the path from income to default. Most lenders hold
+several fields of exactly this shape, e.g. a collections referral, a hardship contact, or a
+manual underwrite override, and all of them are recorded after the covariates and around the
+outcome.
+
+```{python}
+rng = np.random.default_rng(20260902)
+low_income = (dat["logIncome"] < dat["logIncome"].quantile(0.40)).astype(int)
+p_review = np.clip(0.10 + 0.55 * low_income + 0.55 * dat["default_12m"], 0, 1)
+dat["Review"] = (rng.random(len(dat)) < p_review).astype(int)
+
+print(f"review flag raised on {dat['Review'].mean():.1%} of loans")
+print(f"  by income   : {dat.loc[low_income == 0, 'Review'].mean():.3f} high"
+      f" vs {dat.loc[low_income == 1, 'Review'].mean():.3f} low")
+print(f"  by outcome  : {dat.loc[dat.default_12m == 0, 'Review'].mean():.3f} good"
+      f" vs {dat.loc[dat.default_12m == 1, 'Review'].mean():.3f} bad")
+
+correct = smf.glm("default_12m ~ logIncome + Country",
+                  data=dat, family=sm.families.Binomial()).fit()
+with_col = smf.glm("default_12m ~ logIncome + Country + Review",
+                   data=dat, family=sm.families.Binomial()).fit()
+restricted = smf.glm("default_12m ~ logIncome + Country",
+                     data=dat[dat.Review == 1], family=sm.families.Binomial()).fit()
+
+out = pd.DataFrame({
+    "logIncome coef": [correct.params["logIncome"], with_col.params["logIncome"],
+                       restricted.params["logIncome"]],
+    "odds ratio": [np.exp(correct.params["logIncome"]), np.exp(with_col.params["logIncome"]),
+                   np.exp(restricted.params["logIncome"])],
+    "n": [correct.nobs, with_col.nobs, restricted.nobs],
+}, index=["adjust for {Country}", "adjust for {Country, Review}", "restrict to Review == 1"])
+print("\n", out.round(4))
+```
+
+Conditioning on the correct set gives an income coefficient of -0.119, so higher income lowers
+the odds of default. Adding the collider gives +0.475. Restricting to the reviewed loans gives
++0.623. The sign flips and the magnitude lands at roughly five times the true coefficient
+pointing the other way, and the mechanism is mechanical: among loans that were reviewed, a
+high-income borrower is there disproportionately because the loan went bad, so income and
+default acquire a spurious positive association inside the stratum.
+
+Now the part that should worry a model developer.
+
+```{python}
+for name, mod in [("without Review", correct), ("with Review", with_col)]:
+    gini = 2 * roc_auc_score(dat["default_12m"], mod.predict(dat)) - 1
+    print(f"{name:<15} AIC {mod.aic:12,.1f}   Gini {gini:.4f}")
+print(f"\nAIC improves by {correct.aic - with_col.aic:,.1f} when the collider is added")
+```
+
+Adding the collider improves AIC by 29,822 and lifts the Gini from 0.386 to 0.635. Every
+conventional model-selection criterion in credit would therefore select it, forward selection
+would pick it first, and a challenger-model comparison would rank it above the correct
+specification. Predictive-lift selection and adjustment-set selection are answering different
+questions, and on this portfolio they give opposite answers about the same variable.
+
+The magnitude question is worth one sentence, because a mechanism nobody can size is easy to
+dismiss. Greenland's comparison of the two biases under simple causal models reports, per its
+published abstract, that bias from stratifying on a variable affected by both exposure and
+outcome is often comparable in size with the bias from failing to stratify on a common cause,
+while other collider-stratification biases tend to be much smaller. The paper is paywalled and
+that claim reaches this lecture through its abstract rather than a full read, which is recorded
+in the vault entry.
+
+::: {.callout-important icon=false title="Reject inference is a collider problem"}
+Credit's most familiar version of this arrives under a different name. Selection bias in its
+many forms shares one causal structure: conditioning on a common effect of two variables, one
+being the covariate of interest or a cause of it, the other being the outcome or a cause of it.
+Inappropriate control selection and informative censoring both reduce to that shape.
+
+Fitting a scorecard on accepted applicants is exactly it. Acceptance is a common effect of the
+application characteristics and of the lender's own view of the applicant's risk, and that view
+shares causes with default. Consequently the accepted-only sample conditions on a collider, and
+the induced bias has the same character as the `Review` demonstration above. Reject inference is
+the family of remedies, and framing the problem structurally is what tells a validator which
+remedy could possibly work: the question is whether the method restores the blocked path, rather
+than whether it fills in the missing outcomes plausibly.
+
+This claim also reaches the lecture through an abstract, since the source paper is paywalled;
+chapter 8 of Hernán and Robins makes the same structural argument and is on the shelf.
+:::
 
 # The Table 2 fallacy on lecture 1's own model
 

@@ -28,6 +28,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -80,8 +115,15 @@ window.Quarto = {
   </ul></li>
   <li><a href="#setting-up" id="toc-setting-up" class="nav-link" data-scroll-target="#setting-up"><span class="header-section-number">2</span> Setting up</a></li>
   <li><a href="#the-three-identification-conditions-on-a-credit-portfolio" id="toc-the-three-identification-conditions-on-a-credit-portfolio" class="nav-link" data-scroll-target="#the-three-identification-conditions-on-a-credit-portfolio"><span class="header-section-number">3</span> The three identification conditions on a credit portfolio</a></li>
-  <li><a href="#interaction-effect-modification-and-the-scale-nobody-states" id="toc-interaction-effect-modification-and-the-scale-nobody-states" class="nav-link" data-scroll-target="#interaction-effect-modification-and-the-scale-nobody-states"><span class="header-section-number">4</span> Interaction, effect modification, and the scale nobody states</a></li>
-  <li><a href="#choosing-an-adjustment-set" id="toc-choosing-an-adjustment-set" class="nav-link" data-scroll-target="#choosing-an-adjustment-set"><span class="header-section-number">5</span> Choosing an adjustment set</a></li>
+  <li><a href="#interaction-effect-modification-and-the-scale-nobody-states" id="toc-interaction-effect-modification-and-the-scale-nobody-states" class="nav-link" data-scroll-target="#interaction-effect-modification-and-the-scale-nobody-states"><span class="header-section-number">4</span> Interaction, effect modification, and the scale nobody states</a>
+  <ul class="collapse">
+  <li><a href="#interaction-is-a-claim-about-a-scale-and-the-scale-is-usually-unstated" id="toc-interaction-is-a-claim-about-a-scale-and-the-scale-is-usually-unstated" class="nav-link" data-scroll-target="#interaction-is-a-claim-about-a-scale-and-the-scale-is-usually-unstated"><span class="header-section-number">4.1</span> Interaction is a claim about a scale, and the scale is usually unstated</a></li>
+  </ul></li>
+  <li><a href="#choosing-an-adjustment-set" id="toc-choosing-an-adjustment-set" class="nav-link" data-scroll-target="#choosing-an-adjustment-set"><span class="header-section-number">5</span> Choosing an adjustment set</a>
+  <ul class="collapse">
+  <li><a href="#three-roles-and-lecture-1-already-had-two-of-them" id="toc-three-roles-and-lecture-1-already-had-two-of-them" class="nav-link" data-scroll-target="#three-roles-and-lecture-1-already-had-two-of-them"><span class="header-section-number">5.1</span> Three roles, and lecture 1 already had two of them</a></li>
+  <li><a href="#what-a-collider-costs-with-numbers" id="toc-what-a-collider-costs-with-numbers" class="nav-link" data-scroll-target="#what-a-collider-costs-with-numbers"><span class="header-section-number">5.2</span> What a collider costs, with numbers</a></li>
+  </ul></li>
   <li><a href="#the-table-2-fallacy-on-lecture-1s-own-model" id="toc-the-table-2-fallacy-on-lecture-1s-own-model" class="nav-link" data-scroll-target="#the-table-2-fallacy-on-lecture-1s-own-model"><span class="header-section-number">6</span> The Table 2 fallacy on lecture 1’s own model</a></li>
   <li><a href="#standardisation-the-marginal-effect-lecture-1-said-could-not-be-assembled" id="toc-standardisation-the-marginal-effect-lecture-1-said-could-not-be-assembled" class="nav-link" data-scroll-target="#standardisation-the-marginal-effect-lecture-1-said-could-not-be-assembled"><span class="header-section-number">7</span> Standardisation: the marginal effect lecture 1 said could not be assembled</a></li>
   <li><a href="#how-much-confounding-would-overturn-this" id="toc-how-much-confounding-would-overturn-this" class="nav-link" data-scroll-target="#how-much-confounding-would-overturn-this"><span class="header-section-number">8</span> How much confounding would overturn this</a></li>
@@ -133,7 +175,7 @@ window.Quarto = {
 <section id="the-argument-lecture-1-already-made" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> The argument lecture 1 already made</h1>
 <p>Credit lecture 1 put a figure on screen that no underwriter believes. Default risk rose with declared income across most of the Bondora book, from below 20 per cent at the bottom to peaks above 34 per cent. The lecture then split the same data by country, found the rate falling with income inside Estonia, Finland and Spain separately, and explained the pooled curve as composition: the two high-income markets carry default rates of 38 and 55 per cent against Estonia’s 17. Adding <code>Country</code> to the regression flipped the income coefficient negative, and the lecture recorded that the wrongly signed coefficient had been evidence about the portfolio’s composition all along.</p>
-<p>Every step of that is right. It is also a causal argument, and lecture 1 makes it without using the word. The claim “income does not really drive default, country does” is a claim about what would happen under intervention rather than a claim about what the data show. So is the decision to leave <code>Interest</code> out because it is “an output of the lender’s previous risk assessment rather than a property of the borrower”. So is the implicit promise that the GLM3 income coefficient, now correctly signed, may be read as the effect of income.</p>
+<p>Every step of that is right. It is also a causal argument, and lecture 1 makes it without using the word. Reading the flipped coefficient as “country is the real driver and income was standing in for it” makes a claim about what would happen under intervention, where the data on their own support only a claim about association. So does the decision to leave <code>Interest</code> out because it is “an output of the lender’s previous risk assessment rather than a property of the borrower”. So is the implicit promise that the GLM3 income coefficient, now correctly signed, may be read as the effect of income.</p>
 <p>Epidemiology has spent fifty years on exactly this problem, because a study of diet and heart disease has the same shape as a study of income and default and rather more at stake. This lecture takes the machinery that field built and points it at the Bondora book. It answers three questions a credit modeller asks constantly and usually answers by habit: what an interaction claim actually asserts and on which scale, which covariates belong in the model, and what a fitted coefficient may be quoted as.</p>
 <section id="what-this-lecture-owns" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="what-this-lecture-owns"><span class="header-section-number">1.1</span> What this lecture owns</h2>
@@ -148,19 +190,281 @@ window.Quarto = {
 </section>
 <section id="setting-up" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Setting up</h1>
-<p>Intent: load <code>bondora_pd.parquet</code>, rebuild lecture 1’s <code>logIncome</code> and age classes so every number below is comparable with lecture 1’s, and fix the plotting conventions.</p>
+<p>We rebuild lecture 1’s modelling frame exactly, so that every number below is comparable with one the reader has already seen. The table is <code>bondora_pd.parquet</code>, the fixed-horizon frame of 148,733 seasoned loans and a twelve-month default flag, of which 148,437 sit in the three markets lecture 1 used.</p>
+<div id="6a301aea" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">9</span>, <span class="dv">4</span>), <span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE, OLIVE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#3B4A75"</span>, <span class="st">"#4F6333"</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>AGE_CUTS <span class="op">=</span> [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>]</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>AGE_LABELS <span class="op">=</span> [<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>]</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>COUNTRIES <span class="op">=</span> [<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>]</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (raw</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>).is_in(COUNTRIES))</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).clip(lower_bound<span class="op">=</span><span class="dv">1</span>).log()))</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> model_dat.select(</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"Interest"</span>]).to_pandas()</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>dat[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(dat[<span class="st">"Age"</span>], AGE_CUTS, labels<span class="op">=</span>AGE_LABELS, include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>dat<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">:,}</span><span class="ss"> loans across </span><span class="sc">{</span>COUNTRIES<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(model_dat.group_by(<span class="st">"Country"</span>)</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>      .agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>),</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>           pl.col(<span class="st">"default_12m"</span>).mean().<span class="bu">round</span>(<span class="dv">4</span>).alias(<span class="st">"default rate"</span>),</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>           pl.col(<span class="st">"logIncome"</span>).median().<span class="bu">round</span>(<span class="dv">3</span>).alias(<span class="st">"median logIncome"</span>))</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>      .sort(<span class="st">"n"</span>, descending<span class="op">=</span><span class="va">True</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>148,437 loans across ['EE', 'FI', 'ES']
+shape: (3, 4)
+┌─────────┬───────┬──────────────┬──────────────────┐
+│ Country ┆ n     ┆ default rate ┆ median logIncome │
+│ ---     ┆ ---   ┆ ---          ┆ ---              │
+│ str     ┆ u32   ┆ f64          ┆ f64              │
+╞═════════╪═══════╪══════════════╪══════════════════╡
+│ EE      ┆ 86288 ┆ 0.1705       ┆ 6.908            │
+│ FI      ┆ 35879 ┆ 0.3784       ┆ 7.602            │
+│ ES      ┆ 26270 ┆ 0.5543       ┆ 7.184            │
+└─────────┴───────┴──────────────┴──────────────────┘</code></pre>
+</div>
+</div>
+<p>Estonia carries 58.1 per cent of the risk set at a 17.1 per cent default rate, Finland 24.2 per cent at 37.8 per cent, and Spain 17.7 per cent at 55.4 per cent. Those three pairs of numbers generate everything that follows, because the country with the lowest risk also has the lowest median income.</p>
 </section>
 <section id="the-three-identification-conditions-on-a-credit-portfolio" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> The three identification conditions on a credit portfolio</h1>
-<p>Intent: state exchangeability, positivity and consistency, and give each a failure a credit modeller has actually seen. Positivity is the tractable one and this portfolio lets us measure it. Consistency is the hard one, because “reduce the interest rate” is not one intervention.</p>
+<p>A randomised experiment supports a causal claim by design, since randomisation makes the treated and untreated groups comparable in expectation. An observational credit portfolio has to assume what randomisation would have delivered, and that assumption decomposes into three conditions. Each has a credit failure mode, and they are not equally hard to check.</p>
+<p><strong>Exchangeability</strong> requires that, conditional on the measured covariates, the loans at one income level be comparable in their counterfactual outcomes to the loans at another. Formally, <span class="math inline">\(D^{(k),\,a}_i\)</span> is independent of the observed income level given <span class="math inline">\(\boldsymbol{X}_i\)</span>. It fails in credit whenever an unmeasured borrower characteristic drives both the covariate and the outcome, and the standard case is unrecorded financial sophistication: a borrower who understands amortisation both declares income accurately and repays reliably, so a model without that variable attributes its effect to whatever correlates with it.</p>
+<p><strong>Positivity</strong> requires a non-zero probability of every covariate level within every stratum being conditioned on. This is the tractable one, because it is a property of the table rather than of the world, so it can be counted. A credit model violates it silently whenever a segment carries no variation in a driver, and the failure shows up as a coefficient estimated from a handful of loans, or from none.</p>
+<div id="87863c7f" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> np.quantile(model_dat[<span class="st">"logIncome"</span>], [<span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>])</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>banded <span class="op">=</span> model_dat.with_columns(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span>pl.col(<span class="st">"logIncome"</span>).cut(<span class="bu">list</span>(qs), labels<span class="op">=</span>[<span class="st">"Q1"</span>, <span class="st">"Q2"</span>, <span class="st">"Q3"</span>, <span class="st">"Q4"</span>, <span class="st">"Q5"</span>]))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>cells <span class="op">=</span> (banded.group_by([<span class="st">"q"</span>, <span class="st">"Country"</span>]).agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>         .pivot(on<span class="op">=</span><span class="st">"Country"</span>, index<span class="op">=</span><span class="st">"q"</span>, values<span class="op">=</span><span class="st">"n"</span>).sort(<span class="st">"q"</span>))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(cells)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">thinnest cell: </span><span class="sc">{</span><span class="bu">min</span>(cells[c].<span class="bu">min</span>() <span class="cf">for</span> c <span class="kw">in</span> COUNTRIES)<span class="sc">:,}</span><span class="ss"> loans"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>shape: (5, 4)
+┌──────┬──────┬───────┬───────┐
+│ q    ┆ ES   ┆ FI    ┆ EE    │
+│ ---  ┆ ---  ┆ ---   ┆ ---   │
+│ enum ┆ u32  ┆ u32   ┆ u32   │
+╞══════╪══════╪═══════╪═══════╡
+│ Q1   ┆ 1755 ┆ 630   ┆ 30218 │
+│ Q2   ┆ 5909 ┆ 1785  ┆ 21880 │
+│ Q3   ┆ 8202 ┆ 4224  ┆ 14482 │
+│ Q4   ┆ 6458 ┆ 11644 ┆ 11680 │
+│ Q5   ┆ 3946 ┆ 17596 ┆ 8028  │
+└──────┴──────┴───────┴───────┘
+
+thinnest cell: 630 loans</code></pre>
+</div>
+</div>
+<p>Positivity holds here, and comfortably. All fifteen cells are populated and the thinnest, Finland’s bottom pooled-income quintile, carries 630 loans against Estonia’s 30,218 in the same band. Therefore the standardisation of section 7 is supportable, which was not a foregone conclusion: the equivalent macroeconomic exercise in lecture R1 collapsed on exactly this condition and had to retreat to Estonia alone. The caveat sits at the two ends of the range rather than in the middle, and section 7 measures it.</p>
+<p><strong>Consistency</strong> requires that the intervention be well defined before the counterfactual can be linked to the observed data, and it is the condition credit work assumes away most often. “Reduce the interest rate” sounds like one intervention and is at least three: reprice at origination, restructure mid-life, or forbear after arrears. Each implies a different counterfactual, each is available to a different population, and a coefficient on <code>Interest</code> answers none of them on its own. The same objection applies with more force to age and to country, where the intervention is unavailable altogether, which is the point section 4 turns on.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Named here, and deliberately not demonstrated">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Named here, and deliberately not demonstrated
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two families of method exist for the case where exchangeability cannot be assumed on the measured covariates.</p>
+<p>A <strong>propensity score</strong> is the conditional probability of receiving the treatment given the covariates. Matching, weighting or regressing on it reduces a many-covariate balancing problem to a one-dimensional one, and it buys nothing that conditioning on the covariates themselves would not, since it still assumes no unmeasured confounder.</p>
+<p>An <strong>instrumental variable</strong> is a variable affecting the treatment, affecting the outcome only through the treatment, and sharing no cause with the outcome. Where a credible instrument exists, it identifies an effect without assuming exchangeability on measured covariates.</p>
+<p>Neither is demonstrated in this lecture, because the Bondora book carries no treatment variable. Every covariate in it is a borrower characteristic or a platform-set price, so a staged demonstration would teach the mechanics of a method that should not be applied to this portfolio, which is a worse outcome than leaving the mechanics to the reference.</p>
+</div>
+</div>
 </section>
 <section id="interaction-effect-modification-and-the-scale-nobody-states" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Interaction, effect modification, and the scale nobody states</h1>
-<p>Intent: separate the two concepts with a credit example each, then demonstrate numerically that a logit fit carrying no interaction term still produces unequal risk differences by stratum, and report the stronger result that interaction is present on some scale whenever both covariates matter.</p>
+<p>Lecture 1 says that covariates <strong>interact</strong>, so marginal default rates cannot simply be combined. The statement is correct and the word is wrong, and the difference decides what the finding licenses.</p>
+<p><strong>Interaction</strong> concerns the joint effect of intervening on two covariates. <strong>Effect modification</strong> concerns the effect of intervening on one covariate varying across strata of a second covariate nobody intervenes on. Either can hold with the other absent, and there are settings where one is assessable and the other is not. Applied to lecture 1’s figure, nobody intervenes on a borrower’s country of residence, so what the figure shows is effect modification: the income gradient differs across markets. A genuine interaction claim in credit needs two things a lender could actually do, e.g.&nbsp;change the advance and change the term together, and those are rarer in a scorecard than the word suggests.</p>
+<p>The distinction is worth the pedantry because the two claims support different actions. Effect modification tells the lender where an existing model is stronger or weaker, which is a segmentation finding. Interaction tells the lender what happens when two levers are pulled at once, which is a pricing or policy finding. A model document that reports the first and is read as the second has overclaimed, and the reader has no way to tell from the coefficient table.</p>
+<section id="interaction-is-a-claim-about-a-scale-and-the-scale-is-usually-unstated" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="interaction-is-a-claim-about-a-scale-and-the-scale-is-usually-unstated"><span class="header-section-number">4.1</span> Interaction is a claim about a scale, and the scale is usually unstated</h2>
+<p>Here is the result that unsettles most credit modellers, and it takes four lines of arithmetic to see. Fit a logit with <code>logIncome</code> and <code>Country</code> and <strong>no interaction term at all</strong>. By construction the odds ratio for income is identical in every country. The risk differences are not.</p>
+<div id="429e9244" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>no_int <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ logIncome + Country"</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                 data<span class="op">=</span>dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>lo, hi <span class="op">=</span> np.percentile(dat[<span class="st">"logIncome"</span>], [<span class="dv">25</span>, <span class="dv">75</span>])</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> COUNTRIES:</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    p_lo <span class="op">=</span> <span class="bu">float</span>(no_int.predict(pd.DataFrame({<span class="st">"logIncome"</span>: [lo], <span class="st">"Country"</span>: [c]})).iloc[<span class="dv">0</span>])</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    p_hi <span class="op">=</span> <span class="bu">float</span>(no_int.predict(pd.DataFrame({<span class="st">"logIncome"</span>: [hi], <span class="st">"Country"</span>: [c]})).iloc[<span class="dv">0</span>])</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    odds <span class="op">=</span> (p_hi <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p_hi)) <span class="op">/</span> (p_lo <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p_lo))</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"country"</span>: c, <span class="st">"p(Q1 income)"</span>: p_lo, <span class="st">"p(Q3 income)"</span>: p_hi,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"risk difference"</span>: p_hi <span class="op">-</span> p_lo, <span class="st">"odds ratio"</span>: odds})</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"comparing log-income </span><span class="sc">{</span>lo<span class="sc">:.3f}</span><span class="ss"> with </span><span class="sc">{</span>hi<span class="sc">:.3f}</span><span class="ss">, i.e. a </span><span class="sc">{</span>np<span class="sc">.</span>exp(hi <span class="op">-</span> lo)<span class="sc">:.2f}</span><span class="ss">x income ratio</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(rows).set_index(<span class="st">"country"</span>).<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>comparing log-income 6.766 with 7.550, i.e. a 2.19x income ratio
+
+         p(Q1 income)  p(Q3 income)  risk difference  odds ratio
+country                                                         
+EE             0.1732        0.1602          -0.0130      0.9107
+FI             0.4031        0.3808          -0.0223      0.9107
+ES             0.5681        0.5450          -0.0231      0.9107</code></pre>
+</div>
+</div>
+<p>The odds ratio is 0.9107 in all three countries, to four decimal places, because a logit link makes the model multiplicative in the odds and the income coefficient is shared. Move to the risk-difference scale and the same fitted model gives -1.30 percentage points in Estonia, -2.23 in Finland and -2.31 in Spain. The Spanish risk difference is 1.8 times the Estonian one. So this model carries exactly zero interaction on the multiplicative scale and material interaction on the additive scale, and it was never told about either.</p>
+<p>Consequently a statement that a model contains no interaction is incomplete until the scale is named. The general version is sharper still: provided both covariates affect the outcome, there will always be interaction on at least one scale, and the only way to have none on any scale is for one covariate to have no effect whatever. Interaction on some scale is therefore guaranteed in any model whose covariates all matter, and reporting its presence conveys nothing. What conveys something is which scale was tested and why that scale answers the question asked.</p>
+<p>Practice has settled on the multiplicative scale by convenience rather than by argument, since logistic regression is easy to fit and standard software returns a multiplicative interaction estimate with a confidence interval for free, while additive measures need extra work in most packages. The cost is measurable in the field that studies it: across a random sample of 25 cohort and 50 case-control studies drawn from the five highest-ranked epidemiology journals, 61 per cent assessed interaction at least as a secondary analysis and exactly one reported an additive measure. Credit modelling inherits the same default through the same link function, so the same silence is likely here and nobody has counted.</p>
+<div class="callout callout-style-default callout-tip no-icon callout-titled" title="What a validator should ask to see">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>What a validator should ask to see
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Four items make an interaction or effect-modification claim assessable. Anything less leaves it unassessable rather than wrong, which is a worse position for a reviewer, since there is nothing to disagree with.</p>
+<ol type="1">
+<li>The measures for each combination of the two variables, against a single reference cell taken as the lowest-risk combination.</li>
+<li>The measures for the first variable within strata of the second, and for an interaction claim, for the second within strata of the first as well.</li>
+<li>The interaction measures on the additive <strong>and</strong> the multiplicative scale.</li>
+<li>The confounders adjusted for, listed. For an interaction claim, both sets.</li>
+</ol>
+<p>The fourth is the one usually missing and it matters most, because the adjustment set that identifies one of the two effects need not identify the other. Section 6 is what that costs.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="choosing-an-adjustment-set" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Choosing an adjustment set</h1>
-<p>Intent: draw lecture 1’s confounding structure as a graph, then separate the three roles a covariate can play. <code>Country</code> is the confounder to condition on, <code>Interest</code> is the mediator lecture 1 was right to exclude, and a constructed collider shows what conditioning on the wrong variable costs, with numbers rather than assertion.</p>
+<p>Which covariates a model should control for is usually decided by predictive lift, and the decision is defensible right up to the moment a coefficient is quoted as a driver. A causal diagram turns the question into a derivation. Arrows encode the assumed causal relations; paths through the diagram are then read to decide which conditioning sets remove confounding and which create it.</p>
+<p>Lecture 1’s structure is the textbook case, and drawing it takes three arrows.</p>
+<figure class="figure">
+<svg viewbox="0 0 560 170" width="100%" role="img" aria-label="Directed graph: Country points to log-income and to default; log-income points to default. The Country-to-default arrow is the backdoor path.">
+<defs> <marker id="ah" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="6" markerheight="6" orient="auto-start-reverse"> <path d="M 0 0 L 10 5 L 0 10 z" fill="#8C2F1E"></path> </marker> <marker id="ahg" viewbox="0 0 10 10" refx="9" refy="5" markerwidth="6" markerheight="6" orient="auto-start-reverse"> <path d="M 0 0 L 10 5 L 0 10 z" fill="#444444"></path> </marker> </defs> <text x="60" y="30" font-size="15" fill="#1B1A17" text-anchor="middle">Country</text> <text x="60" y="140" font-size="15" fill="#1B1A17" text-anchor="middle">log-income</text> <text x="470" y="140" font-size="15" fill="#1B1A17" text-anchor="middle">default</text> <line x1="60" y1="42" x2="60" y2="120" stroke="#8C2F1E" stroke-width="1.6" marker-end="url(#ah)"></line> <path d="M 95 24 C 260 6 420 60 470 120" fill="none" stroke="#8C2F1E" stroke-width="1.6" marker-end="url(#ah)"></path> <line x1="130" y1="136" x2="425" y2="136" stroke="#444444" stroke-width="1.6" marker-end="url(#ahg)"></line> <text x="270" y="126" font-size="13" fill="#5A554B" text-anchor="middle">the effect we want</text> <text x="285" y="42" font-size="13" fill="#8C2F1E" text-anchor="middle">the backdoor path</text>
+</svg>
+<figcaption>
+Lecture 1’s confounding structure. Country is a common cause of income and of default, so the path from income back through country and on to default is open, and the marginal income gradient carries it. Conditioning on country blocks that path and leaves the direct path intact.
+</figcaption>
+</figure>
+<p>Read the diagram in the vocabulary the sources use. A <strong>backdoor path</strong> from income to default is one leaving income through an arrowhead pointing into it, and here there is exactly one, back through <code>Country</code>. A path is open at ordinary variables and closed at a <strong>collider</strong>, meaning a variable the path enters and leaves through arrowheads. <code>Country</code> is not a collider on this path, so the path is open, and the pooled income gradient is the sum of the direct effect and whatever the open backdoor path transmits. Conditioning on <code>{Country}</code> blocks it, which is precisely what GLM3 did and why the coefficient’s sign changed.</p>
+<p>Crucially, being a collider is a property of a path rather than of a variable. The same variable can be a collider on one path and an ordinary node on another. Hence “control for everything available” is a decision that introduces bias in identifiable cases, which section 5.3 puts a number on.</p>
+<section id="three-roles-and-lecture-1-already-had-two-of-them" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="three-roles-and-lecture-1-already-had-two-of-them"><span class="header-section-number">5.1</span> Three roles, and lecture 1 already had two of them</h2>
+<p>A covariate can enter for three quite different reasons, and only the first improves the estimate.</p>
+<p><code>Country</code> is a <strong>confounder</strong>: a common cause of the covariate of interest and the outcome. Conditioning on it is required, and lecture 1 does so.</p>
+<p><code>Interest</code> is a <strong>mediator</strong>, and lecture 1 excluded it with the right instinct and a different word. Its argument was that the contractual rate is “an output of the lender’s previous risk assessment rather than a property of the borrower”. In graph terms the rate sits on the path from the borrower’s characteristics to default, so conditioning on it removes part of the very effect the model is trying to estimate. Furthermore, <code>Interest</code> is simultaneously a collider on a second path, since the platform’s unobserved view of the borrower’s risk points into the rate and also into default. One variable, two roles, two independent reasons to leave it out. That is the collider-relative-to-a-path rule doing real work on a real portfolio.</p>
+<p>The cost of conditioning on it is measurable, and it is not where a reader would look for it.</p>
+<div id="ad729fda" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>glm3 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country"</span>,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>glm3i <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country + Interest"</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                data<span class="op">=</span>dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>comp <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLM3"</span>: [glm3.params[<span class="st">"logIncome"</span>], glm3.params[<span class="st">"Country[T.ES]"</span>],</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>             glm3.params[<span class="st">"Country[T.FI]"</span>], np.nan],</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"GLM3 + Interest"</span>: [glm3i.params[<span class="st">"logIncome"</span>], glm3i.params[<span class="st">"Country[T.ES]"</span>],</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                        glm3i.params[<span class="st">"Country[T.FI]"</span>], glm3i.params[<span class="st">"Interest"</span>]],</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>[<span class="st">"logIncome"</span>, <span class="st">"Country[ES]"</span>, <span class="st">"Country[FI]"</span>, <span class="st">"Interest"</span>])</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>comp[<span class="st">"change"</span>] <span class="op">=</span> comp[<span class="st">"GLM3 + Interest"</span>] <span class="op">-</span> comp[<span class="st">"GLM3"</span>]</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(comp.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>               GLM3  GLM3 + Interest  change
+logIncome   -0.0766          -0.0741  0.0025
+Country[ES]  1.9051           1.2539 -0.6512
+Country[FI]  1.2529           0.9506 -0.3024
+Interest        NaN           0.0168     NaN</code></pre>
+</div>
+</div>
+<p>The income coefficient barely moves, losing 3.2 per cent of its magnitude. The country coefficients collapse. Spain falls from +1.905 to +1.254 on the logit scale and Finland from +1.253 to +0.951, so roughly a third of the estimated Spanish country effect and a quarter of the Finnish one were travelling through the price. That is the mediator argument made quantitative: the platform had already priced the country risk into the coupon, and conditioning on the coupon takes the credit for it away from the country. A modeller who added <code>Interest</code> looking at the income row would have seen almost nothing change and concluded the addition was harmless.</p>
+</section>
+<section id="what-a-collider-costs-with-numbers" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="what-a-collider-costs-with-numbers"><span class="header-section-number">5.2</span> What a collider costs, with numbers</h2>
+<p>A confounder omitted biases the estimate. A collider included biases it too, and the second is the less familiar failure. To make the sign visible we construct the collider explicitly rather than hunt for one, because a constructed example proves the mechanism where a found one only illustrates it.</p>
+<p>Suppose the lender holds an operational <strong>affordability review</strong> flag, raised with high probability when declared income is low and also raised when the loan goes bad. Both arrows point into the flag, so it is a collider on the path from income to default. Most lenders hold several fields of exactly this shape, e.g.&nbsp;a collections referral, a hardship contact, or a manual underwrite override, and all of them are recorded after the covariates and around the outcome.</p>
+<div id="9ec8e7ec" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">20260902</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>low_income <span class="op">=</span> (dat[<span class="st">"logIncome"</span>] <span class="op">&lt;</span> dat[<span class="st">"logIncome"</span>].quantile(<span class="fl">0.40</span>)).astype(<span class="bu">int</span>)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>p_review <span class="op">=</span> np.clip(<span class="fl">0.10</span> <span class="op">+</span> <span class="fl">0.55</span> <span class="op">*</span> low_income <span class="op">+</span> <span class="fl">0.55</span> <span class="op">*</span> dat[<span class="st">"default_12m"</span>], <span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>dat[<span class="st">"Review"</span>] <span class="op">=</span> (rng.random(<span class="bu">len</span>(dat)) <span class="op">&lt;</span> p_review).astype(<span class="bu">int</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"review flag raised on </span><span class="sc">{</span>dat[<span class="st">'Review'</span>]<span class="sc">.</span>mean()<span class="sc">:.1%}</span><span class="ss"> of loans"</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  by income   : </span><span class="sc">{</span>dat<span class="sc">.</span>loc[low_income <span class="op">==</span> <span class="dv">0</span>, <span class="st">'Review'</span>]<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> high"</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f" vs </span><span class="sc">{</span>dat<span class="sc">.</span>loc[low_income <span class="op">==</span> <span class="dv">1</span>, <span class="st">'Review'</span>]<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> low"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  by outcome  : </span><span class="sc">{</span>dat<span class="sc">.</span>loc[dat.default_12m <span class="op">==</span> <span class="dv">0</span>, <span class="st">'Review'</span>]<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> good"</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f" vs </span><span class="sc">{</span>dat<span class="sc">.</span>loc[dat.default_12m <span class="op">==</span> <span class="dv">1</span>, <span class="st">'Review'</span>]<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss"> bad"</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>correct <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ logIncome + Country"</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>                  data<span class="op">=</span>dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>with_col <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ logIncome + Country + Review"</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>                   data<span class="op">=</span>dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>restricted <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ logIncome + Country"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>                     data<span class="op">=</span>dat[dat.Review <span class="op">==</span> <span class="dv">1</span>], family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>out <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"logIncome coef"</span>: [correct.params[<span class="st">"logIncome"</span>], with_col.params[<span class="st">"logIncome"</span>],</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>                       restricted.params[<span class="st">"logIncome"</span>]],</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"odds ratio"</span>: [np.exp(correct.params[<span class="st">"logIncome"</span>]), np.exp(with_col.params[<span class="st">"logIncome"</span>]),</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>                   np.exp(restricted.params[<span class="st">"logIncome"</span>])],</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"n"</span>: [correct.nobs, with_col.nobs, restricted.nobs],</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>[<span class="st">"adjust for </span><span class="sc">{Country}</span><span class="st">"</span>, <span class="st">"adjust for {Country, Review}"</span>, <span class="st">"restrict to Review == 1"</span>])</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span>, out.<span class="bu">round</span>(<span class="dv">4</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>review flag raised on 45.5% of loans
+  by income   : 0.279 high vs 0.730 low
+  by outcome  : 0.333 good vs 0.757 bad
+
+                               logIncome coef  odds ratio       n
+adjust for {Country}                 -0.1193      0.8875  148437
+adjust for {Country, Review}          0.4747      1.6075  148437
+restrict to Review == 1               0.6233      1.8651   67597</code></pre>
+</div>
+</div>
+<p>Conditioning on the correct set gives an income coefficient of -0.119, so higher income lowers the odds of default. Adding the collider gives +0.475. Restricting to the reviewed loans gives +0.623. The sign flips and the magnitude lands at roughly five times the true coefficient pointing the other way, and the mechanism is mechanical: among loans that were reviewed, a high-income borrower is there disproportionately because the loan went bad, so income and default acquire a spurious positive association inside the stratum.</p>
+<p>Now the part that should worry a model developer.</p>
+<div id="3d7767f8" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, mod <span class="kw">in</span> [(<span class="st">"without Review"</span>, correct), (<span class="st">"with Review"</span>, with_col)]:</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    gini <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> roc_auc_score(dat[<span class="st">"default_12m"</span>], mod.predict(dat)) <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:&lt;15}</span><span class="ss"> AIC </span><span class="sc">{</span>mod<span class="sc">.</span>aic<span class="sc">:12,.1f}</span><span class="ss">   Gini </span><span class="sc">{</span>gini<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">AIC improves by </span><span class="sc">{</span>correct<span class="sc">.</span>aic <span class="op">-</span> with_col<span class="sc">.</span>aic<span class="sc">:,.1f}</span><span class="ss"> when the collider is added"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>without Review  AIC    162,382.6   Gini 0.3865
+with Review     AIC    132,560.7   Gini 0.6353
+
+AIC improves by 29,821.9 when the collider is added</code></pre>
+</div>
+</div>
+<p>Adding the collider improves AIC by 29,822 and lifts the Gini from 0.386 to 0.635. Every conventional model-selection criterion in credit would therefore select it, forward selection would pick it first, and a challenger-model comparison would rank it above the correct specification. Predictive-lift selection and adjustment-set selection are answering different questions, and on this portfolio they give opposite answers about the same variable.</p>
+<p>The magnitude question is worth one sentence, because a mechanism nobody can size is easy to dismiss. Greenland’s comparison of the two biases under simple causal models reports, per its published abstract, that bias from stratifying on a variable affected by both exposure and outcome is often comparable in size with the bias from failing to stratify on a common cause, while other collider-stratification biases tend to be much smaller. The paper is paywalled and that claim reaches this lecture through its abstract rather than a full read, which is recorded in the vault entry.</p>
+<div class="callout callout-style-default callout-important no-icon callout-titled" title="Reject inference is a collider problem">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Reject inference is a collider problem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Credit’s most familiar version of this arrives under a different name. Selection bias in its many forms shares one causal structure: conditioning on a common effect of two variables, one being the covariate of interest or a cause of it, the other being the outcome or a cause of it. Inappropriate control selection and informative censoring both reduce to that shape.</p>
+<p>Fitting a scorecard on accepted applicants is exactly it. Acceptance is a common effect of the application characteristics and of the lender’s own view of the applicant’s risk, and that view shares causes with default. Consequently the accepted-only sample conditions on a collider, and the induced bias has the same character as the <code>Review</code> demonstration above. Reject inference is the family of remedies, and framing the problem structurally is what tells a validator which remedy could possibly work: the question is whether the method restores the blocked path, rather than whether it fills in the missing outcomes plausibly.</p>
+<p>This claim also reaches the lecture through an abstract, since the source paper is paywalled; chapter 8 of Hernán and Robins makes the same structural argument and is on the shelf.</p>
+</div>
+</div>
+</section>
 </section>
 <section id="the-table-2-fallacy-on-lecture-1s-own-model" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> The Table 2 fallacy on lecture 1’s own model</h1>
