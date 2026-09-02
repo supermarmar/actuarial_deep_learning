@@ -1280,6 +1280,30 @@ mortgage portfolio, and the demonstration is a demonstration of the method.
 
 # What stays with the IRB lecture
 
+The two regimes ask for a PD in the same three words and mean something different by each, so
+the contrast is worth having in one place. It sits here rather than in R2 because a reader
+meets IFRS 9 in this lecture while IRB is still the unknown half, and R2 cross-references it
+rather than repeating it.
+
+| Feature | IFRS 9 | IRB |
+|---|---|---|
+| PD type | FiT | TTC, the output of a Vasicek-Merton model |
+| Rating philosophy | dynamic PiT | TTC, PiT or dynamic PiT |
+| Macroeconomic sensitivity | high | low |
+| Update frequency | monthly | annual or longer |
+| Data period | borrower-specific time | a full economic cycle, at least five years |
+| Horizon | twelve months and lifetime | twelve months |
+| Granularity | contract level | counterparty level |
+| Floor | none | 0.03 per cent |
+| Data inputs | all reasonable and supportable information about past events, current conditions and forecasts of future macroeconomic conditions | variables representing the intrinsic quality of the counterparty alone |
+
+: The same PD under two regimes, from Mario's credit risk methodology. The last row drives every other. IFRS 9 admits forecasts of the economy while IRB admits only what is intrinsic to the borrower, which is why one PD is updated monthly and the other annually, and why one carries a term structure and the other a single horizon.
+
+Read that table alongside section 2's map and the division becomes a matter of which cell each
+regime lives in. IFRS 9 wants the top-left cell conditioned on a forecast path, contract by
+contract, at every horizon out to maturity. IRB wants the bottom-left cell, counterparty by
+counterparty, at twelve months, with a floor under it.
+
 Lecture 1's callout carried a second half that this lecture has used without developing, and
 it belongs to lecture R2. Three things go there.
 

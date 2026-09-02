@@ -700,7 +700,7 @@ p^c_{k,t} = \sum_{s \le t} \frac{d_{k,s}}{n_{k,0}} ,
 <section id="the-demonstration-on-bondora" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> The demonstration on Bondora</h1>
 <p>Lecture 1 said this portfolio could not yield a point-in-time PD. This section shows that the obstacle was the shape of lecture 1’s table rather than a property of the book, fits a macro coefficient, and then finds a second obstacle that the first three sections predicted.</p>
-<div id="1f9512bb" class="cell" data-execution_count="1">
+<div id="fc4b9aea" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -739,7 +739,7 @@ p^c_{k,t} = \sum_{s \le t} \frac{d_{k,s}}{n_{k,0}} ,
 <section id="the-person-period-expansion-indexed-by-calendar-month" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="the-person-period-expansion-indexed-by-calendar-month"><span class="header-section-number">5.1</span> The person-period expansion, indexed by calendar month</h2>
 <p>The expansion is lecture S1’s, unchanged, because a silent difference in the exposure convention would make the two lectures disagree about the same book. The one addition is the calendar month, and it is the identity of section 2.1 rather than a new column of data.</p>
-<div id="9a7d045e" class="cell" data-execution_count="2">
+<div id="717297f7" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> person_period(df, horizon<span class="op">=</span>HORIZON):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""S1's expansion: one row per loan-month at risk, plus the calendar month u."""</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
@@ -790,7 +790,7 @@ shape: (4, 5)
 <h2 data-number="5.2" class="anchored" data-anchor-id="the-portfolio-default-rate-as-a-time-series"><span class="header-section-number">5.2</span> The portfolio default rate as a time series</h2>
 <p>Lecture 1 defined <span class="math inline">\(\mathrm{DR}^{(k)}_u\)</span> and had no data to compute it on. Here it is, at <span class="math inline">\(k = 12\)</span>, from the same window-start flag.</p>
 <p>Two conventions need stating before the series can be read. First, the window has to be observable: a flag for the twelve months after <span class="math inline">\(u\)</span> can only be scored where the extract covers them, so the series stops twelve months before the July 2021 snapshot. Second, a censored loan inside the window contributes a zero, which is the standard bias in a fixed-horizon rate and the reason the cut-off is enforced rather than assumed away.</p>
-<div id="76240f5c" class="cell" data-execution_count="3">
+<div id="16b4bdeb" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>LAST_FULL <span class="op">=</span> SNAPSHOT <span class="op">-</span> <span class="dv">12</span></span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"last fully observed 12-month window opens </span><span class="sc">{</span>as_month(LAST_FULL)<span class="sc">}</span><span class="ss">"</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -826,7 +826,7 @@ DR^(12)_u mean 0.247, peak 0.349 in 2017-10
 months with fewer than 500 loans at risk: 29</code></pre>
 </div>
 </div>
-<div id="aba13836" class="cell" data-execution_count="4">
+<div id="baed0a27" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>style <span class="op">=</span> {<span class="st">"EE"</span>: (OX, <span class="fl">1.6</span>), <span class="st">"FI"</span>: (BLUE, <span class="fl">1.1</span>), <span class="st">"ES"</span>: (GREY, <span class="fl">1.1</span>)}</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -867,7 +867,7 @@ months with fewer than 500 loans at risk: 29</code></pre>
 <section id="attaching-the-macroeconomy" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="attaching-the-macroeconomy"><span class="header-section-number">5.3</span> Attaching the macroeconomy</h2>
 <p>Three Eurostat series join by country and calendar month, all of them named in IFRS 9 B5.5.52 or in the EBA’s list of the variables EU institutions actually use.</p>
-<div id="5acd0030" class="cell" data-execution_count="5">
+<div id="7ffdb897" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>MV <span class="op">=</span> [<span class="st">"unemployment"</span>, <span class="st">"inflation"</span>, <span class="st">"gdp_growth"</span>]</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>joined <span class="op">=</span> dr.join(macro.drop(<span class="st">"month"</span>), on<span class="op">=</span>[<span class="st">"Country"</span>, <span class="st">"u"</span>], how<span class="op">=</span><span class="st">"inner"</span>)</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>joined<span class="sc">.</span>height<span class="sc">}</span><span class="ss"> country-months joined, "</span></span>
@@ -890,7 +890,7 @@ correlation of DR^(12)_u with each series, within each market:
 <p>The correlation table is the warning sign, and it is worth reading before the model rather than after it. In Estonia the twelve-month default rate moves <strong>with</strong> unemployment, at <span class="math inline">\(+0.47\)</span>, which is the sign economics expects. In Finland and Spain it moves <strong>against</strong> unemployment, at about <span class="math inline">\(-0.38\)</span> in both. A single pooled coefficient asserts one common slope across the three, and no common slope can be right when the within-market slopes disagree in sign.</p>
 <p>The reason is Bondora’s own history rather than Europe’s. The Finnish and Spanish books opened in 2013 and expanded hard through 2017 to 2019, which was a period of steadily falling unemployment across the euro area. Within those two markets, therefore, the lender’s own move down the credit spectrum runs in the opposite direction to the cycle, and a macro variable picks up the commercial trajectory.</p>
 <p>Fitting the pooled model anyway is the honest way to show what that does.</p>
-<div id="ed06612f" class="cell" data-execution_count="6">
+<div id="0a9e841c" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>BANDS <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">9</span>, <span class="dv">12</span>, <span class="dv">18</span>, <span class="dv">24</span>, <span class="dv">36</span>, <span class="dv">48</span>, <span class="dv">60</span>]</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>BAND_LABELS <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>a <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(BANDS[:<span class="op">-</span><span class="dv">1</span>], BANDS[<span class="dv">1</span>:])]</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>AGE_CUTS <span class="op">=</span> [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>]</span>
@@ -935,7 +935,7 @@ correlation of DR^(12)_u with each series, within each market:
 </div>
 <p>Both signs that matter come out backwards. Higher unemployment <strong>lowers</strong> the fitted default hazard, and faster GDP growth <strong>raises</strong> it, each with a p-value small enough to be reported as decisive by any automatic screen. Inflation is indistinguishable from zero. A model that passed a significance test and failed economics is exactly the outcome section 3.4 warned about, and it is the case for the sign-constrained regression named there: a constraint would have refused this fit rather than reporting it.</p>
 <p>Estonia alone is the specification the data can support, and it is the only market observed across a genuine downturn, since the 2009 collapse took Estonian GDP down 18.6 per cent year on year and unemployment to nearly 19 per cent.</p>
-<div id="52cdff90" class="cell" data-execution_count="7">
+<div id="0dbeeeb7" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ee_loans, ee, ee_moments <span class="op">=</span> design([<span class="st">"EE"</span>])</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>ee_null <span class="op">=</span> smf.glm(BASE_FORMULA <span class="op">+</span> <span class="st">" - 1"</span>, data<span class="op">=</span>ee,</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                  family<span class="op">=</span>sm.families.Binomial()).fit()</span>
@@ -965,7 +965,7 @@ deviance without macro 300,434.9, with macro 300,307.9, drop 127.1 on 3 df (p 2.
 <section id="two-macro-paths-two-term-structures" class="level2" data-number="5.4">
 <h2 data-number="5.4" class="anchored" data-anchor-id="two-macro-paths-two-term-structures"><span class="header-section-number">5.4</span> Two macro paths, two term structures</h2>
 <p>The payoff is that one fitted model now produces a different term structure for every macroeconomic path, which is the whole content of the phrase “point in time”. Taking the harshest and mildest months the Estonian panel actually contains, and holding each flat across the horizon, gives two curves from identical loans at identical ages.</p>
-<div id="2d17172c" class="cell" data-execution_count="8">
+<div id="8f98c11f" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>severity <span class="op">=</span> (ee.groupby(<span class="st">"u"</span>)[MV].first()</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>              .assign(sev<span class="op">=</span><span class="kw">lambda</span> f: f[<span class="st">"unemployment"</span>] <span class="op">/</span> f[<span class="st">"unemployment"</span>].std()</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                                     <span class="op">-</span> f[<span class="st">"gdp_growth"</span>] <span class="op">/</span> f[<span class="st">"gdp_growth"</span>].std()))</span>
@@ -1015,7 +1015,7 @@ no macro block  PD_12 0.1821   PD_24 0.3662   PD_60 0.6059
 twelve-month gap 9.1 percentage points, ratio 1.59</code></pre>
 </div>
 </div>
-<div id="5f554ff2" class="cell" data-execution_count="9">
+<div id="25494b18" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
@@ -1063,6 +1063,70 @@ twelve-month gap 9.1 percentage points, ratio 1.59</code></pre>
 </section>
 <section id="what-stays-with-the-irb-lecture" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> What stays with the IRB lecture</h1>
+<p>The two regimes ask for a PD in the same three words and mean something different by each, so the contrast is worth having in one place. It sits here rather than in R2 because a reader meets IFRS 9 in this lecture while IRB is still the unknown half, and R2 cross-references it rather than repeating it.</p>
+<table class="caption-top table">
+<caption>The same PD under two regimes, from Mario’s credit risk methodology. The last row drives every other. IFRS 9 admits forecasts of the economy while IRB admits only what is intrinsic to the borrower, which is why one PD is updated monthly and the other annually, and why one carries a term structure and the other a single horizon.</caption>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Feature</th>
+<th>IFRS 9</th>
+<th>IRB</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>PD type</td>
+<td>FiT</td>
+<td>TTC, the output of a Vasicek-Merton model</td>
+</tr>
+<tr class="even">
+<td>Rating philosophy</td>
+<td>dynamic PiT</td>
+<td>TTC, PiT or dynamic PiT</td>
+</tr>
+<tr class="odd">
+<td>Macroeconomic sensitivity</td>
+<td>high</td>
+<td>low</td>
+</tr>
+<tr class="even">
+<td>Update frequency</td>
+<td>monthly</td>
+<td>annual or longer</td>
+</tr>
+<tr class="odd">
+<td>Data period</td>
+<td>borrower-specific time</td>
+<td>a full economic cycle, at least five years</td>
+</tr>
+<tr class="even">
+<td>Horizon</td>
+<td>twelve months and lifetime</td>
+<td>twelve months</td>
+</tr>
+<tr class="odd">
+<td>Granularity</td>
+<td>contract level</td>
+<td>counterparty level</td>
+</tr>
+<tr class="even">
+<td>Floor</td>
+<td>none</td>
+<td>0.03 per cent</td>
+</tr>
+<tr class="odd">
+<td>Data inputs</td>
+<td>all reasonable and supportable information about past events, current conditions and forecasts of future macroeconomic conditions</td>
+<td>variables representing the intrinsic quality of the counterparty alone</td>
+</tr>
+</tbody>
+</table>
+<p>Read that table alongside section 2’s map and the division becomes a matter of which cell each regime lives in. IFRS 9 wants the top-left cell conditioned on a forecast path, contract by contract, at every horizon out to maturity. IRB wants the bottom-left cell, counterparty by counterparty, at twelve months, with a floor under it.</p>
 <p>Lecture 1’s callout carried a second half that this lecture has used without developing, and it belongs to lecture R2. Three things go there.</p>
 <p>The <strong>hybrid PD</strong> and its dial. Section 3.2 borrowed Vasicek’s conditional default probability as the closed form for a FiT PD, and R2 owns the question of where <span class="math inline">\(\rho\)</span> and the logit-scale weight <span class="math inline">\(\lambda\)</span> come from, what a validator asks about each, and what “how point in time is this model” means as a measurable property rather than a slogan.</p>
 <p>The <strong>long-run average</strong>. Section 3.2 wrote <span class="math inline">\(\overline{\mathrm{DR}}^{(12)}\)</span> down and cited Article 180 of the Capital Requirements Regulation for the representativeness it forces. The mechanics belong to R2: which years enter the window, what a downturn period is, how the margin of conservatism is sized, and how the grade-level calibration is done.</p>

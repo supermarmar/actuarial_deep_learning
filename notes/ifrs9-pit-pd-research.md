@@ -99,7 +99,7 @@ $\text{FLI}_{t'}$. Plan 1 and plan 2 both flag this and both recommend the probi
 the grounds that it is the form which reproduces the IRB capital formula and the form credit
 lecture 1's hybrid callout already carries.
 
-**Adopted, and flagged for Mario's confirmation.** The lecture takes the probit form as the
+**Settled by Mario on 2 September 2026, and it went this way.** Decision 3 of plan 1 now reads "Its **form** is the probit one, i.e. the factor enters through the Vasicek transform, and the multiplicative $\mathrm{PD}^{\rm PiT} \times \mathrm{FLI}$ version is named as the practitioner shortcut with its bias stated", which is what this note recommended independently. The lecture takes the probit form as the
 definition and names the multiplicative version as the practitioner shortcut it is, with its
 bias stated, which is the treatment lecture 1 already gives the Jensen trap. Two reasons
 beyond the plan's: the multiplicative form is not closed on $[0,1]$, so a downside scenario

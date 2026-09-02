@@ -160,8 +160,6 @@ lectures** rather than edits to lecture 1, so each has a plan of its own under
    -0.083 and inflation at +0.093 with a twelve-month PD swinging 9.1 percentage points on
    the macro state. Research and notation contract in `notes/ifrs9-pit-pd-research.md`.
 2. Planned, not implemented. See `notes/plans/02-irb-capital-lecture.md`.
-3. Not yet planned. The causal inference lecture has no plan file as of 2 September 2026,
-   despite an earlier revision of this note pointing at
-   `notes/plans/03-causal-inference-lecture.md`.
+3. Planned, not implemented. See `notes/plans/03-causal-inference-lecture.md`.
 4. Treated as a small change to lecture 1 rather than a plan, and mirrored into the
    `.qmd` at the figure so it survives the next render. Outstanding.
