@@ -251,3 +251,122 @@ against, and not developed.
 travels, because the lecture's demonstration runs on one public parquet.
 
 **Every portfolio specific from the source material**, per the confidentiality note.
+
+---
+
+# Task 2: the notation bridge
+
+The clash table below was rebuilt from a direct read of `CR/03_notation.md` rather than taken
+from the plan, which compiled it by hand. Every row was checked against the file and against
+`notes/ifrs9-pit-pd-research.md`, which holds the settled notation contract for the series.
+
+The governing rule is the one `R1` already follows: **lecture 1's symbols are canon, the
+guides' symbol appears in parentheses on first use so a reader can move between the two
+documents, and no lecture 1 symbol is ever redefined.**
+
+## The clash table, verified
+
+| Symbol | Lecture 1 and the S track | `CR/03_notation.md` | Verdict |
+|---|---|---|---|
+| $g$ | $g_i$, the origination month of loan $i$ | $g_{i,t} = \mathrm{DPD}_{i,t}/30$, the arrears measure in missed payments | Genuine clash, both load-bearing. **R2 does not import the guides' delinquency notation at all.** See below |
+| $d$ | Botha's delinquency threshold, lecture 1 section 2.1, marked spent in the contract | $d$ as the arrears threshold, $d_{i,t}$ as the instantaneous default indicator $[g_{i,t} \ge 3]$ | Partial. $d$ agrees on meaning. $d_{i,t}$ is not imported |
+| $s$ | one-period survival in the S track, written $q_{i,t}$ and ${}_k p_{i,t}$ rather than $s$ | $s \ge 1$ the stickiness measure **and** $s_{i,v}$ one-period survival | Clash inside the guides themselves. R2 uses neither |
+| $S$ | ${}_k p_{i,t}$ for cumulative survival, so $S$ is unspent in this series | $S_{i,t}$ cumulative survival, $\mathrm{S}_{t'}$ the standardised systemic factor, $\mathrm{S}_{99.9}$ its stressed value | Clash inside the guides themselves. R2 writes the factor $Z_u$, following lecture 1 |
+| calendar time | $u$ | $t'$ | Cosmetic. State the mapping once, as `R1` does |
+| default outcome | $D^{(k)}_{i,t}$ | $D^*_{i,t}(k,p)$, with probation period $p$ | Reconcilable. The guides carry a probation period and lecture 1 does not. R2 names probation once, in the definition-of-default aside, and does not carry $p$ into any formula |
+| normal CDF | $\Phi(\cdot)$ | $N(\cdot)$; the CRR itself writes $N(\cdot)$ and $G(\cdot)$ for the inverse | Cosmetic, and worth stating because the reader will meet $G(\cdot)$ in the regulation |
+| asset correlation | $\rho$, lecture 1's loading on the systematic factor | $\rho$ in the guides' prose; **the CRR writes it $R$** | New row, not in the plan. $R_i$ is spent as Botha's four-level exit variable in S1. **R2 keeps $\rho$** and states once that the regulation writes the same quantity $R$ |
+| the systematic factor | $Z_u \sim {\cal N}(0,1)$, high values benign, entering as $-\sqrt{\rho}\, Z_u$ | three different conventions, see below | The dangerous row |
+
+## The sign convention is a three-way problem, not a two-way one
+
+The plan records one disagreement. A direct read finds three, and only one of them is a
+disagreement with this series.
+
+1. **`CR/03_notation.md`** defines the systemically conditional PD as $N\!\left(\left(N^{-1}
+   (\mathrm{PD}^{\rm TTC}) + \mathrm{FLI}_{t'}\sqrt{\rho}\right)/\sqrt{1-\rho}\right)$, with a
+   **plus**. This is the disagreement `R1` already records and resolves under
+   $\mathrm{FLI}_u = -Z_u$.
+2. **`AIRB/01_introduction/02-credit_losses.md`** derives the same quantity from
+   $X_i = \mathrm{S}_{t'}\sqrt{\rho} + Z_i\sqrt{1-\rho}$ and default at $X_i < c_i$, reaching
+   $N\!\left(\left(N^{-1}(p^*) - \mathrm{S}_{t'}\sqrt{\rho}\right)/\sqrt{1-\rho}\right)$, with a
+   **minus**. Since the same file sets $\mathrm{S}_{t'} = (\mathrm{FLI}_{t'} - \mu)/\sigma$,
+   the two guides files contradict each other unless $\mathrm{FLI}$ is read as
+   stress-oriented in one and benign-oriented in the other. **The minus form is the correct
+   derivation and it agrees with lecture 1.**
+3. The same file then writes $\mathrm{S}_{99.9^{\rm th}} = N^{-1}(0.999)$ while using
+   $+\sqrt{\rho}\,N^{-1}(0.999)$ in the worst-case default rate. Those reconcile only if the
+   stressed factor is the **0.1st** percentile, $\mathrm{S} = -N^{-1}(0.999)$. The label is
+   wrong and the formula is right.
+
+So lecture 1 agrees with the guides' derivation and differs from the guides' notation table.
+`R1` states the mapping for the notation table; R2 states it once more and adds the stressed
+substitution, since that substitution is R2's own subject.
+
+## The one displayed equation task 2 step 4 asks for
+
+R2 writes this as display mathematics rather than describing it in prose, because a reader
+checking lecture 1's hybrid formula against the regulation's risk weight will otherwise
+conclude that one of them has a sign error.
+
+$$
+Z_u = -\Phi^{-1}(0.999)
+\quad\Longrightarrow\quad
+\mathrm{PD}^{\rm hyb}_{12}\left(\boldsymbol{X}_i, Z_u\right)
+= \Phi\!\left(\frac{\Phi^{-1}\!\left(\mathrm{PD}^{\rm TTC}_{12}\right) + \sqrt{\rho}\,\Phi^{-1}(0.999)}{\sqrt{1-\rho}}\right)
+= \mathrm{WCDR} ,
+$$
+
+which is the regulation's $N\!\left(\left(G(\mathrm{PD}) + \sqrt{R}\,G(0.999)\right)/\sqrt{1-R}\right)$
+under $N = \Phi$, $G = \Phi^{-1}$ and $R = \rho$. The algebra is trivial. The labelling is what
+is dangerous, so the lecture spends its words there.
+
+## The arrears measure: non-adoption
+
+The plan proposes $a_{i,t} = \mathrm{DPD}_{i,t}/30$ as a replacement letter for the guides'
+$g_{i,t}$, and asks whether $a$ is free. It is: the single grep hit is `\hat\eta_{i,t}`, which
+matches the pattern and is not a symbol $a$.
+
+**R2 adopts no arrears symbol.** The cheapest resolution is non-adoption, on exactly the
+reasoning that dropped three of plan 1's four proposed symbols. R2's scope is PD only, lecture 1
+already owns the default definition through Botha's threshold $d$ and the window flag
+$D^{(k)}_{i,t}$, and neither Bondora modelling table carries a days-past-due field, so nothing
+in the lecture can be indexed by an arrears measure. Where the guides' delinquency machinery
+needs naming, R2 names it in prose inside the definition-of-default aside and defines no symbol.
+
+A lower-case $a$ would also have sat one case distinction away from lecture 1's $A_i$, the
+borrower's age at origination, which is 13 occurrences of a live symbol. Introducing it to
+carry nothing would be the worst of both outcomes.
+
+## What R2 actually adds
+
+Nine symbols, all of them the regulation's own, which is the point: a reader who has met the
+CRR should recognise every one on sight.
+
+| Symbol | Meaning | Scope note |
+|---|---|---|
+| $\mathrm{EL}$, $\mathrm{UL}$ | expected and unexpected loss, per unit of exposure | Free across the series |
+| $\mathrm{LGD}$, $\mathrm{EAD}$ | loss given default and exposure at default | Free across the series. Named, not modelled |
+| $K$ | the capital requirement per unit of exposure | Lecture 2 uses $K_Y(s)$ for a cumulant generating function and lectures 3 and 6 use $K$ for a count. Different documents, so no in-lecture clash, and $K$ is the regulation's own letter |
+| $\mathrm{RWA}$ | risk-weighted exposure amount, $\mathrm{RWA} = 12.5 \, K \times \mathrm{EAD}$ | Free |
+| $\mathrm{WCDR}$ | worst-case default rate, the conditional PD at the 99.9th percentile | Free |
+| $\mathrm{MA}$, with $b$ and $M$ | the maturity adjustment, its factor $b$, and effective maturity $M$ | $b$ is free in series mathematics. $M$ is lecture 6's count of nagging networks and lecture 2's moment generating function, so state the scope. Retail carries no maturity adjustment, so all three appear in the general derivation and drop out of the Bondora evaluation |
+| $\mathrm{MoC}$ | margin of conservatism, an additive uplift on the calibrated PD | Free |
+| $\mathrm{PD}^{\rm Reg}$ | the regulatory PD, i.e. calibrated PD plus MoC | New superscript in the series' existing style |
+| $j$ | the risk grade index, $j = 1, \dots, J$ | $j$ is a covariate index in lectures 1, 3, 4-5 and 6 and a bin index in S1. R2 has no covariate index in display mathematics, so $j$ is free here. State it once |
+
+$\rho$, $\lambda$, $Z_u$, $\Phi$, $\mathrm{PD}^{\rm TTC}$, $\mathrm{PD}^{\rm PiT}$,
+$\mathrm{PD}^{\rm hyb}$ and $\overline{\mathrm{DR}}^{(12)}$ all arrive from lecture 1 and `R1`
+unchanged and are not redefined.
+
+## The FiT reading, and `R1` agrees
+
+Settled by Mario on 2 September 2026 and already stated in `R1` at the callout "The scaling
+route is not closed on [0, 1], so the series takes the probit form". Verified by direct read on
+2 September 2026: `R1` adopts the probit form as the definition of a FiT PD, names the
+multiplicative factor as the practitioner shortcut, gives the reason (the guides' own FLI
+methodology derives $\mathrm{FLI}_u$ as a ratio of two fitted PDs, so it is an output and cannot
+also be the primitive entering a probit), and states the mapping $\mathrm{FLI}_u = -Z_u$.
+
+R2 states the same reading in one sentence and cross-references `R1` rather than re-arguing it.
+The two lectures must not drift, so any future change to one is a change to both.
