@@ -68,7 +68,13 @@ Mario settled all four on the day the plan was written, so nothing here blocks.
 3. **Whether "FiT" is adopted.** Both, in order. Introduce forward-looking information
    as IFRS 9's own wording, then state that this course calls the resulting PD forward
    in time, so PiT, TTC and FiT read as one family and a reader can still find the
-   material in a bank's own documentation.
+   material in a bank's own documentation. Its **form** is the probit one, i.e. the
+   factor enters through the Vasicek transform, and the multiplicative
+   $\mathrm{PD}^{\rm PiT} \times \mathrm{FLI}$ version is named as the practitioner
+   shortcut with its bias stated.
+5. **The IFRS 9 against IRB comparison table** from the guides' `02_probability_of_default.md`
+   lives in this lecture, cross-referenced from `R2`, because the reader meets IFRS 9
+   here while IRB is still the unknown half.
 4. **Empirical spine and macro data.** Bondora expanded to person-periods, with real
    Eurostat series attached, and a small curated CSV committed at
    `credit_lectures/data/macro_eurostat.csv` so the lecture renders on a fresh clone.
@@ -94,11 +100,11 @@ The same file defines FiT, and it defines it twice in incompatible ways. The not
 table has $\mathrm{PD}^{\rm FiT} = \mathrm{PD}^{\rm PiT} \times \mathrm{FLI}_{t'}$, a
 multiplicative scalar on a probability, while the systemically conditional PD has
 $\mathrm{FLI}_{t'}$ entering a probit in the position of a standard normal factor
-realisation. Consequently decision 3 needs a second half, i.e. which of the two the
-lecture means, and the recommendation is the probit form, with the multiplicative version
-named as the practitioner shortcut and its bias stated. Plan 2 carries the same open
-point at `notes/plans/02-irb-capital-lecture.md`, and both lectures must answer it the
-same way. Plan 2's task 2 also owns the notation bridge between lecture 1 and the guides,
+realisation. Mario settled this on 2 September 2026, so decision 3 now has a second
+half: the probit form is canon and the multiplicative version is named as the
+practitioner shortcut with its bias stated. Plan 2, at
+`notes/plans/02-irb-capital-lecture.md`, records the same answer, and both lectures must
+state it identically. Plan 2's task 2 also owns the notation bridge between lecture 1 and the guides,
 including a genuine clash on $g$, so read it before starting task 2 here.
 
 ## Source material, all of it already on disk

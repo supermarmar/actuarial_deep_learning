@@ -58,13 +58,22 @@ These bind every task, and they are the ones most easily lost in a fresh session
 
 1. **File name.** `credit_lectures/R2_credit-irb-capital.qmd`, sharing the regulatory
    track with plan 1's `R1`.
-2. **Scope is PD only.** LGD and EAD get one paragraph each, naming what they are and
+2. **The FiT form.** The probit form is canon; the multiplier is named as the
+   practitioner shortcut with its bias stated. Shared with `R1`.
+3. **Guides material.** Structure, regulatory references and transferable method only.
+   No portfolio specifics travel, and Bondora carries every worked example.
+4. **The IFRS 9 against IRB comparison table** lives in `R1`, cross-referenced here.
+5. **Scope is PD only.** LGD and EAD get one paragraph each, naming what they are and
    pointing at the guides, because the capital formula needs them as inputs and the
    lecture would double in length if it modelled them.
 
 ## Two flags to settle before writing prose
 
-1. **[FLAG] Confidentiality.** The A-IRB files in the guides repo read like they derive
+Mario settled both on 2 September 2026. On the first, the lecture takes structure,
+regulation and transferable method only, and Bondora carries every worked example. On the
+second, every sentence gets rewritten in house voice.
+
+1. **Confidentiality, settled.** The A-IRB files in the guides repo read like they derive
    from a real engagement. They name a US credit card portfolio, refer to onboarding
    partners without historical performance data, list the exact macroeconomic variables
    selected for that book, and describe COVID-19 exclusions and a chosen downturn
@@ -73,7 +82,7 @@ These bind every task, and they are the ones most easily lost in a fresh session
    the **structure, the regulatory references and the method** from those files, and
    leave every portfolio specific behind. Where the lecture needs a worked example, it
    comes from Bondora.
-2. **[FLAG] The guides files are drafts.** Several are raw assistant transcripts, with
+2. **The guides files are drafts.** Several are raw assistant transcripts, with
    openers such as "Perfect, you're now in the..." and closing offers to write the next
    subsection, and they carry em dashes throughout. `05_modelling/pd/08-lra.md` has the
    LRA period section three times over in successive revisions. Read them for substance
@@ -133,7 +142,8 @@ comparison table (PD type, rating philosophy, macro sensitivity, update frequenc
 period, horizon, granularity, flooring, data inputs) and the three transformations: 12
 month PiT to TTC, TTC to the worst-case default rate, and systemic PiT to lifetime by
 migration matrix. That table is the natural bridge between `R1` and `R2` and should
-appear in one of them, cross-referenced from the other.
+appear in `R1`, per Mario's decision of 2 September 2026, because the reader meets IFRS 9
+there and the contrast lands while IRB is still the unknown half. `R2` points back to it.
 
 ## The notation clash, and it is real
 
@@ -169,10 +179,11 @@ a multiplicative scalar, while the systemically conditional PD has $\mathrm{FLI}
 entering a probit as $N\!\left((N^{-1}(\mathrm{PD}^{\rm TTC}) + \sqrt{\rho}\,\mathrm{FLI}_{t'})/\sqrt{1-\rho}\right)$,
 where it plays the part of a standard normal factor realisation. A multiplier on a
 probability and a factor realisation inside a probit cannot both be the same $\mathrm{FLI}$.
-**[DECISION NEEDED]** which reading the lectures adopt. The recommendation is the probit
-one, since it is the form that reproduces the capital formula and the form lecture 1
-already carries, with the multiplicative version named as the practitioner shortcut it
-is and its bias stated, exactly as lecture 1 already does for the Jensen trap.
+Mario settled this on 2 September 2026: the probit form is canon, since it is the form
+that reproduces the capital formula and the form lecture 1 already carries. The
+multiplicative version is named as the practitioner shortcut it is, with its bias
+stated, exactly as lecture 1 already does for the Jensen trap. Both lectures answer it
+that way.
 
 ## Vault sources, all already on disk
 
@@ -245,7 +256,8 @@ every section names its source.
 - [ ] **Step 4.** Resolve the sign convention on the systemic factor. State the mapping
       as one displayed equation so a reader can check lecture 1's hybrid formula against
       the guides' WCDR formula and see they agree.
-- [ ] **Step 5.** Settle the FiT decision above with Mario, then record it.
+- [ ] **Step 5.** Record the settled FiT reading, i.e. the probit form as canon and the
+      multiplier as the named shortcut, and check that `R1` states it identically.
 - [ ] **Step 6.** Commit.
 
 **Done when** every row of the clash table carries a decision, and the sign mapping is
@@ -319,7 +331,7 @@ unverified.
       which is the reason a supervisor prefers a stable grade PD.
 - [ ] **Step 5.** Cross-reference `R1`, since IFRS 9 wants the opposite philosophy from
       the same data, and reuse the IFRS 9 against IRB comparison table from
-      `CR/02_probability_of_default.md` in whichever lecture task 1 placed it.
+      `CR/02_probability_of_default.md`, which lives in `R1` per decision 4.
 - [ ] **Step 6.** Render, commit.
 
 ## Task 7: the five-step sequence, demonstrated on Bondora
