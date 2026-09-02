@@ -311,7 +311,14 @@ This is the section that will change how a reader looks at their own model docum
 - [ ] **Step 4.** Compute the standardised marginal income effect by averaging the
       country-conditional model over the observed country distribution, and compare it
       with the raw pooled curve from lecture 1's figure. This is the arithmetic that
-      shows lecture 1's warning being obeyed rather than repeated.
+      shows lecture 1's warning being obeyed rather than repeated. Go in expecting
+      trouble at the country level: plan 1's execution found the pooled three-country
+      macro fit returns economically backwards signs, and `R1` retreated to Estonia
+      alone as a result. Standardising across EE, FI and ES is a different operation on
+      the same thin cells, so if it comes out unstable, the lecture reports that and
+      says which cells are too thin to support the average. It does not reach for a
+      tidier number, and an unstable standardisation is itself a finding worth teaching,
+      since it is the positivity condition failing in front of the reader.
 - [ ] **Step 5.** Add the sensitivity analysis, i.e. how strong an unmeasured confounder
       would have to be to overturn the within-country income effect, using the E-value
       method from task 1 if it verified.

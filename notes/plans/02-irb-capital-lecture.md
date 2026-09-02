@@ -272,7 +272,18 @@ every section names its source.
 - [ ] **Step 3.** Resolve the arrears measure explicitly. Lecture 1 owns $g_i$ for the
       origination date, so the arrears measure needs a different letter here. The
       proposal is $a_{i,t} = \mathrm{DPD}_{i,t}/30$, with the guides' $g_{i,t}$ named
-      once beside it.
+      once beside it. Check first that $a$ is not already spent, because plan 1 proposed
+      four new symbols and found three of them redundant against symbols the series
+      already owned. Read the notation contract in `notes/ifrs9-pit-pd-research.md`, then
+      grep the series:
+
+```bash
+grep -n 'a_{i,t}\|A_i' credit_lectures/*.qmd
+```
+
+      Note that lecture 1 already uses $A_i$, so a lower-case $a$ sits uncomfortably
+      close. Where it clashes, prefer a symbol the contract leaves free rather than
+      reusing one with a case distinction.
 - [ ] **Step 4.** Resolve the sign convention on the systemic factor. State the mapping
       as one displayed equation so a reader can check lecture 1's hybrid formula against
       the guides' WCDR formula and see they agree.
