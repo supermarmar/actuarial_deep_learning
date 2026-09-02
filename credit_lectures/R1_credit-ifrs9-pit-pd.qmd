@@ -36,23 +36,216 @@ jupyter: python3
 
 # Where lecture 1 stopped
 
-<!-- Intent: state the debt this lecture pays and the notation it inherits. -->
+Credit lecture 1 put the point-in-time question inside a callout, gave it a formula, and then
+conceded that the portfolio in front of it could not answer the question. The concession was
+honest and it was also incomplete. What follows pays the debt: it separates the two things the
+word "conditional" is doing in this subject, builds the term structure IFRS 9 actually asks
+for, reviews the eleven ways practitioners build one, and then fits a macro coefficient on the
+Bondora book to show that the obstacle lecture 1 hit was a property of its table rather than
+of its portfolio.
+
+Nothing here introduces notation for its own sake. Lecture 1 owns the monthly default flag
+$y_{i,t}$, the worst-ever window flag $D^{(k)}_{i,t}$, the origination month $g_i$, the
+calendar identity $u = g_i + t$, the macro state $\boldsymbol{Z}_u$, the performing set
+${\cal P}_u$ with size $n_u$, and the portfolio default rate $\mathrm{DR}^{(k)}_u$. Lecture S1
+owns the discrete hazard $q_{i,t}$ and the survival probability ${}_k p_{i,t}$. Consequently
+this lecture adds exactly one symbol, and section 2.2 is where it arrives.
+
+::: {.callout-note icon=false title="Where this sits in the series"}
+Lecture 1 defines the outcome and the twelve-month PD. Lecture S1 turns that outcome into a
+discrete-time hazard model and gets a term structure from it. Lecture S2 supplies the
+actuarial translation and the competing-risks correction. Lecture S3 puts a network where S1's
+logistic regression sat.
+
+This lecture is the regulatory reading of the same machinery, and it answers a different
+question from all four: given a term structure, what makes it point in time, and what does
+IFRS 9 do with it. Lecture R2 takes the other half of lecture 1's callout, i.e. the hybrid PD,
+the long-run average and the capital formula, into the IRB world.
+:::
 
 # The two conditioning axes
 
-<!-- Intent: the section that earns the lecture. Define the hazard, build
-survival and the marginal and cumulative PDs from it, then separate the survival
-axis from the macro axis and cross them in one table. -->
+The single most common confusion in this subject is that **conditional** and **unconditional**
+name one axis while **point-in-time** and **through-the-cycle** name another, and the two get
+collapsed into a single spectrum running from "prudent" to "responsive". They are orthogonal.
+A PD can be conditional and through-the-cycle, or unconditional and point-in-time, and both
+combinations occur in production. Separating them takes one page and it makes the rest of the
+lecture legible, so it comes first.
 
 ## The conditional PD is a hazard
 
+Take lecture 1's monthly flag $y_{i,t}$, which is one where loan $i$ breaches the default
+definition in month $t$ of its life. Ask for the probability of that breach given that the
+loan reached month $t$ still performing. That conditional probability is the **discrete
+hazard**, and lecture S1 writes it $q_{i,t}$:
+
+$$
+q_{i,t}\left( \boldsymbol{X}_i, \boldsymbol{Z}_u \right)
+= \mathbb{P}\left( y_{i,t} = 1 \,\middle|\, \text{performing at } t - 1,\;
+\boldsymbol{X}_i,\; \boldsymbol{Z}_u \right) ,
+\qquad u = g_i + t .
+$$
+
+Two indices appear and they must stay apart. The subscript $t$ is months on book, so it
+carries the loan's own age and nothing about the calendar. The macro state $\boldsymbol{Z}_u$
+is indexed by calendar month, and $u = g_i + t$ is the identity that ties the two clocks
+together. A loan originated in March 2015 and observed at $t = 24$ is being asked about March
+2017, and a loan originated in March 2018 at the same $t = 24$ is being asked about March
+2020. Same loan age, entirely different economy.
+
+This is **the conditional PD**, and it is conditional in the precise sense Mario's own credit
+risk notation gives the word: the conditioning event is that the loan sits in the performing
+risk set. The guides' notation table writes the general $k$-month version as
+$\mathrm{PD}^{\rm PiT}_{i,t}(k) = P(D^*_{i,t}(k, p) = 1 \mid D_{i,t}(p) = 0, X)$, where
+$D_{i,t}(p) = 0$ is exactly the statement that the loan has not defaulted. The hazard is that
+quantity at $k = 1$.
+
 ## Survival, the marginal PD and the cumulative PD
+
+Three further quantities follow from the hazard by arithmetic, and lecture S1 derives them from
+Botha and Verster's identities. Survival is a product of one minus the hazard,
+
+$$
+{}_k p_{i,t} = \prod_{s = 1}^{k} \left( 1 - q_{i,\, t+s} \right) ,
+$$
+
+the probability that loan $i$, currently $t$ months on book and performing, survives a further
+$k$ months. Its complement is the **cumulative PD** to horizon $k$, which is lecture 1's
+$\mathrm{PD}_k$ and needs no new symbol,
+
+$$
+\mathrm{PD}_k\left( \boldsymbol{X}_i, \boldsymbol{Z} \right) = 1 - {}_k p_{i,t} .
+$$
+
+The one symbol this lecture adds is the **marginal PD**, i.e. the probability that the loan
+survives to the start of month $t$ and then defaults during it, measured from origination:
+
+$$
+f_{i,t} = {}_{t-1} p_{i,0} \cdot q_{i,t} .
+$$
+
+That is Botha and Verster's third identity, $f(t_{(k)}) = S(t_{(k-1)}) \cdot h(t_{(k)})$,
+written with the subscripts this series uses. The letter is theirs too, so the notation is
+inherited rather than invented.
+
+::: {.callout-warning icon=false title="The two lectures agree, and here is the proof"}
+Lecture 1's window flag $D^{(k)}_{i,t} = \max(y_{i,t+1}, \ldots, y_{i,t+k})$ is the worst-ever
+aggregation: it scores a one where the loan breaches at any point inside the window. A maximum
+of monthly flags is one exactly where the loan fails to survive the whole window, so for a
+loan performing at $t$,
+
+$$
+\mathbb{P}\left( D^{(k)}_{i,t} = 1 \,\middle|\, \text{performing at } t \right)
+= 1 - \prod_{s=1}^{k} \left( 1 - q_{i,\, t+s} \right)
+= 1 - {}_k p_{i,t}
+= \mathrm{PD}_k .
+$$
+
+Lecture 1's twelve-month PD is therefore this lecture's cumulative PD at $k = 12$, and lecture
+1's flag is the survival machinery in disguise. Setting $t = 0$ recovers $D^{(k)}_i$ and the
+lifetime PD is the same expression at $k$ equal to the remaining term.
+
+One caveat, and lecture S1 states it too. The identity holds because a defaulted loan leaves
+the risk set, which is what makes the worst-ever flag immune to a loan that breaches, cures
+and breaches again. Where redefaults are modelled explicitly, the product no longer captures
+the outcome and section 4.6 is the machinery that does.
+:::
+
+Now the survival axis can be stated cleanly, because the difference between a conditional and
+an unconditional PD is whether the chance of getting to the window at all is inside the number
+or outside it. Conditional on performing at $t$, the answer is $1 - {}_k p_{i,t}$. Asked of a
+loan at origination with no conditioning on its survival to $t$, the answer multiplies that by
+the survival probability,
+
+$$
+\mathrm{PD}^{\rm uPiT}
+= \underbrace{{}_t p_{i,0}}_{\text{gets there}} \cdot
+\underbrace{\left( 1 - {}_k p_{i,t} \right)}_{\text{then defaults}} ,
+$$
+
+which the guides' table calls the unconditional PiT marginal PD and glosses as "regardless of
+prior default or prepayment". The marginal PD $f_{i,t}$ is the same construction at $k = 1$.
+Hence the conditional number is always the larger of the two, and the gap between them is the
+survival probability, which on a book like Bondora is substantial: lecture S1 measures a
+cumulative default probability of 30.8 per cent by twelve months, so a third of the book is
+already out of the risk set before a second-year window opens.
+
+Which one a bank wants depends on what the number is for. An expected credit loss on a
+performing loan is a conditional quantity, because the loan demonstrably survived to the
+reporting date. A portfolio-level loss forecast on a cohort is unconditional, because the
+cohort's attrition has to be paid for somewhere. Confusing them double-counts survival or
+ignores it, and both errors are silent.
 
 ## The macro axis is a different question
 
+Everything so far held $\boldsymbol{Z}_u$ fixed. The second axis asks what to do with it, and
+it has exactly two answers.
+
+Conditioning on it gives a **point-in-time** PD, which is lecture 1's
+$\mathrm{PD}^{\rm PiT}_k(\boldsymbol{X}_i, \boldsymbol{Z}_u)$: the number moves as the economy
+moves, and IFRS 9 requires this because an expected credit loss is a forecast made from
+today's conditions. Averaging over the distribution of the macro state instead gives a
+**through-the-cycle** PD,
+
+$$
+\mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right)
+= \mathbb{E}_{\boldsymbol{Z}}\left[ \mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, \boldsymbol{Z} \right) \right] ,
+$$
+
+which is what an IRB long-run average targets and what lecture R2 takes up. Note what the
+expectation runs over. It runs over the macro state alone, leaving survival untouched, which
+is why this axis and the previous one are independent.
+
+The averaging has to happen on the model's output rather than on its input, and section 3.2
+gives the reason with a worked figure, because feeding average macroeconomic conditions into a
+fitted point-in-time model returns something that is not the through-the-cycle PD.
+
 ## The map
 
+Crossing the two axes gives four cells. The naming is the literature's rather than this
+lecture's, and one cell carries a warning.
+
+::: {.callout-note icon=false title="The four cells, and the word that means two things"}
+
+|  | **Conditional** on survival to the window start | **Unconditional**, survival inside the number |
+|---|---|---|
+| **Point in time**, conditioned on $\boldsymbol{Z}_u$ | $\mathrm{PD}^{\rm PiT}_{i,t}(k) = 1 - {}_k p_{i,t}$, hazards at $\boldsymbol{Z}_u$. The IFRS 9 quantity for a performing loan | $\mathrm{PD}^{\rm uPiT}_{i,t}(k) = {}_t p_{i,0}\left(1 - {}_k p_{i,t}\right)$. The cohort forecast |
+| **Through the cycle**, averaged over $\boldsymbol{Z}$ | $\mathrm{PD}^{\rm TTC}_k = \mathbb{E}_{\boldsymbol{Z}}[\cdot]$, and its estimator $\overline{\mathrm{DR}}^{(12)}$. The IRB long-run average | Rarely quoted, and the cell where the ambiguity below lives |
+
+**The warning.** In Mario's notation and in the survival literature, "unconditional" names the
+survival axis, as the top row shows. In the Vasicek and transition-matrix literature it names
+the **macro** axis: Belkin, Suchower and Forest (1998) derive their conditional migration
+probabilities from thresholds fixed by "the unconditional through-the-cycle transition
+matrix", where unconditional means averaged over the cycle and says nothing about survival. A
+reader moving between a survival paper and a transition-matrix paper is therefore reading one
+word for two axes.
+
+This lecture uses the survival reading throughout, following `03_notation.md`. Where the macro
+reading is meant, the words are point in time and through the cycle, which are unambiguous.
+:::
+
+That table is the map for the rest of the lecture. Section 3 works down the left column, from
+point in time to through the cycle and back again with a macro forecast attached. Section 4
+asks which estimator fills the cells. Section 5 fills the top-left cell on real data.
+
 ## What competing risks do to all four cells
+
+One assumption sits under every formula above and it deserves naming before the lecture leans
+on it. Writing survival as $\prod (1 - q_{i,t})$ treats default as the only way a loan can
+leave, so every other exit has to be handled as censoring. Bondora loans leave two ways, and
+the table is not close: 71,416 defaults against 42,144 settlements.
+
+Treating settlement as censoring answers a **latent** question, i.e. what the default
+probability would be if nobody ever repaid early. That is a legitimate quantity, and an expected credit loss needs a different one, because a loan that repays cannot subsequently default
+and cannot carry a loss allowance either. The quantity IFRS 9 wants is the cumulative
+incidence of default in the presence of settlement, which is smaller, and lecture S2 fits the
+Fine-Gray subdistribution hazard that estimates it directly. Lecture S3 measures the gap on
+this book at 17.1 percentage points by sixty months.
+
+The point for this lecture is that the competing-risks correction is orthogonal to both axes.
+It changes the level in every one of the four cells and it changes the ranking in none of
+them, so the map above survives intact. Consequently the demonstration in section 5 treats
+settlement as censoring, exactly as lecture S1 does, and carries the same caveat.
 
 # Macro conditioning, forward-looking information and the FiT PD
 
