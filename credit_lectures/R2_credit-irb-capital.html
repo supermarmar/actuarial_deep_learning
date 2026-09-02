@@ -28,6 +28,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -78,7 +113,14 @@ window.Quarto = {
   <li><a href="#notation-and-the-three-places-it-collides" id="toc-notation-and-the-three-places-it-collides" class="nav-link" data-scroll-target="#notation-and-the-three-places-it-collides"><span class="header-section-number">1.1</span> Notation, and the three places it collides</a></li>
   </ul></li>
   <li><a href="#why-the-capital-exists-at-all" id="toc-why-the-capital-exists-at-all" class="nav-link" data-scroll-target="#why-the-capital-exists-at-all"><span class="header-section-number">2</span> Why the capital exists at all</a></li>
-  <li><a href="#expected-loss-unexpected-loss-and-the-gap-capital-covers" id="toc-expected-loss-unexpected-loss-and-the-gap-capital-covers" class="nav-link" data-scroll-target="#expected-loss-unexpected-loss-and-the-gap-capital-covers"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</a></li>
+  <li><a href="#expected-loss-unexpected-loss-and-the-gap-capital-covers" id="toc-expected-loss-unexpected-loss-and-the-gap-capital-covers" class="nav-link" data-scroll-target="#expected-loss-unexpected-loss-and-the-gap-capital-covers"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</a>
+  <ul class="collapse">
+  <li><a href="#expected-loss-is-a-cost-of-doing-business" id="toc-expected-loss-is-a-cost-of-doing-business" class="nav-link" data-scroll-target="#expected-loss-is-a-cost-of-doing-business"><span class="header-section-number">3.1</span> Expected loss is a cost of doing business</a></li>
+  <li><a href="#unexpected-loss-does-not-add-up" id="toc-unexpected-loss-does-not-add-up" class="nav-link" data-scroll-target="#unexpected-loss-does-not-add-up"><span class="header-section-number">3.2</span> Unexpected loss does not add up</a></li>
+  <li><a href="#conditional-expected-loss-is-the-quantity-the-formula-actually-computes" id="toc-conditional-expected-loss-is-the-quantity-the-formula-actually-computes" class="nav-link" data-scroll-target="#conditional-expected-loss-is-the-quantity-the-formula-actually-computes"><span class="header-section-number">3.3</span> Conditional expected loss is the quantity the formula actually computes</a></li>
+  <li><a href="#where-the-accounting-number-and-the-regulatory-number-meet" id="toc-where-the-accounting-number-and-the-regulatory-number-meet" class="nav-link" data-scroll-target="#where-the-accounting-number-and-the-regulatory-number-meet"><span class="header-section-number">3.4</span> Where the accounting number and the regulatory number meet</a></li>
+  <li><a href="#defaulted-exposures-named-and-not-developed" id="toc-defaulted-exposures-named-and-not-developed" class="nav-link" data-scroll-target="#defaulted-exposures-named-and-not-developed"><span class="header-section-number">3.5</span> Defaulted exposures, named and not developed</a></li>
+  </ul></li>
   <li><a href="#rating-philosophy-and-what-the-regulation-forces" id="toc-rating-philosophy-and-what-the-regulation-forces" class="nav-link" data-scroll-target="#rating-philosophy-and-what-the-regulation-forces"><span class="header-section-number">4</span> Rating philosophy, and what the regulation forces</a></li>
   <li><a href="#the-five-step-sequence" id="toc-the-five-step-sequence" class="nav-link" data-scroll-target="#the-five-step-sequence"><span class="header-section-number">5</span> The five-step sequence</a></li>
   <li><a href="#the-five-steps-on-bondora" id="toc-the-five-steps-on-bondora" class="nav-link" data-scroll-target="#the-five-steps-on-bondora"><span class="header-section-number">6</span> The five steps on Bondora</a></li>
@@ -213,7 +255,118 @@ Z_u = -\Phi^{-1}(0.999)
 </section>
 <section id="expected-loss-unexpected-loss-and-the-gap-capital-covers" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</h1>
-<p><em>To be written: the loss distribution, the split between provisions and capital, the accounting expected credit loss against the regulatory expected loss, and the shortfall where the two meet on a balance sheet.</em></p>
+<p>Everything downstream rests on one picture, so it is worth drawing before any formula. A credit portfolio has a distribution of losses over the coming year. That distribution is heavily right skewed, because most years are unremarkable and a few are catastrophic, and the framework picks two points on it.</p>
+<div id="3b610370" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> stats <span class="im">as</span> sps</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.stats <span class="im">import</span> norm</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">9</span>, <span class="dv">4</span>), <span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#1F4E79"</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>N, G <span class="op">=</span> norm.cdf, norm.ppf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="2d8966c7" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> vasicek_pdf(x, p, rho):</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Density of the asymptotic single-factor loss rate."""</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> G(x), G(p)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (np.sqrt((<span class="dv">1</span> <span class="op">-</span> rho) <span class="op">/</span> rho)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>            <span class="op">*</span> np.exp(<span class="fl">0.5</span> <span class="op">*</span> (a<span class="op">**</span><span class="dv">2</span> <span class="op">-</span> ((np.sqrt(<span class="dv">1</span> <span class="op">-</span> rho) <span class="op">*</span> a <span class="op">-</span> b) <span class="op">/</span> np.sqrt(rho))<span class="op">**</span><span class="dv">2</span>)))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>P_TTC, RHO <span class="op">=</span> <span class="fl">0.03</span>, <span class="fl">0.15</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.linspace(<span class="fl">1e-5</span>, <span class="fl">0.35</span>, <span class="dv">4000</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>f <span class="op">=</span> vasicek_pdf(x, P_TTC, RHO)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>var999 <span class="op">=</span> N((G(P_TTC) <span class="op">+</span> np.sqrt(RHO) <span class="op">*</span> G(<span class="fl">0.999</span>)) <span class="op">/</span> np.sqrt(<span class="dv">1</span> <span class="op">-</span> RHO))</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">8</span>, <span class="fl">3.4</span>))</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>ax.plot(x, f, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.2</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ax.fill_between(x[x <span class="op">&lt;=</span> P_TTC], f[x <span class="op">&lt;=</span> P_TTC], color<span class="op">=</span>GREY, alpha<span class="op">=</span><span class="fl">0.7</span>, linewidth<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>ax.fill_between(x[(x <span class="op">&gt;</span> P_TTC) <span class="op">&amp;</span> (x <span class="op">&lt;=</span> var999)], f[(x <span class="op">&gt;</span> P_TTC) <span class="op">&amp;</span> (x <span class="op">&lt;=</span> var999)],</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>                color<span class="op">=</span>OX, alpha<span class="op">=</span><span class="fl">0.35</span>, linewidth<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> v, lab <span class="kw">in</span> ((P_TTC, <span class="ss">f"EL = </span><span class="sc">{</span>P_TTC<span class="sc">:.1%}</span><span class="ss">"</span>), (var999, <span class="ss">f"VaR$_</span><span class="ch">{{</span><span class="ss">99.9</span><span class="ch">}}</span><span class="ss">$ = </span><span class="sc">{</span>var999<span class="sc">:.1%}</span><span class="ss">"</span>)):</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>    ax.axvline(v, color<span class="op">=</span>RULE <span class="cf">if</span> v <span class="op">==</span> P_TTC <span class="cf">else</span> OX, lw<span class="op">=</span><span class="dv">1</span>, ls<span class="op">=</span><span class="st">"--"</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    ax.annotate(lab, (v, ax.get_ylim()[<span class="dv">1</span>] <span class="op">*</span> <span class="fl">0.85</span>), xytext<span class="op">=</span>(<span class="dv">4</span>, <span class="dv">0</span>),</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>                textcoords<span class="op">=</span><span class="st">"offset points"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"portfolio loss rate over one year"</span>)</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"density"</span>)<span class="op">;</span> ax.set_yticks([])</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"EL </span><span class="sc">{</span>P_TTC<span class="sc">:.2%}</span><span class="ss">   VaR(99.9%) </span><span class="sc">{</span>var999<span class="sc">:.2%}</span><span class="ss">   "</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"UL </span><span class="sc">{</span>var999 <span class="op">-</span> P_TTC<span class="sc">:.2%}</span><span class="ss">   UL/EL </span><span class="sc">{</span>(var999 <span class="op">-</span> P_TTC) <span class="op">/</span> P_TTC<span class="sc">:.1f}</span><span class="ss">x"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="R2_credit-irb-capital_files/figure-html/cell-3-output-1.png" width="1189" height="497" class="figure-img"></p>
+<figcaption>The Vasicek loss rate distribution for an infinitely granular portfolio at a through-the-cycle probability of default of 3 per cent and an asset correlation of 0.15, drawn on the loss rate before any loss given default is applied. The mean is the expected loss and sits at 3 per cent by construction. The 99.9th percentile is at 22.9 per cent, so unexpected loss is 19.9 percentage points, or 6.6 times the expected loss. Provisions and pricing are expected to absorb the shaded region up to the mean; capital absorbs the distance from the mean to the percentile; everything beyond it is the stress loss that capital is deliberately not held against.</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>EL 3.00%   VaR(99.9%) 22.91%   UL 19.91%   UL/EL 6.6x</code></pre>
+</div>
+</div>
+<section id="expected-loss-is-a-cost-of-doing-business" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="expected-loss-is-a-cost-of-doing-business"><span class="header-section-number">3.1</span> Expected loss is a cost of doing business</h2>
+<p>Seen from the portfolio, expected loss is the mean of that distribution. Seen from the loans that make it up, it decomposes into three factors, and the decomposition is the more useful of the two views because a bank can estimate each factor separately:</p>
+<p><span class="math display">\[
+\mathrm{EL} = \sum_{i} \mathrm{PD}_i \times \mathrm{LGD}_i \times \mathrm{EAD}_i .
+\]</span></p>
+<p>The probability of default is the chance the loss event happens over the chosen horizon, fixed at one year across every asset class in the Basel framework. Exposure at default is the amount outstanding when it happens, which for a revolving facility exceeds today’s balance because a distressed borrower draws down before defaulting. Loss given default is the proportion of that exposure never recovered.</p>
+<p>Three numbers on a facility of 100 make the ordering concrete. At an exposure at default of 65 per cent of the limit, a loss given default of 30 per cent and a probability of default of 15 per cent, the amount at risk given default is 65, the amount likely to be lost given default is 19.5, and the expected loss is 2.93. Each factor conditions on the one before it, and confusing exposure at default with loss given default is the most common arithmetic error in the subject.</p>
+<p>Expected loss is not, in the framework’s view, a risk. It is a forecastable cost, and a bank is expected to price for it and provide against it. <strong>Capital is held against unexpected loss alone.</strong></p>
+</section>
+<section id="unexpected-loss-does-not-add-up" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="unexpected-loss-does-not-add-up"><span class="header-section-number">3.2</span> Unexpected loss does not add up</h2>
+<p>Unexpected loss is the distance from the mean of the loss distribution to a chosen quantile of it, and it behaves in a way expected loss does not. Expected loss aggregates: the portfolio figure is the sum of the loan figures, because expectation is linear. Unexpected loss does not, because it depends on how losses move together.</p>
+<p><span class="math display">\[
+\mathrm{UL} = \sum_i \sigma_i \, \rho_i ,
+\]</span></p>
+<p>where <span class="math inline">\(\sigma_i\)</span> is the standalone standard deviation of losses on facility <span class="math inline">\(i\)</span> and <span class="math inline">\(\rho_i\)</span> its correlation with the portfolio as a whole. A portfolio of perfectly independent loans has almost no unexpected loss at scale, since the idiosyncratic variation averages out. A portfolio whose borrowers all depend on the same economy does not, and the correlation is what remains after diversification has done its work.</p>
+<p>The confidence level Basel chose is 99.9 per cent, meaning an institution is expected to suffer losses exceeding its capital roughly once in a thousand years. That is a high bar for a reason that has little to do with the true tail of the distribution: it protects against estimation error in the bank’s own probability, loss and exposure estimates, and against model uncertainty, as much as against credit events. Losses beyond it are <strong>stress loss</strong>, which is the region the framework judges too expensive to hold capital against and hands to Pillar 2 and to stress testing instead.</p>
+</section>
+<section id="conditional-expected-loss-is-the-quantity-the-formula-actually-computes" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="conditional-expected-loss-is-the-quantity-the-formula-actually-computes"><span class="header-section-number">3.3</span> Conditional expected loss is the quantity the formula actually computes</h2>
+<p>The two ideas combine into the identity the capital function implements:</p>
+<p><span class="math display">\[
+\mathrm{UL} = \underbrace{\mathbb{E}\left[\text{loss} \mid Z = -\Phi^{-1}(0.999)\right]}_{\text{conditional expected loss}} - \mathrm{EL} .
+\]</span></p>
+<p>Rather than modelling the whole loss distribution and reading a percentile off it, the framework conditions on a severe realisation of one systematic factor and takes an expectation given that realisation. Under the asymptotic single risk factor model those two operations coincide for an infinitely granular portfolio, which is the result section 7 derives and the reason the formula is a closed form rather than a simulation.</p>
+<p>Two asymmetries in how the conditioning is done are worth noticing now, because both surface again later.</p>
+<p><strong>The probability of default is transformed and the loss given default is not.</strong> The bank reports an average probability reflecting normal conditions, and a supervisory mapping function converts it into a systemically conditional probability. No equivalent function exists for loss given default. The Basel Committee considered one and decided that practice was too varied to support a single supervisory mapping, so advanced banks are instead required to supply their own <strong>downturn</strong> loss given default, reflecting the fact that recoveries fall when collateral values do. One parameter is stressed by formula and the other by instruction.</p>
+<p><strong>The same factor realisation is applied to every exposure in the portfolio.</strong> That is what makes the model additive across loans and what makes concentration invisible to it. Section 7.6 returns to the price of that assumption.</p>
+</section>
+<section id="where-the-accounting-number-and-the-regulatory-number-meet" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="where-the-accounting-number-and-the-regulatory-number-meet"><span class="header-section-number">3.4</span> Where the accounting number and the regulatory number meet</h2>
+<p>The same portfolio carries two expected loss figures at once, computed on different bases, and a bank has to reconcile them. Lecture R1 is where the accounting side is built; the contrast is tabulated there and this lecture points at it rather than repeating it.</p>
+<p>The short version is that the accounting expected credit loss under IFRS 9 is point-in-time, probability-weighted across economic scenarios and discounted at the original effective interest rate, while the regulatory expected loss uses a through-the-cycle probability and a downturn loss given default and is not discounted. Consequently the two will almost never be equal, and the regulation treats the gap explicitly.</p>
+<p>Where regulatory expected loss exceeds accounting provisions, the <strong>shortfall is deducted from Common Equity Tier 1 capital</strong>, on the reasoning that the bank has recognised less loss than the prudential basis requires and the difference is not really capital. Where provisions exceed regulatory expected loss, the excess is eligible as Tier 2 capital, subject to a cap expressed as a percentage of risk-weighted assets.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="One number in the paragraph above is unverified">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>One number in the paragraph above is unverified
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The direction of the treatment is well established. The <strong>size of the Tier 2 cap</strong> on an expected loss excess is commonly quoted as 0.6 per cent of risk-weighted assets for exposures under the internal ratings-based approach, and that figure could not be confirmed against a primary source while this lecture was written. Treat it as a number to check against the own funds articles of the Capital Requirements Regulation before relying on it.</p>
+<p>The mechanism matters more than the cap for present purposes. Because the accounting figure moves with the economy and the regulatory figure is deliberately smoothed, the gap between them widens in a downturn exactly when capital is scarcest, which makes it a live capital management concern rather than a reconciliation exercise.</p>
+</div>
+</div>
+</section>
+<section id="defaulted-exposures-named-and-not-developed" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="defaulted-exposures-named-and-not-developed"><span class="header-section-number">3.5</span> Defaulted exposures, named and not developed</h2>
+<p>Once a loan has defaulted its probability of default is one and all the uncertainty has moved into the recovery. The framework handles that case separately: the bank estimates a best estimate of expected loss on the specific defaulted exposure, which uses the granular information a default reveals rather than a portfolio average, and the capital requirement becomes <span class="math inline">\(K = \max\!\left(0, \mathrm{LGD}_{\rm downturn} - \mathrm{ELBE}\right)\)</span> against the actual outstanding balance, since there is no further drawdown risk to stress.</p>
+<p>That is the whole of what this lecture says about defaulted exposures. The scope here is the probability of default on performing loans, and loss given default in default is its own subject.</p>
+</section>
 </section>
 <section id="rating-philosophy-and-what-the-regulation-forces" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Rating philosophy, and what the regulation forces</h1>

@@ -177,9 +177,181 @@ worth guessing at.
 
 # Expected loss, unexpected loss and the gap capital covers
 
-*To be written: the loss distribution, the split between provisions and capital, the accounting
-expected credit loss against the regulatory expected loss, and the shortfall where the two meet
-on a balance sheet.*
+Everything downstream rests on one picture, so it is worth drawing before any formula. A credit
+portfolio has a distribution of losses over the coming year. That distribution is heavily right
+skewed, because most years are unremarkable and a few are catastrophic, and the framework picks
+two points on it.
+
+```{python}
+import numpy as np
+import polars as pl
+import pandas as pd
+import matplotlib.pyplot as plt
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from scipy import stats as sps
+from scipy.stats import norm
+
+plt.rcParams.update({
+    "figure.figsize": (9, 4), "figure.dpi": 150, "font.size": 9,
+    "axes.spines.top": False, "axes.spines.right": False,
+})
+OX, GREY, RULE, BLUE = "#8C2F1E", "#B0B0B0", "#444444", "#1F4E79"
+N, G = norm.cdf, norm.ppf
+```
+
+```{python}
+#| fig-cap: "The Vasicek loss rate distribution for an infinitely granular portfolio at a through-the-cycle probability of default of 3 per cent and an asset correlation of 0.15, drawn on the loss rate before any loss given default is applied. The mean is the expected loss and sits at 3 per cent by construction. The 99.9th percentile is at 22.9 per cent, so unexpected loss is 19.9 percentage points, or 6.6 times the expected loss. Provisions and pricing are expected to absorb the shaded region up to the mean; capital absorbs the distance from the mean to the percentile; everything beyond it is the stress loss that capital is deliberately not held against."
+def vasicek_pdf(x, p, rho):
+    """Density of the asymptotic single-factor loss rate."""
+    a, b = G(x), G(p)
+    return (np.sqrt((1 - rho) / rho)
+            * np.exp(0.5 * (a**2 - ((np.sqrt(1 - rho) * a - b) / np.sqrt(rho))**2)))
+
+P_TTC, RHO = 0.03, 0.15
+x = np.linspace(1e-5, 0.35, 4000)
+f = vasicek_pdf(x, P_TTC, RHO)
+var999 = N((G(P_TTC) + np.sqrt(RHO) * G(0.999)) / np.sqrt(1 - RHO))
+
+fig, ax = plt.subplots(figsize=(8, 3.4))
+ax.plot(x, f, color=RULE, lw=1.2)
+ax.fill_between(x[x <= P_TTC], f[x <= P_TTC], color=GREY, alpha=0.7, linewidth=0)
+ax.fill_between(x[(x > P_TTC) & (x <= var999)], f[(x > P_TTC) & (x <= var999)],
+                color=OX, alpha=0.35, linewidth=0)
+for v, lab in ((P_TTC, f"EL = {P_TTC:.1%}"), (var999, f"VaR$_{{99.9}}$ = {var999:.1%}")):
+    ax.axvline(v, color=RULE if v == P_TTC else OX, lw=1, ls="--")
+    ax.annotate(lab, (v, ax.get_ylim()[1] * 0.85), xytext=(4, 0),
+                textcoords="offset points", fontsize=8)
+ax.set_xlabel("portfolio loss rate over one year")
+ax.set_ylabel("density"); ax.set_yticks([])
+plt.tight_layout(); plt.show()
+
+print(f"EL {P_TTC:.2%}   VaR(99.9%) {var999:.2%}   "
+      f"UL {var999 - P_TTC:.2%}   UL/EL {(var999 - P_TTC) / P_TTC:.1f}x")
+```
+
+## Expected loss is a cost of doing business
+
+Seen from the portfolio, expected loss is the mean of that distribution. Seen from the loans
+that make it up, it decomposes into three factors, and the decomposition is the more useful of
+the two views because a bank can estimate each factor separately:
+
+$$
+\mathrm{EL} = \sum_{i} \mathrm{PD}_i \times \mathrm{LGD}_i \times \mathrm{EAD}_i .
+$$
+
+The probability of default is the chance the loss event happens over the chosen horizon, fixed
+at one year across every asset class in the Basel framework. Exposure at default is the amount
+outstanding when it happens, which for a revolving facility exceeds today's balance because a
+distressed borrower draws down before defaulting. Loss given default is the proportion of that
+exposure never recovered.
+
+Three numbers on a facility of 100 make the ordering concrete. At an exposure at default of 65
+per cent of the limit, a loss given default of 30 per cent and a probability of default of 15
+per cent, the amount at risk given default is 65, the amount likely to be lost given default is
+19.5, and the expected loss is 2.93. Each factor conditions on the one before it, and confusing
+exposure at default with loss given default is the most common arithmetic error in the subject.
+
+Expected loss is not, in the framework's view, a risk. It is a forecastable cost, and a bank is
+expected to price for it and provide against it. **Capital is held against unexpected loss
+alone.**
+
+## Unexpected loss does not add up
+
+Unexpected loss is the distance from the mean of the loss distribution to a chosen quantile of
+it, and it behaves in a way expected loss does not. Expected loss aggregates: the portfolio
+figure is the sum of the loan figures, because expectation is linear. Unexpected loss does not,
+because it depends on how losses move together.
+
+$$
+\mathrm{UL} = \sum_i \sigma_i \, \rho_i ,
+$$
+
+where $\sigma_i$ is the standalone standard deviation of losses on facility $i$ and $\rho_i$ its
+correlation with the portfolio as a whole. A portfolio of perfectly independent loans has almost
+no unexpected loss at scale, since the idiosyncratic variation averages out. A portfolio whose
+borrowers all depend on the same economy does not, and the correlation is what remains after
+diversification has done its work.
+
+The confidence level Basel chose is 99.9 per cent, meaning an institution is expected to suffer
+losses exceeding its capital roughly once in a thousand years. That is a high bar for a reason
+that has little to do with the true tail of the distribution: it protects against estimation
+error in the bank's own probability, loss and exposure estimates, and against model uncertainty,
+as much as against credit events. Losses beyond it are **stress loss**, which is the region the
+framework judges too expensive to hold capital against and hands to Pillar 2 and to stress
+testing instead.
+
+## Conditional expected loss is the quantity the formula actually computes
+
+The two ideas combine into the identity the capital function implements:
+
+$$
+\mathrm{UL} = \underbrace{\mathbb{E}\left[\text{loss} \mid Z = -\Phi^{-1}(0.999)\right]}_{\text{conditional expected loss}} - \mathrm{EL} .
+$$
+
+Rather than modelling the whole loss distribution and reading a percentile off it, the framework
+conditions on a severe realisation of one systematic factor and takes an expectation given that
+realisation. Under the asymptotic single risk factor model those two operations coincide for an
+infinitely granular portfolio, which is the result section 7 derives and the reason the formula
+is a closed form rather than a simulation.
+
+Two asymmetries in how the conditioning is done are worth noticing now, because both surface
+again later.
+
+**The probability of default is transformed and the loss given default is not.** The bank
+reports an average probability reflecting normal conditions, and a supervisory mapping function
+converts it into a systemically conditional probability. No equivalent function exists for loss
+given default. The Basel Committee considered one and decided that practice was too varied to
+support a single supervisory mapping, so advanced banks are instead required to supply their own
+**downturn** loss given default, reflecting the fact that recoveries fall when collateral values
+do. One parameter is stressed by formula and the other by instruction.
+
+**The same factor realisation is applied to every exposure in the portfolio.** That is what makes
+the model additive across loans and what makes concentration invisible to it. Section 7.6 returns
+to the price of that assumption.
+
+## Where the accounting number and the regulatory number meet
+
+The same portfolio carries two expected loss figures at once, computed on different bases, and a
+bank has to reconcile them. Lecture R1 is where the accounting side is built; the contrast is
+tabulated there and this lecture points at it rather than repeating it.
+
+The short version is that the accounting expected credit loss under IFRS 9 is point-in-time,
+probability-weighted across economic scenarios and discounted at the original effective interest
+rate, while the regulatory expected loss uses a through-the-cycle probability and a downturn loss
+given default and is not discounted. Consequently the two will almost never be equal, and the
+regulation treats the gap explicitly.
+
+Where regulatory expected loss exceeds accounting provisions, the **shortfall is deducted from
+Common Equity Tier 1 capital**, on the reasoning that the bank has recognised less loss than the
+prudential basis requires and the difference is not really capital. Where provisions exceed
+regulatory expected loss, the excess is eligible as Tier 2 capital, subject to a cap expressed as
+a percentage of risk-weighted assets.
+
+::: {.callout-warning icon=false title="One number in the paragraph above is unverified"}
+The direction of the treatment is well established. The **size of the Tier 2 cap** on an expected
+loss excess is commonly quoted as 0.6 per cent of risk-weighted assets for exposures under the
+internal ratings-based approach, and that figure could not be confirmed against a primary source
+while this lecture was written. Treat it as a number to check against the own funds articles of
+the Capital Requirements Regulation before relying on it.
+
+The mechanism matters more than the cap for present purposes. Because the accounting figure moves
+with the economy and the regulatory figure is deliberately smoothed, the gap between them widens
+in a downturn exactly when capital is scarcest, which makes it a live capital management concern
+rather than a reconciliation exercise.
+:::
+
+## Defaulted exposures, named and not developed
+
+Once a loan has defaulted its probability of default is one and all the uncertainty has moved
+into the recovery. The framework handles that case separately: the bank estimates a best estimate
+of expected loss on the specific defaulted exposure, which uses the granular information a
+default reveals rather than a portfolio average, and the capital requirement becomes
+$K = \max\!\left(0, \mathrm{LGD}_{\rm downturn} - \mathrm{ELBE}\right)$ against the actual
+outstanding balance, since there is no further drawdown risk to stress.
+
+That is the whole of what this lecture says about defaulted exposures. The scope here is the
+probability of default on performing loans, and loss given default in default is its own subject.
 
 # Rating philosophy, and what the regulation forces
 
