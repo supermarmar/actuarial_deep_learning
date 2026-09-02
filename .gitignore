@@ -24,3 +24,7 @@ __pycache__/
 
 # Lecture figures fetched into the figures/ subdirectory by the same script.
 lectures/figures/
+
+# Quarto's intermediate notebook, written beside each .qmd during a render and
+# rebuilt every time. One was committed by accident on 2 September 2026.
+*.quarto_ipynb
