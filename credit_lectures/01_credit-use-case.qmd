@@ -750,27 +750,14 @@ which is Vasicek's conditional default probability. At $\rho = 0$ the TTC PD pas
 unmoved; as $\rho$ rises the same input swings further with the cycle, so $\rho$ is a measure of
 how point-in-time the model is.
 
-Two properties earn the extra notation. First, averaging the output returns the TTC PD exactly,
-
-$$
-\mathbb{E}_{Z}\left[ \mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z \right) \right]
-= \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) ,
-$$
-
-by the identity $\mathbb{E}\left[ \Phi(a - bZ) \right] = \Phi\left( a / \sqrt{1 + b^2} \right)$ at
-$a = \Phi^{-1}(\cdot) / \sqrt{1 - \rho}$ and $b = \sqrt{\rho / (1 - \rho)}$. The probit link and
-the normal factor are chosen so that the average comes out right, which is what makes this the
-natural home for the previous callout's TTC definition. The warning there still applies to the
-input, mind: setting $Z_u$ to its mean of zero gives
-$\Phi\left( \Phi^{-1}(\mathrm{PD}^{\rm TTC}_k) / \sqrt{1 - \rho} \right)$, which understates the
-TTC PD whenever that PD is below one half. At a TTC PD of 3 per cent and $\rho = 0.15$ it returns
-2.07 per cent, a shortfall of nearly a third.
-
-Secondly, the IRB capital formula is this same expression with the factor stressed rather than
-averaged, $Z_u = -\Phi^{-1}(0.999)$, and there $\rho$ is the asset correlation the CRR prescribes
-by exposure class rather than something the modeller fits. A credit audience therefore already
-knows the machinery; the hybrid reading simply uses it at the middle of the factor distribution
-instead of in its tail.
+Two properties earn the extra notation, and both belong to the regulatory lectures rather than to
+this one. Averaging the output over $Z$ returns the TTC PD **exactly**, which is what makes the
+probit form the right home for the previous callout's definition, and lecture R2 gives the
+identity that does it. Stressing the factor instead of averaging it, at
+$Z_u = -\Phi^{-1}(0.999)$, turns the same expression into the IRB capital formula, where $\rho$
+is the asset correlation the CRR prescribes by exposure class rather than something the modeller
+fits. Credit lecture R2 follows that substitution through the whole production sequence, from
+this scorecard to a risk weight.
 :::
 
 ## Regression modelling
