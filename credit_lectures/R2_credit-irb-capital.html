@@ -292,7 +292,7 @@ Z_u = -\Phi^{-1}(0.999)
 <section id="expected-loss-unexpected-loss-and-the-gap-capital-covers" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</h1>
 <p>Everything downstream rests on one picture, so it is worth drawing before any formula. A credit portfolio has a distribution of losses over the coming year. That distribution is heavily right skewed, because most years are unremarkable and a few are catastrophic, and the framework picks two points on it.</p>
-<div id="d089b510" class="cell" data-execution_count="1">
+<div id="6220bfbb" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -309,7 +309,7 @@ Z_u = -\Phi^{-1}(0.999)
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#1F4E79"</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>N, G <span class="op">=</span> norm.cdf, norm.ppf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="2f8f9701" class="cell" data-execution_count="2">
+<div id="d613feeb" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> vasicek_pdf(x, p, rho):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Density of the asymptotic single-factor loss rate."""</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> G(x), G(p)</span>
@@ -517,7 +517,7 @@ Z_u = -\Phi^{-1}(0.999)
 <section id="step-1-the-point-in-time-model" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="step-1-the-point-in-time-model"><span class="header-section-number">6.1</span> Step 1: the point-in-time model</h2>
 <p>The scorecard is lecture 1’s GLM3, reused unchanged so the two lectures agree: a Bernoulli regression with a logit link on age class, log income and country, fitted to the twelve-month default flag. It is a deliberately thin model, and section 8 asks what a validator would make of it.</p>
-<div id="8f45526b" class="cell" data-execution_count="3">
+<div id="48c561ef" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log()))</span>
@@ -549,7 +549,7 @@ fitted PD spans 0.00% to 80.77%   cohorts 2009 to 2020</code></pre>
 <h2 data-number="6.2" class="anchored" data-anchor-id="step-2-risk-grades"><span class="header-section-number">6.2</span> Step 2: risk grades</h2>
 <p>Grade construction is the step where regulation, rather than statistics, decides the answer. The requirements are that the scale be discrete, that probabilities rise monotonically across it, that no grade holds too little of the portfolio to calibrate reliably or so much that it encodes nothing, that borrowers within a grade have similar default rates, and that adjacent grades have different ones. A bank must also maintain at least seven grades for non-defaulted exposures plus one for those in default.</p>
 <p>The procedure follows from those constraints. Rank the book on the fitted probability, cut it into fine bins, then merge adjacent bins until every constraint holds.</p>
-<div id="10cf6c3b" class="cell" data-execution_count="4">
+<div id="e56d0179" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>MIN_SHARE, MAX_SHARE <span class="op">=</span> <span class="fl">0.01</span>, <span class="fl">0.30</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_grades(pit, y, n_fine, min_share<span class="op">=</span>MIN_SHARE):</span>
@@ -589,7 +589,7 @@ fitted PD spans 0.00% to 80.77%   cohorts 2009 to 2020</code></pre>
 <span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> lab</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>How fine to cut before merging is the one free parameter, and it decides how many grades come out. The guides’ own process tests several candidate schemes against the regulatory objectives and picks one, so this does the same.</p>
-<div id="28e08021" class="cell" data-execution_count="5">
+<div id="f5d649ea" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> z_between(n1, d1, n2, d2):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Two-proportion z-test on adjacent grades. Small p means they differ."""</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    p1, p2 <span class="op">=</span> d1 <span class="op">/</span> n1, d2 <span class="op">/</span> n2</span>
@@ -629,7 +629,7 @@ fitted PD spans 0.00% to 80.77%   cohorts 2009 to 2020</code></pre>
 <span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>        <span class="st">"homogeneity fails %"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> np.mean(np.array(hom) <span class="op">&lt;</span> <span class="fl">0.05</span>), <span class="dv">1</span>)})</span>
 <span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(candidates).set_index(<span class="st">"fine bins"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="93">
+<div class="cell-output cell-output-display" data-execution_count="118">
 <div>
 
 
@@ -699,7 +699,7 @@ fitted PD spans 0.00% to 80.77%   cohorts 2009 to 2020</code></pre>
 </div>
 <p>That table earns its place, because the trade-off in it is the whole reason grade construction is iterative. Every scheme is monotone and every scheme clears the volume bounds and the concentration test, since the merging procedure enforces all three by construction. What granularity costs is <strong>separation</strong>: at nine grades no adjacent pair is statistically indistinguishable, at thirteen one pair in six is, and at thirty nearly three quarters are. A finer scale looks more discriminating and is mostly reporting noise.</p>
 <p>Nine grades it is. That clears the seven-grade minimum with room to spare and passes every test.</p>
-<div id="c7cd9e22" class="cell" data-execution_count="6">
+<div id="31a1ca99" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>book[<span class="st">"grade"</span>] <span class="op">=</span> build_grades(book.pit.values, book.default_12m.values, <span class="dv">10</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>grades <span class="op">=</span> (book.groupby(<span class="st">"grade"</span>)</span>
@@ -710,21 +710,21 @@ fitted PD spans 0.00% to 80.77%   cohorts 2009 to 2020</code></pre>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>grades[[<span class="st">"loans"</span>, <span class="st">"defaults"</span>, <span class="st">"share"</span>, <span class="st">"pd_lo"</span>, <span class="st">"pd_hi"</span>, <span class="st">"pd_mean"</span>, <span class="st">"odr"</span>]].style.<span class="bu">format</span>({</span>
 <span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"loans"</span>: <span class="st">"</span><span class="sc">{:,.0f}</span><span class="st">"</span>, <span class="st">"defaults"</span>: <span class="st">"</span><span class="sc">{:,.0f}</span><span class="st">"</span>, <span class="st">"share"</span>: <span class="st">"</span><span class="sc">{:.1%}</span><span class="st">"</span>,</span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pd_lo"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"pd_hi"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"pd_mean"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"odr"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="94">
+<div class="cell-output cell-output-display" data-execution_count="119">
 <style type="text/css">
 </style>
 
-<table id="T_ecc5f" class="caption-top table table-sm table-striped small">
+<table id="T_33d1b" class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_ecc5f_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">loans</th>
-<th id="T_ecc5f_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">defaults</th>
-<th id="T_ecc5f_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">share</th>
-<th id="T_ecc5f_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">pd_lo</th>
-<th id="T_ecc5f_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">pd_hi</th>
-<th id="T_ecc5f_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">pd_mean</th>
-<th id="T_ecc5f_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">odr</th>
+<th id="T_33d1b_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">loans</th>
+<th id="T_33d1b_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">defaults</th>
+<th id="T_33d1b_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">share</th>
+<th id="T_33d1b_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">pd_lo</th>
+<th id="T_33d1b_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">pd_hi</th>
+<th id="T_33d1b_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">pd_mean</th>
+<th id="T_33d1b_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">odr</th>
 </tr>
 <tr class="even">
 <th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
@@ -739,100 +739,100 @@ fitted PD spans 0.00% to 80.77%   cohorts 2009 to 2020</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<th id="T_ecc5f_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
-<td id="T_ecc5f_row0_col0" class="data row0 col0">29,701</td>
-<td id="T_ecc5f_row0_col1" class="data row0 col1">4,133</td>
-<td id="T_ecc5f_row0_col2" class="data row0 col2">20.0%</td>
-<td id="T_ecc5f_row0_col3" class="data row0 col3">0.00%</td>
-<td id="T_ecc5f_row0_col4" class="data row0 col4">14.90%</td>
-<td id="T_ecc5f_row0_col5" class="data row0 col5">14.07%</td>
-<td id="T_ecc5f_row0_col6" class="data row0 col6">13.92%</td>
+<th id="T_33d1b_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_33d1b_row0_col0" class="data row0 col0">29,701</td>
+<td id="T_33d1b_row0_col1" class="data row0 col1">4,133</td>
+<td id="T_33d1b_row0_col2" class="data row0 col2">20.0%</td>
+<td id="T_33d1b_row0_col3" class="data row0 col3">0.00%</td>
+<td id="T_33d1b_row0_col4" class="data row0 col4">14.90%</td>
+<td id="T_33d1b_row0_col5" class="data row0 col5">14.07%</td>
+<td id="T_33d1b_row0_col6" class="data row0 col6">13.92%</td>
 </tr>
 <tr class="even">
-<th id="T_ecc5f_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
-<td id="T_ecc5f_row1_col0" class="data row1 col0">14,351</td>
-<td id="T_ecc5f_row1_col1" class="data row1 col1">2,136</td>
-<td id="T_ecc5f_row1_col2" class="data row1 col2">9.7%</td>
-<td id="T_ecc5f_row1_col3" class="data row1 col3">14.90%</td>
-<td id="T_ecc5f_row1_col4" class="data row1 col4">15.73%</td>
-<td id="T_ecc5f_row1_col5" class="data row1 col5">15.33%</td>
-<td id="T_ecc5f_row1_col6" class="data row1 col6">14.88%</td>
+<th id="T_33d1b_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_33d1b_row1_col0" class="data row1 col0">14,351</td>
+<td id="T_33d1b_row1_col1" class="data row1 col1">2,136</td>
+<td id="T_33d1b_row1_col2" class="data row1 col2">9.7%</td>
+<td id="T_33d1b_row1_col3" class="data row1 col3">14.90%</td>
+<td id="T_33d1b_row1_col4" class="data row1 col4">15.73%</td>
+<td id="T_33d1b_row1_col5" class="data row1 col5">15.33%</td>
+<td id="T_33d1b_row1_col6" class="data row1 col6">14.88%</td>
 </tr>
 <tr class="odd">
-<th id="T_ecc5f_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
-<td id="T_ecc5f_row2_col0" class="data row2 col0">15,413</td>
-<td id="T_ecc5f_row2_col1" class="data row2 col1">2,531</td>
-<td id="T_ecc5f_row2_col2" class="data row2 col2">10.4%</td>
-<td id="T_ecc5f_row2_col3" class="data row2 col3">15.73%</td>
-<td id="T_ecc5f_row2_col4" class="data row2 col4">16.59%</td>
-<td id="T_ecc5f_row2_col5" class="data row2 col5">16.06%</td>
-<td id="T_ecc5f_row2_col6" class="data row2 col6">16.42%</td>
+<th id="T_33d1b_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_33d1b_row2_col0" class="data row2 col0">15,413</td>
+<td id="T_33d1b_row2_col1" class="data row2 col1">2,531</td>
+<td id="T_33d1b_row2_col2" class="data row2 col2">10.4%</td>
+<td id="T_33d1b_row2_col3" class="data row2 col3">15.73%</td>
+<td id="T_33d1b_row2_col4" class="data row2 col4">16.59%</td>
+<td id="T_33d1b_row2_col5" class="data row2 col5">16.06%</td>
+<td id="T_33d1b_row2_col6" class="data row2 col6">16.42%</td>
 </tr>
 <tr class="even">
-<th id="T_ecc5f_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
-<td id="T_ecc5f_row3_col0" class="data row3 col0">14,869</td>
-<td id="T_ecc5f_row3_col1" class="data row3 col1">2,763</td>
-<td id="T_ecc5f_row3_col2" class="data row3 col2">10.0%</td>
-<td id="T_ecc5f_row3_col3" class="data row3 col3">16.60%</td>
-<td id="T_ecc5f_row3_col4" class="data row3 col4">21.17%</td>
-<td id="T_ecc5f_row3_col5" class="data row3 col5">18.73%</td>
-<td id="T_ecc5f_row3_col6" class="data row3 col6">18.58%</td>
+<th id="T_33d1b_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_33d1b_row3_col0" class="data row3 col0">14,869</td>
+<td id="T_33d1b_row3_col1" class="data row3 col1">2,763</td>
+<td id="T_33d1b_row3_col2" class="data row3 col2">10.0%</td>
+<td id="T_33d1b_row3_col3" class="data row3 col3">16.60%</td>
+<td id="T_33d1b_row3_col4" class="data row3 col4">21.17%</td>
+<td id="T_33d1b_row3_col5" class="data row3 col5">18.73%</td>
+<td id="T_33d1b_row3_col6" class="data row3 col6">18.58%</td>
 </tr>
 <tr class="odd">
-<th id="T_ecc5f_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
-<td id="T_ecc5f_row4_col0" class="data row4 col0">14,768</td>
-<td id="T_ecc5f_row4_col1" class="data row4 col1">3,962</td>
-<td id="T_ecc5f_row4_col2" class="data row4 col2">9.9%</td>
-<td id="T_ecc5f_row4_col3" class="data row4 col3">21.19%</td>
-<td id="T_ecc5f_row4_col4" class="data row4 col4">34.21%</td>
-<td id="T_ecc5f_row4_col5" class="data row4 col5">27.14%</td>
-<td id="T_ecc5f_row4_col6" class="data row4 col6">26.83%</td>
+<th id="T_33d1b_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_33d1b_row4_col0" class="data row4 col0">14,768</td>
+<td id="T_33d1b_row4_col1" class="data row4 col1">3,962</td>
+<td id="T_33d1b_row4_col2" class="data row4 col2">9.9%</td>
+<td id="T_33d1b_row4_col3" class="data row4 col3">21.19%</td>
+<td id="T_33d1b_row4_col4" class="data row4 col4">34.21%</td>
+<td id="T_33d1b_row4_col5" class="data row4 col5">27.14%</td>
+<td id="T_33d1b_row4_col6" class="data row4 col6">26.83%</td>
 </tr>
 <tr class="even">
-<th id="T_ecc5f_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
-<td id="T_ecc5f_row5_col0" class="data row5 col0">14,967</td>
-<td id="T_ecc5f_row5_col1" class="data row5 col1">5,315</td>
-<td id="T_ecc5f_row5_col2" class="data row5 col2">10.1%</td>
-<td id="T_ecc5f_row5_col3" class="data row5 col3">34.21%</td>
-<td id="T_ecc5f_row5_col4" class="data row5 col4">36.78%</td>
-<td id="T_ecc5f_row5_col5" class="data row5 col5">35.40%</td>
-<td id="T_ecc5f_row5_col6" class="data row5 col6">35.51%</td>
+<th id="T_33d1b_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_33d1b_row5_col0" class="data row5 col0">14,967</td>
+<td id="T_33d1b_row5_col1" class="data row5 col1">5,315</td>
+<td id="T_33d1b_row5_col2" class="data row5 col2">10.1%</td>
+<td id="T_33d1b_row5_col3" class="data row5 col3">34.21%</td>
+<td id="T_33d1b_row5_col4" class="data row5 col4">36.78%</td>
+<td id="T_33d1b_row5_col5" class="data row5 col5">35.40%</td>
+<td id="T_33d1b_row5_col6" class="data row5 col6">35.51%</td>
 </tr>
 <tr class="odd">
-<th id="T_ecc5f_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
-<td id="T_ecc5f_row6_col0" class="data row6 col0">14,863</td>
-<td id="T_ecc5f_row6_col1" class="data row6 col1">5,870</td>
-<td id="T_ecc5f_row6_col2" class="data row6 col2">10.0%</td>
-<td id="T_ecc5f_row6_col3" class="data row6 col3">36.78%</td>
-<td id="T_ecc5f_row6_col4" class="data row6 col4">43.77%</td>
-<td id="T_ecc5f_row6_col5" class="data row6 col5">38.69%</td>
-<td id="T_ecc5f_row6_col6" class="data row6 col6">39.49%</td>
+<th id="T_33d1b_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_33d1b_row6_col0" class="data row6 col0">14,863</td>
+<td id="T_33d1b_row6_col1" class="data row6 col1">5,870</td>
+<td id="T_33d1b_row6_col2" class="data row6 col2">10.0%</td>
+<td id="T_33d1b_row6_col3" class="data row6 col3">36.78%</td>
+<td id="T_33d1b_row6_col4" class="data row6 col4">43.77%</td>
+<td id="T_33d1b_row6_col5" class="data row6 col5">38.69%</td>
+<td id="T_33d1b_row6_col6" class="data row6 col6">39.49%</td>
 </tr>
 <tr class="even">
-<th id="T_ecc5f_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
-<td id="T_ecc5f_row7_col0" class="data row7 col0">14,871</td>
-<td id="T_ecc5f_row7_col1" class="data row7 col1">7,736</td>
-<td id="T_ecc5f_row7_col2" class="data row7 col2">10.0%</td>
-<td id="T_ecc5f_row7_col3" class="data row7 col3">43.77%</td>
-<td id="T_ecc5f_row7_col4" class="data row7 col4">53.87%</td>
-<td id="T_ecc5f_row7_col5" class="data row7 col5">51.31%</td>
-<td id="T_ecc5f_row7_col6" class="data row7 col6">52.02%</td>
+<th id="T_33d1b_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_33d1b_row7_col0" class="data row7 col0">14,871</td>
+<td id="T_33d1b_row7_col1" class="data row7 col1">7,736</td>
+<td id="T_33d1b_row7_col2" class="data row7 col2">10.0%</td>
+<td id="T_33d1b_row7_col3" class="data row7 col3">43.77%</td>
+<td id="T_33d1b_row7_col4" class="data row7 col4">53.87%</td>
+<td id="T_33d1b_row7_col5" class="data row7 col5">51.31%</td>
+<td id="T_33d1b_row7_col6" class="data row7 col6">52.02%</td>
 </tr>
 <tr class="odd">
-<th id="T_ecc5f_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
-<td id="T_ecc5f_row8_col0" class="data row8 col0">14,867</td>
-<td id="T_ecc5f_row8_col1" class="data row8 col1">8,587</td>
-<td id="T_ecc5f_row8_col2" class="data row8 col2">10.0%</td>
-<td id="T_ecc5f_row8_col3" class="data row8 col3">53.88%</td>
-<td id="T_ecc5f_row8_col4" class="data row8 col4">80.77%</td>
-<td id="T_ecc5f_row8_col5" class="data row8 col5">58.56%</td>
-<td id="T_ecc5f_row8_col6" class="data row8 col6">57.76%</td>
+<th id="T_33d1b_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_33d1b_row8_col0" class="data row8 col0">14,867</td>
+<td id="T_33d1b_row8_col1" class="data row8 col1">8,587</td>
+<td id="T_33d1b_row8_col2" class="data row8 col2">10.0%</td>
+<td id="T_33d1b_row8_col3" class="data row8 col3">53.88%</td>
+<td id="T_33d1b_row8_col4" class="data row8 col4">80.77%</td>
+<td id="T_33d1b_row8_col5" class="data row8 col5">58.56%</td>
+<td id="T_33d1b_row8_col6" class="data row8 col6">57.76%</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<div id="c46e1710" class="cell" data-execution_count="7">
+<div id="b6cffa3d" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>hhi <span class="op">=</span> <span class="bu">float</span>((grades.share <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>())</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>het_p <span class="op">=</span> [z_between(grades.loans.iloc[i], grades.defaults.iloc[i],</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                   grades.loans.iloc[i <span class="op">+</span> <span class="dv">1</span>], grades.defaults.iloc[i <span class="op">+</span> <span class="dv">1</span>])</span>
@@ -857,7 +857,7 @@ monotonicity:   holds, 13.9% to 57.8%</code></pre>
 <section id="step-3-observed-default-rates-by-grade-and-cohort" class="level2" data-number="6.3">
 <h2 data-number="6.3" class="anchored" data-anchor-id="step-3-observed-default-rates-by-grade-and-cohort"><span class="header-section-number">6.3</span> Step 3: observed default rates by grade and cohort</h2>
 <p>The long-run average is an average of one-year default rates, so the rates have to exist as a time series before anything can be averaged. Splitting the book by grade and origination year gives that series, and it also gives the first honest look at what this portfolio is.</p>
-<div id="766e3447" class="cell" data-execution_count="8">
+<div id="49f95ddd" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>cell <span class="op">=</span> (book.groupby([<span class="st">"grade"</span>, <span class="st">"cohort"</span>])[<span class="st">"default_12m"</span>]</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>            .agg([<span class="st">"size"</span>, <span class="st">"mean"</span>]).reset_index())</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>cell <span class="op">=</span> cell[cell[<span class="st">"size"</span>] <span class="op">&gt;=</span> <span class="dv">30</span>]</span>
@@ -893,7 +893,7 @@ monotonicity:   holds, 13.9% to 57.8%</code></pre>
 <h2 data-number="6.4" class="anchored" data-anchor-id="step-4-the-long-run-average-and-the-period-it-is-taken-over"><span class="header-section-number">6.4</span> Step 4: the long-run average, and the period it is taken over</h2>
 <p>Two decisions sit inside a long-run average and only one of them is arithmetic.</p>
 <p>The arithmetic decision is what to average. <strong>An average of annual rates is not the rate of the pooled data</strong>, because the cohorts differ enormously in size, and the regulation asks for the former.</p>
-<div id="4e6781bf" class="cell" data-execution_count="9">
+<div id="cee471a5" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>WINDOW <span class="op">=</span> <span class="bu">range</span>(<span class="dv">2009</span>, <span class="dv">2021</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>win <span class="op">=</span> book[book.cohort.isin(WINDOW)]</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>annual <span class="op">=</span> (win.groupby([<span class="st">"grade"</span>, <span class="st">"cohort"</span>])[<span class="st">"default_12m"</span>]</span>
@@ -906,18 +906,18 @@ monotonicity:   holds, 13.9% to 57.8%</code></pre>
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="bu">cmp</span>[<span class="st">"difference"</span>] <span class="op">=</span> <span class="bu">cmp</span>.lra <span class="op">-</span> <span class="bu">cmp</span>.odr</span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="bu">cmp</span>.style.<span class="bu">format</span>({<span class="st">"odr"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"lra"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>,</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"years"</span>: <span class="st">"</span><span class="sc">{:.0f}</span><span class="st">"</span>, <span class="st">"difference"</span>: <span class="st">"</span><span class="sc">{:+.2%}</span><span class="st">"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="97">
+<div class="cell-output cell-output-display" data-execution_count="122">
 <style type="text/css">
 </style>
 
-<table id="T_d92cb" class="caption-top table table-sm table-striped small">
+<table id="T_f78b7" class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_d92cb_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">odr</th>
-<th id="T_d92cb_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">lra</th>
-<th id="T_d92cb_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">years</th>
-<th id="T_d92cb_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">difference</th>
+<th id="T_f78b7_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">odr</th>
+<th id="T_f78b7_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">lra</th>
+<th id="T_f78b7_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">years</th>
+<th id="T_f78b7_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">difference</th>
 </tr>
 <tr class="even">
 <th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
@@ -929,67 +929,67 @@ monotonicity:   holds, 13.9% to 57.8%</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<th id="T_d92cb_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
-<td id="T_d92cb_row0_col0" class="data row0 col0">13.92%</td>
-<td id="T_d92cb_row0_col1" class="data row0 col1">13.16%</td>
-<td id="T_d92cb_row0_col2" class="data row0 col2">12</td>
-<td id="T_d92cb_row0_col3" class="data row0 col3">-0.75%</td>
+<th id="T_f78b7_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_f78b7_row0_col0" class="data row0 col0">13.92%</td>
+<td id="T_f78b7_row0_col1" class="data row0 col1">13.16%</td>
+<td id="T_f78b7_row0_col2" class="data row0 col2">12</td>
+<td id="T_f78b7_row0_col3" class="data row0 col3">-0.75%</td>
 </tr>
 <tr class="even">
-<th id="T_d92cb_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
-<td id="T_d92cb_row1_col0" class="data row1 col0">14.88%</td>
-<td id="T_d92cb_row1_col1" class="data row1 col1">10.95%</td>
-<td id="T_d92cb_row1_col2" class="data row1 col2">11</td>
-<td id="T_d92cb_row1_col3" class="data row1 col3">-3.94%</td>
+<th id="T_f78b7_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_f78b7_row1_col0" class="data row1 col0">14.88%</td>
+<td id="T_f78b7_row1_col1" class="data row1 col1">10.95%</td>
+<td id="T_f78b7_row1_col2" class="data row1 col2">11</td>
+<td id="T_f78b7_row1_col3" class="data row1 col3">-3.94%</td>
 </tr>
 <tr class="odd">
-<th id="T_d92cb_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
-<td id="T_d92cb_row2_col0" class="data row2 col0">16.42%</td>
-<td id="T_d92cb_row2_col1" class="data row2 col1">15.14%</td>
-<td id="T_d92cb_row2_col2" class="data row2 col2">12</td>
-<td id="T_d92cb_row2_col3" class="data row2 col3">-1.28%</td>
+<th id="T_f78b7_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_f78b7_row2_col0" class="data row2 col0">16.42%</td>
+<td id="T_f78b7_row2_col1" class="data row2 col1">15.14%</td>
+<td id="T_f78b7_row2_col2" class="data row2 col2">12</td>
+<td id="T_f78b7_row2_col3" class="data row2 col3">-1.28%</td>
 </tr>
 <tr class="even">
-<th id="T_d92cb_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
-<td id="T_d92cb_row3_col0" class="data row3 col0">18.58%</td>
-<td id="T_d92cb_row3_col1" class="data row3 col1">17.79%</td>
-<td id="T_d92cb_row3_col2" class="data row3 col2">12</td>
-<td id="T_d92cb_row3_col3" class="data row3 col3">-0.79%</td>
+<th id="T_f78b7_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_f78b7_row3_col0" class="data row3 col0">18.58%</td>
+<td id="T_f78b7_row3_col1" class="data row3 col1">17.79%</td>
+<td id="T_f78b7_row3_col2" class="data row3 col2">12</td>
+<td id="T_f78b7_row3_col3" class="data row3 col3">-0.79%</td>
 </tr>
 <tr class="odd">
-<th id="T_d92cb_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
-<td id="T_d92cb_row4_col0" class="data row4 col0">26.83%</td>
-<td id="T_d92cb_row4_col1" class="data row4 col1">26.03%</td>
-<td id="T_d92cb_row4_col2" class="data row4 col2">12</td>
-<td id="T_d92cb_row4_col3" class="data row4 col3">-0.80%</td>
+<th id="T_f78b7_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_f78b7_row4_col0" class="data row4 col0">26.83%</td>
+<td id="T_f78b7_row4_col1" class="data row4 col1">26.03%</td>
+<td id="T_f78b7_row4_col2" class="data row4 col2">12</td>
+<td id="T_f78b7_row4_col3" class="data row4 col3">-0.80%</td>
 </tr>
 <tr class="even">
-<th id="T_d92cb_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
-<td id="T_d92cb_row5_col0" class="data row5 col0">35.51%</td>
-<td id="T_d92cb_row5_col1" class="data row5 col1">32.36%</td>
-<td id="T_d92cb_row5_col2" class="data row5 col2">8</td>
-<td id="T_d92cb_row5_col3" class="data row5 col3">-3.15%</td>
+<th id="T_f78b7_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_f78b7_row5_col0" class="data row5 col0">35.51%</td>
+<td id="T_f78b7_row5_col1" class="data row5 col1">32.36%</td>
+<td id="T_f78b7_row5_col2" class="data row5 col2">8</td>
+<td id="T_f78b7_row5_col3" class="data row5 col3">-3.15%</td>
 </tr>
 <tr class="odd">
-<th id="T_d92cb_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
-<td id="T_d92cb_row6_col0" class="data row6 col0">39.49%</td>
-<td id="T_d92cb_row6_col1" class="data row6 col1">38.23%</td>
-<td id="T_d92cb_row6_col2" class="data row6 col2">8</td>
-<td id="T_d92cb_row6_col3" class="data row6 col3">-1.26%</td>
+<th id="T_f78b7_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_f78b7_row6_col0" class="data row6 col0">39.49%</td>
+<td id="T_f78b7_row6_col1" class="data row6 col1">38.23%</td>
+<td id="T_f78b7_row6_col2" class="data row6 col2">8</td>
+<td id="T_f78b7_row6_col3" class="data row6 col3">-1.26%</td>
 </tr>
 <tr class="even">
-<th id="T_d92cb_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
-<td id="T_d92cb_row7_col0" class="data row7 col0">52.02%</td>
-<td id="T_d92cb_row7_col1" class="data row7 col1">50.21%</td>
-<td id="T_d92cb_row7_col2" class="data row7 col2">8</td>
-<td id="T_d92cb_row7_col3" class="data row7 col3">-1.81%</td>
+<th id="T_f78b7_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_f78b7_row7_col0" class="data row7 col0">52.02%</td>
+<td id="T_f78b7_row7_col1" class="data row7 col1">50.21%</td>
+<td id="T_f78b7_row7_col2" class="data row7 col2">8</td>
+<td id="T_f78b7_row7_col3" class="data row7 col3">-1.81%</td>
 </tr>
 <tr class="odd">
-<th id="T_d92cb_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
-<td id="T_d92cb_row8_col0" class="data row8 col0">57.76%</td>
-<td id="T_d92cb_row8_col1" class="data row8 col1">53.43%</td>
-<td id="T_d92cb_row8_col2" class="data row8 col2">8</td>
-<td id="T_d92cb_row8_col3" class="data row8 col3">-4.33%</td>
+<th id="T_f78b7_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_f78b7_row8_col0" class="data row8 col0">57.76%</td>
+<td id="T_f78b7_row8_col1" class="data row8 col1">53.43%</td>
+<td id="T_f78b7_row8_col2" class="data row8 col2">8</td>
+<td id="T_f78b7_row8_col3" class="data row8 col3">-4.33%</td>
 </tr>
 </tbody>
 </table>
@@ -1000,7 +1000,7 @@ monotonicity:   holds, 13.9% to 57.8%</code></pre>
 <section id="deriving-an-economic-factor" class="level3" data-number="6.4.1">
 <h3 data-number="6.4.1" class="anchored" data-anchor-id="deriving-an-economic-factor"><span class="header-section-number">6.4.1</span> Deriving an economic factor</h3>
 <p>Three Eurostat series carry the economic state: the harmonised unemployment rate, annual HICP inflation, and real gross domestic product growth year on year. A principal component compresses them into one index, oriented so that a high value means benign conditions.</p>
-<div id="b17662ec" class="cell" data-execution_count="10">
+<div id="d4959cca" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>MV <span class="op">=</span> [<span class="st">"unemployment"</span>, <span class="st">"inflation"</span>, <span class="st">"gdp_growth"</span>]</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>macro <span class="op">=</span> pl.read_csv(<span class="st">"data/macro_eurostat.csv"</span>, comment_prefix<span class="op">=</span><span class="st">"#"</span>).to_pandas()</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ee <span class="op">=</span> macro[macro.country <span class="op">==</span> <span class="st">"EE"</span>].copy()</span>
@@ -1029,7 +1029,7 @@ loadings (high factor = benign): unemployment -0.203  inflation +0.647  gdp_grow
 </section>
 <section id="classifying-good-and-bad-years-and-marking-the-cycle" class="level3" data-number="6.4.2">
 <h3 data-number="6.4.2" class="anchored" data-anchor-id="classifying-good-and-bad-years-and-marking-the-cycle"><span class="header-section-number">6.4.2</span> Classifying good and bad years, and marking the cycle</h3>
-<div id="cdd2b3e1" class="cell" data-execution_count="11">
+<div id="2c2ec084" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ee_rate <span class="op">=</span> win[win.Country <span class="op">==</span> <span class="st">"EE"</span>].groupby(<span class="st">"cohort"</span>)[<span class="st">"default_12m"</span>].mean()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>all_rate <span class="op">=</span> win.groupby(<span class="st">"cohort"</span>)[<span class="st">"default_12m"</span>].mean()</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> pd.DataFrame({</span>
@@ -1064,7 +1064,7 @@ correlation of the factor with the Estonian default rate  -0.441
 correlation of the factor with the whole-book rate        -0.226</code></pre>
 </div>
 </div>
-<div id="436442e4" class="cell" data-execution_count="12">
+<div id="93f72834" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.4</span>))</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].axhline(<span class="dv">0</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(factor.index, factor.values,</span>
@@ -1090,7 +1090,7 @@ correlation of the factor with the whole-book rate        -0.226</code></pre>
 <section id="testing-the-window" class="level3" data-number="6.4.3">
 <h3 data-number="6.4.3" class="anchored" data-anchor-id="testing-the-window"><span class="header-section-number">6.4.3</span> Testing the window</h3>
 <p>The remaining step compares the variability of the observed default rates inside a candidate window against their variability over the reference cycle, using an F-test on the two variances. A window whose variability differs materially from the cycle’s is not representative of it.</p>
-<div id="974d0f3c" class="cell" data-execution_count="13">
+<div id="c38a2eaa" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_test(a, b):</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Two-sided F-test on two variances, larger over smaller."""</span></span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    va, vb <span class="op">=</span> np.var(a, ddof<span class="op">=</span><span class="dv">1</span>), np.var(b, ddof<span class="op">=</span><span class="dv">1</span>)</span>
@@ -1115,23 +1115,23 @@ correlation of the factor with the whole-book rate        -0.226</code></pre>
 <span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows).set_index(<span class="st">"window"</span>).style.<span class="bu">format</span>(</span>
 <span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"LRA"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"sd"</span>: <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>, <span class="st">"F vs cycle"</span>: <span class="st">"</span><span class="sc">{:.2f}</span><span class="st">"</span>, <span class="st">"p"</span>: <span class="st">"</span><span class="sc">{:.3f}</span><span class="st">"</span>,</span>
 <span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>     <span class="st">"F vs complement"</span>: <span class="st">"</span><span class="sc">{:.2f}</span><span class="st">"</span>, <span class="st">"p "</span>: <span class="st">"</span><span class="sc">{:.3f}</span><span class="st">"</span>}, na_rep<span class="op">=</span><span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="101">
+<div class="cell-output cell-output-display" data-execution_count="126">
 <style type="text/css">
 </style>
 
-<table id="T_6dc5b" class="caption-top table table-sm table-striped small">
+<table id="T_c922b" class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_6dc5b_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">years</th>
-<th id="T_6dc5b_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">good</th>
-<th id="T_6dc5b_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">bad</th>
-<th id="T_6dc5b_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">LRA</th>
-<th id="T_6dc5b_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">sd</th>
-<th id="T_6dc5b_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">F vs cycle</th>
-<th id="T_6dc5b_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">p</th>
-<th id="T_6dc5b_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">F vs complement</th>
-<th id="T_6dc5b_level0_col8" class="col_heading level0 col8" data-quarto-table-cell-role="th">p</th>
+<th id="T_c922b_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">years</th>
+<th id="T_c922b_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">good</th>
+<th id="T_c922b_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">bad</th>
+<th id="T_c922b_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">LRA</th>
+<th id="T_c922b_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">sd</th>
+<th id="T_c922b_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">F vs cycle</th>
+<th id="T_c922b_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">p</th>
+<th id="T_c922b_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">F vs complement</th>
+<th id="T_c922b_level0_col8" class="col_heading level0 col8" data-quarto-table-cell-role="th">p</th>
 </tr>
 <tr class="even">
 <th class="index_name level0" data-quarto-table-cell-role="th">window</th>
@@ -1148,83 +1148,83 @@ correlation of the factor with the whole-book rate        -0.226</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<th id="T_6dc5b_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">2009-2020</th>
-<td id="T_6dc5b_row0_col0" class="data row0 col0">12</td>
-<td id="T_6dc5b_row0_col1" class="data row0 col1">6</td>
-<td id="T_6dc5b_row0_col2" class="data row0 col2">6</td>
-<td id="T_6dc5b_row0_col3" class="data row0 col3">16.57%</td>
-<td id="T_6dc5b_row0_col4" class="data row0 col4">0.0575</td>
-<td id="T_6dc5b_row0_col5" class="data row0 col5">1.00</td>
-<td id="T_6dc5b_row0_col6" class="data row0 col6">1.000</td>
-<td id="T_6dc5b_row0_col7" class="data row0 col7"></td>
-<td id="T_6dc5b_row0_col8" class="data row0 col8"></td>
+<th id="T_c922b_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">2009-2020</th>
+<td id="T_c922b_row0_col0" class="data row0 col0">12</td>
+<td id="T_c922b_row0_col1" class="data row0 col1">6</td>
+<td id="T_c922b_row0_col2" class="data row0 col2">6</td>
+<td id="T_c922b_row0_col3" class="data row0 col3">16.57%</td>
+<td id="T_c922b_row0_col4" class="data row0 col4">0.0575</td>
+<td id="T_c922b_row0_col5" class="data row0 col5">1.00</td>
+<td id="T_c922b_row0_col6" class="data row0 col6">1.000</td>
+<td id="T_c922b_row0_col7" class="data row0 col7"></td>
+<td id="T_c922b_row0_col8" class="data row0 col8"></td>
 </tr>
 <tr class="even">
-<th id="T_6dc5b_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2011-2017</th>
-<td id="T_6dc5b_row1_col0" class="data row1 col0">7</td>
-<td id="T_6dc5b_row1_col1" class="data row1 col1">4</td>
-<td id="T_6dc5b_row1_col2" class="data row1 col2">3</td>
-<td id="T_6dc5b_row1_col3" class="data row1 col3">14.61%</td>
-<td id="T_6dc5b_row1_col4" class="data row1 col4">0.0536</td>
-<td id="T_6dc5b_row1_col5" class="data row1 col5">1.15</td>
-<td id="T_6dc5b_row1_col6" class="data row1 col6">0.906</td>
-<td id="T_6dc5b_row1_col7" class="data row1 col7">1.11</td>
-<td id="T_6dc5b_row1_col8" class="data row1 col8">0.868</td>
+<th id="T_c922b_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2011-2017</th>
+<td id="T_c922b_row1_col0" class="data row1 col0">7</td>
+<td id="T_c922b_row1_col1" class="data row1 col1">4</td>
+<td id="T_c922b_row1_col2" class="data row1 col2">3</td>
+<td id="T_c922b_row1_col3" class="data row1 col3">14.61%</td>
+<td id="T_c922b_row1_col4" class="data row1 col4">0.0536</td>
+<td id="T_c922b_row1_col5" class="data row1 col5">1.15</td>
+<td id="T_c922b_row1_col6" class="data row1 col6">0.906</td>
+<td id="T_c922b_row1_col7" class="data row1 col7">1.11</td>
+<td id="T_c922b_row1_col8" class="data row1 col8">0.868</td>
 </tr>
 <tr class="odd">
-<th id="T_6dc5b_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2013-2020</th>
-<td id="T_6dc5b_row2_col0" class="data row2 col0">8</td>
-<td id="T_6dc5b_row2_col1" class="data row2 col1">4</td>
-<td id="T_6dc5b_row2_col2" class="data row2 col2">4</td>
-<td id="T_6dc5b_row2_col3" class="data row2 col3">15.99%</td>
-<td id="T_6dc5b_row2_col4" class="data row2 col4">0.0415</td>
-<td id="T_6dc5b_row2_col5" class="data row2 col5">1.93</td>
-<td id="T_6dc5b_row2_col6" class="data row2 col6">0.394</td>
-<td id="T_6dc5b_row2_col7" class="data row2 col7">4.57</td>
-<td id="T_6dc5b_row2_col8" class="data row2 col8">0.089</td>
+<th id="T_c922b_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2013-2020</th>
+<td id="T_c922b_row2_col0" class="data row2 col0">8</td>
+<td id="T_c922b_row2_col1" class="data row2 col1">4</td>
+<td id="T_c922b_row2_col2" class="data row2 col2">4</td>
+<td id="T_c922b_row2_col3" class="data row2 col3">15.99%</td>
+<td id="T_c922b_row2_col4" class="data row2 col4">0.0415</td>
+<td id="T_c922b_row2_col5" class="data row2 col5">1.93</td>
+<td id="T_c922b_row2_col6" class="data row2 col6">0.394</td>
+<td id="T_c922b_row2_col7" class="data row2 col7">4.57</td>
+<td id="T_c922b_row2_col8" class="data row2 col8">0.089</td>
 </tr>
 <tr class="even">
-<th id="T_6dc5b_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">2014-2020</th>
-<td id="T_6dc5b_row3_col0" class="data row3 col0">7</td>
-<td id="T_6dc5b_row3_col1" class="data row3 col1">3</td>
-<td id="T_6dc5b_row3_col2" class="data row3 col2">4</td>
-<td id="T_6dc5b_row3_col3" class="data row3 col3">16.83%</td>
-<td id="T_6dc5b_row3_col4" class="data row3 col4">0.0368</td>
-<td id="T_6dc5b_row3_col5" class="data row3 col5">2.44</td>
-<td id="T_6dc5b_row3_col6" class="data row3 col6">0.285</td>
-<td id="T_6dc5b_row3_col7" class="data row3 col7">5.19</td>
-<td id="T_6dc5b_row3_col8" class="data row3 col8">0.075</td>
+<th id="T_c922b_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">2014-2020</th>
+<td id="T_c922b_row3_col0" class="data row3 col0">7</td>
+<td id="T_c922b_row3_col1" class="data row3 col1">3</td>
+<td id="T_c922b_row3_col2" class="data row3 col2">4</td>
+<td id="T_c922b_row3_col3" class="data row3 col3">16.83%</td>
+<td id="T_c922b_row3_col4" class="data row3 col4">0.0368</td>
+<td id="T_c922b_row3_col5" class="data row3 col5">2.44</td>
+<td id="T_c922b_row3_col6" class="data row3 col6">0.285</td>
+<td id="T_c922b_row3_col7" class="data row3 col7">5.19</td>
+<td id="T_c922b_row3_col8" class="data row3 col8">0.075</td>
 </tr>
 <tr class="odd">
-<th id="T_6dc5b_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">2015-2020</th>
-<td id="T_6dc5b_row4_col0" class="data row4 col0">6</td>
-<td id="T_6dc5b_row4_col1" class="data row4 col1">3</td>
-<td id="T_6dc5b_row4_col2" class="data row4 col2">3</td>
-<td id="T_6dc5b_row4_col3" class="data row4 col3">17.41%</td>
-<td id="T_6dc5b_row4_col4" class="data row4 col4">0.0367</td>
-<td id="T_6dc5b_row4_col5" class="data row4 col5">2.46</td>
-<td id="T_6dc5b_row4_col6" class="data row4 col6">0.330</td>
-<td id="T_6dc5b_row4_col7" class="data row4 col7">4.29</td>
-<td id="T_6dc5b_row4_col8" class="data row4 col8">0.136</td>
+<th id="T_c922b_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">2015-2020</th>
+<td id="T_c922b_row4_col0" class="data row4 col0">6</td>
+<td id="T_c922b_row4_col1" class="data row4 col1">3</td>
+<td id="T_c922b_row4_col2" class="data row4 col2">3</td>
+<td id="T_c922b_row4_col3" class="data row4 col3">17.41%</td>
+<td id="T_c922b_row4_col4" class="data row4 col4">0.0367</td>
+<td id="T_c922b_row4_col5" class="data row4 col5">2.46</td>
+<td id="T_c922b_row4_col6" class="data row4 col6">0.330</td>
+<td id="T_c922b_row4_col7" class="data row4 col7">4.29</td>
+<td id="T_c922b_row4_col8" class="data row4 col8">0.136</td>
 </tr>
 <tr class="even">
-<th id="T_6dc5b_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">2016-2020</th>
-<td id="T_6dc5b_row5_col0" class="data row5 col0">5</td>
-<td id="T_6dc5b_row5_col1" class="data row5 col1">3</td>
-<td id="T_6dc5b_row5_col2" class="data row5 col2">2</td>
-<td id="T_6dc5b_row5_col3" class="data row5 col3">18.01%</td>
-<td id="T_6dc5b_row5_col4" class="data row5 col4">0.0375</td>
-<td id="T_6dc5b_row5_col5" class="data row5 col5">2.35</td>
-<td id="T_6dc5b_row5_col6" class="data row5 col6">0.425</td>
-<td id="T_6dc5b_row5_col7" class="data row5 col7">3.43</td>
-<td id="T_6dc5b_row5_col8" class="data row5 col8">0.253</td>
+<th id="T_c922b_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">2016-2020</th>
+<td id="T_c922b_row5_col0" class="data row5 col0">5</td>
+<td id="T_c922b_row5_col1" class="data row5 col1">3</td>
+<td id="T_c922b_row5_col2" class="data row5 col2">2</td>
+<td id="T_c922b_row5_col3" class="data row5 col3">18.01%</td>
+<td id="T_c922b_row5_col4" class="data row5 col4">0.0375</td>
+<td id="T_c922b_row5_col5" class="data row5 col5">2.35</td>
+<td id="T_c922b_row5_col6" class="data row5 col6">0.425</td>
+<td id="T_c922b_row5_col7" class="data row5 col7">3.43</td>
+<td id="T_c922b_row5_col8" class="data row5 col8">0.253</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <p>Every candidate passes, including one that excludes the 2009 crisis outright. That result is the opposite of the one this section was expected to produce, and taking it at face value would be a mistake. <strong>The test has essentially no power at annual frequency.</strong></p>
-<div id="193f64fa" class="cell" data-execution_count="14">
+<div id="244d164d" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_power(ratio, n1, n2, alpha<span class="op">=</span><span class="fl">0.05</span>):</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    d1, d2 <span class="op">=</span> n1 <span class="op">-</span> <span class="dv">1</span>, n2 <span class="op">-</span> <span class="dv">1</span></span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    lo, hi <span class="op">=</span> sps.f.ppf(alpha <span class="op">/</span> <span class="dv">2</span>, d1, d2), sps.f.ppf(<span class="dv">1</span> <span class="op">-</span> alpha <span class="op">/</span> <span class="dv">2</span>, d1, d2)</span>
@@ -1253,7 +1253,7 @@ the same windows in monthly cohorts  power at a doubled variance 96%   variance 
 <p><strong>Type A</strong> covers deficiencies in the data and the method. On this book that would include the absence of any behavioural information, a default definition derived from a status field rather than from days past due, an outcome window opening at origination rather than at a calendar snapshot, and above all the four grades with no observations before 2013.</p>
 <p><strong>Type B</strong> covers changes in underwriting standards, risk appetite, and collection and recovery policy. Bondora’s expansion into Finland and Spain, and its accompanying move down the credit spectrum, is a Type B adjustment of the first order: the development sample is not representative of the current book because the lender deliberately changed what it lends.</p>
 <p><strong>Type C</strong> covers the general estimation error in the long-run average itself, and it is the one that can be computed rather than argued. Paragraph 327 of the guide requires the autocorrelation of the default rate series to be reflected in it, and the requirement has teeth.</p>
-<div id="fd3b4063" class="cell" data-execution_count="15">
+<div id="bd7bd8db" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>port <span class="op">=</span> win.groupby(<span class="st">"cohort"</span>)[<span class="st">"default_12m"</span>].mean()</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>dev <span class="op">=</span> port.values <span class="op">-</span> port.values.mean()</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>phi <span class="op">=</span> <span class="bu">float</span>(np.<span class="bu">sum</span>(dev[<span class="dv">1</span>:] <span class="op">*</span> dev[:<span class="op">-</span><span class="dv">1</span>]) <span class="op">/</span> np.<span class="bu">sum</span>(dev <span class="op">**</span> <span class="dv">2</span>))</span>
@@ -1274,20 +1274,20 @@ the same windows in monthly cohorts  power at a doubled variance 96%   variance 
 a 12-year series is worth 2.5 independent observations
 </code></pre>
 </div>
-<div class="cell-output cell-output-display" data-execution_count="103">
+<div class="cell-output cell-output-display" data-execution_count="128">
 <style type="text/css">
 </style>
 
-<table id="T_65ab9" class="caption-top table table-sm table-striped small">
+<table id="T_503c1" class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_65ab9_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">lra</th>
-<th id="T_65ab9_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">sd</th>
-<th id="T_65ab9_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">years</th>
-<th id="T_65ab9_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">n_eff</th>
-<th id="T_65ab9_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">moc_naive</th>
-<th id="T_65ab9_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">moc_c</th>
+<th id="T_503c1_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">lra</th>
+<th id="T_503c1_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">sd</th>
+<th id="T_503c1_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">years</th>
+<th id="T_503c1_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">n_eff</th>
+<th id="T_503c1_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">moc_naive</th>
+<th id="T_503c1_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">moc_c</th>
 </tr>
 <tr class="even">
 <th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
@@ -1301,92 +1301,92 @@ a 12-year series is worth 2.5 independent observations
 </thead>
 <tbody>
 <tr class="odd">
-<th id="T_65ab9_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
-<td id="T_65ab9_row0_col0" class="data row0 col0">13.16%</td>
-<td id="T_65ab9_row0_col1" class="data row0 col1">0.0546</td>
-<td id="T_65ab9_row0_col2" class="data row0 col2">12</td>
-<td id="T_65ab9_row0_col3" class="data row0 col3">2.5</td>
-<td id="T_65ab9_row0_col4" class="data row0 col4">2.59%</td>
-<td id="T_65ab9_row0_col5" class="data row0 col5">5.69%</td>
+<th id="T_503c1_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_503c1_row0_col0" class="data row0 col0">13.16%</td>
+<td id="T_503c1_row0_col1" class="data row0 col1">0.0546</td>
+<td id="T_503c1_row0_col2" class="data row0 col2">12</td>
+<td id="T_503c1_row0_col3" class="data row0 col3">2.5</td>
+<td id="T_503c1_row0_col4" class="data row0 col4">2.59%</td>
+<td id="T_503c1_row0_col5" class="data row0 col5">5.69%</td>
 </tr>
 <tr class="even">
-<th id="T_65ab9_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
-<td id="T_65ab9_row1_col0" class="data row1 col0">10.95%</td>
-<td id="T_65ab9_row1_col1" class="data row1 col1">0.0649</td>
-<td id="T_65ab9_row1_col2" class="data row1 col2">11</td>
-<td id="T_65ab9_row1_col3" class="data row1 col3">2.3</td>
-<td id="T_65ab9_row1_col4" class="data row1 col4">3.22%</td>
-<td id="T_65ab9_row1_col5" class="data row1 col5">7.06%</td>
+<th id="T_503c1_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_503c1_row1_col0" class="data row1 col0">10.95%</td>
+<td id="T_503c1_row1_col1" class="data row1 col1">0.0649</td>
+<td id="T_503c1_row1_col2" class="data row1 col2">11</td>
+<td id="T_503c1_row1_col3" class="data row1 col3">2.3</td>
+<td id="T_503c1_row1_col4" class="data row1 col4">3.22%</td>
+<td id="T_503c1_row1_col5" class="data row1 col5">7.06%</td>
 </tr>
 <tr class="odd">
-<th id="T_65ab9_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
-<td id="T_65ab9_row2_col0" class="data row2 col0">15.14%</td>
-<td id="T_65ab9_row2_col1" class="data row2 col1">0.0444</td>
-<td id="T_65ab9_row2_col2" class="data row2 col2">12</td>
-<td id="T_65ab9_row2_col3" class="data row2 col3">2.5</td>
-<td id="T_65ab9_row2_col4" class="data row2 col4">2.11%</td>
-<td id="T_65ab9_row2_col5" class="data row2 col5">4.62%</td>
+<th id="T_503c1_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_503c1_row2_col0" class="data row2 col0">15.14%</td>
+<td id="T_503c1_row2_col1" class="data row2 col1">0.0444</td>
+<td id="T_503c1_row2_col2" class="data row2 col2">12</td>
+<td id="T_503c1_row2_col3" class="data row2 col3">2.5</td>
+<td id="T_503c1_row2_col4" class="data row2 col4">2.11%</td>
+<td id="T_503c1_row2_col5" class="data row2 col5">4.62%</td>
 </tr>
 <tr class="even">
-<th id="T_65ab9_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
-<td id="T_65ab9_row3_col0" class="data row3 col0">17.79%</td>
-<td id="T_65ab9_row3_col1" class="data row3 col1">0.0711</td>
-<td id="T_65ab9_row3_col2" class="data row3 col2">12</td>
-<td id="T_65ab9_row3_col3" class="data row3 col3">2.5</td>
-<td id="T_65ab9_row3_col4" class="data row3 col4">3.37%</td>
-<td id="T_65ab9_row3_col5" class="data row3 col5">7.40%</td>
+<th id="T_503c1_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_503c1_row3_col0" class="data row3 col0">17.79%</td>
+<td id="T_503c1_row3_col1" class="data row3 col1">0.0711</td>
+<td id="T_503c1_row3_col2" class="data row3 col2">12</td>
+<td id="T_503c1_row3_col3" class="data row3 col3">2.5</td>
+<td id="T_503c1_row3_col4" class="data row3 col4">3.37%</td>
+<td id="T_503c1_row3_col5" class="data row3 col5">7.40%</td>
 </tr>
 <tr class="odd">
-<th id="T_65ab9_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
-<td id="T_65ab9_row4_col0" class="data row4 col0">26.03%</td>
-<td id="T_65ab9_row4_col1" class="data row4 col1">0.0849</td>
-<td id="T_65ab9_row4_col2" class="data row4 col2">12</td>
-<td id="T_65ab9_row4_col3" class="data row4 col3">2.5</td>
-<td id="T_65ab9_row4_col4" class="data row4 col4">4.03%</td>
-<td id="T_65ab9_row4_col5" class="data row4 col5">8.83%</td>
+<th id="T_503c1_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_503c1_row4_col0" class="data row4 col0">26.03%</td>
+<td id="T_503c1_row4_col1" class="data row4 col1">0.0849</td>
+<td id="T_503c1_row4_col2" class="data row4 col2">12</td>
+<td id="T_503c1_row4_col3" class="data row4 col3">2.5</td>
+<td id="T_503c1_row4_col4" class="data row4 col4">4.03%</td>
+<td id="T_503c1_row4_col5" class="data row4 col5">8.83%</td>
 </tr>
 <tr class="even">
-<th id="T_65ab9_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
-<td id="T_65ab9_row5_col0" class="data row5 col0">32.36%</td>
-<td id="T_65ab9_row5_col1" class="data row5 col1">0.0992</td>
-<td id="T_65ab9_row5_col2" class="data row5 col2">8</td>
-<td id="T_65ab9_row5_col3" class="data row5 col3">1.7</td>
-<td id="T_65ab9_row5_col4" class="data row5 col4">5.77%</td>
-<td id="T_65ab9_row5_col5" class="data row5 col5">12.65%</td>
+<th id="T_503c1_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_503c1_row5_col0" class="data row5 col0">32.36%</td>
+<td id="T_503c1_row5_col1" class="data row5 col1">0.0992</td>
+<td id="T_503c1_row5_col2" class="data row5 col2">8</td>
+<td id="T_503c1_row5_col3" class="data row5 col3">1.7</td>
+<td id="T_503c1_row5_col4" class="data row5 col4">5.77%</td>
+<td id="T_503c1_row5_col5" class="data row5 col5">12.65%</td>
 </tr>
 <tr class="odd">
-<th id="T_65ab9_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
-<td id="T_65ab9_row6_col0" class="data row6 col0">38.23%</td>
-<td id="T_65ab9_row6_col1" class="data row6 col1">0.1134</td>
-<td id="T_65ab9_row6_col2" class="data row6 col2">8</td>
-<td id="T_65ab9_row6_col3" class="data row6 col3">1.7</td>
-<td id="T_65ab9_row6_col4" class="data row6 col4">6.60%</td>
-<td id="T_65ab9_row6_col5" class="data row6 col5">14.46%</td>
+<th id="T_503c1_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_503c1_row6_col0" class="data row6 col0">38.23%</td>
+<td id="T_503c1_row6_col1" class="data row6 col1">0.1134</td>
+<td id="T_503c1_row6_col2" class="data row6 col2">8</td>
+<td id="T_503c1_row6_col3" class="data row6 col3">1.7</td>
+<td id="T_503c1_row6_col4" class="data row6 col4">6.60%</td>
+<td id="T_503c1_row6_col5" class="data row6 col5">14.46%</td>
 </tr>
 <tr class="even">
-<th id="T_65ab9_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
-<td id="T_65ab9_row7_col0" class="data row7 col0">50.21%</td>
-<td id="T_65ab9_row7_col1" class="data row7 col1">0.0892</td>
-<td id="T_65ab9_row7_col2" class="data row7 col2">8</td>
-<td id="T_65ab9_row7_col3" class="data row7 col3">1.7</td>
-<td id="T_65ab9_row7_col4" class="data row7 col4">5.19%</td>
-<td id="T_65ab9_row7_col5" class="data row7 col5">11.38%</td>
+<th id="T_503c1_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_503c1_row7_col0" class="data row7 col0">50.21%</td>
+<td id="T_503c1_row7_col1" class="data row7 col1">0.0892</td>
+<td id="T_503c1_row7_col2" class="data row7 col2">8</td>
+<td id="T_503c1_row7_col3" class="data row7 col3">1.7</td>
+<td id="T_503c1_row7_col4" class="data row7 col4">5.19%</td>
+<td id="T_503c1_row7_col5" class="data row7 col5">11.38%</td>
 </tr>
 <tr class="odd">
-<th id="T_65ab9_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
-<td id="T_65ab9_row8_col0" class="data row8 col0">53.43%</td>
-<td id="T_65ab9_row8_col1" class="data row8 col1">0.1192</td>
-<td id="T_65ab9_row8_col2" class="data row8 col2">8</td>
-<td id="T_65ab9_row8_col3" class="data row8 col3">1.7</td>
-<td id="T_65ab9_row8_col4" class="data row8 col4">6.93%</td>
-<td id="T_65ab9_row8_col5" class="data row8 col5">15.20%</td>
+<th id="T_503c1_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_503c1_row8_col0" class="data row8 col0">53.43%</td>
+<td id="T_503c1_row8_col1" class="data row8 col1">0.1192</td>
+<td id="T_503c1_row8_col2" class="data row8 col2">8</td>
+<td id="T_503c1_row8_col3" class="data row8 col3">1.7</td>
+<td id="T_503c1_row8_col4" class="data row8 col4">6.93%</td>
+<td id="T_503c1_row8_col5" class="data row8 col5">15.20%</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <p>The default rate series is strongly autocorrelated, at <span class="math inline">\(\phi = 0.66\)</span>, which is what the systematic factor’s own persistence produces. Correcting the effective sample size for it takes twelve annual observations down to about two and a half, and the margin of conservatism correspondingly up:</p>
-<div id="51ab28e6" class="cell" data-execution_count="16">
+<div id="c3d18a00" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Type C uplift, autocorrelation-adjusted against naive: "</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>(grades.moc_c <span class="op">/</span> grades.moc_naive)<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss">x"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -1395,14 +1395,14 @@ a 12-year series is worth 2.5 independent observations
 </div>
 <p>An institution using the textbook standard error of the mean would understate this component by a factor of more than two. That is the entire content of paragraph 327 and it is not a subtle effect.</p>
 <p>Only Type C is quantified here, because Types A and B are sized against a model’s own deficiency register and this book does not have one. On a real submission the three would be combined and the total would be considerably larger than the figure below.</p>
-<div id="9ff29127" class="cell" data-execution_count="17">
+<div id="6ee8007a" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>grades[<span class="st">"pd_reg"</span>] <span class="op">=</span> np.minimum(grades.lra <span class="op">+</span> grades.moc_c, <span class="fl">0.9999</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="one-grade-end-to-end" class="level2" data-number="6.6">
 <h2 data-number="6.6" class="anchored" data-anchor-id="one-grade-end-to-end"><span class="header-section-number">6.6</span> One grade, end to end</h2>
 <p>The point of the whole sequence is that a single number can be traced through it. Grade 5 sits in the middle of the scale and is as good a witness as any.</p>
-<div id="6013a892" class="cell" data-execution_count="18">
+<div id="501166f4" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>trace <span class="op">=</span> grades.loc[<span class="dv">5</span>]</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>steps <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quantity"</span>: [<span class="st">"1. point-in-time PD, mean over the grade"</span>,</span>
@@ -1420,45 +1420,45 @@ a 12-year series is worth 2.5 independent observations
 <span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"+</span><span class="sc">{</span>trace<span class="sc">.</span>moc_c<span class="sc">:.2%}</span><span class="ss">"</span>,</span>
 <span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"</span><span class="sc">{</span>trace<span class="sc">.</span>pd_reg<span class="sc">:.2%}</span><span class="ss">"</span>]})</span>
 <span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>steps.style.hide(axis<span class="op">=</span><span class="st">"index"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="106">
+<div class="cell-output cell-output-display" data-execution_count="131">
 <style type="text/css">
 </style>
 
-<table id="T_81f80" class="caption-top table table-sm table-striped small">
+<table id="T_e2cf5" class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
-<th id="T_81f80_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">quantity</th>
-<th id="T_81f80_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">value</th>
+<th id="T_e2cf5_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">quantity</th>
+<th id="T_e2cf5_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">value</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td id="T_81f80_row0_col0" class="data row0 col0">1. point-in-time PD, mean over the grade</td>
-<td id="T_81f80_row0_col1" class="data row0 col1">27.14%</td>
+<td id="T_e2cf5_row0_col0" class="data row0 col0">1. point-in-time PD, mean over the grade</td>
+<td id="T_e2cf5_row0_col1" class="data row0 col1">27.14%</td>
 </tr>
 <tr class="even">
-<td id="T_81f80_row1_col0" class="data row1 col0">2. grade assignment: score interval</td>
-<td id="T_81f80_row1_col1" class="data row1 col1">21.19% to 34.21%</td>
+<td id="T_e2cf5_row1_col0" class="data row1 col0">2. grade assignment: score interval</td>
+<td id="T_e2cf5_row1_col1" class="data row1 col1">21.19% to 34.21%</td>
 </tr>
 <tr class="odd">
-<td id="T_81f80_row2_col0" class="data row2 col0">2. grade assignment: share of the book</td>
-<td id="T_81f80_row2_col1" class="data row2 col1">9.9% (14,768 loans)</td>
+<td id="T_e2cf5_row2_col0" class="data row2 col0">2. grade assignment: share of the book</td>
+<td id="T_e2cf5_row2_col1" class="data row2 col1">9.9% (14,768 loans)</td>
 </tr>
 <tr class="even">
-<td id="T_81f80_row3_col0" class="data row3 col0">3. pooled observed default rate</td>
-<td id="T_81f80_row3_col1" class="data row3 col1">26.83%</td>
+<td id="T_e2cf5_row3_col0" class="data row3 col0">3. pooled observed default rate</td>
+<td id="T_e2cf5_row3_col1" class="data row3 col1">26.83%</td>
 </tr>
 <tr class="odd">
-<td id="T_81f80_row4_col0" class="data row4 col0">3. long-run average over 2009-2020</td>
-<td id="T_81f80_row4_col1" class="data row4 col1">26.03% (mean of 12 annual rates)</td>
+<td id="T_e2cf5_row4_col0" class="data row4 col0">3. long-run average over 2009-2020</td>
+<td id="T_e2cf5_row4_col1" class="data row4 col1">26.03% (mean of 12 annual rates)</td>
 </tr>
 <tr class="even">
-<td id="T_81f80_row5_col0" class="data row5 col0">4. margin of conservatism, Type C</td>
-<td id="T_81f80_row5_col1" class="data row5 col1">+8.83%</td>
+<td id="T_e2cf5_row5_col0" class="data row5 col0">4. margin of conservatism, Type C</td>
+<td id="T_e2cf5_row5_col1" class="data row5 col1">+8.83%</td>
 </tr>
 <tr class="odd">
-<td id="T_81f80_row6_col0" class="data row6 col0">5. regulatory PD</td>
-<td id="T_81f80_row6_col1" class="data row6 col1">34.87%</td>
+<td id="T_e2cf5_row6_col0" class="data row6 col0">5. regulatory PD</td>
+<td id="T_e2cf5_row6_col1" class="data row6 col1">34.87%</td>
 </tr>
 </tbody>
 </table>
@@ -1489,6 +1489,12 @@ X_i = \sqrt{\rho}\, Z_u + \sqrt{1 - \rho}\; \varepsilon_i ,
 = \Phi\!\left( \frac{\Phi^{-1}(p) - \sqrt{\rho}\, Z_u}{\sqrt{1-\rho}} \right) .
 \]</span></p>
 <p><strong>That is lecture 1’s hybrid probability of default, arrived at from the asset side rather than postulated.</strong> Lecture 1 introduced it as a way of interpolating between a through-the-cycle and a point-in-time estimate; here it falls out of a structural model of default, which is why the same formula serves both purposes.</p>
+<p>The probit link and the normal factor are not decoration, and the property that justifies them is worth having explicitly, because the whole of section 6 depends on it. Averaging the conditional probability over the factor returns the unconditional one <strong>exactly</strong>:</p>
+<p><span class="math display">\[
+\mathbb{E}_{Z}\left[ \Phi\!\left( \frac{\Phi^{-1}(p) - \sqrt{\rho}\, Z}{\sqrt{1-\rho}} \right) \right] = p ,
+\]</span></p>
+<p>by the identity <span class="math inline">\(\mathbb{E}\left[\Phi(a - bZ)\right] = \Phi\!\left(a/\sqrt{1+b^2}\right)\)</span> evaluated at <span class="math inline">\(a = \Phi^{-1}(p)/\sqrt{1-\rho}\)</span> and <span class="math inline">\(b = \sqrt{\rho/(1-\rho)}\)</span>, since then <span class="math inline">\(1 + b^2 = 1/(1-\rho)\)</span> and the two square roots cancel. Consequently the through-the-cycle probability that section 6.4 estimated by averaging observed default rates is the same object the formula here treats as the borrower’s unconditional probability, and the two halves of the lecture join.</p>
+<p>The identity holds on the <strong>output</strong> and not on the input. Feeding an average factor realisation into the formula gives <span class="math inline">\(\Phi\!\left(\Phi^{-1}(p)/\sqrt{1-\rho}\right)\)</span>, which understates <span class="math inline">\(p\)</span> whenever <span class="math inline">\(p\)</span> is below one half, and lecture R1 works that trap through with a figure.</p>
 </section>
 <section id="why-the-conditional-expectation-is-also-a-quantile" class="level2" data-number="7.2">
 <h2 data-number="7.2" class="anchored" data-anchor-id="why-the-conditional-expectation-is-also-a-quantile"><span class="header-section-number">7.2</span> Why the conditional expectation is also a quantile</h2>
@@ -1519,7 +1525,7 @@ X_i = \sqrt{\rho}\, Z_u + \sqrt{1 - \rho}\; \varepsilon_i ,
 \underbrace{N\!\left((1-R)^{-\frac12} G(\mathrm{PD}) + \left(\tfrac{R}{1-R}\right)^{\frac12} G(0.999)\right)}_{\text{the Basel explanatory note}}
 \]</span></p>
 <p>The second and third are the same after dividing through, and the first becomes the second on substituting <span class="math inline">\(Z_u = -\Phi^{-1}(0.999)\)</span> and reading <span class="math inline">\(N = \Phi\)</span>, <span class="math inline">\(G = \Phi^{-1}\)</span>, <span class="math inline">\(R = \rho\)</span>.</p>
-<div id="7b51aff5" class="cell" data-execution_count="19">
+<div id="ccea5abd" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>p_chk, R_chk <span class="op">=</span> <span class="fl">0.05</span>, <span class="fl">0.0526</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>crr  <span class="op">=</span> N((G(p_chk) <span class="op">+</span> np.sqrt(R_chk) <span class="op">*</span> G(<span class="fl">0.999</span>)) <span class="op">/</span> np.sqrt(<span class="dv">1</span> <span class="op">-</span> R_chk))</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>bcbs <span class="op">=</span> N((<span class="dv">1</span> <span class="op">-</span> R_chk) <span class="op">**</span> <span class="op">-</span><span class="fl">0.5</span> <span class="op">*</span> G(p_chk) <span class="op">+</span> (R_chk <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> R_chk)) <span class="op">**</span> <span class="fl">0.5</span> <span class="op">*</span> G(<span class="fl">0.999</span>))</span>
@@ -1554,7 +1560,7 @@ b = \left( 0.11852 - 0.05478 \ln \mathrm{PD} \right)^2 ,
 <section id="the-correlation-is-prescribed-and-it-is-not-an-estimate" class="level2" data-number="7.4">
 <h2 data-number="7.4" class="anchored" data-anchor-id="the-correlation-is-prescribed-and-it-is-not-an-estimate"><span class="header-section-number">7.4</span> The correlation is prescribed, and it is not an estimate</h2>
 <p><span class="math inline">\(\rho\)</span> is the one parameter a bank does not supply. The regulation fixes it by exposure class:</p>
-<div id="93647fb9" class="cell" data-execution_count="20">
+<div id="85952f8a" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rho_mortgage(pd_):</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.full_like(np.asarray(pd_, dtype<span class="op">=</span><span class="bu">float</span>), <span class="fl">0.15</span>)</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -1583,7 +1589,7 @@ b = \left( 0.11852 - 0.05478 \ln \mathrm{PD} \right)^2 ,
 </section>
 <section id="the-risk-weight-curve-and-where-it-stops-rising" class="level2" data-number="7.5">
 <h2 data-number="7.5" class="anchored" data-anchor-id="the-risk-weight-curve-and-where-it-stops-rising"><span class="header-section-number">7.5</span> The risk weight curve, and where it stops rising</h2>
-<div id="23ba5a15" class="cell" data-execution_count="21">
+<div id="e4da93e4" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>LGD <span class="op">=</span> <span class="fl">0.65</span></span>
 <span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>curves <span class="op">=</span> [(<span class="st">"residential mortgage"</span>, rho_mortgage, GREY),</span>
 <span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>          (<span class="st">"qualifying revolving"</span>, rho_qrre, BLUE),</span>
@@ -1636,7 +1642,7 @@ other retail           peak risk weight   173% at PD 40.4%;  at PD 1% it is 66%<
 <section id="bondora-evaluated" class="level2" data-number="7.6">
 <h2 data-number="7.6" class="anchored" data-anchor-id="bondora-evaluated"><span class="header-section-number">7.6</span> Bondora, evaluated</h2>
 <p>The grades from section 6 now go through the formula. Loss given default is <strong>assumed rather than estimated</strong>, at 65 per cent, which is a plausible downturn figure for unsecured consumer credit and is stated here as an assumption because modelling it is a separate exercise. The capital requirement is linear in it, so the sensitivity is easy to read off.</p>
-<div id="195f13c0" class="cell" data-execution_count="22">
+<div id="db3c57f7" class="cell" data-execution_count="22">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>cap <span class="op">=</span> grades[[<span class="st">"lra"</span>, <span class="st">"moc_c"</span>, <span class="st">"pd_reg"</span>]].copy()</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>cap[<span class="st">"rho"</span>] <span class="op">=</span> rho_other_retail(cap.pd_reg.values)</span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>cap[<span class="st">"wcdr"</span>] <span class="op">=</span> wcdr(cap.pd_reg.values, cap.rho.values)</span>
@@ -1645,21 +1651,21 @@ other retail           peak risk weight   173% at PD 40.4%;  at PD 1% it is 66%<
 <span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>cap.style.<span class="bu">format</span>({<span class="st">"lra"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"moc_c"</span>: <span class="st">"</span><span class="sc">{:+.2%}</span><span class="st">"</span>, <span class="st">"pd_reg"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>,</span>
 <span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"rho"</span>: <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>, <span class="st">"wcdr"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"K"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>,</span>
 <span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"risk weight"</span>: <span class="st">"</span><span class="sc">{:.1%}</span><span class="st">"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="110">
+<div class="cell-output cell-output-display" data-execution_count="135">
 <style type="text/css">
 </style>
 
-<table id="T_c3414" class="caption-top table table-sm table-striped small">
+<table id="T_45bb7" class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_c3414_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">lra</th>
-<th id="T_c3414_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">moc_c</th>
-<th id="T_c3414_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">pd_reg</th>
-<th id="T_c3414_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">rho</th>
-<th id="T_c3414_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">wcdr</th>
-<th id="T_c3414_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">K</th>
-<th id="T_c3414_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">risk weight</th>
+<th id="T_45bb7_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">lra</th>
+<th id="T_45bb7_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">moc_c</th>
+<th id="T_45bb7_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">pd_reg</th>
+<th id="T_45bb7_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">rho</th>
+<th id="T_45bb7_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">wcdr</th>
+<th id="T_45bb7_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">K</th>
+<th id="T_45bb7_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">risk weight</th>
 </tr>
 <tr class="even">
 <th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
@@ -1674,100 +1680,100 @@ other retail           peak risk weight   173% at PD 40.4%;  at PD 1% it is 66%<
 </thead>
 <tbody>
 <tr class="odd">
-<th id="T_c3414_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
-<td id="T_c3414_row0_col0" class="data row0 col0">13.16%</td>
-<td id="T_c3414_row0_col1" class="data row0 col1">+5.69%</td>
-<td id="T_c3414_row0_col2" class="data row0 col2">18.85%</td>
-<td id="T_c3414_row0_col3" class="data row0 col3">0.0302</td>
-<td id="T_c3414_row0_col4" class="data row0 col4">36.25%</td>
-<td id="T_c3414_row0_col5" class="data row0 col5">11.31%</td>
-<td id="T_c3414_row0_col6" class="data row0 col6">141.3%</td>
+<th id="T_45bb7_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_45bb7_row0_col0" class="data row0 col0">13.16%</td>
+<td id="T_45bb7_row0_col1" class="data row0 col1">+5.69%</td>
+<td id="T_45bb7_row0_col2" class="data row0 col2">18.85%</td>
+<td id="T_45bb7_row0_col3" class="data row0 col3">0.0302</td>
+<td id="T_45bb7_row0_col4" class="data row0 col4">36.25%</td>
+<td id="T_45bb7_row0_col5" class="data row0 col5">11.31%</td>
+<td id="T_45bb7_row0_col6" class="data row0 col6">141.3%</td>
 </tr>
 <tr class="even">
-<th id="T_c3414_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
-<td id="T_c3414_row1_col0" class="data row1 col0">10.95%</td>
-<td id="T_c3414_row1_col1" class="data row1 col1">+7.06%</td>
-<td id="T_c3414_row1_col2" class="data row1 col2">18.00%</td>
-<td id="T_c3414_row1_col3" class="data row1 col3">0.0302</td>
-<td id="T_c3414_row1_col4" class="data row1 col4">35.06%</td>
-<td id="T_c3414_row1_col5" class="data row1 col5">11.09%</td>
-<td id="T_c3414_row1_col6" class="data row1 col6">138.6%</td>
+<th id="T_45bb7_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_45bb7_row1_col0" class="data row1 col0">10.95%</td>
+<td id="T_45bb7_row1_col1" class="data row1 col1">+7.06%</td>
+<td id="T_45bb7_row1_col2" class="data row1 col2">18.00%</td>
+<td id="T_45bb7_row1_col3" class="data row1 col3">0.0302</td>
+<td id="T_45bb7_row1_col4" class="data row1 col4">35.06%</td>
+<td id="T_45bb7_row1_col5" class="data row1 col5">11.09%</td>
+<td id="T_45bb7_row1_col6" class="data row1 col6">138.6%</td>
 </tr>
 <tr class="odd">
-<th id="T_c3414_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
-<td id="T_c3414_row2_col0" class="data row2 col0">15.14%</td>
-<td id="T_c3414_row2_col1" class="data row2 col1">+4.62%</td>
-<td id="T_c3414_row2_col2" class="data row2 col2">19.76%</td>
-<td id="T_c3414_row2_col3" class="data row2 col3">0.0301</td>
-<td id="T_c3414_row2_col4" class="data row2 col4">37.50%</td>
-<td id="T_c3414_row2_col5" class="data row2 col5">11.53%</td>
-<td id="T_c3414_row2_col6" class="data row2 col6">144.1%</td>
+<th id="T_45bb7_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_45bb7_row2_col0" class="data row2 col0">15.14%</td>
+<td id="T_45bb7_row2_col1" class="data row2 col1">+4.62%</td>
+<td id="T_45bb7_row2_col2" class="data row2 col2">19.76%</td>
+<td id="T_45bb7_row2_col3" class="data row2 col3">0.0301</td>
+<td id="T_45bb7_row2_col4" class="data row2 col4">37.50%</td>
+<td id="T_45bb7_row2_col5" class="data row2 col5">11.53%</td>
+<td id="T_45bb7_row2_col6" class="data row2 col6">144.1%</td>
 </tr>
 <tr class="even">
-<th id="T_c3414_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
-<td id="T_c3414_row3_col0" class="data row3 col0">17.79%</td>
-<td id="T_c3414_row3_col1" class="data row3 col1">+7.40%</td>
-<td id="T_c3414_row3_col2" class="data row3 col2">25.19%</td>
-<td id="T_c3414_row3_col3" class="data row3 col3">0.0300</td>
-<td id="T_c3414_row3_col4" class="data row3 col4">44.63%</td>
-<td id="T_c3414_row3_col5" class="data row3 col5">12.63%</td>
-<td id="T_c3414_row3_col6" class="data row3 col6">157.9%</td>
+<th id="T_45bb7_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_45bb7_row3_col0" class="data row3 col0">17.79%</td>
+<td id="T_45bb7_row3_col1" class="data row3 col1">+7.40%</td>
+<td id="T_45bb7_row3_col2" class="data row3 col2">25.19%</td>
+<td id="T_45bb7_row3_col3" class="data row3 col3">0.0300</td>
+<td id="T_45bb7_row3_col4" class="data row3 col4">44.63%</td>
+<td id="T_45bb7_row3_col5" class="data row3 col5">12.63%</td>
+<td id="T_45bb7_row3_col6" class="data row3 col6">157.9%</td>
 </tr>
 <tr class="odd">
-<th id="T_c3414_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
-<td id="T_c3414_row4_col0" class="data row4 col0">26.03%</td>
-<td id="T_c3414_row4_col1" class="data row4 col1">+8.83%</td>
-<td id="T_c3414_row4_col2" class="data row4 col2">34.87%</td>
-<td id="T_c3414_row4_col3" class="data row4 col3">0.0300</td>
-<td id="T_c3414_row4_col4" class="data row4 col4">55.90%</td>
-<td id="T_c3414_row4_col5" class="data row4 col5">13.68%</td>
-<td id="T_c3414_row4_col6" class="data row4 col6">170.9%</td>
+<th id="T_45bb7_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_45bb7_row4_col0" class="data row4 col0">26.03%</td>
+<td id="T_45bb7_row4_col1" class="data row4 col1">+8.83%</td>
+<td id="T_45bb7_row4_col2" class="data row4 col2">34.87%</td>
+<td id="T_45bb7_row4_col3" class="data row4 col3">0.0300</td>
+<td id="T_45bb7_row4_col4" class="data row4 col4">55.90%</td>
+<td id="T_45bb7_row4_col5" class="data row4 col5">13.68%</td>
+<td id="T_45bb7_row4_col6" class="data row4 col6">170.9%</td>
 </tr>
 <tr class="even">
-<th id="T_c3414_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
-<td id="T_c3414_row5_col0" class="data row5 col0">32.36%</td>
-<td id="T_c3414_row5_col1" class="data row5 col1">+12.65%</td>
-<td id="T_c3414_row5_col2" class="data row5 col2">45.00%</td>
-<td id="T_c3414_row5_col3" class="data row5 col3">0.0300</td>
-<td id="T_c3414_row5_col4" class="data row5 col4">66.13%</td>
-<td id="T_c3414_row5_col5" class="data row5 col5">13.73%</td>
-<td id="T_c3414_row5_col6" class="data row5 col6">171.6%</td>
+<th id="T_45bb7_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_45bb7_row5_col0" class="data row5 col0">32.36%</td>
+<td id="T_45bb7_row5_col1" class="data row5 col1">+12.65%</td>
+<td id="T_45bb7_row5_col2" class="data row5 col2">45.00%</td>
+<td id="T_45bb7_row5_col3" class="data row5 col3">0.0300</td>
+<td id="T_45bb7_row5_col4" class="data row5 col4">66.13%</td>
+<td id="T_45bb7_row5_col5" class="data row5 col5">13.73%</td>
+<td id="T_45bb7_row5_col6" class="data row5 col6">171.6%</td>
 </tr>
 <tr class="odd">
-<th id="T_c3414_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
-<td id="T_c3414_row6_col0" class="data row6 col0">38.23%</td>
-<td id="T_c3414_row6_col1" class="data row6 col1">+14.46%</td>
-<td id="T_c3414_row6_col2" class="data row6 col2">52.69%</td>
-<td id="T_c3414_row6_col3" class="data row6 col3">0.0300</td>
-<td id="T_c3414_row6_col4" class="data row6 col4">72.98%</td>
-<td id="T_c3414_row6_col5" class="data row6 col5">13.18%</td>
-<td id="T_c3414_row6_col6" class="data row6 col6">164.8%</td>
+<th id="T_45bb7_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_45bb7_row6_col0" class="data row6 col0">38.23%</td>
+<td id="T_45bb7_row6_col1" class="data row6 col1">+14.46%</td>
+<td id="T_45bb7_row6_col2" class="data row6 col2">52.69%</td>
+<td id="T_45bb7_row6_col3" class="data row6 col3">0.0300</td>
+<td id="T_45bb7_row6_col4" class="data row6 col4">72.98%</td>
+<td id="T_45bb7_row6_col5" class="data row6 col5">13.18%</td>
+<td id="T_45bb7_row6_col6" class="data row6 col6">164.8%</td>
 </tr>
 <tr class="even">
-<th id="T_c3414_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
-<td id="T_c3414_row7_col0" class="data row7 col0">50.21%</td>
-<td id="T_c3414_row7_col1" class="data row7 col1">+11.38%</td>
-<td id="T_c3414_row7_col2" class="data row7 col2">61.59%</td>
-<td id="T_c3414_row7_col3" class="data row7 col3">0.0300</td>
-<td id="T_c3414_row7_col4" class="data row7 col4">80.03%</td>
-<td id="T_c3414_row7_col5" class="data row7 col5">11.99%</td>
-<td id="T_c3414_row7_col6" class="data row7 col6">149.8%</td>
+<th id="T_45bb7_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_45bb7_row7_col0" class="data row7 col0">50.21%</td>
+<td id="T_45bb7_row7_col1" class="data row7 col1">+11.38%</td>
+<td id="T_45bb7_row7_col2" class="data row7 col2">61.59%</td>
+<td id="T_45bb7_row7_col3" class="data row7 col3">0.0300</td>
+<td id="T_45bb7_row7_col4" class="data row7 col4">80.03%</td>
+<td id="T_45bb7_row7_col5" class="data row7 col5">11.99%</td>
+<td id="T_45bb7_row7_col6" class="data row7 col6">149.8%</td>
 </tr>
 <tr class="odd">
-<th id="T_c3414_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
-<td id="T_c3414_row8_col0" class="data row8 col0">53.43%</td>
-<td id="T_c3414_row8_col1" class="data row8 col1">+15.20%</td>
-<td id="T_c3414_row8_col2" class="data row8 col2">68.62%</td>
-<td id="T_c3414_row8_col3" class="data row8 col3">0.0300</td>
-<td id="T_c3414_row8_col4" class="data row8 col4">84.99%</td>
-<td id="T_c3414_row8_col5" class="data row8 col5">10.64%</td>
-<td id="T_c3414_row8_col6" class="data row8 col6">133.0%</td>
+<th id="T_45bb7_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_45bb7_row8_col0" class="data row8 col0">53.43%</td>
+<td id="T_45bb7_row8_col1" class="data row8 col1">+15.20%</td>
+<td id="T_45bb7_row8_col2" class="data row8 col2">68.62%</td>
+<td id="T_45bb7_row8_col3" class="data row8 col3">0.0300</td>
+<td id="T_45bb7_row8_col4" class="data row8 col4">84.99%</td>
+<td id="T_45bb7_row8_col5" class="data row8 col5">10.64%</td>
+<td id="T_45bb7_row8_col6" class="data row8 col6">133.0%</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<div id="170b1bb6" class="cell" data-execution_count="23">
+<div id="dbf08fff" class="cell" data-execution_count="23">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lgd <span class="kw">in</span> (<span class="fl">0.45</span>, <span class="fl">0.65</span>, <span class="fl">0.85</span>):</span>
 <span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    k <span class="op">=</span> capital(cap.pd_reg.values, lgd, cap.rho.values)</span>
 <span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"LGD </span><span class="sc">{</span>lgd<span class="sc">:.0%}</span><span class="ss">   mean risk weight </span><span class="sc">{</span><span class="fl">12.5</span> <span class="op">*</span> k<span class="sc">.</span>mean()<span class="sc">:6.1%}</span><span class="ss">   "</span></span>
@@ -1802,7 +1808,7 @@ standardised approach for retail: a flat 75%</code></pre>
 <section id="the-differentiation-tests" class="level2" data-number="8.1">
 <h2 data-number="8.1" class="anchored" data-anchor-id="the-differentiation-tests"><span class="header-section-number">8.1</span> The differentiation tests</h2>
 <p>Six dimensions, and the diagnostics for each are computed below on this book so the section says something rather than listing definitions.</p>
-<div id="45772e5b" class="cell" data-execution_count="24">
+<div id="31b4fe74" class="cell" data-execution_count="24">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>dev <span class="op">=</span> book[book.cohort <span class="op">&lt;=</span> <span class="dv">2017</span>]</span>
@@ -1863,7 +1869,7 @@ stress           single-factor shock to log income:
 <p><strong>Heterogeneity</strong> checks the reverse, that adjacent grades differ, with a two-proportion z-test. Failing it means two grades are one grade and should be merged. Section 6.2’s candidate table is the clearest thing in this lecture about why the two tests have to be read together: pushing the scale finer improves nothing and fails heterogeneity in three quarters of adjacent pairs.</p>
 <p><strong>Migration</strong> asks how far borrowers move between grades from one observation date to the next, because a point-in-time system is expected to migrate and violent migration makes risk-weighted assets swing. <strong>It cannot be computed on this data at all</strong>, as section 6.2 says, and a real submission would build a migration matrix per quarter and report the proportion of exposures staying within one band.</p>
 <p><strong>Calibration accuracy</strong> is the test the whole quantification phase exists to pass. It compares the assigned probability against the realised default rate, grade by grade, with a binomial or Jeffreys backtest.</p>
-<div id="13ffb1fa" class="cell" data-execution_count="25">
+<div id="93c4c950" class="cell" data-execution_count="25">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>back <span class="op">=</span> cap[[<span class="st">"pd_reg"</span>]].join(grades[[<span class="st">"loans"</span>, <span class="st">"defaults"</span>, <span class="st">"odr"</span>]])</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>back[<span class="st">"predicted defaults"</span>] <span class="op">=</span> back.pd_reg <span class="op">*</span> back.loans</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>back[<span class="st">"relative error"</span>] <span class="op">=</span> back.pd_reg <span class="op">/</span> back.odr <span class="op">-</span> <span class="dv">1</span></span>
@@ -1872,21 +1878,21 @@ stress           single-factor shock to log income:
 <span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>back.style.<span class="bu">format</span>({<span class="st">"pd_reg"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"loans"</span>: <span class="st">"</span><span class="sc">{:,.0f}</span><span class="st">"</span>, <span class="st">"defaults"</span>: <span class="st">"</span><span class="sc">{:,.0f}</span><span class="st">"</span>,</span>
 <span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"odr"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"predicted defaults"</span>: <span class="st">"</span><span class="sc">{:,.0f}</span><span class="st">"</span>,</span>
 <span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"relative error"</span>: <span class="st">"</span><span class="sc">{:+.1%}</span><span class="st">"</span>, <span class="st">"one-sided p"</span>: <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="113">
+<div class="cell-output cell-output-display" data-execution_count="138">
 <style type="text/css">
 </style>
 
-<table id="T_e4d2a" class="caption-top table table-sm table-striped small">
+<table id="T_0e0fa" class="caption-top table table-sm table-striped small">
 <thead>
 <tr class="header">
 <th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
-<th id="T_e4d2a_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">pd_reg</th>
-<th id="T_e4d2a_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">loans</th>
-<th id="T_e4d2a_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">defaults</th>
-<th id="T_e4d2a_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">odr</th>
-<th id="T_e4d2a_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">predicted defaults</th>
-<th id="T_e4d2a_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">relative error</th>
-<th id="T_e4d2a_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">one-sided p</th>
+<th id="T_0e0fa_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">pd_reg</th>
+<th id="T_0e0fa_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">loans</th>
+<th id="T_0e0fa_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">defaults</th>
+<th id="T_0e0fa_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">odr</th>
+<th id="T_0e0fa_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">predicted defaults</th>
+<th id="T_0e0fa_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">relative error</th>
+<th id="T_0e0fa_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">one-sided p</th>
 </tr>
 <tr class="even">
 <th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
@@ -1901,94 +1907,94 @@ stress           single-factor shock to log income:
 </thead>
 <tbody>
 <tr class="odd">
-<th id="T_e4d2a_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
-<td id="T_e4d2a_row0_col0" class="data row0 col0">18.85%</td>
-<td id="T_e4d2a_row0_col1" class="data row0 col1">29,701</td>
-<td id="T_e4d2a_row0_col2" class="data row0 col2">4,133</td>
-<td id="T_e4d2a_row0_col3" class="data row0 col3">13.92%</td>
-<td id="T_e4d2a_row0_col4" class="data row0 col4">5,600</td>
-<td id="T_e4d2a_row0_col5" class="data row0 col5">+35.5%</td>
-<td id="T_e4d2a_row0_col6" class="data row0 col6">0.0000</td>
+<th id="T_0e0fa_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_0e0fa_row0_col0" class="data row0 col0">18.85%</td>
+<td id="T_0e0fa_row0_col1" class="data row0 col1">29,701</td>
+<td id="T_0e0fa_row0_col2" class="data row0 col2">4,133</td>
+<td id="T_0e0fa_row0_col3" class="data row0 col3">13.92%</td>
+<td id="T_0e0fa_row0_col4" class="data row0 col4">5,600</td>
+<td id="T_0e0fa_row0_col5" class="data row0 col5">+35.5%</td>
+<td id="T_0e0fa_row0_col6" class="data row0 col6">0.0000</td>
 </tr>
 <tr class="even">
-<th id="T_e4d2a_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
-<td id="T_e4d2a_row1_col0" class="data row1 col0">18.00%</td>
-<td id="T_e4d2a_row1_col1" class="data row1 col1">14,351</td>
-<td id="T_e4d2a_row1_col2" class="data row1 col2">2,136</td>
-<td id="T_e4d2a_row1_col3" class="data row1 col3">14.88%</td>
-<td id="T_e4d2a_row1_col4" class="data row1 col4">2,584</td>
-<td id="T_e4d2a_row1_col5" class="data row1 col5">+21.0%</td>
-<td id="T_e4d2a_row1_col6" class="data row1 col6">0.0000</td>
+<th id="T_0e0fa_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_0e0fa_row1_col0" class="data row1 col0">18.00%</td>
+<td id="T_0e0fa_row1_col1" class="data row1 col1">14,351</td>
+<td id="T_0e0fa_row1_col2" class="data row1 col2">2,136</td>
+<td id="T_0e0fa_row1_col3" class="data row1 col3">14.88%</td>
+<td id="T_0e0fa_row1_col4" class="data row1 col4">2,584</td>
+<td id="T_0e0fa_row1_col5" class="data row1 col5">+21.0%</td>
+<td id="T_0e0fa_row1_col6" class="data row1 col6">0.0000</td>
 </tr>
 <tr class="odd">
-<th id="T_e4d2a_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
-<td id="T_e4d2a_row2_col0" class="data row2 col0">19.76%</td>
-<td id="T_e4d2a_row2_col1" class="data row2 col1">15,413</td>
-<td id="T_e4d2a_row2_col2" class="data row2 col2">2,531</td>
-<td id="T_e4d2a_row2_col3" class="data row2 col3">16.42%</td>
-<td id="T_e4d2a_row2_col4" class="data row2 col4">3,046</td>
-<td id="T_e4d2a_row2_col5" class="data row2 col5">+20.3%</td>
-<td id="T_e4d2a_row2_col6" class="data row2 col6">0.0000</td>
+<th id="T_0e0fa_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_0e0fa_row2_col0" class="data row2 col0">19.76%</td>
+<td id="T_0e0fa_row2_col1" class="data row2 col1">15,413</td>
+<td id="T_0e0fa_row2_col2" class="data row2 col2">2,531</td>
+<td id="T_0e0fa_row2_col3" class="data row2 col3">16.42%</td>
+<td id="T_0e0fa_row2_col4" class="data row2 col4">3,046</td>
+<td id="T_0e0fa_row2_col5" class="data row2 col5">+20.3%</td>
+<td id="T_0e0fa_row2_col6" class="data row2 col6">0.0000</td>
 </tr>
 <tr class="even">
-<th id="T_e4d2a_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
-<td id="T_e4d2a_row3_col0" class="data row3 col0">25.19%</td>
-<td id="T_e4d2a_row3_col1" class="data row3 col1">14,869</td>
-<td id="T_e4d2a_row3_col2" class="data row3 col2">2,763</td>
-<td id="T_e4d2a_row3_col3" class="data row3 col3">18.58%</td>
-<td id="T_e4d2a_row3_col4" class="data row3 col4">3,746</td>
-<td id="T_e4d2a_row3_col5" class="data row3 col5">+35.6%</td>
-<td id="T_e4d2a_row3_col6" class="data row3 col6">0.0000</td>
+<th id="T_0e0fa_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_0e0fa_row3_col0" class="data row3 col0">25.19%</td>
+<td id="T_0e0fa_row3_col1" class="data row3 col1">14,869</td>
+<td id="T_0e0fa_row3_col2" class="data row3 col2">2,763</td>
+<td id="T_0e0fa_row3_col3" class="data row3 col3">18.58%</td>
+<td id="T_0e0fa_row3_col4" class="data row3 col4">3,746</td>
+<td id="T_0e0fa_row3_col5" class="data row3 col5">+35.6%</td>
+<td id="T_0e0fa_row3_col6" class="data row3 col6">0.0000</td>
 </tr>
 <tr class="odd">
-<th id="T_e4d2a_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
-<td id="T_e4d2a_row4_col0" class="data row4 col0">34.87%</td>
-<td id="T_e4d2a_row4_col1" class="data row4 col1">14,768</td>
-<td id="T_e4d2a_row4_col2" class="data row4 col2">3,962</td>
-<td id="T_e4d2a_row4_col3" class="data row4 col3">26.83%</td>
-<td id="T_e4d2a_row4_col4" class="data row4 col4">5,149</td>
-<td id="T_e4d2a_row4_col5" class="data row4 col5">+30.0%</td>
-<td id="T_e4d2a_row4_col6" class="data row4 col6">0.0000</td>
+<th id="T_0e0fa_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_0e0fa_row4_col0" class="data row4 col0">34.87%</td>
+<td id="T_0e0fa_row4_col1" class="data row4 col1">14,768</td>
+<td id="T_0e0fa_row4_col2" class="data row4 col2">3,962</td>
+<td id="T_0e0fa_row4_col3" class="data row4 col3">26.83%</td>
+<td id="T_0e0fa_row4_col4" class="data row4 col4">5,149</td>
+<td id="T_0e0fa_row4_col5" class="data row4 col5">+30.0%</td>
+<td id="T_0e0fa_row4_col6" class="data row4 col6">0.0000</td>
 </tr>
 <tr class="even">
-<th id="T_e4d2a_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
-<td id="T_e4d2a_row5_col0" class="data row5 col0">45.00%</td>
-<td id="T_e4d2a_row5_col1" class="data row5 col1">14,967</td>
-<td id="T_e4d2a_row5_col2" class="data row5 col2">5,315</td>
-<td id="T_e4d2a_row5_col3" class="data row5 col3">35.51%</td>
-<td id="T_e4d2a_row5_col4" class="data row5 col4">6,736</td>
-<td id="T_e4d2a_row5_col5" class="data row5 col5">+26.7%</td>
-<td id="T_e4d2a_row5_col6" class="data row5 col6">0.0000</td>
+<th id="T_0e0fa_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_0e0fa_row5_col0" class="data row5 col0">45.00%</td>
+<td id="T_0e0fa_row5_col1" class="data row5 col1">14,967</td>
+<td id="T_0e0fa_row5_col2" class="data row5 col2">5,315</td>
+<td id="T_0e0fa_row5_col3" class="data row5 col3">35.51%</td>
+<td id="T_0e0fa_row5_col4" class="data row5 col4">6,736</td>
+<td id="T_0e0fa_row5_col5" class="data row5 col5">+26.7%</td>
+<td id="T_0e0fa_row5_col6" class="data row5 col6">0.0000</td>
 </tr>
 <tr class="odd">
-<th id="T_e4d2a_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
-<td id="T_e4d2a_row6_col0" class="data row6 col0">52.69%</td>
-<td id="T_e4d2a_row6_col1" class="data row6 col1">14,863</td>
-<td id="T_e4d2a_row6_col2" class="data row6 col2">5,870</td>
-<td id="T_e4d2a_row6_col3" class="data row6 col3">39.49%</td>
-<td id="T_e4d2a_row6_col4" class="data row6 col4">7,832</td>
-<td id="T_e4d2a_row6_col5" class="data row6 col5">+33.4%</td>
-<td id="T_e4d2a_row6_col6" class="data row6 col6">0.0000</td>
+<th id="T_0e0fa_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_0e0fa_row6_col0" class="data row6 col0">52.69%</td>
+<td id="T_0e0fa_row6_col1" class="data row6 col1">14,863</td>
+<td id="T_0e0fa_row6_col2" class="data row6 col2">5,870</td>
+<td id="T_0e0fa_row6_col3" class="data row6 col3">39.49%</td>
+<td id="T_0e0fa_row6_col4" class="data row6 col4">7,832</td>
+<td id="T_0e0fa_row6_col5" class="data row6 col5">+33.4%</td>
+<td id="T_0e0fa_row6_col6" class="data row6 col6">0.0000</td>
 </tr>
 <tr class="even">
-<th id="T_e4d2a_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
-<td id="T_e4d2a_row7_col0" class="data row7 col0">61.59%</td>
-<td id="T_e4d2a_row7_col1" class="data row7 col1">14,871</td>
-<td id="T_e4d2a_row7_col2" class="data row7 col2">7,736</td>
-<td id="T_e4d2a_row7_col3" class="data row7 col3">52.02%</td>
-<td id="T_e4d2a_row7_col4" class="data row7 col4">9,159</td>
-<td id="T_e4d2a_row7_col5" class="data row7 col5">+18.4%</td>
-<td id="T_e4d2a_row7_col6" class="data row7 col6">0.0000</td>
+<th id="T_0e0fa_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_0e0fa_row7_col0" class="data row7 col0">61.59%</td>
+<td id="T_0e0fa_row7_col1" class="data row7 col1">14,871</td>
+<td id="T_0e0fa_row7_col2" class="data row7 col2">7,736</td>
+<td id="T_0e0fa_row7_col3" class="data row7 col3">52.02%</td>
+<td id="T_0e0fa_row7_col4" class="data row7 col4">9,159</td>
+<td id="T_0e0fa_row7_col5" class="data row7 col5">+18.4%</td>
+<td id="T_0e0fa_row7_col6" class="data row7 col6">0.0000</td>
 </tr>
 <tr class="odd">
-<th id="T_e4d2a_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
-<td id="T_e4d2a_row8_col0" class="data row8 col0">68.62%</td>
-<td id="T_e4d2a_row8_col1" class="data row8 col1">14,867</td>
-<td id="T_e4d2a_row8_col2" class="data row8 col2">8,587</td>
-<td id="T_e4d2a_row8_col3" class="data row8 col3">57.76%</td>
-<td id="T_e4d2a_row8_col4" class="data row8 col4">10,202</td>
-<td id="T_e4d2a_row8_col5" class="data row8 col5">+18.8%</td>
-<td id="T_e4d2a_row8_col6" class="data row8 col6">0.0000</td>
+<th id="T_0e0fa_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_0e0fa_row8_col0" class="data row8 col0">68.62%</td>
+<td id="T_0e0fa_row8_col1" class="data row8 col1">14,867</td>
+<td id="T_0e0fa_row8_col2" class="data row8 col2">8,587</td>
+<td id="T_0e0fa_row8_col3" class="data row8 col3">57.76%</td>
+<td id="T_0e0fa_row8_col4" class="data row8 col4">10,202</td>
+<td id="T_0e0fa_row8_col5" class="data row8 col5">+18.8%</td>
+<td id="T_0e0fa_row8_col6" class="data row8 col6">0.0000</td>
 </tr>
 </tbody>
 </table>

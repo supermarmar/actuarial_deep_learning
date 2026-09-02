@@ -1045,6 +1045,25 @@ postulated.** Lecture 1 introduced it as a way of interpolating between a throug
 point-in-time estimate; here it falls out of a structural model of default, which is why the same
 formula serves both purposes.
 
+The probit link and the normal factor are not decoration, and the property that justifies them is
+worth having explicitly, because the whole of section 6 depends on it. Averaging the conditional
+probability over the factor returns the unconditional one **exactly**:
+
+$$
+\mathbb{E}_{Z}\left[ \Phi\!\left( \frac{\Phi^{-1}(p) - \sqrt{\rho}\, Z}{\sqrt{1-\rho}} \right) \right] = p ,
+$$
+
+by the identity $\mathbb{E}\left[\Phi(a - bZ)\right] = \Phi\!\left(a/\sqrt{1+b^2}\right)$ evaluated
+at $a = \Phi^{-1}(p)/\sqrt{1-\rho}$ and $b = \sqrt{\rho/(1-\rho)}$, since then
+$1 + b^2 = 1/(1-\rho)$ and the two square roots cancel. Consequently the through-the-cycle
+probability that section 6.4 estimated by averaging observed default rates is the same object the
+formula here treats as the borrower's unconditional probability, and the two halves of the lecture
+join.
+
+The identity holds on the **output** and not on the input. Feeding an average factor realisation
+into the formula gives $\Phi\!\left(\Phi^{-1}(p)/\sqrt{1-\rho}\right)$, which understates $p$
+whenever $p$ is below one half, and lecture R1 works that trap through with a figure.
+
 ## Why the conditional expectation is also a quantile
 
 The step that turns a conditional probability into a capital requirement is the asymptotic single
