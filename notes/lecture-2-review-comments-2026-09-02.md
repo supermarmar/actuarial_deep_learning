@@ -30,3 +30,36 @@ formatter, which the render discards.
    as lecture 1 fixes them. Lecture 1's false friend is sidestepped instead of restated:
    $x_i$ is borrower age there, so this lecture never uses $x_i$ for a covariate
    realisation and writes $\boldsymbol{X}_i$ throughout.
+
+## Round 2, 2 September 2026
+
+One further comment, left as an HTML comment in the rendered file. The three above were
+round 1.
+
+| # | Anchor in the HTML | Comment, verbatim |
+|---|---|---|
+| 4 | after the opening line of section 2.2, "Deviance loss function" | `mention how this meets up with the ML world` |
+
+### How it was addressed
+
+A `callout-note` at the foot of section 2.2 titled "The same losses, under machine learning
+names", mirrored into `02_credit-edf-glm.qmd:304` as a `REVIEW` comment first so the next
+render cannot destroy it. The callout maps each EDF member onto the boosting `objective`
+flag and the loss or metric function that carry it in XGBoost, LightGBM, scikit-learn and
+PyTorch, then makes the correspondence exact in three steps: the factor two and the
+saturated term are constants in $m$ and so move the reported value without moving the
+minimiser; under the canonical link the gradient in the linear predictor is $(m - y)/\psi$
+for every member, which is why one boosting implementation serves the whole menu; and
+choosing a loss is choosing a variance function $V(\mu)$.
+
+The section already carried the Bernoulli specialisation (twice log loss), so the callout
+generalises rather than repeats, and section 2.3 keeps that paragraph. The closing paragraph
+answers the question the comment implies but does not ask, namely which machine learning
+metrics **fail** the test: accuracy, $F_1$ and AUC are invariant under monotone rescaling of
+the scores, so they leave the level of $\mathrm{PD}_k$ unidentified, and lecture 7 picks that
+up as calibration.
+
+Two claims were checked against the files rather than asserted. Lecture 7 does decompose the
+Brier score (`07_credit-calibration.qmd:914`). Lectures 4 and 5 train on `nn.BCELoss` rather
+than `nn.BCEWithLogitsLoss` (`04-05_credit-fnn.qmd:238`, `:459`), and the first draft of the
+callout had the wrong one.

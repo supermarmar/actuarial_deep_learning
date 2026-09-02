@@ -301,6 +301,9 @@ general theory specialises accordingly.
 For mean estimation within the EDF, the natural loss is the **deviance
 loss**
 
+<!-- REVIEW (Mario, round 2, 2 Sep 2026): mention how this meets up with the ML world.
+     Answered by the callout below. -->
+
 $$
 L(y, m)
 = 2\, \frac{\varphi}{v} \left( \log f_{h(y)}(y) - \log f_{h(m)}(y) \right)
@@ -313,6 +316,51 @@ its log-likelihood under the estimated mean $m$. The deviance loss is zero
 precisely when $m = y$, and it is **strictly consistent** for mean
 estimation (Gneiting, 2011), which is the minimal requirement for a loss
 that is meant to recover conditional means.
+
+::: {.callout-note icon=false title="The same losses, under machine learning names"}
+Machine learning practice picks a loss and reads the model off it, whereas the EDF derives
+the loss from an assumption about the response. Both routes arrive at the same short menu.
+Every named regression objective in a gradient boosting library is one of the deviance
+losses tabulated in the next section, wearing a different label.
+
+| EDF member | boosting `objective` | loss or metric function |
+|---|---|---|
+| Gaussian | `reg:squarederror`, `regression` | `mean_squared_error`, `nn.MSELoss` |
+| gamma | `reg:gamma`, `gamma` | `mean_gamma_deviance` |
+| Poisson | `count:poisson`, `poisson` | `mean_poisson_deviance`, `nn.PoissonNLLLoss` |
+| Tweedie | `reg:tweedie`, `tweedie` | `mean_tweedie_deviance` |
+| Bernoulli | `binary:logistic`, `binary` | `log_loss`, `nn.BCELoss` |
+
+Three details make that correspondence exact. First, the factor two and the saturated
+log-likelihood are constants in $m$, so they move the value of the loss without moving its
+minimiser. A library reporting a negative log-likelihood and one reporting a deviance
+therefore agree on the fitted model and disagree on the number they print, which is why a
+loss reading is comparable across models within one implementation and meaningless across
+two.
+
+Second, under the canonical link the derivative of the negative log-likelihood with respect
+to the linear predictor is $(m - y) / \psi$ for **every** member of the family, and the
+second derivative is $\kappa''(\theta) / \psi$. Hence a single boosting implementation
+serves the whole menu, since swapping the objective swaps the two lines that compute the
+gradient and the Hessian. The raw residual drives the fit in every row above.
+
+Third, and this is what the EDF framing adds, choosing a loss is choosing a variance
+function $V(\mu)$: an assumption about how dispersion scales with the mean. Gaussian takes
+it constant, Poisson linear in $\mu$ and gamma quadratic. On a $0/1$ response the Bernoulli
+variance $\mu_k(1 - \mu_k)$ is forced by the response itself, so squared error, which on an
+indicator is the Brier score, and log loss are both strictly consistent for $\mu_k$ and
+differ in how they weight the observations. Lecture 7 uses that freedom deliberately when it
+decomposes the Brier score.
+
+The warning sits one level up, in the metrics a scoring pipeline reaches for by default.
+Accuracy, the $F_1$ score and the AUC are invariant under any strictly monotone rescaling of
+the fitted scores, so they grade the ordering of the borrowers and leave the level of
+$\mathrm{PD}_k$ unidentified. A model selected on AUC alone can therefore rank the book
+faultlessly and still misprice every loan in it. Lecture 7 takes that gap up as calibration,
+and lectures 4 and 5 train their networks on `nn.BCELoss`, which is this section's
+Bernoulli deviance halved. Its sibling `nn.BCEWithLogitsLoss` folds the logit link into the
+same loss for numerical stability.
+:::
 
 ## Examples of deviance losses
 
