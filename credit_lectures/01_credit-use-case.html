@@ -187,7 +187,7 @@ window.Quarto = {
 <p>Generally, raw data needs <strong>data cleaning</strong>, e.g., correcting for data errors, inputting missing values, merging partial information, etc. The Bondora extract is raw in exactly this sense. Missing values arrive as empty strings, decimals are written like <code>.6800</code>, and 53 loans carry a borrower age below 18, Bondora’s contractual minimum. The cleaning applied here lives in <code>scripts/convert_credit_data.py</code>, which also selects the columns a lender would hold <strong>at application time</strong> and derives the default outcome defined below. Post-origination columns (payment histories, recoveries, balances and the platform’s own loss estimates) are excluded from the modelling table by construction, because they leak the outcome into the covariates.</p>
 <section id="load-and-illustrate-the-bondora-data" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="load-and-illustrate-the-bondora-data"><span class="header-section-number">1.1</span> Load and illustrate the Bondora data</h2>
-<div id="3490890e" class="cell" data-execution_count="1">
+<div id="db38fecd" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -198,7 +198,7 @@ window.Quarto = {
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>     <span class="st">"LoanDuration"</span>, <span class="st">"Education"</span>, <span class="st">"IncomeTotal"</span>, <span class="st">"DebtToIncome"</span>, <span class="st">"Rating"</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>     <span class="st">"default_12m"</span>]</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>).head(<span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="61">
+<div class="cell-output cell-output-display" data-execution_count="21">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -476,7 +476,7 @@ window.Quarto = {
 <p>At the extract date 57,774 loans were still current. A loan originated three months earlier has had no time to default, and scoring it a non-default would bias every estimate downwards. The event time exists; we have simply not waited long enough to see it. That is <strong>right-censoring</strong>.</p>
 <p>Life insurance meets the identical problem whenever a mortality rate is calibrated. A life observed from entry to a census date, still alive at the census, tells you it survived that far and nothing more. The denominator of <span class="math inline">\(q_x\)</span> therefore counts time actually at risk rather than lives, and the central exposed to risk is precisely that denominator. Lives entering part-way through the rate year contribute part-years, and lives withdrawing contribute only up to withdrawal.</p>
 <p>General insurance escapes the problem. The exposure <span class="math inline">\(v_i\)</span> is the earned policy period, which is measured and complete once the period has run, so no latent event date waits beyond the edge of the data. Incompleteness in general insurance sits instead in claim reporting and development, i.e.&nbsp;IBNR and IBNER, and that is a question about the size and timing of claims arising on a known exposure. Life and credit share right-censoring because both wait on an absorbing event whose date may fall outside the observation window; general insurance counts events inside a window it has already observed in full.</p>
-<div id="d109e0bb" class="cell" data-execution_count="2">
+<div id="a778bf71" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datetime <span class="im">as</span> dt</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.dates <span class="im">as</span> mdates</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -570,7 +570,7 @@ n(k) = \# {\cal W}_k ,
 <p>where <span class="math inline">\(\# {\cal W}_k\)</span> denotes the number of elements of the set, its cardinality. The second equality for <span class="math inline">\(D_i^{(k)}\)</span> is worth pausing on, because it is Botha’s <strong>worst-ever</strong> aggregation appearing here already: a loan that breaches and then cures still scores a one, since the maximum over the window remembers the breach. The same device returns in the next section as the ingredient of a point-in-time default rate.</p>
 <p>The retention rule <span class="math inline">\({\cal W}_k\)</span> keeps only loans whose <strong>w</strong>indow had closed by the snapshot, so every retained loan carries a complete observation. It takes a plain letter deliberately: <span class="math inline">\(\mathcal{L}\)</span> is the loss function throughout the summer school lectures, and reusing it here would collide. Setting <span class="math inline">\(k = 12\)</span> reproduces <code>default_12m</code> exactly, at <span class="math inline">\(n(12) = 148{,}733\)</span> loans, and that is what the rest of this lecture uses. Every formula from here on carries <span class="math inline">\(k\)</span>, so nothing needs rewriting when the window moves. Note also that <span class="math inline">\(k\)</span> is the outcome period of the callout above, i.e.&nbsp;the third of Botha’s three dials.</p>
 <p>The window is not a free parameter in practice, and the cost of moving it shows up immediately.</p>
-<div id="4fa511b5" class="cell" data-execution_count="3">
+<div id="2398ba6f" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pl.read_parquet(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/bondora_raw.parquet"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"ReportAsOfEOD"</span>, <span class="st">"LoanDate"</span>, <span class="st">"DefaultDate"</span>],</span>
@@ -592,7 +592,7 @@ n(k) = \# {\cal W}_k ,
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> kept <span class="kw">in</span> [raw.<span class="bu">filter</span>(pl.col(<span class="st">"A"</span>) <span class="op">&gt;=</span> k)]</span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    ]</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="63">
+<div class="cell-output cell-output-display" data-execution_count="23">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -758,7 +758,7 @@ u = g_i + t ,
 <p>Only two of the three are ever free. Demographers know this as the age-period-cohort identification problem, and with <span class="math inline">\(t\)</span> read as the loan’s attained age the correspondence is exact: <strong>age</strong> is months on book <span class="math inline">\(t\)</span>, <strong>period</strong> is calendar month <span class="math inline">\(u\)</span>, and <strong>cohort</strong> is vintage <span class="math inline">\(g\)</span>. That is why a mortality model indexed by all three needs a constraint imposed by hand instead of estimated, and credit inherits the problem whole. Breeden’s age-period-cohort decomposition of loan-level performance is the same identity in credit clothing, splitting observed performance into a lifecycle in <span class="math inline">\(t\)</span>, an environment in <span class="math inline">\(u\)</span> and a credit-quality effect in <span class="math inline">\(g\)</span>.</p>
 <p>One property of this extract now does more damage than it appears to. <code>ReportAsOfEOD</code> takes a single value across all 179,235 rows, 20 July 2021. The snapshot <span class="math inline">\(\tau\)</span> is therefore a constant rather than a per-row field, and the extract holds one cross-section where a panel would hold many. What that costs is taken up once the PD itself has been defined, in the callout closing the next section.</p>
 <p>Five real loans put every symbol of this section on a row. One per censoring pattern, picked as the lowest <code>LoanNumber</code> matching each, so the selection is reproducible rather than sampled. That rule reaches for the oldest loans on the platform, which is why three of the five carry the March 2009 vintage.</p>
-<div id="da992df4" class="cell" data-execution_count="4">
+<div id="a07c64ab" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ex <span class="op">=</span> pl.read_parquet(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/bondora_raw.parquet"</span>,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"LoanNumber"</span>, <span class="st">"LoanDate"</span>, <span class="st">"DefaultDate"</span>, <span class="st">"Status"</span>],</span>
@@ -791,7 +791,7 @@ u = g_i + t ,
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, cond <span class="kw">in</span> patterns.items()</span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="64">
+<div class="cell-output cell-output-display" data-execution_count="24">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -956,14 +956,76 @@ Y_i^{(k)} = \frac{N_i}{\min(T_i,\, k)} ,
 </div>
 <div class="callout-body-container callout-body">
 <p>A <strong>point-in-time (PiT)</strong> PD conditions on where the economy is, i.e.&nbsp;it estimates <span class="math inline">\(\mathbb{P}(D^{(k)} = 1 \mid \boldsymbol{X}, u)\)</span> and moves with the cycle. IFRS 9 requires one, because an expected credit loss is a forecast made from today’s conditions. A <strong>through-the-cycle (TTC)</strong> PD averages the cycle away instead, which is what an IRB long-run average targets. Production stacks mostly run something hybrid and then argue about where on the spectrum it has landed.</p>
-<p>This portfolio cannot yield a PiT PD, and the identity above is the reason. Conditional on months on book <span class="math inline">\(t\)</span>, vintage <span class="math inline">\(g\)</span> and calendar month <span class="math inline">\(u\)</span> are collinear, so a single snapshot offers no way to tell an origination-quality effect from a macroeconomic one. The vintage figure later in this lecture shows the default rate running from 7 per cent in the 2012 vintage to 37 per cent in 2017, and two stories fit that equally well. Bondora may have loosened its underwriting, or those cohorts may simply have lived through a worse environment. More modelling will not separate them.</p>
-<p>Botha and Verster (2025) show what the missing ingredient buys. Their portfolio-level default rate at calendar month <span class="math inline">\(t\)</span>,</p>
+<p>Both deserve a formula, and both need the outcome generalised first, since a PD asked of a loan already <span class="math inline">\(t\)</span> months on book wants a window opening at <span class="math inline">\(t\)</span> rather than at origination. For a loan performing at <span class="math inline">\(t\)</span>, write</p>
 <p><span class="math display">\[
-D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
-      \mathbb{I}\left( \max\left( y_{it}, \ldots, y_{i(t+k)} \right) = 1 \right),
+D^{(k)}_{i,t} = \max\left( y_{i,t+1}, \ldots, y_{i,t+k} \right) \in \{0, 1\} ,
+\qquad
+D^{(k)}_{i,0} = D^{(k)}_i .
 \]</span></p>
-<p>runs over the set <span class="math inline">\({\cal S}_P(t)\)</span> of accounts still performing at <span class="math inline">\(t\)</span>, with <span class="math inline">\(n'_t\)</span> its size. The maximum inside the indicator is the <strong>worst-ever</strong> aggregation, so an obligor who breaches and then cures still scores a one and the series is immune to cure-and-relapse cycling. What matters here is the index. <span class="math inline">\(D_t\)</span> is a time series in calendar time, and it exists to be regressed on macroeconomic variables, which is how a PiT PD gets built. Its ingredient is monthly performance history for every account. Bondora records one snapshot, so the maximum has nothing to run over.</p>
+<p>Section 2.4’s flag is the <span class="math inline">\(t = 0\)</span> case, and the worst-ever aggregation carries over untouched. A PiT PD then conditions on the state of the economy in the calendar month the window opens, <span class="math inline">\(u = g_i + t\)</span>:</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, \boldsymbol{Z}_u \right)
+= \mathbb{P}\left( D^{(k)}_{i,t} = 1 \,\middle|\, \boldsymbol{X}_i, \boldsymbol{Z}_u \right) ,
+\]</span></p>
+<p>where <span class="math inline">\(\boldsymbol{Z}_u\)</span> collects the macroeconomic variables at <span class="math inline">\(u\)</span>, i.e.&nbsp;unemployment, house prices, the policy rate, whatever the model has earned the right to use. Conditioning on <span class="math inline">\(u\)</span> itself, as the paragraph above did loosely, cannot be used out of sample, because a future calendar month carries no observations of its own. Conditioning on <span class="math inline">\(\boldsymbol{Z}_u\)</span> can be, since the macro variables are themselves forecastable, and an IFRS 9 expected credit loss needs precisely that forecast.</p>
+<p>The TTC PD is indeed an average of default rates, and two versions of that average want keeping apart. Written as a property of the model, it averages the PiT PD over the distribution of the macro state rather than over any particular path,</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right)
+= \mathbb{E}_{\boldsymbol{Z}}\left[ \mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, \boldsymbol{Z} \right) \right] ,
+\]</span></p>
+<p>while the estimator the regulation actually asks for averages the observed series instead, grade by grade and at <span class="math inline">\(k = 12\)</span>,</p>
+<p><span class="math display">\[
+\overline{\mathrm{DR}}^{(12)} = \frac{1}{\# U} \sum_{u \in U} \mathrm{DR}^{(12)}_u ,
+\]</span></p>
+<p>over a historical window <span class="math inline">\(U\)</span> of calendar months, with <span class="math inline">\(\mathrm{DR}^{(k)}_u\)</span> the portfolio default rate defined below. Article 180 of the Capital Requirements Regulation sets the requirements specific to PD estimation, and what it forces is representativeness: the long-run average must rest on a period long enough to cover the likely range of variability, which in practice means <span class="math inline">\(U\)</span> has to contain bad years as well as good ones. The EBA’s guidelines on PD estimation (EBA/GL/2017/16) are where the mechanics of that average live.</p>
+<p>One trap sits inside the word “average”, and it is where the calculation goes wrong in practice. Averaging has to happen downstream of the model, on its output. For a logistic PiT model with linear predictor <span class="math inline">\(\eta\)</span>, Jensen’s inequality gives <span class="math inline">\(\mathbb{E}[\sigma(\eta)] \ne \sigma(\mathbb{E}[\eta])\)</span>, so feeding mean macroeconomic conditions into a fitted PiT model returns a number that is not the TTC PD, and the discrepancy grows with the curvature of the link over the range the cycle covers.</p>
+<p>This portfolio cannot yield a PiT PD, and the identity above is the reason. Conditional on months on book <span class="math inline">\(t\)</span>, vintage <span class="math inline">\(g\)</span> and calendar month <span class="math inline">\(u\)</span> are collinear, so a single snapshot offers no way to tell an origination-quality effect from a macroeconomic one. The vintage figure later in this lecture shows the default rate running from 7 per cent in the 2012 vintage to 37 per cent in 2017, and two stories fit that equally well. Bondora may have loosened its underwriting, or those cohorts may simply have lived through a worse environment. More modelling will not separate them.</p>
+<p>Botha and Verster (2025) show what the missing ingredient buys. Their portfolio-level default rate, put on this lecture’s axes, is the cross-sectional mean of the window-start flag defined above,</p>
+<p><span class="math display">\[
+\mathrm{DR}^{(k)}_u = \frac{1}{n_u} \sum_{i \in {\cal P}_u} D^{(k)}_{i,\, u - g_i} ,
+\qquad
+{\cal P}_u = \left\{ i : \text{loan } i \text{ on book and performing at } u \right\} ,
+\qquad
+n_u = \# {\cal P}_u .
+\]</span></p>
+<p>The paper writes <span class="math inline">\(D_t\)</span>, <span class="math inline">\({\cal S}_P(t)\)</span> and <span class="math inline">\(n'_t\)</span>, with <span class="math inline">\(t\)</span> as calendar time, so anyone going to the source should carry that translation. Here the calendar axis has to be <span class="math inline">\(u\)</span>, since <span class="math inline">\(t\)</span> is months on book everywhere else in this lecture, and the window rides on the superscript so that <span class="math inline">\(k\)</span> is never in doubt. The indicator has gone because a maximum of 0/1 flags already is one: <span class="math inline">\(D^{(k)}_{i,t}\)</span> is Botha’s <strong>worst-ever</strong> aggregation, which is why an obligor who breaches and then cures still scores a one and why the series is immune to cure-and-relapse cycling.</p>
+<p>What matters here is the index. <span class="math inline">\(\mathrm{DR}^{(k)}_u\)</span> is a time series in calendar time, and regressing it on <span class="math inline">\(\boldsymbol{Z}_u\)</span> is how the PiT PD above gets built, while averaging it over <span class="math inline">\(u\)</span> gives the TTC estimator above. One series, two uses. Its ingredient is monthly performance history for every account, and Bondora records one snapshot, so the maximum has nothing to run over.</p>
 <p>Breaking the collinearity needs a panel, i.e.&nbsp;many calendar months <span class="math inline">\(u\)</span> observed for each vintage <span class="math inline">\(g\)</span>. <code>data/amex_panel.parquet</code> in this repository is a customer-month panel of exactly that shape, and it is where the point-in-time question gets picked up.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="What a hybrid PD looks like in formulas">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What a hybrid PD looks like in formulas
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two representations, of which the second is the one production systems actually parameterise.</p>
+<p>The blunt one interpolates on the logit scale between the two extremes,</p>
+<p><span class="math display">\[
+\mathrm{logit}\, \mathrm{PD}^{\rm hyb}_k
+= (1 - \lambda) \, \mathrm{logit}\, \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right)
++ \lambda \, \mathrm{logit}\, \mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, \boldsymbol{Z}_u \right) ,
+\qquad \lambda \in [0, 1] ,
+\]</span></p>
+<p>with <span class="math inline">\(\lambda = 0\)</span> fully through the cycle and <span class="math inline">\(\lambda = 1\)</span> fully point in time. It is easy to explain and it leaves <span class="math inline">\(\lambda\)</span> with no meaning beyond itself, which is why a validator will ask how it was set.</p>
+<p>The one-factor version gives the dial a meaning. Let <span class="math inline">\(Z_u \sim {\cal N}(0, 1)\)</span> be a systematic factor for calendar month <span class="math inline">\(u\)</span>, high values benign, and let <span class="math inline">\(\rho \in [0, 1)\)</span> be the loan’s loading on it. Then</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z_u \right)
+= \Phi\left( \frac{ \Phi^{-1}\left( \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) \right)
+- \sqrt{\rho} \, Z_u }{ \sqrt{1 - \rho} } \right) ,
+\]</span></p>
+<p>which is Vasicek’s conditional default probability. At <span class="math inline">\(\rho = 0\)</span> the TTC PD passes through unmoved; as <span class="math inline">\(\rho\)</span> rises the same input swings further with the cycle, so <span class="math inline">\(\rho\)</span> is a measure of how point-in-time the model is.</p>
+<p>Two properties earn the extra notation. First, averaging the output returns the TTC PD exactly,</p>
+<p><span class="math display">\[
+\mathbb{E}_{Z}\left[ \mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z \right) \right]
+= \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) ,
+\]</span></p>
+<p>by the identity <span class="math inline">\(\mathbb{E}\left[ \Phi(a - bZ) \right] = \Phi\left( a / \sqrt{1 + b^2} \right)\)</span> at <span class="math inline">\(a = \Phi^{-1}(\cdot) / \sqrt{1 - \rho}\)</span> and <span class="math inline">\(b = \sqrt{\rho / (1 - \rho)}\)</span>. The probit link and the normal factor are chosen so that the average comes out right, which is what makes this the natural home for the previous callout’s TTC definition. The warning there still applies to the input, mind: setting <span class="math inline">\(Z_u\)</span> to its mean of zero gives <span class="math inline">\(\Phi\left( \Phi^{-1}(\mathrm{PD}^{\rm TTC}_k) / \sqrt{1 - \rho} \right)\)</span>, which understates the TTC PD whenever that PD is below one half. At a TTC PD of 3 per cent and <span class="math inline">\(\rho = 0.15\)</span> it returns 2.07 per cent, a shortfall of nearly a third.</p>
+<p>Secondly, the IRB capital formula is this same expression with the factor stressed rather than averaged, <span class="math inline">\(Z_u = -\Phi^{-1}(0.999)\)</span>, and there <span class="math inline">\(\rho\)</span> is the asset correlation the CRR prescribes by exposure class rather than something the modeller fits. A credit audience therefore already knows the machinery; the hybrid reading simply uses it at the middle of the factor distribution instead of in its tail.</p>
 </div>
 </div>
 </section>
@@ -979,9 +1041,9 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 <section id="empirical-data-analysis" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Empirical data analysis</h1>
 <p>We start by classifying the loans w.r.t. their default outcome.</p>
-<div id="390fbc5a" class="cell" data-execution_count="5">
+<div id="ceb1050e" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat.group_by(<span class="st">"default_12m"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"loans"</span>)).sort(<span class="st">"default_12m"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="65">
+<div class="cell-output cell-output-display" data-execution_count="25">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -1015,7 +1077,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 </div>
 </div>
-<div id="2234a7a1" class="cell" data-execution_count="6">
+<div id="5f6919cb" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"empirical default rate: </span><span class="sc">{</span>dat[<span class="st">'default_12m'</span>]<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>empirical default rate: 28.95%</code></pre>
@@ -1023,7 +1085,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 <p>The empirical twelve-month default rate is 28.95 per cent. Here the credit example diverges from the insurance one on purpose. The French MTPL portfolio has an empirical claims frequency of 7.36 per cent, and the original lecture frames this as a <strong>class imbalance problem</strong>, i.e., insurance claims are rare events. Bondora is a subprime peer-to-peer book, and at this default rate the event is anything but rare. Rarity is a property of the portfolio rather than of credit risk as such. A prime credit card book behaves like the insurance case; the companion dataset <code>credit_card_dev.parquet</code> in this repository, an anonymised bank-grade card portfolio, has a bad rate of 1.42 per cent. Class imbalance will therefore return with force when that dataset takes the stage in a later lecture.</p>
 <p>A second structural feature deserves a look before any covariate does. The book grew by two orders of magnitude over its life, and the default rate moved with it.</p>
-<div id="384baa2f" class="cell" data-execution_count="7">
+<div id="71c31e93" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>vint <span class="op">=</span> (</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    dat.with_columns(vintage<span class="op">=</span>pl.col(<span class="st">"LoanDate"</span>).dt.year())</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"vintage"</span>)</span>
@@ -1048,7 +1110,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 <p>The default rate runs from 7 per cent in the 2012 vintage to 37 per cent in 2017. Insurance portfolios drift too, but rarely this violently; the drift here mixes platform growth, underwriting changes and country expansion. We ignore the time dimension for the rest of this lecture and model the pooled book, as the original lecture pools its single accident year. The vintage axis returns when we need an honest out-of-time validation split.</p>
 <p>For the covariate analysis we consider two covariates, <code>Age</code> and log-<code>IncomeTotal</code>, playing the roles that <code>DrivAge</code> and log-<code>Density</code> play in the insurance lecture. Later, all covariates are considered. We remove the 53 loans with a cleaned age of null and the 63 loans declaring zero income, which leaves the modelling sample used from here on.</p>
-<div id="7099c23a" class="cell" data-execution_count="8">
+<div id="9af7a664" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
@@ -1058,7 +1120,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 <pre><code>modelling sample: n = 148,670</code></pre>
 </div>
 </div>
-<div id="3f68e30d" class="cell" data-execution_count="9">
+<div id="d280676d" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rate_by(df, col):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> (</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        df.group_by(col)</span>
@@ -1087,7 +1149,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 </div>
 <p>The age profile is <strong>non-monotone</strong>. Default risk peaks around the mid-twenties at roughly 32 per cent, eases to about 27 per cent through middle age, and climbs again beyond 65, where declared pension income replaces salary. The same shape, a hump for the young and a deterioration at the old end, drove the insurance lecture’s discussion of <code>DrivAge</code>, and it will defeat the same naive model below.</p>
-<div id="4bc24f96" class="cell" data-execution_count="10">
+<div id="4686041f" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> model_dat.with_columns(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    incBand<span class="op">=</span>(pl.col(<span class="st">"logIncome"</span>) <span class="op">*</span> <span class="dv">4</span>).<span class="bu">round</span>(<span class="dv">0</span>) <span class="op">/</span> <span class="dv">4</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -1112,7 +1174,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 <p>The income profile should worry any credit risk modeller on sight. Default risk <strong>rises</strong> with declared income across most of the range, from below 20 per cent at the bottom to peaks above 34 per cent, before easing at the very top. No underwriter believes that richer borrowers are intrinsically worse risks, so something else must be driving the marginal curve. We hold that thought for a moment and look at one more covariate first.</p>
 <p><strong>An aside on the price of risk.</strong> The contractual interest rate is the platform’s own answer to this prediction problem, set at listing from its rating model. Its marginal profile is brutally clean.</p>
-<div id="bb74f339" class="cell" data-execution_count="11">
+<div id="055e3452" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ib <span class="op">=</span> (</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    model_dat.with_columns(band<span class="op">=</span>pl.col(<span class="st">"Interest"</span>).cut([<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">50</span>, <span class="dv">100</span>]))</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"band"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
@@ -1135,7 +1197,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 <section id="covariates-interact" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="covariates-interact"><span class="header-section-number">3.1</span> Covariates interact</h2>
 <p>Generally, covariates <strong>interact</strong>, and one cannot simply combine marginal default rates to obtain a correct PD. The insurance lecture argues this with a hypothetical, i.e., young drivers may cluster in dense cities, so the two marginal penalties may double-count one risk factor. The Bondora book turns the hypothetical into a demonstration. The three main countries have very different income levels and very different risk levels, and the composition generates the rising marginal income curve above.</p>
-<div id="7a073926" class="cell" data-execution_count="12">
+<div id="a4f89189" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>countries <span class="op">=</span> {<span class="st">"EE"</span>: <span class="st">"Estonia"</span>, <span class="st">"FI"</span>: <span class="st">"Finland"</span>, <span class="st">"ES"</span>: <span class="st">"Spain"</span>}</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> code, colour <span class="kw">in</span> <span class="bu">zip</span>(countries, [<span class="st">"#8C2F1E"</span>, <span class="st">"#4F6333"</span>, <span class="st">"#3B4A75"</span>]):</span>
@@ -1165,7 +1227,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 </div>
 <p>Within Estonia, Finland and Spain separately, default risk <strong>falls</strong> with income, exactly as underwriting intuition demands. Pooled, it rises, because Finland and Spain combine higher nominal incomes with default rates of 38 and 55 per cent against Estonia’s 17. The marginal income effect is a country effect wearing a disguise. Multiplying marginal profiles would price this book absurdly, and the same mechanism, in gentler form, is why the insurance lecture insists on estimating <span class="math inline">\(\mu(\boldsymbol{X})\)</span> <strong>jointly</strong> in the components of <span class="math inline">\(\boldsymbol{X} = (X_1, \ldots, X_q)^\top\)</span> rather than marginally.</p>
-<div id="58168c29" class="cell" data-execution_count="13">
+<div id="43158f38" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.ndimage <span class="im">import</span> gaussian_filter</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> model_dat[<span class="st">"Age"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
@@ -1215,7 +1277,7 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 <p>for <span class="math inline">\(\boldsymbol{X} = (X_1, X_2) = (\text{Age}, \text{log-Income})\)</span> and parameter <span class="math inline">\((\beta_0, \beta_1, \beta_2)\)</span>. Where the insurance lecture’s log-link produced a model multiplicative in the <strong>frequency</strong>, the logit link produces a model multiplicative in the <strong>odds</strong> <span class="math inline">\(\mu / (1 - \mu)\)</span>; each covariate scales the odds of default by a constant factor per unit.</p>
 <section id="model-glm1-bernoulli-with-canonical-logit-link" class="level3" data-number="4.0.1">
 <h3 data-number="4.0.1" class="anchored" data-anchor-id="model-glm1-bernoulli-with-canonical-logit-link"><span class="header-section-number">4.0.1</span> Model GLM1 (Bernoulli with canonical logit link)</h3>
-<div id="685d2ee3" class="cell" data-execution_count="14">
+<div id="47e59218" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
@@ -1235,7 +1297,7 @@ Model Family:                Binomial   Df Model:                            2
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -89001.
 Date:                Wed, 02 Sep 2026   Deviance:                   1.7800e+05
-Time:                        09:10:46   Pearson chi2:                 1.49e+05
+Time:                        09:45:14   Pearson chi2:                 1.49e+05
 No. Iterations:                     5   Pseudo R-squ. (CS):           0.006011
 Covariance Type:            nonrobust                                         
 ==============================================================================
@@ -1251,7 +1313,7 @@ logIncome      0.2550      0.009     28.520      0.000       0.238       0.273
 </section>
 <section id="model-glm2-categorical-age-classes" class="level3" data-number="4.0.2">
 <h3 data-number="4.0.2" class="anchored" data-anchor-id="model-glm2-categorical-age-classes"><span class="header-section-number">4.0.2</span> Model GLM2 (categorical age classes)</h3>
-<div id="c98cd8a0" class="cell" data-execution_count="15">
+<div id="c77f6609" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>glm_dat[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    glm_dat[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
@@ -1270,7 +1332,7 @@ Model Family:                Binomial   Df Model:                            8
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -88846.
 Date:                Wed, 02 Sep 2026   Deviance:                   1.7769e+05
-Time:                        09:10:46   Pearson chi2:                 1.49e+05
+Time:                        09:45:14   Pearson chi2:                 1.49e+05
 No. Iterations:                    21   Pseudo R-squ. (CS):           0.008074
 Covariance Type:            nonrobust                                         
 =====================================================================================
@@ -1289,7 +1351,7 @@ logIncome             0.2754      0.009     30.461      0.000       0.258       
 </div>
 </div>
 <p>This estimates an individual regression parameter <span class="math inline">\(\beta_j\)</span> for each age class, and the fit improves accordingly. Because of the logit link, the model has a multiplicative structure in the odds; e.g., a borrower in the <code>71+</code> class carries the same income effect as every other borrower, scaled by their own age-class odds factor.</p>
-<div id="1a793722" class="cell" data-execution_count="16">
+<div id="3cb86142" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>li_med <span class="op">=</span> <span class="bu">float</span>(np.median(glm_dat[<span class="st">"logIncome"</span>]))</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.DataFrame({<span class="st">"Age"</span>: np.arange(<span class="dv">18</span>, <span class="dv">76</span>), <span class="st">"logIncome"</span>: li_med})</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>grid[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
@@ -1317,7 +1379,7 @@ logIncome             0.2754      0.009     30.461      0.000       0.258       
 </section>
 <section id="model-glm3-adding-the-confounder" class="level3" data-number="4.0.3">
 <h3 data-number="4.0.3" class="anchored" data-anchor-id="model-glm3-adding-the-confounder"><span class="header-section-number">4.0.3</span> Model GLM3 (adding the confounder)</h3>
-<div id="4039b9c1" class="cell" data-execution_count="17">
+<div id="9086c889" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>glm3 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country"</span>,</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm3.summary().tables[<span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1340,7 +1402,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 =====================================================================================</code></pre>
 </div>
 </div>
-<div id="5b5b7a5b" class="cell" data-execution_count="18">
+<div id="60e1bc8b" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>comparison <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"deviance"</span>: [glm1.deviance, glm2.deviance, glm3.deviance],</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AIC"</span>: [glm1.aic, glm2.aic, glm3.aic],</span>
@@ -1349,7 +1411,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        glm3.params[<span class="st">"logIncome"</span>]],</span>
 <span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>[<span class="st">"GLM1"</span>, <span class="st">"GLM2"</span>, <span class="st">"GLM3"</span>])</span>
 <span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>comparison.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="78">
+<div class="cell-output cell-output-display" data-execution_count="38">
 <div>
 
 
@@ -1388,7 +1450,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 </div>
 </div>
 <p>Conditioning on country flips the income coefficient negative, i.e., within a country, higher income now reduces the odds of default, exactly as the quintile curves showed and as underwriting intuition demands. The wrongly signed coefficient was evidence about the portfolio’s composition all along, and it had to be explained before the model could be believed. This is worth carrying through the whole lecture series, because deep learning models absorb such composition effects silently, and in credit they must be found and explained before a model is used.</p>
-<div id="8f424254" class="cell" data-execution_count="19">
+<div id="62e69ce9" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>gx <span class="op">=</span> (x_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> x_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>gy <span class="op">=</span> (y_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> y_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>gxx, gyy <span class="op">=</span> np.meshgrid(gx, gy, indexing<span class="op">=</span><span class="st">"ij"</span>)</span>
@@ -1423,7 +1485,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <section id="gradient-boosting-machine" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Gradient boosting machine</h1>
 <p>As a first machine learning regression model, we present a gradient boosting machine (GBM). GBMs belong to the most powerful techniques on tabular data, in particular the powerful versions like XGBoost, LightGBM or CatBoost; on credit bureau data they remain the benchmark to beat in most published comparisons. A GBM partitions the covariate space into different (homogeneous) subsets and estimates the default rate on each subset. We fit scikit-learn’s histogram-based implementation on the two selected covariates and only present the resulting heatmap; GBMs are not further studied in this series.</p>
-<div id="28041c41" class="cell" data-execution_count="20">
+<div id="6e253cbc" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> HistGradientBoostingClassifier</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>gbm <span class="op">=</span> HistGradientBoostingClassifier(</span>
@@ -1465,7 +1527,9 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <li>Botha, A. and Verster, T. (2025). <em>Approaches for modelling the term-structure of default risk under IFRS 9: a tutorial using discrete-time survival analysis</em>.</li>
 <li>Breeden, J.L. (2016). <em>Incorporating lifecycle and environment in loan-level forecasts and stress tests</em>. European Journal of Operational Research.</li>
 <li>International Accounting Standards Board (2014). <em>IFRS 9: Financial Instruments</em>, section 5.5: impairment.</li>
-<li>European Parliament and Council. <em>Regulation (EU) No 575/2013 (Capital Requirements Regulation)</em>, Article 178: default of an obligor, as amended by Regulation (EU) 2024/1623 (CRR3).</li>
+<li>European Parliament and Council. <em>Regulation (EU) No 575/2013 (Capital Requirements Regulation)</em>, Article 178: default of an obligor, as amended by Regulation (EU) 2024/1623 (CRR3), and Article 180: requirements specific to PD estimation.</li>
+<li>European Banking Authority (2017). <em>Guidelines on PD estimation, LGD estimation and the treatment of defaulted exposures</em> (EBA/GL/2017/16).</li>
+<li>Vasicek, O.A. (2002). <em>The distribution of loan portfolio value</em>. Risk, 15(12).</li>
 <li>Prudential Regulation Authority (2024). <em>SS3/24: Credit risk, definition of default</em>.</li>
 <li>Wüthrich, M.V. and Merz, M. (2023). <em>Statistical Foundations of Actuarial Learning and its Applications</em>. Springer.</li>
 <li>Scognamiglio, S., Maggi, M. and Wüthrich, M.V. (2026). <em>Deep Learning for Actuarial Modeling</em>, SSRN 5162304.</li>

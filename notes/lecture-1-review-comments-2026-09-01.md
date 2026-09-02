@@ -64,3 +64,44 @@ here before re-rendering. Verbatim, including typos.
 5. Added "The conditional expectation, formally" before the reading callout: the
    cell-wise sum, the $L^2$ minimiser, and the tower property named as the balance
    property of lecture 7.
+
+## Round 3, 2 September 2026
+
+Three comments, all inside the point-in-time and through-the-cycle callout in 2.6.
+Verbatim, including typos.
+
+1. Can you write a mathematical notation to say what the PiT PD formula can be
+   represented by. can you also write a formula for a TTC PD which i imagine is some
+   average of default rates but I could be wrong so challenge me
+
+2. Can you also explain what a hybrid model could look like in a formula terms
+
+3. update the terms of this formula ever so slightly to be consistent with above e.g.
+   nt' and the identity function coudl be some D(k) of sorts also update the D_t so
+   with a k so we know what we are talking about in terms of the window
+
+### How each was answered
+
+1. The callout now carries a PiT display conditioning on a macro state
+   $\boldsymbol{Z}_u$ rather than on the calendar month itself, since a future $u$
+   carries no data, and two TTC displays. On the challenge: the instinct is right, and
+   the one-factor probit construction makes it exactly right, because
+   $\mathbb{E}_Z[\Phi((\Phi^{-1}(p) - \sqrt{\rho} Z)/\sqrt{1-\rho})] = p$ identically.
+   Where it fails is the practitioner's shortcut of feeding average macro conditions
+   into a fitted logistic PiT model, which Jensen's inequality rules out. The
+   regulatory TTC is the other display: an average of observed one-year default rates,
+   which is the same $\mathrm{DR}^{(12)}_u$ series the PiT model regresses.
+2. Two hybrid representations. A convex combination on the logit scale with a weight
+   $\lambda$, and the Vasicek one-factor form with a loading $\rho$, whose $\rho = 0$
+   and $\rho \to 1$ ends are TTC and fully cyclical. The IRB capital formula is the
+   same expression at the 99.9th percentile of the factor, which is the tie a credit
+   audience already knows.
+3. Renotated. The calendar axis moves from the paper's $t$ to the lecture's $u$, which
+   matters more than the missing $k$: $t$ is months on book everywhere else in this
+   lecture. The indicator becomes the loan-level $D^{(k)}_{i,t}$, the window-start
+   generalisation of 2.4's flag, since a maximum of 0/1 flags is that indicator. The
+   performing set becomes ${\cal P}_u$ with size $n_u$, and the portfolio series
+   becomes $\mathrm{DR}^{(k)}_u$: written $\mathrm{DR}$ rather than $D$ because the
+   loan-level $D^{(k)}_{i,t}$ is now in the same display. The paper's own symbols
+   ($D_t$, ${\cal S}_P(t)$, $n'_t$) are named in the prose so the source stays
+   findable.
