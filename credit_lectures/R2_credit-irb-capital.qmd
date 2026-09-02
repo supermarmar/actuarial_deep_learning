@@ -1198,7 +1198,7 @@ reason to expect it to fit.
 ## The risk weight curve, and where it stops rising
 
 ```{python}
-#| fig-cap: "Risk weight against the regulatory probability of default for the three retail exposure classes, at a loss given default of 65 per cent and no maturity adjustment. (lhs): the full range, on which every curve rises, turns over and falls back towards zero, because as the probability approaches one the worst-case rate approaches one too and the gap the capital covers closes. (rhs): the range a bank's retail book actually occupies, up to a 5 per cent probability, where the curves are steeply concave and the 0.03 per cent floor sits at the far left. Bronze marks other retail, the class an unsecured consumer loan falls in and the one used for the Bondora evaluation below. The nine Bondora grades are marked on the left panel, and four of them sit at or beyond the turning point."
+#| fig-cap: "Risk weight against the regulatory probability of default for the three retail exposure classes, at a loss given default of 65 per cent and no maturity adjustment. (lhs): the full range, on which every curve rises, turns over and falls back towards zero, because as the probability approaches one the worst-case rate approaches one too and the gap the capital covers closes. (rhs): the range a bank's retail book actually occupies, up to a 5 per cent probability, where the curves are steeply concave and the dotted line marks the 0.03 per cent input floor that applied under the original Capital Requirements Regulation, since raised. Bronze marks other retail, the class an unsecured consumer loan falls in and the one used for the Bondora evaluation below. The nine Bondora grades are marked on the left panel, and four of them sit at or beyond the turning point."
 LGD = 0.65
 curves = [("residential mortgage", rho_mortgage, GREY),
           ("qualifying revolving", rho_qrre, BLUE),
@@ -1216,7 +1216,7 @@ for ax, grid_ in ((axs[0], wide), (axs[1], near)):
     ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
     ax.xaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
 axs[1].axvline(0.0003, color=RULE, lw=0.8, ls=":")
-axs[1].annotate("0.03% floor", (0.0003, 60), xytext=(4, 0),
+axs[1].annotate("PD floor", (0.0003, 60), xytext=(4, 0),
                 textcoords="offset points", fontsize=7, color=RULE)
 axs[1].legend(frameon=False, fontsize=7.5)
 
@@ -1224,7 +1224,13 @@ peak = wide[np.argmax(12.5 * capital(wide, LGD, rho_other_retail(wide)))]
 axs[0].axvline(peak, color=RULE, lw=0.8, ls="--")
 axs[0].annotate(f"other retail peaks\nat PD {peak:.0%}", (peak, 30),
                 xytext=(6, 0), textcoords="offset points", fontsize=7, color=RULE)
+axs[0].plot(grades.pd_reg, 12.5 * capital(grades.pd_reg.values, LGD,
+                                          rho_other_retail(grades.pd_reg.values)),
+            "o", ms=4, color=OX, zorder=3)
 plt.tight_layout(); plt.show()
+
+print(f"Bondora grades at or beyond the turning point: "
+      f"{int((grades.pd_reg >= peak).sum())} of {len(grades)}")
 
 for label, rho_f, _ in curves:
     rw = 12.5 * capital(wide, LGD, rho_f(wide))
@@ -1395,9 +1401,9 @@ is robust.
 
 **Benchmarking** compares the model against an external ranking of the same borrowers. Bondora
 publishes its own grade, and it is the most uncomfortable result in this lecture: **a three-covariate
-generalised linear model on age, income and country matches the lender's own credit grade
-exactly**, at a Gini of 0.419 against 0.419. Two readings are available and a validator would want
-both explored. Either the lender's grade contains little more than demography, or both are
+generalised linear model on age, income and country is indistinguishable from the lender's own
+credit grade**, at a Gini of 0.419 against 0.419, separating only in the fourth decimal. Two
+readings are available and a validator would want both explored. Either the lender's grade contains little more than demography, or both are
 picking up the same country composition effect that lecture 1 spent a section on.
 
 ## The quantification tests
