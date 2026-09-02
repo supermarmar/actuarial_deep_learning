@@ -1302,16 +1302,230 @@ assumption is being leaned on is most of what a validator is for.
 
 # What a validator asks
 
-*To be written: the differentiation tests, the quantification tests and the use test.*
+An independent validation function reads the model in the order it was built, and it asks a
+different question of each phase. Differentiation is asked whether the ranking is right.
+Quantification is asked whether the level is right. A model can pass either and fail the other,
+and the two failures have completely different remedies.
+
+## The differentiation tests
+
+Six dimensions, and the diagnostics for each are computed below on this book so the section says
+something rather than listing definitions.
+
+```{python}
+from sklearn.metrics import roc_auc_score
+
+dev = book[book.cohort <= 2017]
+oot = book[book.cohort >= 2018]
+
+def gini(frame):
+    return 2 * roc_auc_score(frame.default_12m, frame.pit) - 1
+
+def psi(a, b, bins=10):
+    """Population stability index between two score distributions."""
+    q = np.quantile(a, np.linspace(0, 1, bins + 1)); q[0], q[-1] = -np.inf, np.inf
+    pa = np.clip(np.histogram(a, q)[0] / len(a), 1e-6, None)
+    pb = np.clip(np.histogram(b, q)[0] / len(b), 1e-6, None)
+    return float(((pb - pa) * np.log(pb / pa)).sum())
+
+print(f"discrimination   development 2009-17  n {len(dev):,}  Gini {gini(dev):.3f}")
+print(f"                 out of time 2018-20  n {len(oot):,}  Gini {gini(oot):.3f}")
+print(f"stability        PSI development against out of time  {psi(dev.pit.values, oot.pit.values):.3f}"
+      "   (0.10 watch, 0.25 breach)")
+
+RATING_ORDER = {r: i for i, r in enumerate(["AA", "A", "B", "C", "D", "E", "F", "HR"])}
+bench = book[book.Rating.map(RATING_ORDER).notna()].copy()
+bench["lender_grade"] = bench.Rating.map(RATING_ORDER)
+print(f"benchmarking     on n {len(bench):,}: our model Gini "
+      f"{2 * roc_auc_score(bench.default_12m, bench.pit) - 1:.3f}, "
+      f"Bondora's own grade "
+      f"{2 * roc_auc_score(bench.default_12m, bench.lender_grade) - 1:.3f}")
+
+print("stress           single-factor shock to log income:")
+for shock in (-0.20, -0.10, 0.10, 0.20):
+    shocked = book.assign(logIncome=book.logIncome * (1 + shock))
+    m = pit_model.predict(shocked).mean()
+    print(f"                   {shock:+.0%}  mean PD {m:.2%}  "
+          f"({m / book.pit.mean() - 1:+.1%} relative)")
+```
+
+**Accuracy** compares predicted probabilities against realised default rates, overall and within
+every segment and sub-population that matters commercially. It is usually reported as a mean
+percentage error, and it is the test a well-fitted model passes for free at the portfolio level
+and can still fail badly inside a sub-population.
+
+**Discrimination** asks whether the ranking separates defaulters from survivors, and it is
+reported as a Gini coefficient. This model comes out at 0.45 in development and 0.40 out of
+time. The drop is modest and expected: some of it is genuine degradation and some is that the
+later cohorts are a different portfolio.
+
+**Stability** asks whether the population the model scores today resembles the one it was fitted
+on. The population stability index here is 0.157, above the conventional 0.10 watch threshold and
+below the 0.25 breach threshold. On a real submission that is a finding rather than a failure,
+and the explanation is not mysterious: the book changed country mix over the period.
+
+**Robustness** asks whether the model's structure survives being refitted on a different sample,
+which means checking that no coefficient changes sign and that significance holds. It also covers
+seasonality, which is tested by drawing snapshots evenly across quarters.
+
+**Stress analysis** shocks the inputs rather than the economy: each driver up and down by 10 and
+20 per cent individually, then all of them together, to see which drivers the output actually
+depends on. A 20 per cent cut to log income moves the mean probability by 7 per cent, which is
+mild, and mildness here reflects the fact that the model has three covariates rather than that it
+is robust.
+
+**Benchmarking** compares the model against an external ranking of the same borrowers. Bondora
+publishes its own grade, and it is the most uncomfortable result in this lecture: **a three-covariate
+generalised linear model on age, income and country matches the lender's own credit grade
+exactly**, at a Gini of 0.419 against 0.419. Two readings are available and a validator would want
+both explored. Either the lender's grade contains little more than demography, or both are
+picking up the same country composition effect that lecture 1 spent a section on.
+
+## The quantification tests
+
+**Concentration** checks that no grade is too big to be informative or too small to calibrate.
+Section 6.2 reports a maximum grade of 20.0 per cent of the book against a 30 per cent ceiling,
+a minimum of 9.7 per cent against a 1 per cent floor, and a Herfindahl-Hirschman index of 0.120
+against a 0.25 threshold.
+
+**Homogeneity** checks that borrowers inside a grade really do share a default rate, by
+bootstrapping subsamples within the grade and testing them against each other with a chi-square
+statistic. Failing it means the grade is a mixture and should be split.
+
+**Heterogeneity** checks the reverse, that adjacent grades differ, with a two-proportion z-test.
+Failing it means two grades are one grade and should be merged. Section 6.2's candidate table is
+the clearest thing in this lecture about why the two tests have to be read together: pushing the
+scale finer improves nothing and fails heterogeneity in three quarters of adjacent pairs.
+
+**Migration** asks how far borrowers move between grades from one observation date to the next,
+because a point-in-time system is expected to migrate and violent migration makes risk-weighted
+assets swing. **It cannot be computed on this data at all**, as section 6.2 says, and a real
+submission would build a migration matrix per quarter and report the proportion of exposures
+staying within one band.
+
+**Calibration accuracy** is the test the whole quantification phase exists to pass. It compares
+the assigned probability against the realised default rate, grade by grade, with a binomial or
+Jeffreys backtest.
+
+```{python}
+back = cap[["pd_reg"]].join(grades[["loans", "defaults", "odr"]])
+back["predicted defaults"] = back.pd_reg * back.loans
+back["relative error"] = back.pd_reg / back.odr - 1
+back["one-sided p"] = [sps.binom.cdf(d, n, p)
+                       for d, n, p in zip(back.defaults, back.loans, back.pd_reg)]
+back.style.format({"pd_reg": "{:.2%}", "loans": "{:,.0f}", "defaults": "{:,.0f}",
+                   "odr": "{:.2%}", "predicted defaults": "{:,.0f}",
+                   "relative error": "{:+.1%}", "one-sided p": "{:.4f}"})
+```
+
+Every grade over-predicts, decisively, and that is the correct outcome. The binomial test asks
+whether the assigned probability is too low for the observed defaults, and here it is far too
+high in every grade, by between 18 and 36 per cent in relative terms. The margin of conservatism
+put it there on purpose. **A calibration backtest on a regulatory probability of default is a
+one-sided test**, and a validator reading two-sided p-values off this table would report nine
+failures where there are none.
+
+## The use test
+
+The last question is not statistical. Article 144 of the Capital Requirements Regulation requires
+internal ratings and the estimates derived from them to play an essential role in risk
+management, decision-making and credit approval, and the Prudential Regulation Authority's
+supervisory statement SS4/24 treats the requirement as substantive in its section on use and
+experience tests. A firm holding internal ratings-based models solely to compute regulatory
+capital does not satisfy it, and the consequence is not a finding in a report: permission can be
+restricted or withdrawn.
+
+The requirement is a sensible piece of institutional design. A model that drives pricing, limits,
+provisioning and collections is one the business will complain about when it is wrong, and those
+complaints are a feedback loop that no validation function can replicate. A model used only for
+the capital return has nobody with an incentive to notice it drifting.
+
+Consequently the awkward question a validator asks last is the one this lecture cannot answer for
+Bondora, or for any demonstration: what decisions would change if this model changed?
 
 # Takeaways
 
-*To be written.*
+1. **The capital formula is one substitution away from lecture 1.** Vasicek's conditional default
+   probability evaluated at the mean of the systematic factor is a hybrid or forward-looking
+   probability of default; the same expression at $Z_u = -\Phi^{-1}(0.999)$ is the worst-case
+   default rate. Purpose separates the two frameworks and the mathematics is shared.
+2. **Five steps separate a scorecard from a regulatory number**, and the last three exist to break
+   the balance property the first two guarantee. A calibrated model is what a generalised linear
+   model delivers; a conservative model is what the regulation requires.
+3. **Rating philosophy is a statement about where the cycle goes**, into grade migration or into
+   the default rate within a grade. Every philosophy is permissible, and Article 180's long-run
+   average requirement presses hardest on the dynamic point-in-time end.
+4. **Granularity costs separation.** Nine grades on this book leave no adjacent pair statistically
+   indistinguishable; thirty leave three quarters of them so. A finer scale looks more
+   discriminating and mostly reports noise.
+5. **An average of annual rates is not the rate of the pooled data.** On a book that has grown,
+   pooling over-weights the recent cohorts, and the regulation asks for the average.
+6. **The variance test for the long-run average window has almost no power at annual frequency.**
+   Eight annual observations need a sevenfold difference in variance before the F-test notices;
+   the same windows in monthly cohorts detect 1.7-fold. Every candidate window passed here,
+   including one excluding the 2009 crisis, and passing meant nothing.
+7. **Serial correlation more than doubles the statistical margin of conservatism.** At
+   $\phi = 0.66$ a twelve-year annual series is worth about two and a half independent
+   observations, and a bank using the textbook standard error of the mean understates the Type C
+   margin by a factor of 2.2. That is the whole content of paragraph 327 of the ECB guide.
+8. **The prescribed correlations are reverse-engineered, not estimated.** They were chosen so the
+   formula reproduced the economic capital large banks already held. A portfolio unlike the
+   calibration sample has no reason to expect them to fit, and on this one the other-retail
+   function has decayed to its floor before the safest grade is reached.
+9. **The risk weight is not monotone in the probability of default.** It turns over near 40 per
+   cent for other retail, so Bondora's riskiest grade consumes less capital than its safest, and
+   its mean risk weight is twice the standardised approach's flat 75 per cent. The formula was
+   built for books one to two orders of magnitude safer, and this one is off the end of it.
+10. **A calibration backtest on a regulatory probability of default is one-sided.** Every grade
+    over-predicts by design, and reading two-sided p-values off the table manufactures failures.
 
 # Copyright and attribution {.unnumbered}
 
-*To be written.*
+This lecture answers no lecture of the summer school **Deep Learning for Actuarial Modeling** and
+is original to this repository. It grows out of a review comment on credit lecture 1 asking for
+the hybrid probability of default callout to become a lecture of its own, and it is the second
+lecture of the regulatory track after R1.
+
+The structure, the five-step development sequence, the rating philosophy comparison, the four-step
+long-run average procedure and the grade construction tests follow Mario's own credit risk
+methodology material. No portfolio-specific content from that material appears here, and every
+worked example is Bondora's.
+
+The capital formula, the maturity adjustment factor, the prescribed retail correlations and the
+account of how they were derived are the Basel Committee's, from its explanatory note on the
+internal ratings-based risk weight functions. The single-factor model is Vasicek's, building on
+Merton. The procyclicality argument, and the distinction between measurement and structural
+procyclicality, is Lowe's. The margin of conservatism type structure and the autocorrelation
+requirement are the European Central Bank's guide to internal models, read through Djurovic's
+quantification papers. The scorecard is lecture 1's GLM3 unchanged.
+
+The Bondora loan book is public. The macroeconomic series are Eurostat's, public and free, fetched
+by `scripts/fetch_macro_eurostat.py` and committed at `credit_lectures/data/macro_eurostat.csv` so
+the lecture renders on a fresh clone.
+
+Regulatory citations were verified against the Gini vault before use, and the ones that could not
+be verified are recorded in `notes/irb-lecture-structure.md` rather than repeated here. In
+particular this lecture cites Article 180 at article level, cites SS4/24 by section rather than by
+paragraph, and does not assert the size of the Tier 2 cap on an expected loss excess.
 
 # References {.unnumbered}
 
-*To be written.*
+- Basel Committee on Banking Supervision (2005). *An Explanatory Note on the Basel II IRB Risk
+  Weight Functions.* Bank for International Settlements.
+- Djurovic, A. (2025). *Quantification of MoC Type C in Probability of Default Models.* Industry
+  papers on the aggregate effect of regulatory requirements and on paragraph 327 of the ECB Guide
+  to Internal Models.
+- European Banking Authority (2017). *Guidelines on PD estimation, LGD estimation and the
+  treatment of defaulted exposures* (EBA/GL/2017/16).
+- European Parliament and Council (2013). *Regulation (EU) No 575/2013* (Capital Requirements
+  Regulation), as amended.
+- Gordy, M. and Lütkebohmert, E. (2013). *Granularity Adjustment for Regulatory Capital
+  Assessment.* International Journal of Central Banking.
+- Lopez, J.A. (2002). *The Empirical Relationship between Average Asset Correlation, Firm
+  Probability of Default and Asset Size.* Federal Reserve Bank of San Francisco.
+- Lowe, P. (2002). *Credit risk measurement and procyclicality.* BIS Working Papers No. 116.
+- Merton, R.C. (1974). *On the Pricing of Corporate Debt: The Risk Structure of Interest Rates.*
+  Journal of Finance 29(2).
+- Prudential Regulation Authority (2026). *SS4/24: The Internal Ratings Based approach*, January
+  2026 consolidated restatement.
+- Vasicek, O. (2002). *The Distribution of Loan Portfolio Value.* Risk 15(12).
