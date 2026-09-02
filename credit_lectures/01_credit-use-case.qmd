@@ -983,7 +983,7 @@ marginally.
      one shared colour scale and one colourbar. -->
 
 ```{python}
-#| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income, shown twice off one smoothed array. Both panels share the colour scale 0.10 to 0.50 and the single colourbar, so a colour means the same default rate in each. White space in the heatmap, and the gaps in the surface, mark covariate combinations too thin in the portfolio to estimate (fewer than eight effective loans after smoothing). The heatmap is the better panel for reading a value off a pair of covariates; the surface is the better panel for seeing that the joint shape is not additive, since the age profile changes its form as log-income moves rather than merely shifting up or down."
+#| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income, shown twice off one smoothed array. Both panels share the colour scale 0.10 to 0.50 and the single colourbar, so a colour means the same default rate in each, and on the surface the height encodes that same rate as well as the colour. White space in the heatmap, and the gaps in the surface, mark covariate combinations too thin in the portfolio to estimate (fewer than eight effective loans after smoothing). The heatmap is the better panel for reading a value off a pair of covariates; the surface is the better panel for seeing that the joint shape is not additive, since the age profile changes its form as log-income moves rather than merely shifting up or down. Read the surface with age increasing to the right along the front edge and log-income increasing away from the viewer to the left, so its income axis runs in the opposite visual sense to the heatmap's vertical one."
 from scipy.ndimage import gaussian_filter
 from matplotlib.colors import Normalize
 
@@ -1018,10 +1018,12 @@ ax3 = fig.add_subplot(1, 2, 2, projection="3d")
 ax3.plot_surface(
     X_g, Y_g, rate, cmap="RdYlBu_r", norm=norm,
     rcount=58, ccount=70, linewidth=0, edgecolor="none", antialiased=True)
+# The z axis carries no label, since the colourbar already names the quantity and
+# a zlabel here collides with the heatmap panel's right edge.
 ax3.set_xlabel("age of borrower"); ax3.set_ylabel("log-income")
-ax3.set_zlabel("default rate")
 ax3.set_zlim(0.1, 0.5)
 ax3.view_init(elev=28, azim=-125)
+ax3.set_box_aspect((1, 1, 0.62), zoom=1.18)
 ax3.set_title("surface", fontsize=10)
 for pane in (ax3.xaxis.pane, ax3.yaxis.pane, ax3.zaxis.pane):
     pane.set_facecolor("white"); pane.set_edgecolor("0.85")
@@ -1031,11 +1033,22 @@ fig.colorbar(im, ax=(ax, ax3), shrink=0.75, label="smoothed default rate")
 plt.show()
 ```
 
-The heatmap shows the empirical default rate as a function of the two
+Both panels show the empirical default rate as a function of the two
 covariates jointly, smoothed with a Gaussian kernel; the original lecture
-uses loess smoothing for the same purpose. The colouring shows quite some
-non-linear structure, and it does not support any simple combination of the
-two marginal profiles. This requires regression modelling or machine
+uses loess smoothing for the same purpose. They are two views of one array
+on one colour scale, so they carry the same numbers and differ only in what
+they make easy to see. The heatmap is the panel to read a rate off a pair of
+covariates, since position and colour are both undistorted. The surface adds
+the one thing a flat map hides, namely the height, and with it a visual test
+of additivity. Were the joint effect additive, every slice along age would be
+the same curve, raised or lowered by the income level alone. Instead the age
+profile is pronounced at high incomes, where the rate runs at its highest
+below age 25, falls away through the middle ages and lifts again past 65,
+whereas at low incomes it is close to flat. Age therefore matters far more to
+a high-income borrower in this book than to a low-income one, and no amount
+of tilting a plane will reproduce that. Either way the colouring shows quite
+some non-linear structure, and it does not support any simple combination of
+the two marginal profiles. This requires regression modelling or machine
 learning solutions, e.g.,
 
 - generalised linear models (GLMs)

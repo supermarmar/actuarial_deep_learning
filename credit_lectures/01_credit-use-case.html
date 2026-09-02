@@ -187,7 +187,7 @@ window.Quarto = {
 <p>Generally, raw data needs <strong>data cleaning</strong>, e.g., correcting for data errors, inputting missing values, merging partial information, etc. The Bondora extract is raw in exactly this sense. Missing values arrive as empty strings, decimals are written like <code>.6800</code>, and 53 loans carry a borrower age below 18, Bondora’s contractual minimum. The cleaning applied here lives in <code>scripts/convert_credit_data.py</code>, which also selects the columns a lender would hold <strong>at application time</strong> and derives the default outcome defined below. Post-origination columns (payment histories, recoveries, balances and the platform’s own loss estimates) are excluded from the modelling table by construction, because they leak the outcome into the covariates.</p>
 <section id="load-and-illustrate-the-bondora-data" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="load-and-illustrate-the-bondora-data"><span class="header-section-number">1.1</span> Load and illustrate the Bondora data</h2>
-<div id="666e994c" class="cell" data-execution_count="1">
+<div id="8c18d79e" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -198,7 +198,7 @@ window.Quarto = {
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>     <span class="st">"LoanDuration"</span>, <span class="st">"Education"</span>, <span class="st">"IncomeTotal"</span>, <span class="st">"DebtToIncome"</span>, <span class="st">"Rating"</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>     <span class="st">"default_12m"</span>]</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>).head(<span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="1">
+<div class="cell-output cell-output-display" data-execution_count="41">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -476,7 +476,7 @@ window.Quarto = {
 <p>At the extract date 57,774 loans were still current. A loan originated three months earlier has had no time to default, and scoring it a non-default would bias every estimate downwards. The event time exists; we have simply not waited long enough to see it. That is <strong>right-censoring</strong>.</p>
 <p>Life insurance meets the identical problem whenever a mortality rate is calibrated. A life observed from entry to a census date, still alive at the census, tells you it survived that far and nothing more. The denominator of <span class="math inline">\(q_x\)</span> therefore counts time actually at risk rather than lives, and the central exposed to risk is precisely that denominator. Lives entering part-way through the rate year contribute part-years, and lives withdrawing contribute only up to withdrawal.</p>
 <p>General insurance escapes the problem. The exposure <span class="math inline">\(v_i\)</span> is the earned policy period, which is measured and complete once the period has run, so no latent event date waits beyond the edge of the data. Incompleteness in general insurance sits instead in claim reporting and development, i.e.&nbsp;IBNR and IBNER, and that is a question about the size and timing of claims arising on a known exposure. Life and credit share right-censoring because both wait on an absorbing event whose date may fall outside the observation window; general insurance counts events inside a window it has already observed in full.</p>
-<div id="0eb918f6" class="cell" data-execution_count="2">
+<div id="87caa868" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datetime <span class="im">as</span> dt</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.dates <span class="im">as</span> mdates</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -570,7 +570,7 @@ n(k) = \# {\cal W}_k ,
 <p>where <span class="math inline">\(\# {\cal W}_k\)</span> denotes the number of elements of the set, its cardinality. The second equality for <span class="math inline">\(D_i^{(k)}\)</span> is worth pausing on, because it is Botha’s <strong>worst-ever</strong> aggregation appearing here already: a loan that breaches and then cures still scores a one, since the maximum over the window remembers the breach. The same device returns in the next section as the ingredient of a point-in-time default rate.</p>
 <p>The retention rule <span class="math inline">\({\cal W}_k\)</span> keeps only loans whose <strong>w</strong>indow had closed by the snapshot, so every retained loan carries a complete observation. It takes a plain letter deliberately: <span class="math inline">\(\mathcal{L}\)</span> is the loss function throughout the summer school lectures, and reusing it here would collide. Setting <span class="math inline">\(k = 12\)</span> reproduces <code>default_12m</code> exactly, at <span class="math inline">\(n(12) = 148{,}733\)</span> loans, and that is what the rest of this lecture uses. Every formula from here on carries <span class="math inline">\(k\)</span>, so nothing needs rewriting when the window moves. Note also that <span class="math inline">\(k\)</span> is the outcome period of the callout above, i.e.&nbsp;the third of Botha’s three dials.</p>
 <p>The window is not a free parameter in practice, and the cost of moving it shows up immediately.</p>
-<div id="52da0b7e" class="cell" data-execution_count="3">
+<div id="eedf254d" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pl.read_parquet(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/bondora_raw.parquet"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"ReportAsOfEOD"</span>, <span class="st">"LoanDate"</span>, <span class="st">"DefaultDate"</span>],</span>
@@ -592,7 +592,7 @@ n(k) = \# {\cal W}_k ,
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> kept <span class="kw">in</span> [raw.<span class="bu">filter</span>(pl.col(<span class="st">"A"</span>) <span class="op">&gt;=</span> k)]</span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    ]</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="3">
+<div class="cell-output cell-output-display" data-execution_count="43">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -758,7 +758,7 @@ u = g_i + t ,
 <p>Only two of the three are ever free. Demographers know this as the age-period-cohort identification problem, and with <span class="math inline">\(t\)</span> read as the loan’s attained age the correspondence is exact: <strong>age</strong> is months on book <span class="math inline">\(t\)</span>, <strong>period</strong> is calendar month <span class="math inline">\(u\)</span>, and <strong>cohort</strong> is vintage <span class="math inline">\(g\)</span>. That is why a mortality model indexed by all three needs a constraint imposed by hand instead of estimated, and credit inherits the problem whole. Breeden’s age-period-cohort decomposition of loan-level performance is the same identity in credit clothing, splitting observed performance into a lifecycle in <span class="math inline">\(t\)</span>, an environment in <span class="math inline">\(u\)</span> and a credit-quality effect in <span class="math inline">\(g\)</span>.</p>
 <p>One property of this extract now does more damage than it appears to. <code>ReportAsOfEOD</code> takes a single value across all 179,235 rows, 20 July 2021. The snapshot <span class="math inline">\(\tau\)</span> is therefore a constant rather than a per-row field, and the extract holds one cross-section where a panel would hold many. What that costs is taken up once the PD itself has been defined, in the callout closing the next section.</p>
 <p>Five real loans put every symbol of this section on a row. One per censoring pattern, picked as the lowest <code>LoanNumber</code> matching each, so the selection is reproducible rather than sampled. That rule reaches for the oldest loans on the platform, which is why three of the five carry the March 2009 vintage.</p>
-<div id="e50524b3" class="cell" data-execution_count="4">
+<div id="3b1eae74" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ex <span class="op">=</span> pl.read_parquet(</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/bondora_raw.parquet"</span>,</span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"LoanNumber"</span>, <span class="st">"LoanDate"</span>, <span class="st">"DefaultDate"</span>, <span class="st">"Status"</span>],</span>
@@ -791,7 +791,7 @@ u = g_i + t ,
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    )</span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, cond <span class="kw">in</span> patterns.items()</span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="4">
+<div class="cell-output cell-output-display" data-execution_count="44">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -1023,9 +1023,9 @@ n_u = \# {\cal P}_u .
 <section id="empirical-data-analysis" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Empirical data analysis</h1>
 <p>We start by classifying the loans w.r.t. their default outcome.</p>
-<div id="901decbf" class="cell" data-execution_count="5">
+<div id="96f9ccda" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat.group_by(<span class="st">"default_12m"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"loans"</span>)).sort(<span class="st">"default_12m"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="5">
+<div class="cell-output cell-output-display" data-execution_count="45">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -1059,7 +1059,7 @@ n_u = \# {\cal P}_u .
 </div>
 </div>
 </div>
-<div id="29cbb731" class="cell" data-execution_count="6">
+<div id="0ada122e" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"empirical default rate: </span><span class="sc">{</span>dat[<span class="st">'default_12m'</span>]<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>empirical default rate: 28.95%</code></pre>
@@ -1067,7 +1067,7 @@ n_u = \# {\cal P}_u .
 </div>
 <p>The empirical twelve-month default rate is 28.95 per cent. Here the credit example diverges from the insurance one on purpose. The French MTPL portfolio has an empirical claims frequency of 7.36 per cent, and the original lecture frames this as a <strong>class imbalance problem</strong>, i.e., insurance claims are rare events. Bondora is a subprime peer-to-peer book, and at this default rate the event is anything but rare. Rarity is a property of the portfolio rather than of credit risk as such. A prime credit card book behaves like the insurance case; the companion dataset <code>credit_card_dev.parquet</code> in this repository, an anonymised bank-grade card portfolio, has a bad rate of 1.42 per cent. Class imbalance will therefore return with force when that dataset takes the stage in a later lecture.</p>
 <p>A second structural feature deserves a look before any covariate does. The book grew by two orders of magnitude over its life, and the default rate moved with it.</p>
-<div id="aa3ae527" class="cell" data-execution_count="7">
+<div id="e03fcad1" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>vint <span class="op">=</span> (</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    dat.with_columns(vintage<span class="op">=</span>pl.col(<span class="st">"LoanDate"</span>).dt.year())</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"vintage"</span>)</span>
@@ -1092,7 +1092,7 @@ n_u = \# {\cal P}_u .
 </div>
 <p>The default rate runs from 7 per cent in the 2012 vintage to 37 per cent in 2017. Insurance portfolios drift too, but rarely this violently; the drift here mixes platform growth, underwriting changes and country expansion. We ignore the time dimension for the rest of this lecture and model the pooled book, as the original lecture pools its single accident year. The vintage axis returns when we need an honest out-of-time validation split.</p>
 <p>For the covariate analysis we consider two covariates, <code>Age</code> and log-<code>IncomeTotal</code>, playing the roles that <code>DrivAge</code> and log-<code>Density</code> play in the insurance lecture. Later, all covariates are considered. We remove the 53 loans with a cleaned age of null and the 63 loans declaring zero income, which leaves the modelling sample used from here on.</p>
-<div id="3fe424aa" class="cell" data-execution_count="8">
+<div id="21a345c8" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
@@ -1102,7 +1102,7 @@ n_u = \# {\cal P}_u .
 <pre><code>modelling sample: n = 148,670</code></pre>
 </div>
 </div>
-<div id="06f123a5" class="cell" data-execution_count="9">
+<div id="5b3923b6" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rate_by(df, col):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> (</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        df.group_by(col)</span>
@@ -1131,7 +1131,7 @@ n_u = \# {\cal P}_u .
 </div>
 </div>
 <p>The age profile is <strong>non-monotone</strong>. Default risk peaks around the mid-twenties at roughly 32 per cent, eases to about 27 per cent through middle age, and climbs again beyond 65, where declared pension income replaces salary. The same shape, a hump for the young and a deterioration at the old end, drove the insurance lecture’s discussion of <code>DrivAge</code>, and it will defeat the same naive model below.</p>
-<div id="1088ec3c" class="cell" data-execution_count="10">
+<div id="92c84e9a" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> model_dat.with_columns(</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    incBand<span class="op">=</span>(pl.col(<span class="st">"logIncome"</span>) <span class="op">*</span> <span class="dv">4</span>).<span class="bu">round</span>(<span class="dv">0</span>) <span class="op">/</span> <span class="dv">4</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)</span>
@@ -1156,7 +1156,7 @@ n_u = \# {\cal P}_u .
 </div>
 <p>The income profile should worry any credit risk modeller on sight. Default risk <strong>rises</strong> with declared income across most of the range, from below 20 per cent at the bottom to peaks above 34 per cent, before easing at the very top. No underwriter believes that richer borrowers are intrinsically worse risks, so something else must be driving the marginal curve. We hold that thought for a moment and look at one more covariate first.</p>
 <p><strong>An aside on the price of risk.</strong> The contractual interest rate is the platform’s own answer to this prediction problem, set at listing from its rating model. Its marginal profile is brutally clean.</p>
-<div id="1a97dd4b" class="cell" data-execution_count="11">
+<div id="b2d22f06" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ib <span class="op">=</span> (</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    model_dat.with_columns(band<span class="op">=</span>pl.col(<span class="st">"Interest"</span>).cut([<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">50</span>, <span class="dv">100</span>]))</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"band"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
@@ -1179,7 +1179,7 @@ n_u = \# {\cal P}_u .
 <section id="covariates-interact" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="covariates-interact"><span class="header-section-number">3.1</span> Covariates interact</h2>
 <p>Generally, covariates <strong>interact</strong>, and one cannot simply combine marginal default rates to obtain a correct PD. The insurance lecture argues this with a hypothetical, i.e., young drivers may cluster in dense cities, so the two marginal penalties may double-count one risk factor. The Bondora book turns the hypothetical into a demonstration. The three main countries have very different income levels and very different risk levels, and the composition generates the rising marginal income curve above.</p>
-<div id="fa7ab4e8" class="cell" data-execution_count="12">
+<div id="52d3caab" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>countries <span class="op">=</span> {<span class="st">"EE"</span>: <span class="st">"Estonia"</span>, <span class="st">"FI"</span>: <span class="st">"Finland"</span>, <span class="st">"ES"</span>: <span class="st">"Spain"</span>}</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> code, colour <span class="kw">in</span> <span class="bu">zip</span>(countries, [<span class="st">"#8C2F1E"</span>, <span class="st">"#4F6333"</span>, <span class="st">"#3B4A75"</span>]):</span>
@@ -1210,39 +1210,66 @@ n_u = \# {\cal P}_u .
 </div>
 <p>Within Estonia, Finland and Spain separately, default risk <strong>falls</strong> with income, exactly as underwriting intuition demands. Pooled, it rises, because Finland and Spain combine higher nominal incomes with default rates of 38 and 55 per cent against Estonia’s 17. The marginal income effect is a country effect wearing a disguise. Multiplying marginal profiles would price this book absurdly, and the same mechanism, in gentler form, is why the insurance lecture insists on estimating <span class="math inline">\(\mu(\boldsymbol{X})\)</span> <strong>jointly</strong> in the components of <span class="math inline">\(\boldsymbol{X} = (X_1, \ldots, X_q)^\top\)</span> rather than marginally.</p>
 <!-- REVIEW (Mario, round 3, 2 Sep 2026): can we also show this as a 3d graph
-     together with the 2d ggraph. Outstanding. -->
-<div id="6c63a2b7" class="cell" data-execution_count="13">
+     together with the 2d ggraph. Answered below: two panels off one `rate` array,
+     one shared colour scale and one colourbar. -->
+<div id="874ea47f" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.ndimage <span class="im">import</span> gaussian_filter</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> model_dat[<span class="st">"Age"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> model_dat[<span class="st">"logIncome"</span>].to_numpy()</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> model_dat[<span class="st">"default_12m"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>x_edges <span class="op">=</span> np.linspace(<span class="dv">18</span>, <span class="dv">76</span>, <span class="dv">59</span>)</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>y_edges <span class="op">=</span> np.linspace(<span class="fl">5.5</span>, <span class="fl">9.0</span>, <span class="dv">71</span>)</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>cnt, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges])</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>dft, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges], weights<span class="op">=</span>d)</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>cnt_s <span class="op">=</span> gaussian_filter(cnt, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>dft_s <span class="op">=</span> gaussian_filter(dft, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>rate <span class="op">=</span> np.where(cnt_s <span class="op">&gt;</span> <span class="dv">8</span>, dft_s <span class="op">/</span> np.maximum(cnt_s, <span class="fl">1e-9</span>), np.nan)</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    rate.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, label<span class="op">=</span><span class="st">"smoothed default rate"</span>)</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> matplotlib.colors <span class="im">import</span> Normalize</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> model_dat[<span class="st">"Age"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> model_dat[<span class="st">"logIncome"</span>].to_numpy()</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> model_dat[<span class="st">"default_12m"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>x_edges <span class="op">=</span> np.linspace(<span class="dv">18</span>, <span class="dv">76</span>, <span class="dv">59</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>y_edges <span class="op">=</span> np.linspace(<span class="fl">5.5</span>, <span class="fl">9.0</span>, <span class="dv">71</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>cnt, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges])</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>dft, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges], weights<span class="op">=</span>d)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>cnt_s <span class="op">=</span> gaussian_filter(cnt, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>dft_s <span class="op">=</span> gaussian_filter(dft, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>rate <span class="op">=</span> np.where(cnt_s <span class="op">&gt;</span> <span class="dv">8</span>, dft_s <span class="op">/</span> np.maximum(cnt_s, <span class="fl">1e-9</span>), np.nan)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Both panels are drawn from this one array on this one scale, so the surface</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="co"># cannot disagree with the heatmap. Bin centres, not edges, carry the surface.</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>x_c <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (x_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> x_edges[<span class="dv">1</span>:])</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>y_c <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (y_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> y_edges[<span class="dv">1</span>:])</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>X_g, Y_g <span class="op">=</span> np.meshgrid(x_c, y_c, indexing<span class="op">=</span><span class="st">"ij"</span>)   <span class="co"># both (58, 70), as rate is</span></span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>norm <span class="op">=</span> Normalize(vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>fig <span class="op">=</span> plt.figure(figsize<span class="op">=</span>(<span class="fl">10.5</span>, <span class="fl">4.4</span>), layout<span class="op">=</span><span class="st">"constrained"</span>)</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> fig.add_subplot(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">1</span>)</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    rate.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>    extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, norm<span class="op">=</span>norm)</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"heatmap"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>ax3 <span class="op">=</span> fig.add_subplot(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>, projection<span class="op">=</span><span class="st">"3d"</span>)</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>ax3.plot_surface(</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a>    X_g, Y_g, rate, cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, norm<span class="op">=</span>norm,</span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a>    rcount<span class="op">=</span><span class="dv">58</span>, ccount<span class="op">=</span><span class="dv">70</span>, linewidth<span class="op">=</span><span class="dv">0</span>, edgecolor<span class="op">=</span><span class="st">"none"</span>, antialiased<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a><span class="co"># The z axis carries no label, since the colourbar already names the quantity and</span></span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a><span class="co"># a zlabel here collides with the heatmap panel's right edge.</span></span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>ax3.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax3.set_ylabel(<span class="st">"log-income"</span>)</span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>ax3.set_zlim(<span class="fl">0.1</span>, <span class="fl">0.5</span>)</span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>ax3.view_init(elev<span class="op">=</span><span class="dv">28</span>, azim<span class="op">=-</span><span class="dv">125</span>)</span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>ax3.set_box_aspect((<span class="dv">1</span>, <span class="dv">1</span>, <span class="fl">0.62</span>), zoom<span class="op">=</span><span class="fl">1.18</span>)</span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>ax3.set_title(<span class="st">"surface"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> pane <span class="kw">in</span> (ax3.xaxis.pane, ax3.yaxis.pane, ax3.zaxis.pane):</span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>    pane.set_facecolor(<span class="st">"white"</span>)<span class="op">;</span> pane.set_edgecolor(<span class="st">"0.85"</span>)</span>
+<span id="cb15-44"><a href="#cb15-44" aria-hidden="true" tabindex="-1"></a>ax3.grid(<span class="va">False</span>)</span>
+<span id="cb15-45"><a href="#cb15-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-46"><a href="#cb15-46" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, ax<span class="op">=</span>(ax, ax3), shrink<span class="op">=</span><span class="fl">0.75</span>, label<span class="op">=</span><span class="st">"smoothed default rate"</span>)</span>
+<span id="cb15-47"><a href="#cb15-47" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-14-output-1.png" width="949" height="617" class="figure-img"></p>
-<figcaption>Kernel-smoothed empirical default rate as a function of borrower age and log-income. White space marks covariate combinations too thin in the portfolio to estimate. The vertical banding reflects the income effect, the hump at young ages and the deterioration at old ages are visible along the age axis.</figcaption>
+<p><img src="01_credit-use-case_files/figure-html/cell-14-output-1.png" width="1589" height="677" class="figure-img"></p>
+<figcaption>Kernel-smoothed empirical default rate as a function of borrower age and log-income, shown twice off one smoothed array. Both panels share the colour scale 0.10 to 0.50 and the single colourbar, so a colour means the same default rate in each, and on the surface the height encodes that same rate as well as the colour. White space in the heatmap, and the gaps in the surface, mark covariate combinations too thin in the portfolio to estimate (fewer than eight effective loans after smoothing). The heatmap is the better panel for reading a value off a pair of covariates; the surface is the better panel for seeing that the joint shape is not additive, since the age profile changes its form as log-income moves rather than merely shifting up or down. Read the surface with age increasing to the right along the front edge and log-income increasing away from the viewer to the left, so its income axis runs in the opposite visual sense to the heatmap’s vertical one.</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>The heatmap shows the empirical default rate as a function of the two covariates jointly, smoothed with a Gaussian kernel; the original lecture uses loess smoothing for the same purpose. The colouring shows quite some non-linear structure, and it does not support any simple combination of the two marginal profiles. This requires regression modelling or machine learning solutions, e.g.,</p>
+<p>Both panels show the empirical default rate as a function of the two covariates jointly, smoothed with a Gaussian kernel; the original lecture uses loess smoothing for the same purpose. They are two views of one array on one colour scale, so they carry the same numbers and differ only in what they make easy to see. The heatmap is the panel to read a rate off a pair of covariates, since position and colour are both undistorted. The surface adds the one thing a flat map hides, namely the height, and with it a visual test of additivity. Were the joint effect additive, every slice along age would be the same curve, raised or lowered by the income level alone. Instead the age profile is pronounced at high incomes, where the rate runs at its highest below age 25, falls away through the middle ages and lifts again past 65, whereas at low incomes it is close to flat. Age therefore matters far more to a high-income borrower in this book than to a low-income one, and no amount of tilting a plane will reproduce that. Either way the colouring shows quite some non-linear structure, and it does not support any simple combination of the two marginal profiles. This requires regression modelling or machine learning solutions, e.g.,</p>
 <ul>
 <li>generalised linear models (GLMs)</li>
 <li>neural networks and deep learning</li>
@@ -1261,7 +1288,7 @@ n_u = \# {\cal P}_u .
 <p>for <span class="math inline">\(\boldsymbol{X} = (X_1, X_2) = (\text{Age}, \text{log-Income})\)</span> and parameter <span class="math inline">\((\beta_0, \beta_1, \beta_2)\)</span>. Where the insurance lecture’s log-link produced a model multiplicative in the <strong>frequency</strong>, the logit link produces a model multiplicative in the <strong>odds</strong> <span class="math inline">\(\mu / (1 - \mu)\)</span>; each covariate scales the odds of default by a constant factor per unit.</p>
 <section id="model-glm1-bernoulli-with-canonical-logit-link" class="level3" data-number="4.0.1">
 <h3 data-number="4.0.1" class="anchored" data-anchor-id="model-glm1-bernoulli-with-canonical-logit-link"><span class="header-section-number">4.0.1</span> Model GLM1 (Bernoulli with canonical logit link)</h3>
-<div id="069057e4" class="cell" data-execution_count="14">
+<div id="c2470ada" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
@@ -1281,7 +1308,7 @@ Model Family:                Binomial   Df Model:                            2
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -89001.
 Date:                Wed, 02 Sep 2026   Deviance:                   1.7800e+05
-Time:                        11:00:09   Pearson chi2:                 1.49e+05
+Time:                        12:18:21   Pearson chi2:                 1.49e+05
 No. Iterations:                     5   Pseudo R-squ. (CS):           0.006011
 Covariance Type:            nonrobust                                         
 ==============================================================================
@@ -1297,7 +1324,7 @@ logIncome      0.2550      0.009     28.520      0.000       0.238       0.273
 </section>
 <section id="model-glm2-categorical-age-classes" class="level3" data-number="4.0.2">
 <h3 data-number="4.0.2" class="anchored" data-anchor-id="model-glm2-categorical-age-classes"><span class="header-section-number">4.0.2</span> Model GLM2 (categorical age classes)</h3>
-<div id="30557dce" class="cell" data-execution_count="15">
+<div id="598083ca" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>glm_dat[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    glm_dat[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
@@ -1316,7 +1343,7 @@ Model Family:                Binomial   Df Model:                            8
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -88846.
 Date:                Wed, 02 Sep 2026   Deviance:                   1.7769e+05
-Time:                        11:00:09   Pearson chi2:                 1.49e+05
+Time:                        12:18:21   Pearson chi2:                 1.49e+05
 No. Iterations:                    21   Pseudo R-squ. (CS):           0.008074
 Covariance Type:            nonrobust                                         
 =====================================================================================
@@ -1335,7 +1362,7 @@ logIncome             0.2754      0.009     30.461      0.000       0.258       
 </div>
 </div>
 <p>This estimates an individual regression parameter <span class="math inline">\(\beta_j\)</span> for each age class, and the fit improves accordingly. Because of the logit link, the model has a multiplicative structure in the odds; e.g., a borrower in the <code>71+</code> class carries the same income effect as every other borrower, scaled by their own age-class odds factor.</p>
-<div id="f0b44968" class="cell" data-execution_count="16">
+<div id="00c1c3bb" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>li_med <span class="op">=</span> <span class="bu">float</span>(np.median(glm_dat[<span class="st">"logIncome"</span>]))</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.DataFrame({<span class="st">"Age"</span>: np.arange(<span class="dv">18</span>, <span class="dv">76</span>), <span class="st">"logIncome"</span>: li_med})</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>grid[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
@@ -1363,7 +1390,7 @@ logIncome             0.2754      0.009     30.461      0.000       0.258       
 </section>
 <section id="model-glm3-adding-the-confounder" class="level3" data-number="4.0.3">
 <h3 data-number="4.0.3" class="anchored" data-anchor-id="model-glm3-adding-the-confounder"><span class="header-section-number">4.0.3</span> Model GLM3 (adding the confounder)</h3>
-<div id="c2ddb8f8" class="cell" data-execution_count="17">
+<div id="d3b68435" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>glm3 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country"</span>,</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm3.summary().tables[<span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -1386,7 +1413,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 =====================================================================================</code></pre>
 </div>
 </div>
-<div id="8977ef6e" class="cell" data-execution_count="18">
+<div id="39cf4732" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>comparison <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"deviance"</span>: [glm1.deviance, glm2.deviance, glm3.deviance],</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AIC"</span>: [glm1.aic, glm2.aic, glm3.aic],</span>
@@ -1395,7 +1422,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        glm3.params[<span class="st">"logIncome"</span>]],</span>
 <span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>[<span class="st">"GLM1"</span>, <span class="st">"GLM2"</span>, <span class="st">"GLM3"</span>])</span>
 <span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>comparison.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="18">
+<div class="cell-output cell-output-display" data-execution_count="58">
 <div>
 
 
@@ -1434,7 +1461,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 </div>
 </div>
 <p>Conditioning on country flips the income coefficient negative, i.e., within a country, higher income now reduces the odds of default, exactly as the quintile curves showed and as underwriting intuition demands. The wrongly signed coefficient was evidence about the portfolio’s composition all along, and it had to be explained before the model could be believed. This is worth carrying through the whole lecture series, because deep learning models absorb such composition effects silently, and in credit they must be found and explained before a model is used.</p>
-<div id="506b6dff" class="cell" data-execution_count="19">
+<div id="97d4cf1e" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>gx <span class="op">=</span> (x_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> x_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>gy <span class="op">=</span> (y_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> y_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>gxx, gyy <span class="op">=</span> np.meshgrid(gx, gy, indexing<span class="op">=</span><span class="st">"ij"</span>)</span>
@@ -1469,7 +1496,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <section id="gradient-boosting-machine" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Gradient boosting machine</h1>
 <p>As a first machine learning regression model, we present a gradient boosting machine (GBM). GBMs belong to the most powerful techniques on tabular data, in particular the powerful versions like XGBoost, LightGBM or CatBoost; on credit bureau data they remain the benchmark to beat in most published comparisons. A GBM partitions the covariate space into different (homogeneous) subsets and estimates the default rate on each subset. We fit scikit-learn’s histogram-based implementation on the two selected covariates and only present the resulting heatmap; GBMs are not further studied in this series.</p>
-<div id="ea07207e" class="cell" data-execution_count="20">
+<div id="37e873b4" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> HistGradientBoostingClassifier</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>gbm <span class="op">=</span> HistGradientBoostingClassifier(</span>

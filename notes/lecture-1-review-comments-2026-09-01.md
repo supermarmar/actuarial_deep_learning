@@ -161,5 +161,20 @@ lectures** rather than edits to lecture 1, so each has a plan of its own under
    the macro state. Research and notation contract in `notes/ifrs9-pit-pd-research.md`.
 2. Planned, not implemented. See `notes/plans/02-irb-capital-lecture.md`.
 3. Planned, not implemented. See `notes/plans/03-causal-inference-lecture.md`.
-4. Treated as a small change to lecture 1 rather than a plan, and mirrored into the
-   `.qmd` at the figure so it survives the next render. Outstanding.
+4. **Answered on 2 September 2026.** Treated as a small change to lecture 1 rather than a
+   plan, and mirrored into the `.qmd` at the figure so it survives the next render. The
+   figure is now two panels, a heatmap beside a `plot_surface` view, and the guard against
+   the obvious failure is that both are drawn from the one smoothed `rate` array on one
+   `Normalize(0.1, 0.5)` under one colourbar, so the surface cannot disagree with the map.
+   Three details were easy to get wrong. The surface takes bin **centres** rather than
+   edges, since `linspace(18, 76, 59)` and `linspace(5.5, 9.0, 71)` give 58 and 70 bins and
+   `rate` is therefore `(58, 70)`, which `np.meshgrid(..., indexing="ij")` matches without a
+   silent transpose. The `cnt_s > 8` NaN mask is kept on both panels, because the white
+   space is the honest part of the figure. And the `elev=28, azim=-125` view was chosen over
+   matplotlib's default `-58`, which throws the z-axis furniture into the colourbar; the
+   z-axis label is dropped for the same reason, the colourbar already naming the quantity.
+   The prose beside the figure now argues the interaction the surface makes visible: the age
+   profile is pronounced at high incomes and close to flat at low ones, so no tilted plane
+   reproduces it. A first draft of that sentence placed the ridge on the low-income edge,
+   which the rendered figure contradicts, and it was corrected against the render rather
+   than against expectation.
