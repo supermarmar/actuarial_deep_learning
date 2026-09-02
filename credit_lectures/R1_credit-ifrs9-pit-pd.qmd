@@ -1,0 +1,124 @@
+---
+title: "Credit Lecture R1: Point-in-Time PD and the IFRS 9 Term Structure"
+subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
+author: "Mario Ervedosa"
+date: "2026-09-02"
+abstract: >
+  Credit lecture 1 defined a point-in-time PD in a callout and then admitted it
+  could not fit one, because a twelve-month cross-section leaves vintage and
+  calendar month collinear. This lecture takes the callout apart and rebuilds it.
+  Two conditioning axes are doing the work and they are routinely confused: one
+  runs from conditional to unconditional and asks whether the loan has survived
+  to the start of the window, the other runs from point-in-time to
+  through-the-cycle and asks what the macroeconomy is doing. Separating them
+  gives a two-by-two map, and the map is what makes the rest legible: the term
+  structure IFRS 9 needs, forward-looking information and the FiT PD it produces,
+  the eleven ways the estimate is actually built and what each costs, and a
+  demonstration on the Bondora book expanded to 2.7 million loan-months with real
+  Eurostat series attached, where the collinearity lecture 1 complained about
+  breaks and a macro coefficient is finally identified.
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    # Render with scripts/render_lecture.sh, not bare `quarto render`.
+    css: ../lectures/lecture.css
+    embed-resources: false
+    fig-width: 9
+    fig-height: 4
+    fig-dpi: 150
+execute:
+  echo: true
+  warning: false
+jupyter: python3
+---
+
+# Where lecture 1 stopped
+
+<!-- Intent: state the debt this lecture pays and the notation it inherits. -->
+
+# The two conditioning axes
+
+<!-- Intent: the section that earns the lecture. Define the hazard, build
+survival and the marginal and cumulative PDs from it, then separate the survival
+axis from the macro axis and cross them in one table. -->
+
+## The conditional PD is a hazard
+
+## Survival, the marginal PD and the cumulative PD
+
+## The macro axis is a different question
+
+## The map
+
+## What competing risks do to all four cells
+
+# Macro conditioning, forward-looking information and the FiT PD
+
+<!-- Intent: introduce IFRS 9's own wording, then the course's FiT label, settle
+which of the guides' two FiT definitions the series adopts, and state the design
+problem honestly. -->
+
+## What the standard actually requires
+
+## Two ways to put the macroeconomy in, and only one of them is closed
+
+## The expected credit loss this serves
+
+## Two or three cycles against dozens of indicators
+
+## Age, period and cohort: how the collinearity breaks
+
+# How the estimate is actually produced
+
+<!-- Intent: the methods review the review comment asked for. One subsection per
+method, each with what it buys and what it costs, then one comparison table. -->
+
+## The discrete-time hazard model
+
+## Markov chains and the two assumptions they need
+
+## Beta regression on the transition cells
+
+## Multinomial logistic regression on the transitions
+
+## Cox regression with time-varying macro covariates
+
+## Recurrent events: Andersen-Gill and Prentice-Williams-Peterson
+
+## Vasicek Z-factor scaling of a through-the-cycle grade PD
+
+## The age-period-cohort decomposition
+
+## Two methods an actuary already owns
+
+## The comparison
+
+# The demonstration on Bondora
+
+<!-- Intent: prove the point-in-time claim rather than assert it. Expand to
+person-periods, index by calendar month, attach Eurostat series, fit with and
+without the macro block, and show the term structure move under two macro
+paths. -->
+
+## The person-period expansion, indexed by calendar month
+
+## The portfolio default rate as a time series
+
+## Attaching the macroeconomy
+
+## Two macro paths, two term structures
+
+## What this demonstration does not show
+
+# What stays with the IRB lecture
+
+<!-- Intent: hand the hybrid PD, the long-run average and the capital formula to
+R2, so the two lectures do not overlap. -->
+
+# Takeaways
+
+# Copyright and attribution {.unnumbered}
+
+# References {.unnumbered}

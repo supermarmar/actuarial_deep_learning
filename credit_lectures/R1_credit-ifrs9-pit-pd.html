@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-02">
+
+<title>Credit Lecture R1: Point-in-Time PD and the IFRS 9 Term Structure</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-lecture-1-stopped" id="toc-where-lecture-1-stopped" class="nav-link active" data-scroll-target="#where-lecture-1-stopped"><span class="header-section-number">1</span> Where lecture 1 stopped</a></li>
+  <li><a href="#the-two-conditioning-axes" id="toc-the-two-conditioning-axes" class="nav-link" data-scroll-target="#the-two-conditioning-axes"><span class="header-section-number">2</span> The two conditioning axes</a>
+  <ul class="collapse">
+  <li><a href="#the-conditional-pd-is-a-hazard" id="toc-the-conditional-pd-is-a-hazard" class="nav-link" data-scroll-target="#the-conditional-pd-is-a-hazard"><span class="header-section-number">2.1</span> The conditional PD is a hazard</a></li>
+  <li><a href="#survival-the-marginal-pd-and-the-cumulative-pd" id="toc-survival-the-marginal-pd-and-the-cumulative-pd" class="nav-link" data-scroll-target="#survival-the-marginal-pd-and-the-cumulative-pd"><span class="header-section-number">2.2</span> Survival, the marginal PD and the cumulative PD</a></li>
+  <li><a href="#the-macro-axis-is-a-different-question" id="toc-the-macro-axis-is-a-different-question" class="nav-link" data-scroll-target="#the-macro-axis-is-a-different-question"><span class="header-section-number">2.3</span> The macro axis is a different question</a></li>
+  <li><a href="#the-map" id="toc-the-map" class="nav-link" data-scroll-target="#the-map"><span class="header-section-number">2.4</span> The map</a></li>
+  <li><a href="#what-competing-risks-do-to-all-four-cells" id="toc-what-competing-risks-do-to-all-four-cells" class="nav-link" data-scroll-target="#what-competing-risks-do-to-all-four-cells"><span class="header-section-number">2.5</span> What competing risks do to all four cells</a></li>
+  </ul></li>
+  <li><a href="#macro-conditioning-forward-looking-information-and-the-fit-pd" id="toc-macro-conditioning-forward-looking-information-and-the-fit-pd" class="nav-link" data-scroll-target="#macro-conditioning-forward-looking-information-and-the-fit-pd"><span class="header-section-number">3</span> Macro conditioning, forward-looking information and the FiT PD</a>
+  <ul class="collapse">
+  <li><a href="#what-the-standard-actually-requires" id="toc-what-the-standard-actually-requires" class="nav-link" data-scroll-target="#what-the-standard-actually-requires"><span class="header-section-number">3.1</span> What the standard actually requires</a></li>
+  <li><a href="#two-ways-to-put-the-macroeconomy-in-and-only-one-of-them-is-closed" id="toc-two-ways-to-put-the-macroeconomy-in-and-only-one-of-them-is-closed" class="nav-link" data-scroll-target="#two-ways-to-put-the-macroeconomy-in-and-only-one-of-them-is-closed"><span class="header-section-number">3.2</span> Two ways to put the macroeconomy in, and only one of them is closed</a></li>
+  <li><a href="#the-expected-credit-loss-this-serves" id="toc-the-expected-credit-loss-this-serves" class="nav-link" data-scroll-target="#the-expected-credit-loss-this-serves"><span class="header-section-number">3.3</span> The expected credit loss this serves</a></li>
+  <li><a href="#two-or-three-cycles-against-dozens-of-indicators" id="toc-two-or-three-cycles-against-dozens-of-indicators" class="nav-link" data-scroll-target="#two-or-three-cycles-against-dozens-of-indicators"><span class="header-section-number">3.4</span> Two or three cycles against dozens of indicators</a></li>
+  <li><a href="#age-period-and-cohort-how-the-collinearity-breaks" id="toc-age-period-and-cohort-how-the-collinearity-breaks" class="nav-link" data-scroll-target="#age-period-and-cohort-how-the-collinearity-breaks"><span class="header-section-number">3.5</span> Age, period and cohort: how the collinearity breaks</a></li>
+  </ul></li>
+  <li><a href="#how-the-estimate-is-actually-produced" id="toc-how-the-estimate-is-actually-produced" class="nav-link" data-scroll-target="#how-the-estimate-is-actually-produced"><span class="header-section-number">4</span> How the estimate is actually produced</a>
+  <ul class="collapse">
+  <li><a href="#the-discrete-time-hazard-model" id="toc-the-discrete-time-hazard-model" class="nav-link" data-scroll-target="#the-discrete-time-hazard-model"><span class="header-section-number">4.1</span> The discrete-time hazard model</a></li>
+  <li><a href="#markov-chains-and-the-two-assumptions-they-need" id="toc-markov-chains-and-the-two-assumptions-they-need" class="nav-link" data-scroll-target="#markov-chains-and-the-two-assumptions-they-need"><span class="header-section-number">4.2</span> Markov chains and the two assumptions they need</a></li>
+  <li><a href="#beta-regression-on-the-transition-cells" id="toc-beta-regression-on-the-transition-cells" class="nav-link" data-scroll-target="#beta-regression-on-the-transition-cells"><span class="header-section-number">4.3</span> Beta regression on the transition cells</a></li>
+  <li><a href="#multinomial-logistic-regression-on-the-transitions" id="toc-multinomial-logistic-regression-on-the-transitions" class="nav-link" data-scroll-target="#multinomial-logistic-regression-on-the-transitions"><span class="header-section-number">4.4</span> Multinomial logistic regression on the transitions</a></li>
+  <li><a href="#cox-regression-with-time-varying-macro-covariates" id="toc-cox-regression-with-time-varying-macro-covariates" class="nav-link" data-scroll-target="#cox-regression-with-time-varying-macro-covariates"><span class="header-section-number">4.5</span> Cox regression with time-varying macro covariates</a></li>
+  <li><a href="#recurrent-events-andersen-gill-and-prentice-williams-peterson" id="toc-recurrent-events-andersen-gill-and-prentice-williams-peterson" class="nav-link" data-scroll-target="#recurrent-events-andersen-gill-and-prentice-williams-peterson"><span class="header-section-number">4.6</span> Recurrent events: Andersen-Gill and Prentice-Williams-Peterson</a></li>
+  <li><a href="#vasicek-z-factor-scaling-of-a-through-the-cycle-grade-pd" id="toc-vasicek-z-factor-scaling-of-a-through-the-cycle-grade-pd" class="nav-link" data-scroll-target="#vasicek-z-factor-scaling-of-a-through-the-cycle-grade-pd"><span class="header-section-number">4.7</span> Vasicek Z-factor scaling of a through-the-cycle grade PD</a></li>
+  <li><a href="#the-age-period-cohort-decomposition" id="toc-the-age-period-cohort-decomposition" class="nav-link" data-scroll-target="#the-age-period-cohort-decomposition"><span class="header-section-number">4.8</span> The age-period-cohort decomposition</a></li>
+  <li><a href="#two-methods-an-actuary-already-owns" id="toc-two-methods-an-actuary-already-owns" class="nav-link" data-scroll-target="#two-methods-an-actuary-already-owns"><span class="header-section-number">4.9</span> Two methods an actuary already owns</a></li>
+  <li><a href="#the-comparison" id="toc-the-comparison" class="nav-link" data-scroll-target="#the-comparison"><span class="header-section-number">4.10</span> The comparison</a></li>
+  </ul></li>
+  <li><a href="#the-demonstration-on-bondora" id="toc-the-demonstration-on-bondora" class="nav-link" data-scroll-target="#the-demonstration-on-bondora"><span class="header-section-number">5</span> The demonstration on Bondora</a>
+  <ul class="collapse">
+  <li><a href="#the-person-period-expansion-indexed-by-calendar-month" id="toc-the-person-period-expansion-indexed-by-calendar-month" class="nav-link" data-scroll-target="#the-person-period-expansion-indexed-by-calendar-month"><span class="header-section-number">5.1</span> The person-period expansion, indexed by calendar month</a></li>
+  <li><a href="#the-portfolio-default-rate-as-a-time-series" id="toc-the-portfolio-default-rate-as-a-time-series" class="nav-link" data-scroll-target="#the-portfolio-default-rate-as-a-time-series"><span class="header-section-number">5.2</span> The portfolio default rate as a time series</a></li>
+  <li><a href="#attaching-the-macroeconomy" id="toc-attaching-the-macroeconomy" class="nav-link" data-scroll-target="#attaching-the-macroeconomy"><span class="header-section-number">5.3</span> Attaching the macroeconomy</a></li>
+  <li><a href="#two-macro-paths-two-term-structures" id="toc-two-macro-paths-two-term-structures" class="nav-link" data-scroll-target="#two-macro-paths-two-term-structures"><span class="header-section-number">5.4</span> Two macro paths, two term structures</a></li>
+  <li><a href="#what-this-demonstration-does-not-show" id="toc-what-this-demonstration-does-not-show" class="nav-link" data-scroll-target="#what-this-demonstration-does-not-show"><span class="header-section-number">5.5</span> What this demonstration does not show</a></li>
+  </ul></li>
+  <li><a href="#what-stays-with-the-irb-lecture" id="toc-what-stays-with-the-irb-lecture" class="nav-link" data-scroll-target="#what-stays-with-the-irb-lecture"><span class="header-section-number">6</span> What stays with the IRB lecture</a></li>
+  <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways"><span class="header-section-number">7</span> Takeaways</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture R1: Point-in-Time PD and the IFRS 9 Term Structure</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 2, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Credit lecture 1 defined a point-in-time PD in a callout and then admitted it could not fit one, because a twelve-month cross-section leaves vintage and calendar month collinear. This lecture takes the callout apart and rebuilds it. Two conditioning axes are doing the work and they are routinely confused: one runs from conditional to unconditional and asks whether the loan has survived to the start of the window, the other runs from point-in-time to through-the-cycle and asks what the macroeconomy is doing. Separating them gives a two-by-two map, and the map is what makes the rest legible: the term structure IFRS 9 needs, forward-looking information and the FiT PD it produces, the eleven ways the estimate is actually built and what each costs, and a demonstration on the Bondora book expanded to 2.7 million loan-months with real Eurostat series attached, where the collinearity lecture 1 complained about breaks and a macro coefficient is finally identified.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="where-lecture-1-stopped" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Where lecture 1 stopped</h1>
+<!-- Intent: state the debt this lecture pays and the notation it inherits. -->
+</section>
+<section id="the-two-conditioning-axes" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> The two conditioning axes</h1>
+<!-- Intent: the section that earns the lecture. Define the hazard, build
+survival and the marginal and cumulative PDs from it, then separate the survival
+axis from the macro axis and cross them in one table. -->
+<section id="the-conditional-pd-is-a-hazard" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="the-conditional-pd-is-a-hazard"><span class="header-section-number">2.1</span> The conditional PD is a hazard</h2>
+</section>
+<section id="survival-the-marginal-pd-and-the-cumulative-pd" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="survival-the-marginal-pd-and-the-cumulative-pd"><span class="header-section-number">2.2</span> Survival, the marginal PD and the cumulative PD</h2>
+</section>
+<section id="the-macro-axis-is-a-different-question" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="the-macro-axis-is-a-different-question"><span class="header-section-number">2.3</span> The macro axis is a different question</h2>
+</section>
+<section id="the-map" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="the-map"><span class="header-section-number">2.4</span> The map</h2>
+</section>
+<section id="what-competing-risks-do-to-all-four-cells" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="what-competing-risks-do-to-all-four-cells"><span class="header-section-number">2.5</span> What competing risks do to all four cells</h2>
+</section>
+</section>
+<section id="macro-conditioning-forward-looking-information-and-the-fit-pd" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Macro conditioning, forward-looking information and the FiT PD</h1>
+<!-- Intent: introduce IFRS 9's own wording, then the course's FiT label, settle
+which of the guides' two FiT definitions the series adopts, and state the design
+problem honestly. -->
+<section id="what-the-standard-actually-requires" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="what-the-standard-actually-requires"><span class="header-section-number">3.1</span> What the standard actually requires</h2>
+</section>
+<section id="two-ways-to-put-the-macroeconomy-in-and-only-one-of-them-is-closed" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="two-ways-to-put-the-macroeconomy-in-and-only-one-of-them-is-closed"><span class="header-section-number">3.2</span> Two ways to put the macroeconomy in, and only one of them is closed</h2>
+</section>
+<section id="the-expected-credit-loss-this-serves" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="the-expected-credit-loss-this-serves"><span class="header-section-number">3.3</span> The expected credit loss this serves</h2>
+</section>
+<section id="two-or-three-cycles-against-dozens-of-indicators" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="two-or-three-cycles-against-dozens-of-indicators"><span class="header-section-number">3.4</span> Two or three cycles against dozens of indicators</h2>
+</section>
+<section id="age-period-and-cohort-how-the-collinearity-breaks" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="age-period-and-cohort-how-the-collinearity-breaks"><span class="header-section-number">3.5</span> Age, period and cohort: how the collinearity breaks</h2>
+</section>
+</section>
+<section id="how-the-estimate-is-actually-produced" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> How the estimate is actually produced</h1>
+<!-- Intent: the methods review the review comment asked for. One subsection per
+method, each with what it buys and what it costs, then one comparison table. -->
+<section id="the-discrete-time-hazard-model" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="the-discrete-time-hazard-model"><span class="header-section-number">4.1</span> The discrete-time hazard model</h2>
+</section>
+<section id="markov-chains-and-the-two-assumptions-they-need" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="markov-chains-and-the-two-assumptions-they-need"><span class="header-section-number">4.2</span> Markov chains and the two assumptions they need</h2>
+</section>
+<section id="beta-regression-on-the-transition-cells" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="beta-regression-on-the-transition-cells"><span class="header-section-number">4.3</span> Beta regression on the transition cells</h2>
+</section>
+<section id="multinomial-logistic-regression-on-the-transitions" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="multinomial-logistic-regression-on-the-transitions"><span class="header-section-number">4.4</span> Multinomial logistic regression on the transitions</h2>
+</section>
+<section id="cox-regression-with-time-varying-macro-covariates" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="cox-regression-with-time-varying-macro-covariates"><span class="header-section-number">4.5</span> Cox regression with time-varying macro covariates</h2>
+</section>
+<section id="recurrent-events-andersen-gill-and-prentice-williams-peterson" class="level2" data-number="4.6">
+<h2 data-number="4.6" class="anchored" data-anchor-id="recurrent-events-andersen-gill-and-prentice-williams-peterson"><span class="header-section-number">4.6</span> Recurrent events: Andersen-Gill and Prentice-Williams-Peterson</h2>
+</section>
+<section id="vasicek-z-factor-scaling-of-a-through-the-cycle-grade-pd" class="level2" data-number="4.7">
+<h2 data-number="4.7" class="anchored" data-anchor-id="vasicek-z-factor-scaling-of-a-through-the-cycle-grade-pd"><span class="header-section-number">4.7</span> Vasicek Z-factor scaling of a through-the-cycle grade PD</h2>
+</section>
+<section id="the-age-period-cohort-decomposition" class="level2" data-number="4.8">
+<h2 data-number="4.8" class="anchored" data-anchor-id="the-age-period-cohort-decomposition"><span class="header-section-number">4.8</span> The age-period-cohort decomposition</h2>
+</section>
+<section id="two-methods-an-actuary-already-owns" class="level2" data-number="4.9">
+<h2 data-number="4.9" class="anchored" data-anchor-id="two-methods-an-actuary-already-owns"><span class="header-section-number">4.9</span> Two methods an actuary already owns</h2>
+</section>
+<section id="the-comparison" class="level2" data-number="4.10">
+<h2 data-number="4.10" class="anchored" data-anchor-id="the-comparison"><span class="header-section-number">4.10</span> The comparison</h2>
+</section>
+</section>
+<section id="the-demonstration-on-bondora" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> The demonstration on Bondora</h1>
+<!-- Intent: prove the point-in-time claim rather than assert it. Expand to
+person-periods, index by calendar month, attach Eurostat series, fit with and
+without the macro block, and show the term structure move under two macro
+paths. -->
+<section id="the-person-period-expansion-indexed-by-calendar-month" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="the-person-period-expansion-indexed-by-calendar-month"><span class="header-section-number">5.1</span> The person-period expansion, indexed by calendar month</h2>
+</section>
+<section id="the-portfolio-default-rate-as-a-time-series" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="the-portfolio-default-rate-as-a-time-series"><span class="header-section-number">5.2</span> The portfolio default rate as a time series</h2>
+</section>
+<section id="attaching-the-macroeconomy" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="attaching-the-macroeconomy"><span class="header-section-number">5.3</span> Attaching the macroeconomy</h2>
+</section>
+<section id="two-macro-paths-two-term-structures" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="two-macro-paths-two-term-structures"><span class="header-section-number">5.4</span> Two macro paths, two term structures</h2>
+</section>
+<section id="what-this-demonstration-does-not-show" class="level2" data-number="5.5">
+<h2 data-number="5.5" class="anchored" data-anchor-id="what-this-demonstration-does-not-show"><span class="header-section-number">5.5</span> What this demonstration does not show</h2>
+</section>
+</section>
+<section id="what-stays-with-the-irb-lecture" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> What stays with the IRB lecture</h1>
+<!-- Intent: hand the hybrid PD, the long-run average and the capital formula to
+R2, so the two lectures do not overlap. -->
+</section>
+<section id="takeaways" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Takeaways</h1>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>
