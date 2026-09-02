@@ -187,7 +187,7 @@ window.Quarto = {
 <p>Generally, raw data needs <strong>data cleaning</strong>, e.g., correcting for data errors, inputting missing values, merging partial information, etc. The Bondora extract is raw in exactly this sense. Missing values arrive as empty strings, decimals are written like <code>.6800</code>, and 53 loans carry a borrower age below 18, Bondora’s contractual minimum. The cleaning applied here lives in <code>scripts/convert_credit_data.py</code>, which also selects the columns a lender would hold <strong>at application time</strong> and derives the default outcome defined below. Post-origination columns (payment histories, recoveries, balances and the platform’s own loss estimates) are excluded from the modelling table by construction, because they leak the outcome into the covariates.</p>
 <section id="load-and-illustrate-the-bondora-data" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="load-and-illustrate-the-bondora-data"><span class="header-section-number">1.1</span> Load and illustrate the Bondora data</h2>
-<div id="bb92dc96" class="cell" data-execution_count="1">
+<div id="db38fecd" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
@@ -198,7 +198,7 @@ window.Quarto = {
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>     <span class="st">"LoanDuration"</span>, <span class="st">"Education"</span>, <span class="st">"IncomeTotal"</span>, <span class="st">"DebtToIncome"</span>, <span class="st">"Rating"</span>,</span>
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>     <span class="st">"default_12m"</span>]</span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>).head(<span class="dv">6</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="20">
+<div class="cell-output cell-output-display" data-execution_count="21">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -476,7 +476,7 @@ window.Quarto = {
 <p>At the extract date 57,774 loans were still current. A loan originated three months earlier has had no time to default, and scoring it a non-default would bias every estimate downwards. The event time exists; we have simply not waited long enough to see it. That is <strong>right-censoring</strong>.</p>
 <p>Life insurance meets the identical problem whenever a mortality rate is calibrated. A life observed from entry to a census date, still alive at the census, tells you it survived that far and nothing more. The denominator of <span class="math inline">\(q_x\)</span> therefore counts time actually at risk rather than lives, and the central exposed to risk is precisely that denominator. Lives entering part-way through the rate year contribute part-years, and lives withdrawing contribute only up to withdrawal.</p>
 <p>General insurance escapes the problem. The exposure <span class="math inline">\(v_i\)</span> is the earned policy period, which is measured and complete once the period has run, so no latent event date waits beyond the edge of the data. Incompleteness in general insurance sits instead in claim reporting and development, i.e.&nbsp;IBNR and IBNER, and that is a question about the size and timing of claims arising on a known exposure. Life and credit share right-censoring because both wait on an absorbing event whose date may fall outside the observation window; general insurance counts events inside a window it has already observed in full.</p>
-<div id="bb36e577" class="cell" data-execution_count="2">
+<div id="a778bf71" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datetime <span class="im">as</span> dt</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.dates <span class="im">as</span> mdates</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -570,7 +570,7 @@ n(k) = \# {\cal W}_k ,
 <p>where <span class="math inline">\(\# {\cal W}_k\)</span> denotes the number of elements of the set, its cardinality. The second equality for <span class="math inline">\(D_i^{(k)}\)</span> is worth pausing on, because it is Botha’s <strong>worst-ever</strong> aggregation appearing here already: a loan that breaches and then cures still scores a one, since the maximum over the window remembers the breach. The same device returns in the next section as the ingredient of a point-in-time default rate.</p>
 <p>The retention rule <span class="math inline">\({\cal W}_k\)</span> keeps only loans whose <strong>w</strong>indow had closed by the snapshot, so every retained loan carries a complete observation. It takes a plain letter deliberately: <span class="math inline">\(\mathcal{L}\)</span> is the loss function throughout the summer school lectures, and reusing it here would collide. Setting <span class="math inline">\(k = 12\)</span> reproduces <code>default_12m</code> exactly, at <span class="math inline">\(n(12) = 148{,}733\)</span> loans, and that is what the rest of this lecture uses. Every formula from here on carries <span class="math inline">\(k\)</span>, so nothing needs rewriting when the window moves. Note also that <span class="math inline">\(k\)</span> is the outcome period of the callout above, i.e.&nbsp;the third of Botha’s three dials.</p>
 <p>The window is not a free parameter in practice, and the cost of moving it shows up immediately.</p>
-<div id="3d49343b" class="cell" data-execution_count="3">
+<div id="2398ba6f" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pl.read_parquet(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/bondora_raw.parquet"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"ReportAsOfEOD"</span>, <span class="st">"LoanDate"</span>, <span class="st">"DefaultDate"</span>],</span>
@@ -592,7 +592,7 @@ n(k) = \# {\cal W}_k ,
 <span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> kept <span class="kw">in</span> [raw.<span class="bu">filter</span>(pl.col(<span class="st">"A"</span>) <span class="op">&gt;=</span> k)]</span>
 <span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    ]</span>
 <span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="22">
+<div class="cell-output cell-output-display" data-execution_count="23">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -714,6 +714,41 @@ n(k) = \# {\cal W}_k ,
 {}_k p_{i,t} = \mathbb{P}\left( \text{loan } i, \text{ now } t \text{ months on book, survives a further } k \text{ months} \right),
 \]</span></p>
 <p>which has exactly the shape of <span class="math inline">\({}_t p_x\)</span> with <span class="math inline">\((k, t)\)</span> in the roles of <span class="math inline">\((t, x)\)</span>. Note that <span class="math inline">\(t\)</span> is therefore unbounded by <span class="math inline">\(k\)</span>: a loan can be forty months on book and still be asked about over the next twelve.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="The same statement in life-table notation">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The same statement in life-table notation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Write the same thing as a life table and the correspondence becomes mechanical. Fix a vintage <span class="math inline">\(g\)</span> and follow its loans forward. Let <span class="math inline">\(l_t\)</span> count the loans of that vintage still in force and performing at <span class="math inline">\(t\)</span> months on book, <span class="math inline">\(l_0\)</span> being the number originated, and let <span class="math inline">\(d^{\rm def}_t\)</span> and <span class="math inline">\(d^{\rm set}_t\)</span> count those leaving between <span class="math inline">\(t\)</span> and <span class="math inline">\(t + 1\)</span> by default and by settlement. The cohort runs down as</p>
+<p><span class="math display">\[
+l_{t+1} = l_t - d^{\rm def}_t - d^{\rm set}_t ,
+\]</span></p>
+<p>so a ratio of two of those counts is a conditional survival probability,</p>
+<p><span class="math display">\[
+\frac{l_{k+t}}{l_t} = \mathbb{P}\left( \text{in force and performing at } k + t
+\,\middle|\, \text{in force and performing at } t \right) .
+\]</span></p>
+<p>Where default is the only way out, i.e.&nbsp;<span class="math inline">\(d^{\rm set}_t \equiv 0\)</span>, that ratio is exactly the object the paragraph above named, now written through the time to default <span class="math inline">\(T_i\)</span> of section 2.4:</p>
+<p><span class="math display">\[
+{}_k p_t = \frac{l_{k+t}}{l_t} = \mathbb{P}\left( T_i &gt; k + t \,\middle|\, T_i &gt; t \right) ,
+\qquad
+{}_k q_t = 1 - {}_k p_t = \frac{l_t - l_{k+t}}{l_t}
+= \frac{1}{l_t} \sum_{s = t}^{k + t - 1} d^{\rm def}_s .
+\]</span></p>
+<p>The subscript <span class="math inline">\(i\)</span> has gone because a life table is a statement about a cohort; <span class="math inline">\({}_k p_{i,t}\)</span> above is the loan-level version of the same quantity. The conditioning event <span class="math inline">\(\{T_i &gt; t\}\)</span> is what “loans that have never defaulted” amounts to formally. <span class="math inline">\({}_k p_t\)</span> is asked of the survivors alone, exactly as <span class="math inline">\({}_t p_x\)</span> is asked of the lives who reached age <span class="math inline">\(x\)</span>, and a defaulted loan has left the table for good, since default is absorbing.</p>
+<p>Setting <span class="math inline">\(t = 0\)</span> recovers this lecture’s own outcome. <span class="math inline">\(T_i \ge 1\)</span> by construction, so <span class="math inline">\(\{T_i &gt; 0\}\)</span> is the whole cohort and</p>
+<p><span class="math display">\[
+{}_k q_0 = \mathbb{P}\left( T_i \le k \right) = \mathbb{E}\left[ D_i^{(k)} \right] ,
+\]</span></p>
+<p>which at <span class="math inline">\(k = 12\)</span> is the portfolio default rate the previous section tabulated. The fixed-horizon flag is the first row of this table and nothing more, and the rows beneath it are the term structure lecture S1 goes after. Read <span class="math inline">\({}_k q_0\)</span> there as the pure-default probability, since <span class="math inline">\(D_i^{(k)}\)</span> is built from the monthly flags <span class="math inline">\(y_{i,t}\)</span> rather than from the counts <span class="math inline">\(l_t\)</span>; the ratio <span class="math inline">\((l_0 - l_k) / l_0\)</span> recovers the same number only under the assumption the next paragraph examines.</p>
+<p>Settlement, however, is common. The survival table built in <code>scripts/convert_credit_data.py</code> counts 42,144 loans settling against 71,416 defaulting, so <span class="math inline">\(l_{k+t} / l_t\)</span> as measured on Bondora is a <strong>multiple-decrement</strong> probability, the credit twin of a life table carrying withdrawals. Reading it as a default probability means treating settlement as censoring, which assumes the two decrements independent given the covariates. Lecture S2 takes that assumption apart and supplies the Fine and Gray correction for where it fails.</p>
+</div>
+</div>
 <p>Borrower age deserves a warning rather than a row in that table. It is written <span class="math inline">\(x_i\)</span> here and it is a genuine and useful covariate, entering the models later in this lecture as an age class. Nevertheless it is <strong>not</strong> the credit twin of the actuarial <span class="math inline">\(x\)</span>, and treating it as one is the most common false friend in this translation. Two borrowers of different ages whose loans are both twelve months old sit at the same point on the loan’s survival curve; their ages shift the level of the curve without indexing it.</p>
 <p>The three axes are then bound by an identity. For loan <span class="math inline">\(i\)</span> observed at <span class="math inline">\(t\)</span> months on book, the calendar month is</p>
 <p><span class="math display">\[
@@ -722,10 +757,127 @@ u = g_i + t ,
 <p>and the subscript is dropped only when the axes are discussed as axes rather than as quantities attached to a particular loan.</p>
 <p>Only two of the three are ever free. Demographers know this as the age-period-cohort identification problem, and with <span class="math inline">\(t\)</span> read as the loan’s attained age the correspondence is exact: <strong>age</strong> is months on book <span class="math inline">\(t\)</span>, <strong>period</strong> is calendar month <span class="math inline">\(u\)</span>, and <strong>cohort</strong> is vintage <span class="math inline">\(g\)</span>. That is why a mortality model indexed by all three needs a constraint imposed by hand instead of estimated, and credit inherits the problem whole. Breeden’s age-period-cohort decomposition of loan-level performance is the same identity in credit clothing, splitting observed performance into a lifecycle in <span class="math inline">\(t\)</span>, an environment in <span class="math inline">\(u\)</span> and a credit-quality effect in <span class="math inline">\(g\)</span>.</p>
 <p>One property of this extract now does more damage than it appears to. <code>ReportAsOfEOD</code> takes a single value across all 179,235 rows, 20 July 2021. The snapshot <span class="math inline">\(\tau\)</span> is therefore a constant rather than a per-row field, and the extract holds one cross-section where a panel would hold many. What that costs is taken up once the PD itself has been defined, in the callout closing the next section.</p>
+<p>Five real loans put every symbol of this section on a row. One per censoring pattern, picked as the lowest <code>LoanNumber</code> matching each, so the selection is reproducible rather than sampled. That rule reaches for the oldest loans on the platform, which is why three of the five carry the March 2009 vintage.</p>
+<div id="a07c64ab" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ex <span class="op">=</span> pl.read_parquet(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"../data/bondora_raw.parquet"</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    columns<span class="op">=</span>[<span class="st">"LoanNumber"</span>, <span class="st">"LoanDate"</span>, <span class="st">"DefaultDate"</span>, <span class="st">"Status"</span>],</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>).with_columns(</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    g<span class="op">=</span>pl.col(<span class="st">"LoanDate"</span>).dt.strftime(<span class="st">"%Y-%m"</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    A<span class="op">=</span>(pl.lit(tau) <span class="op">-</span> pl.col(<span class="st">"LoanDate"</span>)).dt.total_days() <span class="op">/</span> MONTH,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    T<span class="op">=</span>(pl.col(<span class="st">"DefaultDate"</span>) <span class="op">-</span> pl.col(<span class="st">"LoanDate"</span>)).dt.total_days() <span class="op">/</span> MONTH,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>).with_columns(retained<span class="op">=</span>pl.col(<span class="st">"A"</span>) <span class="op">&gt;=</span> <span class="dv">12</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>patterns <span class="op">=</span> {</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"default inside the window"</span>: pl.col(<span class="st">"retained"</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"T"</span>) <span class="op">&lt;=</span> <span class="dv">12</span>),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"default after the window"</span>: pl.col(<span class="st">"retained"</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"T"</span>) <span class="op">&gt;</span> <span class="dv">12</span>),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"settled, never defaulted"</span>: pl.col(<span class="st">"retained"</span>) <span class="op">&amp;</span> pl.col(<span class="st">"T"</span>).is_null()</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                                <span class="op">&amp;</span> (pl.col(<span class="st">"Status"</span>) <span class="op">==</span> <span class="st">"Repaid"</span>),</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"still open at the snapshot"</span>: pl.col(<span class="st">"retained"</span>) <span class="op">&amp;</span> pl.col(<span class="st">"T"</span>).is_null()</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>                                  <span class="op">&amp;</span> (pl.col(<span class="st">"Status"</span>) <span class="op">==</span> <span class="st">"Current"</span>),</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="st">"dropped, not yet seasoned"</span>: <span class="op">~</span>pl.col(<span class="st">"retained"</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"T"</span>) <span class="op">&lt;=</span> <span class="dv">12</span>),</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>pl.concat(</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    ex.<span class="bu">filter</span>(cond).sort(<span class="st">"LoanNumber"</span>).head(<span class="dv">1</span>).select(</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        pl.lit(name).alias(<span class="st">"pattern"</span>),</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">"LoanNumber"</span>,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"g"</span>).alias(<span class="st">"g_i"</span>),</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"A"</span>).<span class="bu">round</span>(<span class="dv">2</span>).alias(<span class="st">"A_i"</span>),</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"T"</span>).<span class="bu">round</span>(<span class="dv">2</span>).alias(<span class="st">"T_i"</span>),</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>        pl.when(<span class="st">"retained"</span>)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>          .then((pl.col(<span class="st">"T"</span>) <span class="op">&lt;=</span> <span class="dv">12</span>).fill_null(<span class="va">False</span>))</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>          .cast(pl.Int8).alias(<span class="st">"D_i(12)"</span>),</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>        pl.col(<span class="st">"retained"</span>).alias(<span class="st">"in W_12"</span>),</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> name, cond <span class="kw">in</span> patterns.items()</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="24">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 7)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">pattern</th>
+<th data-quarto-table-cell-role="th">LoanNumber</th>
+<th data-quarto-table-cell-role="th">g_i</th>
+<th data-quarto-table-cell-role="th">A_i</th>
+<th data-quarto-table-cell-role="th">T_i</th>
+<th data-quarto-table-cell-role="th">D_i(12)</th>
+<th data-quarto-table-cell-role="th">in W_12</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>i64</td>
+<td>str</td>
+<td>f64</td>
+<td>f64</td>
+<td>i8</td>
+<td>bool</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"default inside the window"</td>
+<td>163</td>
+<td>"2009-03"</td>
+<td>148.17</td>
+<td>3.06</td>
+<td>1</td>
+<td>true</td>
+</tr>
+<tr class="even">
+<td>"default after the window"</td>
+<td>45</td>
+<td>"2009-03"</td>
+<td>148.44</td>
+<td>13.9</td>
+<td>0</td>
+<td>true</td>
+</tr>
+<tr class="odd">
+<td>"settled, never defaulted"</td>
+<td>37</td>
+<td>"2009-03"</td>
+<td>148.44</td>
+<td>null</td>
+<td>0</td>
+<td>true</td>
+</tr>
+<tr class="even">
+<td>"still open at the snapshot"</td>
+<td>13581</td>
+<td>"2012-11"</td>
+<td>104.44</td>
+<td>null</td>
+<td>0</td>
+<td>true</td>
+</tr>
+<tr class="odd">
+<td>"dropped, not yet seasoned"</td>
+<td>2063289</td>
+<td>"2020-07"</td>
+<td>11.99</td>
+<td>3.71</td>
+<td>null</td>
+<td>false</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Two columns of this section are deliberately absent. The snapshot <span class="math inline">\(\tau\)</span> would print 20 July 2021 on every row, being the constant just discussed, and the calendar month <span class="math inline">\(u = g_i + t\)</span> is an identity rather than a measurement, recoverable from the vintage and whichever <span class="math inline">\(t\)</span> the reader cares to ask about. Months on book at the snapshot is <span class="math inline">\(A_i\)</span> itself, so that column is already there under its other name.</p>
+<p>Read the last two rows together, because they are the ones that cost something. Loan 13581 was originated in November 2012 and is still current at the snapshot, so it contributes a genuine zero to <code>default_12m</code>: its window closed years ago. Loan 2063289 defaulted after 3.71 months, well inside twelve, and is dropped all the same, since only <span class="math inline">\(A_i = 11.99\)</span> months of observation had accumulated by the snapshot. Note what that figure exposes. The loan was originated exactly 365 days before the snapshot, and dividing days by the mean Gregorian month of 30.4375 puts it a hundredth of a month short of the boundary. The filter <span class="math inline">\(A_i \ge 12\)</span> therefore draws the same line as the 365-day rule in <code>scripts/convert_credit_data.py</code>, which is why <span class="math inline">\(n(12)\)</span> reproduces <code>default_12m</code> exactly.</p>
 </section>
 <section id="default-modelling-and-pds" class="level2" data-number="2.6">
 <h2 data-number="2.6" class="anchored" data-anchor-id="default-modelling-and-pds"><span class="header-section-number">2.6</span> Default modelling and PDs</h2>
-<p>The portfolio has <span class="math inline">\(n = 148{,}733\)</span> loans. We label them by <span class="math inline">\(i \in \{1, \ldots, n\}\)</span>. Each loan is characterised by covariates <span class="math inline">\(\boldsymbol{X}_i\)</span> describing the borrower and the contract at application time, such as the age of the borrower or the loan amount.</p>
+<p>Fix the window at <span class="math inline">\(k = 12\)</span> for the rest of this lecture. The portfolio is then the retained set <span class="math inline">\({\cal W}_{12}\)</span> of the section above, whose size we named there: <span class="math inline">\(n := n(12) = 148{,}733\)</span> loans, which we label <span class="math inline">\(i \in \{1, \ldots, n\}\)</span>. Each loan is characterised by covariates <span class="math inline">\(\boldsymbol{X}_i\)</span> describing the borrower and the contract at application time, such as the age of the borrower or the loan amount.</p>
 <p>The original lecture models claim counts <span class="math inline">\(N_i \geq 0\)</span> observed over a time exposure <span class="math inline">\(v_i \in (0, 1]\)</span>, and studies the claims frequencies <span class="math inline">\(Y_i = N_i / v_i\)</span>. That notation carries over to credit almost unchanged. Within the observation window, loan <span class="math inline">\(i\)</span> produces a number of default events <span class="math inline">\(N_i\)</span>, and the window itself plays the role of the exposure <span class="math inline">\(v_i\)</span>. Default is an absorbing state, so <span class="math inline">\(N_i \in \{0, 1\}\)</span> rather than <span class="math inline">\(N_i \in \{0, 1, 2, \ldots\}\)</span>.</p>
 <p>What the exposure should be is then a real choice, and the two answers lead to different models. Measuring exposure in windows gives every retained loan the same one, <span class="math inline">\(v_i \equiv 1\)</span> window of <span class="math inline">\(k\)</span> months, and the frequency collapses to the indicator itself,</p>
 <p><span class="math display">\[
@@ -739,17 +891,43 @@ Y_i^{(k)} = \frac{N_i}{\min(T_i,\, k)} ,
 \]</span></p>
 <p>which is the honest claims-frequency analogue, with time to default in the role of exposure. Here the frequency does not collapse. A loan defaulting in month two and a loan defaulting in month eleven both score <span class="math inline">\(D_i^{(k)} = 1\)</span>, yet they carry intensities differing by a factor of five, and the second convention keeps that difference while the first discards it.</p>
 <p>The first convention is how application scorecards are built, and it is what this lecture uses. The second is a discrete hazard, and it is the door into survival analysis: survival and hazard-rate models treat default as an event arriving at some intensity over time on book, and the IFRS 9 lifetime PD term structure is built exactly that way. Lecture S1 walks through that door, starting from the exposure <span class="math inline">\(v_i = \min(T_i, k)\)</span> defined here.</p>
-<p>The general task is to predict (forecast) the default behaviour as accurately as possible, taking into account all available borrower information <span class="math inline">\(\boldsymbol{X}_i\)</span>. (Best) predictors are typically computed by conditional means</p>
+<p>The general task is to predict (forecast) the default behaviour as accurately as possible, taking into account all available borrower information <span class="math inline">\(\boldsymbol{X}_i\)</span>. (Best) predictors are typically computed by conditional means, and the quantity admits two equivalent statements. Asked of the time to default, what is wanted is the probability that the default arrives inside the window,</p>
+<p><span class="math display">\[
+\mathrm{PD}_k(\boldsymbol{X}_i) := \mathbb{P}\left( T_i \le k \,\middle|\, \boldsymbol{X}_i \right) .
+\]</span></p>
+<p>That is the survival-analysis statement: a distribution function of <span class="math inline">\(T_i\)</span> evaluated at <span class="math inline">\(k\)</span>, and the covariate-conditional version of the <span class="math inline">\({}_k q_{i,0}\)</span> that the life-table callout above obtains by reading <span class="math inline">\({}_k p_{i,t}\)</span> at <span class="math inline">\(t = 0\)</span>. A term structure of PDs is the same object read at several <span class="math inline">\(k\)</span> at once, and lectures S1 and S2 work at this level throughout.</p>
+<p>The regression machinery wants the indicator instead, and the bridge between the two is the definition <span class="math inline">\(D_i^{(k)} = \mathbf{1}\{ T_i \le k \}\)</span>, since the expectation of an indicator is the probability of the event it indicates. Hence</p>
 <p><span class="math display">\[
 \mu_k(\boldsymbol{X}_i) := \mathbb{E}\left[ D_i^{(k)} \,\middle|\, \boldsymbol{X}_i \right]
+= \mathbb{P}\left( D_i^{(k)} = 1 \,\middle|\, \boldsymbol{X}_i \right)
 = \mathbb{P}\left( T_i \le k \,\middle|\, \boldsymbol{X}_i \right)
 = \mathrm{PD}_k(\boldsymbol{X}_i).
 \]</span></p>
-<p>For a binary response, the conditional mean <strong>is</strong> the probability of default, now carrying the window it was measured over. The pricing functional of the insurance lecture becomes the PD functional</p>
+<p>For a binary response, therefore, the conditional mean <strong>is</strong> the probability of default, and it carries the window it was measured over wherever it goes, which is why <span class="math inline">\(k\)</span> sits on <span class="math inline">\(\mu_k\)</span> throughout. It is the middle form, conditioning on covariates and averaging an indicator, that the point-in-time callout below extends by conditioning on the calendar month <span class="math inline">\(u\)</span> as well. The pricing functional of the insurance lecture becomes the PD functional</p>
 <p><span class="math display">\[
 \boldsymbol{X} \mapsto \mu_k(\boldsymbol{X}) = \mathrm{PD}_k(\boldsymbol{X}),
 \]</span></p>
 <p>and everything the lectures develop for estimating regression functions applies to it. The distributional consequence is taken up in the next lecture. Claim counts led to the Poisson member of the exponential dispersion family; a binary indicator leads to the Bernoulli member, whose canonical link is the logit. Deviance losses, maximum likelihood estimation and the balance property all carry over.</p>
+<p>Three properties fix what the function <span class="math inline">\(\boldsymbol{X} \mapsto \mathbb{E}[Y \mid \boldsymbol{X}]\)</span> actually is, writing <span class="math inline">\(Y\)</span> for the response and taking <span class="math inline">\(\boldsymbol{X}\)</span> discrete, as the covariates of a scorecard mostly are. Note first that it is a function of <span class="math inline">\(\boldsymbol{X}\)</span> rather than a number, so it is itself a random variable once <span class="math inline">\(\boldsymbol{X}\)</span> is.</p>
+<p>First, it averages the response over the conditional distribution,</p>
+<p><span class="math display">\[
+\mu(\boldsymbol{x}) = \mathbb{E}\left[ Y \,\middle|\, \boldsymbol{X} = \boldsymbol{x} \right]
+= \sum_y y \, \mathbb{P}\left( Y = y \,\middle|\, \boldsymbol{X} = \boldsymbol{x} \right) ,
+\qquad
+\text{or} \quad \int y \, f_{Y \mid \boldsymbol{X}}(y \mid \boldsymbol{x}) \, \mathrm{d}y
+\quad \text{for continuous } Y .
+\]</span></p>
+<p>For <span class="math inline">\(Y = D^{(k)} \in \{0, 1\}\)</span> that sum has two terms and the <span class="math inline">\(y = 0\)</span> term vanishes, leaving <span class="math inline">\(\mu_k(\boldsymbol{x}) = \mathbb{P}(D^{(k)} = 1 \mid \boldsymbol{X} = \boldsymbol{x})\)</span>. The conditional mean and the conditional probability are then the same number, which is the algebra behind the callout below.</p>
+<p>Second, among all functions of the covariates it is the best square-error predictor,</p>
+<p><span class="math display">\[
+\mu = \arg\min_{f} \mathbb{E}\left[ \left( Y - f(\boldsymbol{X}) \right)^2 \right] ,
+\]</span></p>
+<p>the minimum running over measurable <span class="math inline">\(f\)</span> with a finite second moment. That is what “(best) predictor” means above. Beyond squared error the property survives intact, since the conditional mean minimises expected loss for every Bregman divergence, the Poisson and Bernoulli deviances of the next lecture included. Changing the loss to suit the distribution therefore leaves <span class="math inline">\(\mu_k\)</span> as the target.</p>
+<p>Third, it averages back to the unconditional mean,</p>
+<p><span class="math display">\[
+\mathbb{E}\left[ \mathbb{E}\left[ Y \,\middle|\, \boldsymbol{X} \right] \right] = \mathbb{E}[Y] .
+\]</span></p>
+<p>The tower property, and in this setting the <strong>balance property</strong> just mentioned. A model estimating <span class="math inline">\(\mu_k\)</span> ought to reproduce the portfolio default rate once its predictions are averaged, and lecture 7 is about what breaks that and how to restore it.</p>
 <div class="callout callout-style-default callout-tip no-icon callout-titled" title="Reading a conditional expectation">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -778,14 +956,76 @@ Y_i^{(k)} = \frac{N_i}{\min(T_i,\, k)} ,
 </div>
 <div class="callout-body-container callout-body">
 <p>A <strong>point-in-time (PiT)</strong> PD conditions on where the economy is, i.e.&nbsp;it estimates <span class="math inline">\(\mathbb{P}(D^{(k)} = 1 \mid \boldsymbol{X}, u)\)</span> and moves with the cycle. IFRS 9 requires one, because an expected credit loss is a forecast made from today’s conditions. A <strong>through-the-cycle (TTC)</strong> PD averages the cycle away instead, which is what an IRB long-run average targets. Production stacks mostly run something hybrid and then argue about where on the spectrum it has landed.</p>
-<p>This portfolio cannot yield a PiT PD, and the identity above is the reason. Conditional on months on book <span class="math inline">\(t\)</span>, vintage <span class="math inline">\(g\)</span> and calendar month <span class="math inline">\(u\)</span> are collinear, so a single snapshot offers no way to tell an origination-quality effect from a macroeconomic one. The vintage figure later in this lecture shows the default rate running from 7 per cent in the 2012 vintage to 37 per cent in 2017, and two stories fit that equally well. Bondora may have loosened its underwriting, or those cohorts may simply have lived through a worse environment. More modelling will not separate them.</p>
-<p>Botha and Verster (2025) show what the missing ingredient buys. Their portfolio-level default rate at calendar month <span class="math inline">\(t\)</span>,</p>
+<p>Both deserve a formula, and both need the outcome generalised first, since a PD asked of a loan already <span class="math inline">\(t\)</span> months on book wants a window opening at <span class="math inline">\(t\)</span> rather than at origination. For a loan performing at <span class="math inline">\(t\)</span>, write</p>
 <p><span class="math display">\[
-D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
-      \mathbb{I}\left( \max\left( y_{it}, \ldots, y_{i(t+k)} \right) = 1 \right),
+D^{(k)}_{i,t} = \max\left( y_{i,t+1}, \ldots, y_{i,t+k} \right) \in \{0, 1\} ,
+\qquad
+D^{(k)}_{i,0} = D^{(k)}_i .
 \]</span></p>
-<p>runs over the set <span class="math inline">\({\cal S}_P(t)\)</span> of accounts still performing at <span class="math inline">\(t\)</span>, with <span class="math inline">\(n'_t\)</span> its size. The maximum inside the indicator is the <strong>worst-ever</strong> aggregation, so an obligor who breaches and then cures still scores a one and the series is immune to cure-and-relapse cycling. What matters here is the index. <span class="math inline">\(D_t\)</span> is a time series in calendar time, and it exists to be regressed on macroeconomic variables, which is how a PiT PD gets built. Its ingredient is monthly performance history for every account. Bondora records one snapshot, so the maximum has nothing to run over.</p>
+<p>Section 2.4’s flag is the <span class="math inline">\(t = 0\)</span> case, and the worst-ever aggregation carries over untouched. A PiT PD then conditions on the state of the economy in the calendar month the window opens, <span class="math inline">\(u = g_i + t\)</span>:</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, \boldsymbol{Z}_u \right)
+= \mathbb{P}\left( D^{(k)}_{i,t} = 1 \,\middle|\, \boldsymbol{X}_i, \boldsymbol{Z}_u \right) ,
+\]</span></p>
+<p>where <span class="math inline">\(\boldsymbol{Z}_u\)</span> collects the macroeconomic variables at <span class="math inline">\(u\)</span>, i.e.&nbsp;unemployment, house prices, the policy rate, whatever the model has earned the right to use. Conditioning on <span class="math inline">\(u\)</span> itself, as the paragraph above did loosely, cannot be used out of sample, because a future calendar month carries no observations of its own. Conditioning on <span class="math inline">\(\boldsymbol{Z}_u\)</span> can be, since the macro variables are themselves forecastable, and an IFRS 9 expected credit loss needs precisely that forecast.</p>
+<p>The TTC PD is indeed an average of default rates, and two versions of that average want keeping apart. Written as a property of the model, it averages the PiT PD over the distribution of the macro state rather than over any particular path,</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right)
+= \mathbb{E}_{\boldsymbol{Z}}\left[ \mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, \boldsymbol{Z} \right) \right] ,
+\]</span></p>
+<p>while the estimator the regulation actually asks for averages the observed series instead, grade by grade and at <span class="math inline">\(k = 12\)</span>,</p>
+<p><span class="math display">\[
+\overline{\mathrm{DR}}^{(12)} = \frac{1}{\# U} \sum_{u \in U} \mathrm{DR}^{(12)}_u ,
+\]</span></p>
+<p>over a historical window <span class="math inline">\(U\)</span> of calendar months, with <span class="math inline">\(\mathrm{DR}^{(k)}_u\)</span> the portfolio default rate defined below. Article 180 of the Capital Requirements Regulation sets the requirements specific to PD estimation, and what it forces is representativeness: the long-run average must rest on a period long enough to cover the likely range of variability, which in practice means <span class="math inline">\(U\)</span> has to contain bad years as well as good ones. The EBA’s guidelines on PD estimation (EBA/GL/2017/16) are where the mechanics of that average live.</p>
+<p>One trap sits inside the word “average”, and it is where the calculation goes wrong in practice. Averaging has to happen downstream of the model, on its output. For a logistic PiT model with linear predictor <span class="math inline">\(\eta\)</span>, Jensen’s inequality gives <span class="math inline">\(\mathbb{E}[\sigma(\eta)] \ne \sigma(\mathbb{E}[\eta])\)</span>, so feeding mean macroeconomic conditions into a fitted PiT model returns a number that is not the TTC PD, and the discrepancy grows with the curvature of the link over the range the cycle covers.</p>
+<p>This portfolio cannot yield a PiT PD, and the identity above is the reason. Conditional on months on book <span class="math inline">\(t\)</span>, vintage <span class="math inline">\(g\)</span> and calendar month <span class="math inline">\(u\)</span> are collinear, so a single snapshot offers no way to tell an origination-quality effect from a macroeconomic one. The vintage figure later in this lecture shows the default rate running from 7 per cent in the 2012 vintage to 37 per cent in 2017, and two stories fit that equally well. Bondora may have loosened its underwriting, or those cohorts may simply have lived through a worse environment. More modelling will not separate them.</p>
+<p>Botha and Verster (2025) show what the missing ingredient buys. Their portfolio-level default rate, put on this lecture’s axes, is the cross-sectional mean of the window-start flag defined above,</p>
+<p><span class="math display">\[
+\mathrm{DR}^{(k)}_u = \frac{1}{n_u} \sum_{i \in {\cal P}_u} D^{(k)}_{i,\, u - g_i} ,
+\qquad
+{\cal P}_u = \left\{ i : \text{loan } i \text{ on book and performing at } u \right\} ,
+\qquad
+n_u = \# {\cal P}_u .
+\]</span></p>
+<p>The paper writes <span class="math inline">\(D_t\)</span>, <span class="math inline">\({\cal S}_P(t)\)</span> and <span class="math inline">\(n'_t\)</span>, with <span class="math inline">\(t\)</span> as calendar time, so anyone going to the source should carry that translation. Here the calendar axis has to be <span class="math inline">\(u\)</span>, since <span class="math inline">\(t\)</span> is months on book everywhere else in this lecture, and the window rides on the superscript so that <span class="math inline">\(k\)</span> is never in doubt. The indicator has gone because a maximum of 0/1 flags already is one: <span class="math inline">\(D^{(k)}_{i,t}\)</span> is Botha’s <strong>worst-ever</strong> aggregation, which is why an obligor who breaches and then cures still scores a one and why the series is immune to cure-and-relapse cycling.</p>
+<p>What matters here is the index. <span class="math inline">\(\mathrm{DR}^{(k)}_u\)</span> is a time series in calendar time, and regressing it on <span class="math inline">\(\boldsymbol{Z}_u\)</span> is how the PiT PD above gets built, while averaging it over <span class="math inline">\(u\)</span> gives the TTC estimator above. One series, two uses. Its ingredient is monthly performance history for every account, and Bondora records one snapshot, so the maximum has nothing to run over.</p>
 <p>Breaking the collinearity needs a panel, i.e.&nbsp;many calendar months <span class="math inline">\(u\)</span> observed for each vintage <span class="math inline">\(g\)</span>. <code>data/amex_panel.parquet</code> in this repository is a customer-month panel of exactly that shape, and it is where the point-in-time question gets picked up.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="What a hybrid PD looks like in formulas">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What a hybrid PD looks like in formulas
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Two representations, of which the second is the one production systems actually parameterise.</p>
+<p>The blunt one interpolates on the logit scale between the two extremes,</p>
+<p><span class="math display">\[
+\mathrm{logit}\, \mathrm{PD}^{\rm hyb}_k
+= (1 - \lambda) \, \mathrm{logit}\, \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right)
++ \lambda \, \mathrm{logit}\, \mathrm{PD}^{\rm PiT}_k\left( \boldsymbol{X}_i, \boldsymbol{Z}_u \right) ,
+\qquad \lambda \in [0, 1] ,
+\]</span></p>
+<p>with <span class="math inline">\(\lambda = 0\)</span> fully through the cycle and <span class="math inline">\(\lambda = 1\)</span> fully point in time. It is easy to explain and it leaves <span class="math inline">\(\lambda\)</span> with no meaning beyond itself, which is why a validator will ask how it was set.</p>
+<p>The one-factor version gives the dial a meaning. Let <span class="math inline">\(Z_u \sim {\cal N}(0, 1)\)</span> be a systematic factor for calendar month <span class="math inline">\(u\)</span>, high values benign, and let <span class="math inline">\(\rho \in [0, 1)\)</span> be the loan’s loading on it. Then</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z_u \right)
+= \Phi\left( \frac{ \Phi^{-1}\left( \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) \right)
+- \sqrt{\rho} \, Z_u }{ \sqrt{1 - \rho} } \right) ,
+\]</span></p>
+<p>which is Vasicek’s conditional default probability. At <span class="math inline">\(\rho = 0\)</span> the TTC PD passes through unmoved; as <span class="math inline">\(\rho\)</span> rises the same input swings further with the cycle, so <span class="math inline">\(\rho\)</span> is a measure of how point-in-time the model is.</p>
+<p>Two properties earn the extra notation. First, averaging the output returns the TTC PD exactly,</p>
+<p><span class="math display">\[
+\mathbb{E}_{Z}\left[ \mathrm{PD}^{\rm hyb}_k\left( \boldsymbol{X}_i, Z \right) \right]
+= \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) ,
+\]</span></p>
+<p>by the identity <span class="math inline">\(\mathbb{E}\left[ \Phi(a - bZ) \right] = \Phi\left( a / \sqrt{1 + b^2} \right)\)</span> at <span class="math inline">\(a = \Phi^{-1}(\cdot) / \sqrt{1 - \rho}\)</span> and <span class="math inline">\(b = \sqrt{\rho / (1 - \rho)}\)</span>. The probit link and the normal factor are chosen so that the average comes out right, which is what makes this the natural home for the previous callout’s TTC definition. The warning there still applies to the input, mind: setting <span class="math inline">\(Z_u\)</span> to its mean of zero gives <span class="math inline">\(\Phi\left( \Phi^{-1}(\mathrm{PD}^{\rm TTC}_k) / \sqrt{1 - \rho} \right)\)</span>, which understates the TTC PD whenever that PD is below one half. At a TTC PD of 3 per cent and <span class="math inline">\(\rho = 0.15\)</span> it returns 2.07 per cent, a shortfall of nearly a third.</p>
+<p>Secondly, the IRB capital formula is this same expression with the factor stressed rather than averaged, <span class="math inline">\(Z_u = -\Phi^{-1}(0.999)\)</span>, and there <span class="math inline">\(\rho\)</span> is the asset correlation the CRR prescribes by exposure class rather than something the modeller fits. A credit audience therefore already knows the machinery; the hybrid reading simply uses it at the middle of the factor distribution instead of in its tail.</p>
 </div>
 </div>
 </section>
@@ -801,9 +1041,9 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 <section id="empirical-data-analysis" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Empirical data analysis</h1>
 <p>We start by classifying the loans w.r.t. their default outcome.</p>
-<div id="69962ba4" class="cell" data-execution_count="4">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dat.group_by(<span class="st">"default_12m"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"loans"</span>)).sort(<span class="st">"default_12m"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="23">
+<div id="ceb1050e" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dat.group_by(<span class="st">"default_12m"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"loans"</span>)).sort(<span class="st">"default_12m"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="25">
 <div><style>
 .dataframe > thead > tr,
 .dataframe > tbody > tr {
@@ -837,32 +1077,32 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 </div>
 </div>
-<div id="482e84ca" class="cell" data-execution_count="5">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"empirical default rate: </span><span class="sc">{</span>dat[<span class="st">'default_12m'</span>]<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="5f6919cb" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"empirical default rate: </span><span class="sc">{</span>dat[<span class="st">'default_12m'</span>]<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>empirical default rate: 28.95%</code></pre>
 </div>
 </div>
 <p>The empirical twelve-month default rate is 28.95 per cent. Here the credit example diverges from the insurance one on purpose. The French MTPL portfolio has an empirical claims frequency of 7.36 per cent, and the original lecture frames this as a <strong>class imbalance problem</strong>, i.e., insurance claims are rare events. Bondora is a subprime peer-to-peer book, and at this default rate the event is anything but rare. Rarity is a property of the portfolio rather than of credit risk as such. A prime credit card book behaves like the insurance case; the companion dataset <code>credit_card_dev.parquet</code> in this repository, an anonymised bank-grade card portfolio, has a bad rate of 1.42 per cent. Class imbalance will therefore return with force when that dataset takes the stage in a later lecture.</p>
 <p>A second structural feature deserves a look before any covariate does. The book grew by two orders of magnitude over its life, and the default rate moved with it.</p>
-<div id="fcdd9e14" class="cell" data-execution_count="6">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>vint <span class="op">=</span> (</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    dat.with_columns(vintage<span class="op">=</span>pl.col(<span class="st">"LoanDate"</span>).dt.year())</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"vintage"</span>)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    .agg(pl.<span class="bu">len</span>().alias(<span class="st">"loans"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"vintage"</span>)</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(vint[<span class="st">"vintage"</span>], vint[<span class="st">"loans"</span>], color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"vintage year"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"loans originated"</span>)</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(vint[<span class="st">"vintage"</span>], vint[<span class="st">"rate"</span>], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">"vintage year"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_ylabel(<span class="st">"default rate"</span>)</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylim(<span class="dv">0</span>, <span class="va">None</span>)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="71c31e93" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>vint <span class="op">=</span> (</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    dat.with_columns(vintage<span class="op">=</span>pl.col(<span class="st">"LoanDate"</span>).dt.year())</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"vintage"</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    .agg(pl.<span class="bu">len</span>().alias(<span class="st">"loans"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"vintage"</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(vint[<span class="st">"vintage"</span>], vint[<span class="st">"loans"</span>], color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"vintage year"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"loans originated"</span>)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(vint[<span class="st">"vintage"</span>], vint[<span class="st">"rate"</span>], <span class="st">"o-"</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">"vintage year"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_ylabel(<span class="st">"default rate"</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylim(<span class="dv">0</span>, <span class="va">None</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-7-output-1.png" width="1333" height="587" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-8-output-1.png" width="1333" height="587" class="figure-img"></p>
 <figcaption>(lhs): Loans originated per vintage year. (rhs): Empirical twelve-month default rate per vintage year. The portfolio is strongly non-stationary in both volume and risk.</figcaption>
 </figure>
 </div>
@@ -870,63 +1110,63 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 <p>The default rate runs from 7 per cent in the 2012 vintage to 37 per cent in 2017. Insurance portfolios drift too, but rarely this violently; the drift here mixes platform growth, underwriting changes and country expansion. We ignore the time dimension for the rest of this lecture and model the pooled book, as the original lecture pools its single accident year. The vintage axis returns when we need an honest out-of-time validation split.</p>
 <p>For the covariate analysis we consider two covariates, <code>Age</code> and log-<code>IncomeTotal</code>, playing the roles that <code>DrivAge</code> and log-<code>Density</code> play in the insurance lecture. Later, all covariates are considered. We remove the 53 loans with a cleaned age of null and the 63 loans declaring zero income, which leaves the modelling sample used from here on.</p>
-<div id="8dfc880a" class="cell" data-execution_count="7">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"modelling sample: n = </span><span class="sc">{</span>model_dat<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9af7a664" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"modelling sample: n = </span><span class="sc">{</span>model_dat<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>modelling sample: n = 148,670</code></pre>
 </div>
 </div>
-<div id="02a9c4f4" class="cell" data-execution_count="8">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rate_by(df, col):</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> (</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        df.group_by(col)</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        .agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>        .sort(col)</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    se <span class="op">=</span> (g[<span class="st">"rate"</span>] <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> g[<span class="st">"rate"</span>]) <span class="op">/</span> g[<span class="st">"n"</span>]).sqrt()</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> g[<span class="st">"n"</span>], g[col], g[<span class="st">"rate"</span>], se</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>n_a, age, r_a, se_a <span class="op">=</span> rate_by(model_dat, <span class="st">"Age"</span>)</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(age, n_a, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"number of loans"</span>)</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(age, r_a, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">3</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].fill_between(age, r_a <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> se_a, r_a <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> se_a,</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>                    color<span class="op">=</span><span class="st">"#8C2F1E"</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, linewidth<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_ylabel(<span class="st">"default rate"</span>)</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="d280676d" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> rate_by(df, col):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    g <span class="op">=</span> (</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        df.group_by(col)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        .agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        .sort(col)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    se <span class="op">=</span> (g[<span class="st">"rate"</span>] <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> g[<span class="st">"rate"</span>]) <span class="op">/</span> g[<span class="st">"n"</span>]).sqrt()</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> g[<span class="st">"n"</span>], g[col], g[<span class="st">"rate"</span>], se</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>n_a, age, r_a, se_a <span class="op">=</span> rate_by(model_dat, <span class="st">"Age"</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(age, n_a, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"number of loans"</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(age, r_a, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">3</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].fill_between(age, r_a <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> se_a, r_a <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> se_a,</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>                    color<span class="op">=</span><span class="st">"#8C2F1E"</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, linewidth<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_ylabel(<span class="st">"default rate"</span>)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-9-output-1.png" width="1336" height="587" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-10-output-1.png" width="1336" height="587" class="figure-img"></p>
 <figcaption>(lhs): Number of loans per borrower age. (rhs): Empirical default rate per borrower age; the bounds correspond to 2 standard deviations in a Bernoulli model. Ages with fewer than 200 loans are pooled into their neighbours by the eye; the bounds widen accordingly.</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p>The age profile is <strong>non-monotone</strong>. Default risk peaks around the mid-twenties at roughly 32 per cent, eases to about 27 per cent through middle age, and climbs again beyond 65, where declared pension income replaces salary. The same shape, a hump for the young and a deterioration at the old end, drove the insurance lecture’s discussion of <code>DrivAge</code>, and it will defeat the same naive model below.</p>
-<div id="17df9031" class="cell" data-execution_count="9">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> model_dat.with_columns(</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    incBand<span class="op">=</span>(pl.col(<span class="st">"logIncome"</span>) <span class="op">*</span> <span class="dv">4</span>).<span class="bu">round</span>(<span class="dv">0</span>) <span class="op">/</span> <span class="dv">4</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>n_b, band, r_b, se_b <span class="op">=</span> rate_by(model_dat.<span class="bu">filter</span>(</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    pl.col(<span class="st">"logIncome"</span>).is_between(<span class="fl">5.5</span>, <span class="fl">9.0</span>)), <span class="st">"incBand"</span>)</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(band, n_b, width<span class="op">=</span><span class="fl">0.2</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"log-income"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"number of loans"</span>)</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(band, r_b, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">4</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].fill_between(band, r_b <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> se_b, r_b <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> se_b,</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                    color<span class="op">=</span><span class="st">"#8C2F1E"</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, linewidth<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">"log-income"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_ylabel(<span class="st">"default rate"</span>)</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="4686041f" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> model_dat.with_columns(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    incBand<span class="op">=</span>(pl.col(<span class="st">"logIncome"</span>) <span class="op">*</span> <span class="dv">4</span>).<span class="bu">round</span>(<span class="dv">0</span>) <span class="op">/</span> <span class="dv">4</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>n_b, band, r_b, se_b <span class="op">=</span> rate_by(model_dat.<span class="bu">filter</span>(</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    pl.col(<span class="st">"logIncome"</span>).is_between(<span class="fl">5.5</span>, <span class="fl">9.0</span>)), <span class="st">"incBand"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(band, n_b, width<span class="op">=</span><span class="fl">0.2</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"log-income"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"number of loans"</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(band, r_b, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">4</span>, color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].fill_between(band, r_b <span class="op">-</span> <span class="dv">2</span> <span class="op">*</span> se_b, r_b <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> se_b,</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>                    color<span class="op">=</span><span class="st">"#8C2F1E"</span>, alpha<span class="op">=</span><span class="fl">0.2</span>, linewidth<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">"log-income"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_ylabel(<span class="st">"default rate"</span>)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-10-output-1.png" width="1336" height="587" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-11-output-1.png" width="1336" height="587" class="figure-img"></p>
 <figcaption>(lhs): Number of loans per log-income band. (rhs): Empirical default rate per log-income band; the bounds correspond to 2 standard deviations in a Bernoulli model.</figcaption>
 </figure>
 </div>
@@ -934,20 +1174,20 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 </div>
 <p>The income profile should worry any credit risk modeller on sight. Default risk <strong>rises</strong> with declared income across most of the range, from below 20 per cent at the bottom to peaks above 34 per cent, before easing at the very top. No underwriter believes that richer borrowers are intrinsically worse risks, so something else must be driving the marginal curve. We hold that thought for a moment and look at one more covariate first.</p>
 <p><strong>An aside on the price of risk.</strong> The contractual interest rate is the platform’s own answer to this prediction problem, set at listing from its rating model. Its marginal profile is brutally clean.</p>
-<div id="d9d461a1" class="cell" data-execution_count="10">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ib <span class="op">=</span> (</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    model_dat.with_columns(band<span class="op">=</span>pl.col(<span class="st">"Interest"</span>).cut([<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">50</span>, <span class="dv">100</span>]))</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"band"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"band"</span>)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="fl">3.2</span>))</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>ax.bar([<span class="bu">str</span>(b) <span class="cf">for</span> b <span class="kw">in</span> ib[<span class="st">"band"</span>]], ib[<span class="st">"rate"</span>], color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"interest rate band (% p.a.)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"default rate"</span>)</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="055e3452" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ib <span class="op">=</span> (</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    model_dat.with_columns(band<span class="op">=</span>pl.col(<span class="st">"Interest"</span>).cut([<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">20</span>, <span class="dv">30</span>, <span class="dv">50</span>, <span class="dv">100</span>]))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"band"</span>).agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>), pl.col(<span class="st">"default_12m"</span>).mean().alias(<span class="st">"rate"</span>))</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    .sort(<span class="st">"band"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">6</span>, <span class="fl">3.2</span>))</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>ax.bar([<span class="bu">str</span>(b) <span class="cf">for</span> b <span class="kw">in</span> ib[<span class="st">"band"</span>]], ib[<span class="st">"rate"</span>], color<span class="op">=</span><span class="st">"#8C2F1E"</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"interest rate band (% p.a.)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"default rate"</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-11-output-1.png" width="886" height="467" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-12-output-1.png" width="886" height="467" class="figure-img"></p>
 <figcaption>Empirical default rate per contractual interest band. Interest is the platform’s price of risk, so its gradient is the platform’s own PD model echoed back.</figcaption>
 </figure>
 </div>
@@ -957,62 +1197,62 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 <section id="covariates-interact" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="covariates-interact"><span class="header-section-number">3.1</span> Covariates interact</h2>
 <p>Generally, covariates <strong>interact</strong>, and one cannot simply combine marginal default rates to obtain a correct PD. The insurance lecture argues this with a hypothetical, i.e., young drivers may cluster in dense cities, so the two marginal penalties may double-count one risk factor. The Bondora book turns the hypothetical into a demonstration. The three main countries have very different income levels and very different risk levels, and the composition generates the rising marginal income curve above.</p>
-<div id="cb104ef1" class="cell" data-execution_count="11">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>countries <span class="op">=</span> {<span class="st">"EE"</span>: <span class="st">"Estonia"</span>, <span class="st">"FI"</span>: <span class="st">"Finland"</span>, <span class="st">"ES"</span>: <span class="st">"Spain"</span>}</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> code, colour <span class="kw">in</span> <span class="bu">zip</span>(countries, [<span class="st">"#8C2F1E"</span>, <span class="st">"#4F6333"</span>, <span class="st">"#3B4A75"</span>]):</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    sub <span class="op">=</span> model_dat.<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>) <span class="op">==</span> code)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    qs <span class="op">=</span> np.quantile(sub[<span class="st">"logIncome"</span>], [<span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>])</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    banded <span class="op">=</span> sub.with_columns(</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        q<span class="op">=</span>pl.col(<span class="st">"logIncome"</span>).cut(<span class="bu">list</span>(qs), labels<span class="op">=</span>[<span class="st">"Q1"</span>, <span class="st">"Q2"</span>, <span class="st">"Q3"</span>, <span class="st">"Q4"</span>, <span class="st">"Q5"</span>])</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    curve <span class="op">=</span> banded.group_by(<span class="st">"q"</span>).agg(pl.col(<span class="st">"default_12m"</span>).mean()).sort(<span class="st">"q"</span>)</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    ax.plot(curve[<span class="st">"q"</span>], curve[<span class="st">"default_12m"</span>], <span class="st">"o-"</span>, label<span class="op">=</span>countries[code], color<span class="op">=</span>colour)</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> np.quantile(model_dat[<span class="st">"logIncome"</span>], [<span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>])</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>marg <span class="op">=</span> (</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    model_dat.with_columns(</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>        q<span class="op">=</span>pl.col(<span class="st">"logIncome"</span>).cut(<span class="bu">list</span>(qs), labels<span class="op">=</span>[<span class="st">"Q1"</span>, <span class="st">"Q2"</span>, <span class="st">"Q3"</span>, <span class="st">"Q4"</span>, <span class="st">"Q5"</span>]))</span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"q"</span>).agg(pl.col(<span class="st">"default_12m"</span>).mean()).sort(<span class="st">"q"</span>)</span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>ax.plot(marg[<span class="st">"q"</span>], marg[<span class="st">"default_12m"</span>], <span class="st">"s--"</span>, color<span class="op">=</span><span class="st">"#1B1A17"</span>, label<span class="op">=</span><span class="st">"marginal (pooled)"</span>)</span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"income quintile"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"default rate"</span>)<span class="op">;</span> ax.legend()</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="a4f89189" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>countries <span class="op">=</span> {<span class="st">"EE"</span>: <span class="st">"Estonia"</span>, <span class="st">"FI"</span>: <span class="st">"Finland"</span>, <span class="st">"ES"</span>: <span class="st">"Spain"</span>}</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> code, colour <span class="kw">in</span> <span class="bu">zip</span>(countries, [<span class="st">"#8C2F1E"</span>, <span class="st">"#4F6333"</span>, <span class="st">"#3B4A75"</span>]):</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    sub <span class="op">=</span> model_dat.<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>) <span class="op">==</span> code)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    qs <span class="op">=</span> np.quantile(sub[<span class="st">"logIncome"</span>], [<span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>])</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    banded <span class="op">=</span> sub.with_columns(</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        q<span class="op">=</span>pl.col(<span class="st">"logIncome"</span>).cut(<span class="bu">list</span>(qs), labels<span class="op">=</span>[<span class="st">"Q1"</span>, <span class="st">"Q2"</span>, <span class="st">"Q3"</span>, <span class="st">"Q4"</span>, <span class="st">"Q5"</span>])</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    curve <span class="op">=</span> banded.group_by(<span class="st">"q"</span>).agg(pl.col(<span class="st">"default_12m"</span>).mean()).sort(<span class="st">"q"</span>)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    ax.plot(curve[<span class="st">"q"</span>], curve[<span class="st">"default_12m"</span>], <span class="st">"o-"</span>, label<span class="op">=</span>countries[code], color<span class="op">=</span>colour)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> np.quantile(model_dat[<span class="st">"logIncome"</span>], [<span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>])</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>marg <span class="op">=</span> (</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    model_dat.with_columns(</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        q<span class="op">=</span>pl.col(<span class="st">"logIncome"</span>).cut(<span class="bu">list</span>(qs), labels<span class="op">=</span>[<span class="st">"Q1"</span>, <span class="st">"Q2"</span>, <span class="st">"Q3"</span>, <span class="st">"Q4"</span>, <span class="st">"Q5"</span>]))</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    .group_by(<span class="st">"q"</span>).agg(pl.col(<span class="st">"default_12m"</span>).mean()).sort(<span class="st">"q"</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>ax.plot(marg[<span class="st">"q"</span>], marg[<span class="st">"default_12m"</span>], <span class="st">"s--"</span>, color<span class="op">=</span><span class="st">"#1B1A17"</span>, label<span class="op">=</span><span class="st">"marginal (pooled)"</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"income quintile"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"default rate"</span>)<span class="op">;</span> ax.legend()</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-12-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Empirical default rate per within-country income quintile (Q1 low to Q5 high), by country and marginally. Within every country the rate falls with income; marginally it rises. The marginal curve is composition, i.e., Simpson’s paradox in the raw data.</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p>Within Estonia, Finland and Spain separately, default risk <strong>falls</strong> with income, exactly as underwriting intuition demands. Pooled, it rises, because Finland and Spain combine higher nominal incomes with default rates of 38 and 55 per cent against Estonia’s 17. The marginal income effect is a country effect wearing a disguise. Multiplying marginal profiles would price this book absurdly, and the same mechanism, in gentler form, is why the insurance lecture insists on estimating <span class="math inline">\(\mu(\boldsymbol{X})\)</span> <strong>jointly</strong> in the components of <span class="math inline">\(\boldsymbol{X} = (X_1, \ldots, X_q)^\top\)</span> rather than marginally.</p>
-<div id="f78dfdf4" class="cell" data-execution_count="12">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.ndimage <span class="im">import</span> gaussian_filter</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> model_dat[<span class="st">"Age"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> model_dat[<span class="st">"logIncome"</span>].to_numpy()</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> model_dat[<span class="st">"default_12m"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>x_edges <span class="op">=</span> np.linspace(<span class="dv">18</span>, <span class="dv">76</span>, <span class="dv">59</span>)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>y_edges <span class="op">=</span> np.linspace(<span class="fl">5.5</span>, <span class="fl">9.0</span>, <span class="dv">71</span>)</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>cnt, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges])</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>dft, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges], weights<span class="op">=</span>d)</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>cnt_s <span class="op">=</span> gaussian_filter(cnt, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>dft_s <span class="op">=</span> gaussian_filter(dft, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>rate <span class="op">=</span> np.where(cnt_s <span class="op">&gt;</span> <span class="dv">8</span>, dft_s <span class="op">/</span> np.maximum(cnt_s, <span class="fl">1e-9</span>), np.nan)</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    rate.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, label<span class="op">=</span><span class="st">"smoothed default rate"</span>)</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="43158f38" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.ndimage <span class="im">import</span> gaussian_filter</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> model_dat[<span class="st">"Age"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> model_dat[<span class="st">"logIncome"</span>].to_numpy()</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> model_dat[<span class="st">"default_12m"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>x_edges <span class="op">=</span> np.linspace(<span class="dv">18</span>, <span class="dv">76</span>, <span class="dv">59</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>y_edges <span class="op">=</span> np.linspace(<span class="fl">5.5</span>, <span class="fl">9.0</span>, <span class="dv">71</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>cnt, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges])</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>dft, _, _ <span class="op">=</span> np.histogram2d(x, y, bins<span class="op">=</span>[x_edges, y_edges], weights<span class="op">=</span>d)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>cnt_s <span class="op">=</span> gaussian_filter(cnt, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>dft_s <span class="op">=</span> gaussian_filter(dft, sigma<span class="op">=</span><span class="fl">2.0</span>)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>rate <span class="op">=</span> np.where(cnt_s <span class="op">&gt;</span> <span class="dv">8</span>, dft_s <span class="op">/</span> np.maximum(cnt_s, <span class="fl">1e-9</span>), np.nan)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>    rate.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>    extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, label<span class="op">=</span><span class="st">"smoothed default rate"</span>)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-13-output-1.png" width="949" height="617" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-14-output-1.png" width="949" height="617" class="figure-img"></p>
 <figcaption>Kernel-smoothed empirical default rate as a function of borrower age and log-income. White space marks covariate combinations too thin in the portfolio to estimate. The vertical banding reflects the income effect, the hump at young ages and the deterioration at old ages are visible along the age axis.</figcaption>
 </figure>
 </div>
@@ -1037,17 +1277,17 @@ D_t = \frac{1}{n'_t} \sum_{i \in {\cal S}_P(t)}
 <p>for <span class="math inline">\(\boldsymbol{X} = (X_1, X_2) = (\text{Age}, \text{log-Income})\)</span> and parameter <span class="math inline">\((\beta_0, \beta_1, \beta_2)\)</span>. Where the insurance lecture’s log-link produced a model multiplicative in the <strong>frequency</strong>, the logit link produces a model multiplicative in the <strong>odds</strong> <span class="math inline">\(\mu / (1 - \mu)\)</span>; each covariate scales the odds of default by a constant factor per unit.</p>
 <section id="model-glm1-bernoulli-with-canonical-logit-link" class="level3" data-number="4.0.1">
 <h3 data-number="4.0.1" class="anchored" data-anchor-id="model-glm1-bernoulli-with-canonical-logit-link"><span class="header-section-number">4.0.1</span> Model GLM1 (Bernoulli with canonical logit link)</h3>
-<div id="5c9d7d52" class="cell" data-execution_count="13">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>glm_dat <span class="op">=</span> model_dat.select(</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>]).to_pandas()</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>glm1 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ Age + logIncome"</span>,</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm1.summary())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="47e59218" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>glm_dat <span class="op">=</span> model_dat.select(</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>]).to_pandas()</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>glm1 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ Age + logIncome"</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm1.summary())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                 Generalized Linear Model Regression Results                  
 ==============================================================================
@@ -1056,8 +1296,8 @@ Model:                            GLM   Df Residuals:                   148667
 Model Family:                Binomial   Df Model:                            2
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -89001.
-Date:                Tue, 01 Sep 2026   Deviance:                   1.7800e+05
-Time:                        17:48:32   Pearson chi2:                 1.49e+05
+Date:                Wed, 02 Sep 2026   Deviance:                   1.7800e+05
+Time:                        09:45:14   Pearson chi2:                 1.49e+05
 No. Iterations:                     5   Pseudo R-squ. (CS):           0.006011
 Covariance Type:            nonrobust                                         
 ==============================================================================
@@ -1073,16 +1313,16 @@ logIncome      0.2550      0.009     28.520      0.000       0.238       0.273
 </section>
 <section id="model-glm2-categorical-age-classes" class="level3" data-number="4.0.2">
 <h3 data-number="4.0.2" class="anchored" data-anchor-id="model-glm2-categorical-age-classes"><span class="header-section-number">4.0.2</span> Model GLM2 (categorical age classes)</h3>
-<div id="1029768e" class="cell" data-execution_count="14">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>glm_dat[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    glm_dat[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>],</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>glm2 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome"</span>,</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm2.summary())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="c77f6609" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>glm_dat[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    glm_dat[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>],</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>glm2 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome"</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm2.summary())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                 Generalized Linear Model Regression Results                  
 ==============================================================================
@@ -1091,8 +1331,8 @@ Model:                            GLM   Df Residuals:                   148661
 Model Family:                Binomial   Df Model:                            8
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -88846.
-Date:                Tue, 01 Sep 2026   Deviance:                   1.7769e+05
-Time:                        17:48:32   Pearson chi2:                 1.49e+05
+Date:                Wed, 02 Sep 2026   Deviance:                   1.7769e+05
+Time:                        09:45:14   Pearson chi2:                 1.49e+05
 No. Iterations:                    21   Pseudo R-squ. (CS):           0.008074
 Covariance Type:            nonrobust                                         
 =====================================================================================
@@ -1111,25 +1351,25 @@ logIncome             0.2754      0.009     30.461      0.000       0.258       
 </div>
 </div>
 <p>This estimates an individual regression parameter <span class="math inline">\(\beta_j\)</span> for each age class, and the fit improves accordingly. Because of the logit link, the model has a multiplicative structure in the odds; e.g., a borrower in the <code>71+</code> class carries the same income effect as every other borrower, scaled by their own age-class odds factor.</p>
-<div id="65843124" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>li_med <span class="op">=</span> <span class="bu">float</span>(np.median(glm_dat[<span class="st">"logIncome"</span>]))</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.DataFrame({<span class="st">"Age"</span>: np.arange(<span class="dv">18</span>, <span class="dv">76</span>), <span class="st">"logIncome"</span>: li_med})</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>grid[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    grid[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>],</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>ax.plot(age, r_a, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">3</span>, color<span class="op">=</span><span class="st">"#8A8377"</span>, label<span class="op">=</span><span class="st">"empirical"</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>ax.plot(grid[<span class="st">"Age"</span>], glm1.predict(grid), color<span class="op">=</span><span class="st">"#3B4A75"</span>, label<span class="op">=</span><span class="st">"GLM1"</span>)</span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>ax.step(grid[<span class="st">"Age"</span>], glm2.predict(grid), color<span class="op">=</span><span class="st">"#8C2F1E"</span>, label<span class="op">=</span><span class="st">"GLM2"</span>, where<span class="op">=</span><span class="st">"mid"</span>)</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"default rate"</span>)<span class="op">;</span> ax.legend()</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="3cb86142" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>li_med <span class="op">=</span> <span class="bu">float</span>(np.median(glm_dat[<span class="st">"logIncome"</span>]))</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> pd.DataFrame({<span class="st">"Age"</span>: np.arange(<span class="dv">18</span>, <span class="dv">76</span>), <span class="st">"logIncome"</span>: li_med})</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>grid[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    grid[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>],</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>ax.plot(age, r_a, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">3</span>, color<span class="op">=</span><span class="st">"#8A8377"</span>, label<span class="op">=</span><span class="st">"empirical"</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>ax.plot(grid[<span class="st">"Age"</span>], glm1.predict(grid), color<span class="op">=</span><span class="st">"#3B4A75"</span>, label<span class="op">=</span><span class="st">"GLM1"</span>)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>ax.step(grid[<span class="st">"Age"</span>], glm2.predict(grid), color<span class="op">=</span><span class="st">"#8C2F1E"</span>, label<span class="op">=</span><span class="st">"GLM2"</span>, where<span class="op">=</span><span class="st">"mid"</span>)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"default rate"</span>)<span class="op">;</span> ax.legend()</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-16-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-17-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Empirical default rate per age (dots) against the GLM1 and GLM2 age profiles, both evaluated at the median log-income. GLM1 forces monotonicity; GLM2 recovers the hump at young ages and the rise after 65.</figcaption>
 </figure>
 </div>
@@ -1139,10 +1379,10 @@ logIncome             0.2754      0.009     30.461      0.000       0.258       
 </section>
 <section id="model-glm3-adding-the-confounder" class="level3" data-number="4.0.3">
 <h3 data-number="4.0.3" class="anchored" data-anchor-id="model-glm3-adding-the-confounder"><span class="header-section-number">4.0.3</span> Model GLM3 (adding the confounder)</h3>
-<div id="63865278" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>glm3 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country"</span>,</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm3.summary().tables[<span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9086c889" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>glm3 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country"</span>,</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>glm_dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(glm3.summary().tables[<span class="dv">1</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>=====================================================================================
                         coef    std err          z      P&gt;|z|      [0.025      0.975]
@@ -1162,16 +1402,16 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 =====================================================================================</code></pre>
 </div>
 </div>
-<div id="9cf7c246" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>comparison <span class="op">=</span> pd.DataFrame({</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"deviance"</span>: [glm1.deviance, glm2.deviance, glm3.deviance],</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AIC"</span>: [glm1.aic, glm2.aic, glm3.aic],</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"income coefficient"</span>: [</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>        glm1.params[<span class="st">"logIncome"</span>], glm2.params[<span class="st">"logIncome"</span>],</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>        glm3.params[<span class="st">"logIncome"</span>]],</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>[<span class="st">"GLM1"</span>, <span class="st">"GLM2"</span>, <span class="st">"GLM3"</span>])</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>comparison.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<div class="cell-output cell-output-display" data-execution_count="36">
+<div id="60e1bc8b" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>comparison <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"deviance"</span>: [glm1.deviance, glm2.deviance, glm3.deviance],</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AIC"</span>: [glm1.aic, glm2.aic, glm3.aic],</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"income coefficient"</span>: [</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>        glm1.params[<span class="st">"logIncome"</span>], glm2.params[<span class="st">"logIncome"</span>],</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        glm3.params[<span class="st">"logIncome"</span>]],</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>}, index<span class="op">=</span>[<span class="st">"GLM1"</span>, <span class="st">"GLM2"</span>, <span class="st">"GLM3"</span>])</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>comparison.<span class="bu">round</span>(<span class="dv">3</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="38">
 <div>
 
 
@@ -1210,30 +1450,30 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 </div>
 </div>
 <p>Conditioning on country flips the income coefficient negative, i.e., within a country, higher income now reduces the odds of default, exactly as the quintile curves showed and as underwriting intuition demands. The wrongly signed coefficient was evidence about the portfolio’s composition all along, and it had to be explained before the model could be believed. This is worth carrying through the whole lecture series, because deep learning models absorb such composition effects silently, and in credit they must be found and explained before a model is used.</p>
-<div id="9eb09ca1" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>gx <span class="op">=</span> (x_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> x_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>gy <span class="op">=</span> (y_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> y_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>gxx, gyy <span class="op">=</span> np.meshgrid(gx, gy, indexing<span class="op">=</span><span class="st">"ij"</span>)</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>gframe <span class="op">=</span> pd.DataFrame({<span class="st">"Age"</span>: gxx.ravel(), <span class="st">"logIncome"</span>: gyy.ravel()})</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>gframe[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>    gframe[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>            <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>],</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>glm2_surface <span class="op">=</span> np.where(</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    np.isnan(rate), np.nan,</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    glm2.predict(gframe).to_numpy().reshape(gxx.shape))</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(glm2_surface.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>               extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, label<span class="op">=</span><span class="st">"GLM2 fitted default rate"</span>)</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="62e69ce9" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>gx <span class="op">=</span> (x_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> x_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>gy <span class="op">=</span> (y_edges[:<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> y_edges[<span class="dv">1</span>:]) <span class="op">/</span> <span class="dv">2</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>gxx, gyy <span class="op">=</span> np.meshgrid(gx, gy, indexing<span class="op">=</span><span class="st">"ij"</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>gframe <span class="op">=</span> pd.DataFrame({<span class="st">"Age"</span>: gxx.ravel(), <span class="st">"logIncome"</span>: gyy.ravel()})</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>gframe[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    gframe[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>],</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>            <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>],</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>glm2_surface <span class="op">=</span> np.where(</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>    np.isnan(rate), np.nan,</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    glm2.predict(gframe).to_numpy().reshape(gxx.shape))</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(glm2_surface.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>               extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, label<span class="op">=</span><span class="st">"GLM2 fitted default rate"</span>)</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-19-output-1.png" width="949" height="617" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-20-output-1.png" width="949" height="617" class="figure-img"></p>
 <figcaption>Fitted default rate of GLM2 over the (age, log-income) grid, masked to the covariate combinations present in the portfolio. The multiplicative odds structure produces smooth vertical and horizontal banding and, by construction, no interaction between the two axes.</figcaption>
 </figure>
 </div>
@@ -1245,28 +1485,28 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <section id="gradient-boosting-machine" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Gradient boosting machine</h1>
 <p>As a first machine learning regression model, we present a gradient boosting machine (GBM). GBMs belong to the most powerful techniques on tabular data, in particular the powerful versions like XGBoost, LightGBM or CatBoost; on credit bureau data they remain the benchmark to beat in most published comparisons. A GBM partitions the covariate space into different (homogeneous) subsets and estimates the default rate on each subset. We fit scikit-learn’s histogram-based implementation on the two selected covariates and only present the resulting heatmap; GBMs are not further studied in this series.</p>
-<div id="3801d6a2" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> HistGradientBoostingClassifier</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>gbm <span class="op">=</span> HistGradientBoostingClassifier(</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    max_iter<span class="op">=</span><span class="dv">300</span>, learning_rate<span class="op">=</span><span class="fl">0.05</span>, max_leaf_nodes<span class="op">=</span><span class="dv">15</span>, random_state<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>gbm.fit(np.column_stack([x, y]), d)</span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>gbm_surface <span class="op">=</span> np.where(</span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    np.isnan(rate), np.nan,</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    gbm.predict_proba(np.column_stack([gxx.ravel(), gyy.ravel()]))[:, <span class="dv">1</span>]</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    .reshape(gxx.shape))</span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(gbm_surface.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
-<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>               extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
-<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
-<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, label<span class="op">=</span><span class="st">"GBM fitted default rate"</span>)</span>
-<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="6e253cbc" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> HistGradientBoostingClassifier</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>gbm <span class="op">=</span> HistGradientBoostingClassifier(</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    max_iter<span class="op">=</span><span class="dv">300</span>, learning_rate<span class="op">=</span><span class="fl">0.05</span>, max_leaf_nodes<span class="op">=</span><span class="dv">15</span>, random_state<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>gbm.fit(np.column_stack([x, y]), d)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>gbm_surface <span class="op">=</span> np.where(</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    np.isnan(rate), np.nan,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    gbm.predict_proba(np.column_stack([gxx.ravel(), gyy.ravel()]))[:, <span class="dv">1</span>]</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    .reshape(gxx.shape))</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">4.2</span>))</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(gbm_surface.T, origin<span class="op">=</span><span class="st">"lower"</span>, aspect<span class="op">=</span><span class="st">"auto"</span>,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>               extent<span class="op">=</span>(<span class="dv">18</span>, <span class="dv">76</span>, <span class="fl">5.5</span>, <span class="fl">9.0</span>), cmap<span class="op">=</span><span class="st">"RdYlBu_r"</span>, vmin<span class="op">=</span><span class="fl">0.1</span>, vmax<span class="op">=</span><span class="fl">0.5</span>)</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"age of borrower"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"log-income"</span>)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>fig.colorbar(im, label<span class="op">=</span><span class="st">"GBM fitted default rate"</span>)</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-20-output-1.png" width="949" height="617" class="figure-img"></p>
+<p><img src="01_credit-use-case_files/figure-html/cell-21-output-1.png" width="949" height="617" class="figure-img"></p>
 <figcaption>Fitted default rate of the GBM over the (age, log-income) grid, same masking and colour scale as before. The GBM recovers the diagonal structure of the empirical heatmap, at the price of a piecewise-constant, non-smooth surface.</figcaption>
 </figure>
 </div>
@@ -1287,7 +1527,9 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <li>Botha, A. and Verster, T. (2025). <em>Approaches for modelling the term-structure of default risk under IFRS 9: a tutorial using discrete-time survival analysis</em>.</li>
 <li>Breeden, J.L. (2016). <em>Incorporating lifecycle and environment in loan-level forecasts and stress tests</em>. European Journal of Operational Research.</li>
 <li>International Accounting Standards Board (2014). <em>IFRS 9: Financial Instruments</em>, section 5.5: impairment.</li>
-<li>European Parliament and Council. <em>Regulation (EU) No 575/2013 (Capital Requirements Regulation)</em>, Article 178: default of an obligor, as amended by Regulation (EU) 2024/1623 (CRR3).</li>
+<li>European Parliament and Council. <em>Regulation (EU) No 575/2013 (Capital Requirements Regulation)</em>, Article 178: default of an obligor, as amended by Regulation (EU) 2024/1623 (CRR3), and Article 180: requirements specific to PD estimation.</li>
+<li>European Banking Authority (2017). <em>Guidelines on PD estimation, LGD estimation and the treatment of defaulted exposures</em> (EBA/GL/2017/16).</li>
+<li>Vasicek, O.A. (2002). <em>The distribution of loan portfolio value</em>. Risk, 15(12).</li>
 <li>Prudential Regulation Authority (2024). <em>SS3/24: Credit risk, definition of default</em>.</li>
 <li>Wüthrich, M.V. and Merz, M. (2023). <em>Statistical Foundations of Actuarial Learning and its Applications</em>. Springer.</li>
 <li>Scognamiglio, S., Maggi, M. and Wüthrich, M.V. (2026). <em>Deep Learning for Actuarial Modeling</em>, SSRN 5162304.</li>

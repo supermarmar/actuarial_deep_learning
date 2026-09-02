@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-02">
+
+<title>Credit Lecture S3: Neural Survival Heads</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-lecture-s1-stopped" id="toc-where-lecture-s1-stopped" class="nav-link active" data-scroll-target="#where-lecture-s1-stopped"><span class="header-section-number">1</span> Where lecture S1 stopped</a></li>
+  <li><a href="#one-logit-per-month" id="toc-one-logit-per-month" class="nav-link" data-scroll-target="#one-logit-per-month"><span class="header-section-number">2</span> One logit per month</a>
+  <ul class="collapse">
+  <li><a href="#the-masking-identity" id="toc-the-masking-identity" class="nav-link" data-scroll-target="#the-masking-identity"><span class="header-section-number">2.1</span> The masking identity</a></li>
+  <li><a href="#architecture" id="toc-architecture" class="nav-link" data-scroll-target="#architecture"><span class="header-section-number">2.2</span> Architecture</a></li>
+  </ul></li>
+  <li><a href="#fitting-it-on-bondora" id="toc-fitting-it-on-bondora" class="nav-link" data-scroll-target="#fitting-it-on-bondora"><span class="header-section-number">3</span> Fitting it on Bondora</a>
+  <ul class="collapse">
+  <li><a href="#splits-and-training" id="toc-splits-and-training" class="nav-link" data-scroll-target="#splits-and-training"><span class="header-section-number">3.1</span> Splits and training</a></li>
+  <li><a href="#the-benchmarks" id="toc-the-benchmarks" class="nav-link" data-scroll-target="#the-benchmarks"><span class="header-section-number">3.2</span> The benchmarks</a></li>
+  <li><a href="#the-term-structure" id="toc-the-term-structure" class="nav-link" data-scroll-target="#the-term-structure"><span class="header-section-number">3.3</span> The term structure</a></li>
+  <li><a href="#does-the-advantage-survive-the-out-of-time-split" id="toc-does-the-advantage-survive-the-out-of-time-split" class="nav-link" data-scroll-target="#does-the-advantage-survive-the-out-of-time-split"><span class="header-section-number">3.4</span> Does the advantage survive the out-of-time split?</a></li>
+  </ul></li>
+  <li><a href="#three-balance-conditions" id="toc-three-balance-conditions" class="nav-link" data-scroll-target="#three-balance-conditions"><span class="header-section-number">4</span> Three balance conditions</a>
+  <ul class="collapse">
+  <li><a href="#what-each-model-satisfies" id="toc-what-each-model-satisfies" class="nav-link" data-scroll-target="#what-each-model-satisfies"><span class="header-section-number">4.1</span> What each model satisfies</a></li>
+  <li><a href="#the-readout-re-fit" id="toc-the-readout-re-fit" class="nav-link" data-scroll-target="#the-readout-re-fit"><span class="header-section-number">4.2</span> The readout re-fit</a></li>
+  <li><a href="#why-balance-at-horizon-k-does-not-follow" id="toc-why-balance-at-horizon-k-does-not-follow" class="nav-link" data-scroll-target="#why-balance-at-horizon-k-does-not-follow"><span class="header-section-number">4.3</span> Why balance at horizon <span class="math inline">\(k\)</span> does not follow</a></li>
+  </ul></li>
+  <li><a href="#two-causes-in-one-head" id="toc-two-causes-in-one-head" class="nav-link" data-scroll-target="#two-causes-in-one-head"><span class="header-section-number">5</span> Two causes in one head</a></li>
+  <li><a href="#calibration-where-it-counts" id="toc-calibration-where-it-counts" class="nav-link" data-scroll-target="#calibration-where-it-counts"><span class="header-section-number">6</span> Calibration where it counts</a>
+  <ul class="collapse">
+  <li><a href="#the-seasoned-sample-verdict" id="toc-the-seasoned-sample-verdict" class="nav-link" data-scroll-target="#the-seasoned-sample-verdict"><span class="header-section-number">6.1</span> The seasoned sample verdict</a></li>
+  <li><a href="#auto-calibration-and-the-score-decomposition" id="toc-auto-calibration-and-the-score-decomposition" class="nav-link" data-scroll-target="#auto-calibration-and-the-score-decomposition"><span class="header-section-number">6.2</span> Auto-calibration and the score decomposition</a></li>
+  </ul></li>
+  <li><a href="#deepsurv-deephit-and-what-is-not-fitted-here" id="toc-deepsurv-deephit-and-what-is-not-fitted-here" class="nav-link" data-scroll-target="#deepsurv-deephit-and-what-is-not-fitted-here"><span class="header-section-number">7</span> DeepSurv, DeepHit, and what is not fitted here</a></li>
+  <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways"><span class="header-section-number">8</span> Takeaways</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture S3: Neural Survival Heads</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 2, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Lecture S1 showed that a discrete-time hazard model is a logistic regression on a person-period expansion. Replacing that logistic regression with a network is therefore a one-line change, and this lecture makes it. It builds a survival head that emits one logit per month, so the whole term structure arrives in a single forward pass and the 2.7 million person-period rows are never materialised, then asks of that head the two questions lecture 7 of the summer school asks of a PD head. The balance property turns out to hold at whatever resolution the model was given and nowhere finer, and enforcing it at every month leaves the twelve-month PD still overstated by 2.4 percentage points. Widening the same head to two causes cuts that to 0.8, because the residue was never a calibration failure. It closes on DeepSurv and DeepHit, and on why neither is fitted here. This lecture answers no summer school lecture; it completes the survival track S1 opened.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="where-lecture-s1-stopped" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Where lecture S1 stopped</h1>
+<p>Lecture S1 ended on a specification borrowed from Botha and Verster (2025, Eq. 14), in which the discrete-time hazard of default is a logistic regression on a person-period expansion,</p>
+<p><span class="math display">\[
+q_{i,t} = \mathrm{logit}^{-1}\left(
+\boldsymbol{\alpha}^{\!\top} \boldsymbol{E}_{i}
++ \boldsymbol{\beta}^{\!\top} \boldsymbol{x}_{i}
+\right),
+\]</span></p>
+<p>with <span class="math inline">\(\boldsymbol{E}_{i}\)</span> the period indicators forming the baseline hazard and <span class="math inline">\(\boldsymbol{x}_{i}\)</span> the application covariates. Everything on the right of that inverse logit is linear, and the summer school spent lectures 4 and 5 establishing what happens when the linear predictor of a generalised linear model is replaced by a feed-forward network. Consequently the deep-learning version of a survival model is available immediately:</p>
+<p><span class="math display">\[
+q_{i,t} = \mathrm{logit}^{-1}\left(
+\alpha_t + \left\langle \boldsymbol{w}_t, \boldsymbol{z}(\boldsymbol{x}_i) \right\rangle
+\right),
+\qquad
+\boldsymbol{z} = \boldsymbol{z}^{(d)} \circ \cdots \circ \boldsymbol{z}^{(1)} ,
+\]</span></p>
+<p>where <span class="math inline">\(\boldsymbol{z}\)</span> is the feature extractor of lecture 4 and the readout now carries one weight vector and one intercept <strong>per month</strong> rather than one of each. That is the entire architectural idea, and the rest of this lecture is about what it costs and what it buys.</p>
+<p>Two questions follow it, and they are the ones the summer school’s seventh lecture puts to any network. Does the balance property survive? And is the fitted model auto-calibrated? Credit lecture 4 and 5 found the balance property to be the first casualty of moving from a GLM to a network on a twelve-month PD. A survival head raises the same question at sixty horizons at once, which turns a single condition into a family of them.</p>
+<p>The reader is assumed to hold lecture S1 and the feed-forward material of credit lectures 4 and 5. Notation carries over unchanged: <span class="math inline">\(t\)</span> for months on book, <span class="math inline">\(k\)</span> for the horizon being asked about, <span class="math inline">\(q_{i,t}\)</span> for the discrete default hazard, and <span class="math inline">\({}_k p_{i} = \prod_{t \le k} (1 - q_{i,t})\)</span> for survival to <span class="math inline">\(k\)</span> months.</p>
+<div id="931d4655" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy.optimize <span class="im">import</span> brentq</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">9</span>, <span class="dv">4</span>), <span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#1F4E79"</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>torch.set_num_threads(<span class="dv">4</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="op">=</span> <span class="dv">60</span>  <span class="co"># months, as in lecture S1</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>surv <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_survival.parquet"</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> (surv.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>            .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log()))</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"loans after lecture 1's cleaning filter: </span><span class="sc">{</span>base<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>loans after lecture 1's cleaning filter: 179,171</code></pre>
+</div>
+</div>
+</section>
+<section id="one-logit-per-month" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> One logit per month</h1>
+<section id="the-masking-identity" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="the-masking-identity"><span class="header-section-number">2.1</span> The masking identity</h2>
+<p>The person-period expansion of lecture S1 turned 179,171 loans into 2.7 million loan-months, one row per month at risk. That reshaping is what let a logistic regression fit a hazard, and it is also the reason a naive neural version is wasteful: each of a loan’s rows carries the same covariates, so the feature extractor would recompute <span class="math inline">\(\boldsymbol{z}(\boldsymbol{x}_i)\)</span> once per month of that loan’s life.</p>
+<p>The wide-output head removes the duplication. Give the network <span class="math inline">\(m = 60\)</span> output units, read output <span class="math inline">\(t\)</span> as the logit of <span class="math inline">\(q_{i,t}\)</span>, and evaluate the loss only on the months during which loan <span class="math inline">\(i\)</span> was actually at risk. Writing <span class="math inline">\(r_{i,t} = 1\)</span> for a month at risk and <span class="math inline">\(y_{i,t}\)</span> for the event history indicator of Singer and Willett (1993), the objective is</p>
+<p><span class="math display">\[
+\mathcal{L} = - \sum_{i=1}^{n} \sum_{t=1}^{m} r_{i,t}
+\left[ y_{i,t} \log q_{i,t} + (1 - y_{i,t}) \log (1 - q_{i,t}) \right] ,
+\]</span></p>
+<p>which is the person-period Bernoulli log-likelihood term for term. Nothing has been approximated, and the mask <span class="math inline">\(r_{i,t}\)</span> is doing exactly the work that dropping a row from the expansion did. Gensheimer and Narasimhan (2019) give this construction its usual name in the literature, a discrete-time survival neural network.</p>
+<p>Hence the comparison against lecture S1’s logit is exact rather than indicative: the two models optimise the same objective over the same cells and differ only in the functional form allowed between the covariates and the logit. Section 4.2 verifies that claim numerically rather than leaving it as an argument.</p>
+<div id="56645e66" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> masks(df, horizon<span class="op">=</span>HORIZON):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""At-risk indicator and the two event-history indicators, all n by m."""</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> df[<span class="st">"t_obs_m"</span>].to_numpy().clip(<span class="bu">max</span><span class="op">=</span>horizon <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    kind <span class="op">=</span> df[<span class="st">"exit_kind"</span>].to_numpy()</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    grid <span class="op">=</span> np.arange(<span class="dv">1</span>, horizon <span class="op">+</span> <span class="dv">1</span>)[<span class="va">None</span>, :]</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    at_risk <span class="op">=</span> (grid <span class="op">&lt;=</span> np.minimum(t, horizon)[:, <span class="va">None</span>]).astype(np.float32)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    y_def <span class="op">=</span> ((grid <span class="op">==</span> t[:, <span class="va">None</span>]) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"default"</span>)[:, <span class="va">None</span>]).astype(np.float32)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    y_set <span class="op">=</span> ((grid <span class="op">==</span> t[:, <span class="va">None</span>]) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"settled"</span>)[:, <span class="va">None</span>]).astype(np.float32)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> at_risk, y_def, y_set</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>M, Yd, Ys <span class="op">=</span> masks(base)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"matrix is </span><span class="sc">{</span>M<span class="sc">.</span>shape[<span class="dv">0</span>]<span class="sc">:,}</span><span class="ss"> by </span><span class="sc">{</span>M<span class="sc">.</span>shape[<span class="dv">1</span>]<span class="sc">}</span><span class="ss">, of which "</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">int</span>(M.<span class="bu">sum</span>())<span class="sc">:,}</span><span class="ss"> cells are at risk"</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"defaults </span><span class="sc">{</span><span class="bu">int</span>(Yd.<span class="bu">sum</span>())<span class="sc">:,}</span><span class="ss">   settlements </span><span class="sc">{</span><span class="bu">int</span>(Ys.<span class="bu">sum</span>())<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>matrix is 179,171 by 60, of which 2,671,330 cells are at risk
+defaults 71,180   settlements 41,115</code></pre>
+</div>
+</div>
+<p>The at-risk cell count reproduces the person-period row count of lecture S1 exactly, which is the check that the mask was built correctly.</p>
+</section>
+<section id="architecture" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="architecture"><span class="header-section-number">2.2</span> Architecture</h2>
+<p>The covariates are lecture S1’s, namely borrower age, log income and country, so that the only difference between the two models is the functional form. Country enters through a two-dimensional embedding in the manner of the summer school’s sixth lecture, and the two continuous covariates are standardised on the training partition.</p>
+<div id="1f5cbb41" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>Xc <span class="op">=</span> np.column_stack([base[<span class="st">"logIncome"</span>].to_numpy(),</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                      base[<span class="st">"Age"</span>].to_numpy().astype(<span class="bu">float</span>)])</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>codes <span class="op">=</span> pl.Series(base[<span class="st">"Country"</span>]).cast(pl.Categorical).to_physical().to_numpy().astype(np.int64)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>n_country <span class="op">=</span> <span class="bu">int</span>(codes.<span class="bu">max</span>()) <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SurvivalHead(torch.nn.Module):</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Feature extractor shared across months; one output logit per month."""</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n_cont, n_levels, horizon<span class="op">=</span>HORIZON, widths<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">10</span>),</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                 emb<span class="op">=</span><span class="dv">2</span>, seed<span class="op">=</span><span class="dv">7</span>):</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        torch.manual_seed(seed)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.emb <span class="op">=</span> torch.nn.Embedding(n_levels, emb)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        layers, prev <span class="op">=</span> [], n_cont <span class="op">+</span> emb</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> w <span class="kw">in</span> widths:</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>            layers <span class="op">+=</span> [torch.nn.Linear(prev, w), torch.nn.Tanh()]</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>            prev <span class="op">=</span> w</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.body <span class="op">=</span> torch.nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.out <span class="op">=</span> torch.nn.Linear(prev, horizon)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.out.bias.data.fill_(<span class="op">-</span><span class="fl">5.0</span>)  <span class="co"># start near a low hazard, not near a half</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, xc, xk):</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.out(<span class="va">self</span>.body(torch.cat([xc, <span class="va">self</span>.emb(xk)], dim<span class="op">=</span><span class="dv">1</span>)))</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> masked_deviance(logits, y, m):</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Bernoulli deviance per at-risk cell, times 100."""</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> torch.nn.functional.binary_cross_entropy_with_logits(logits, y,</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>                                                              reduction<span class="op">=</span><span class="st">"none"</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">200.0</span> <span class="op">*</span> (bce <span class="op">*</span> m).<span class="bu">sum</span>() <span class="op">/</span> m.<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The output bias is initialised at <span class="math inline">\(-5\)</span> rather than at zero. Default is a rare event month by month, so an untouched linear layer starts every hazard near a half and the first epochs are spent undoing that.</p>
+</section>
+</section>
+<section id="fitting-it-on-bondora" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Fitting it on Bondora</h1>
+<section id="splits-and-training" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="splits-and-training"><span class="header-section-number">3.1</span> Splits and training</h2>
+<p>The splits are those of credit lecture 4 and 5, with the same seeds: an 80/20 random split, and an out-of-time split at the 0.8 quantile of origination dates. The training recipe is also theirs, namely a 90/10 partition of the learning sample, NAdam over mini-batches of 5,000 loans, and early stopping by checkpointing on the validation deviance. Training runs on the CPU with every seed fixed, so the figures below reproduce on re-render.</p>
+<div id="bdacb686" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>perm <span class="op">=</span> rng.permutation(base.height)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>idx_learn, idx_test <span class="op">=</span> perm[:<span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> base.height)], perm[<span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> base.height):]</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>loan_date <span class="op">=</span> base[<span class="st">"LoanDate"</span>].to_numpy()</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>cutoff <span class="op">=</span> pd.Series(loan_date).quantile(<span class="fl">0.8</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>mask_t <span class="op">=</span> loan_date <span class="op">&lt;=</span> cutoff</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>idx_learn_t, idx_test_t <span class="op">=</span> np.where(mask_t)[<span class="dv">0</span>], np.where(<span class="op">~</span>mask_t)[<span class="dv">0</span>]</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"random     : learn </span><span class="sc">{</span><span class="bu">len</span>(idx_learn)<span class="sc">:,}</span><span class="ss"> / test </span><span class="sc">{</span><span class="bu">len</span>(idx_test)<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"out-of-time: learn </span><span class="sc">{</span><span class="bu">len</span>(idx_learn_t)<span class="sc">:,}</span><span class="ss"> / test </span><span class="sc">{</span><span class="bu">len</span>(idx_test_t)<span class="sc">:,}</span><span class="ss"> "</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(cutoff </span><span class="sc">{</span>pd<span class="sc">.</span>Timestamp(cutoff)<span class="sc">.</span>date()<span class="sc">}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>random     : learn 143,336 / test 35,835
+out-of-time: learn 143,375 / test 35,796 (cutoff 2020-03-17)</code></pre>
+</div>
+</div>
+<div id="1e06e8b9" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_head(idx, seed<span class="op">=</span><span class="dv">7</span>, epochs<span class="op">=</span><span class="dv">400</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">30</span>):</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.random.default_rng(seed).permutation(<span class="bu">len</span>(idx))</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    tr, va <span class="op">=</span> idx[p[:<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p))]], idx[p[<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p)):]]</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    m_hat, s_hat <span class="op">=</span> Xc[tr].mean(<span class="dv">0</span>), Xc[tr].std(<span class="dv">0</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    prep <span class="op">=</span> <span class="kw">lambda</span> i: torch.tensor(((Xc[i] <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).astype(np.float32))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    Xtr, Xva <span class="op">=</span> prep(tr), prep(va)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    Ktr, Kva <span class="op">=</span> torch.tensor(codes[tr]), torch.tensor(codes[va])</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    Ytr, Yva <span class="op">=</span> torch.tensor(Yd[tr]), torch.tensor(Yd[va])</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    Mtr, Mva <span class="op">=</span> torch.tensor(M[tr]), torch.tensor(M[va])</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> SurvivalHead(Xc.shape[<span class="dv">1</span>], n_country, seed<span class="op">=</span>seed)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.NAdam(model.parameters())</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    gen <span class="op">=</span> torch.Generator().manual_seed(seed)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>    best, best_epoch, best_state, hist <span class="op">=</span> np.inf, <span class="dv">0</span>, <span class="va">None</span>, []</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, epochs <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        model.train()</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> chunk <span class="kw">in</span> torch.randperm(<span class="bu">len</span>(tr), generator<span class="op">=</span>gen).split(batch):</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>            masked_deviance(model(Xtr[chunk], Ktr[chunk]), Ytr[chunk],</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>                            Mtr[chunk]).backward()</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">eval</span>()</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>            hist.append((masked_deviance(model(Xtr, Ktr), Ytr, Mtr).item(),</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>                         masked_deviance(model(Xva, Kva), Yva, Mva).item()))</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> hist[<span class="op">-</span><span class="dv">1</span>][<span class="dv">1</span>] <span class="op">&lt;</span> best:</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>            best, best_epoch <span class="op">=</span> hist[<span class="op">-</span><span class="dv">1</span>][<span class="dv">1</span>], epoch</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>            best_state <span class="op">=</span> {k: v.clone() <span class="cf">for</span> k, v <span class="kw">in</span> model.state_dict().items()}</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">-</span> best_epoch <span class="op">&gt;=</span> patience:</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>    model.load_state_dict(best_state)</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, (m_hat, s_hat), np.array(hist), best_epoch</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> hazards(model, scaler, idx):</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>    m_hat, s_hat <span class="op">=</span> scaler</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>        logits <span class="op">=</span> model(torch.tensor(((Xc[idx] <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).astype(np.float32)),</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>                       torch.tensor(codes[idx]))</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> torch.sigmoid(logits).numpy(), logits.numpy()</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>head, scaler, hist, stop <span class="op">=</span> train_head(idx_learn)</span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>q_net, logit_net <span class="op">=</span> hazards(head, scaler, np.arange(base.height))</span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"parameters </span><span class="sc">{</span><span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> head.parameters())<span class="sc">:,}</span><span class="ss">, "</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>HORIZON<span class="sc">}</span><span class="ss"> outputs; validation optimum at epoch </span><span class="sc">{</span>stop<span class="sc">}</span><span class="ss"> of "</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(hist)<span class="sc">}</span><span class="ss"> run in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss">s"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>parameters 1,243, 60 outputs; validation optimum at epoch 90 of 120 run in 9s</code></pre>
+</div>
+</div>
+<p>The parameter count is worth a moment. A network of the same depth and width fitted to a twelve-month PD in credit lecture 4 and 5 carried 1,266 parameters and produced one number per loan. This one carries a comparable total and produces sixty, because the extra cost sits entirely in the readout, at <span class="math inline">\(10 \times 60 + 60 = 660\)</span> weights against the single readout’s <span class="math inline">\(11\)</span>. The feature extractor, which is where the depth lives, is shared across every month.</p>
+<div id="21970e43" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="fl">3.6</span>))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>ep <span class="op">=</span> np.arange(<span class="dv">1</span>, <span class="bu">len</span>(hist) <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>ax.plot(ep, hist[:, <span class="dv">0</span>], color<span class="op">=</span>BLUE, label<span class="op">=</span><span class="st">"training deviance"</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>ax.plot(ep, hist[:, <span class="dv">1</span>], color<span class="op">=</span>OX, label<span class="op">=</span><span class="st">"validation deviance"</span>)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(stop, color<span class="op">=</span>RULE, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>, label<span class="op">=</span><span class="ss">f"early stop (epoch </span><span class="sc">{</span>stop<span class="sc">}</span><span class="ss">)"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"epoch"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"deviance per at-risk cell </span><span class="kw">(</span><span class="dv">$</span><span class="vs">10</span><span class="dv">^</span><span class="vs">{-2}</span><span class="dv">$</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S3_deep-survival-credit_files/figure-html/cell-7-output-1.png" width="963" height="528" class="figure-img"></p>
+<figcaption>Training and validation deviance per at-risk cell by epoch on the random split. The validation curve bottoms out at the epoch marked by the dashed line and the checkpoint at that epoch is the parameter retained. The shape is the one credit lecture 4 and 5 found for the twelve-month PD network, which is expected: masking changes which cells enter the loss and changes nothing about the optimisation.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="the-benchmarks" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="the-benchmarks"><span class="header-section-number">3.2</span> The benchmarks</h2>
+<p>Two benchmarks matter. The first is lecture S1’s discrete-time hazard logit, refitted here on the same learning sample so the comparison is like for like. The second is the marginal Kaplan-Meier hazard applied to every loan, which is the survival analogue of the null model and sets the deviance a model with no covariates achieves.</p>
+<div id="21e6eaeb" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>BANDS <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">9</span>, <span class="dv">12</span>, <span class="dv">18</span>, <span class="dv">24</span>, <span class="dv">36</span>, <span class="dv">48</span>, <span class="dv">60</span>]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>BAND_LABELS <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>a <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(BANDS[:<span class="op">-</span><span class="dv">1</span>], BANDS[<span class="dv">1</span>:])]</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>AGE_CUTS <span class="op">=</span> [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>AGE_LABELS <span class="op">=</span> [<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>]</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>frame <span class="op">=</span> base.select([<span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"t_obs_m"</span>, <span class="st">"exit_kind"</span>]).to_pandas()</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>frame[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(frame[<span class="st">"Age"</span>], AGE_CUTS, labels<span class="op">=</span>AGE_LABELS,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>                           include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> expand(idx):</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Lecture S1's person-period expansion, restricted to a sample."""</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    sub <span class="op">=</span> frame.iloc[idx]</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> np.minimum(sub[<span class="st">"t_obs_m"</span>].to_numpy(), HORIZON)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> sub.iloc[np.repeat(np.arange(<span class="bu">len</span>(sub)), n)].copy()</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"t"</span>] <span class="op">=</span> np.concatenate([np.arange(<span class="dv">1</span>, j <span class="op">+</span> <span class="dv">1</span>) <span class="cf">for</span> j <span class="kw">in</span> n])</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"y"</span>] <span class="op">=</span> ((out[<span class="st">"t"</span>] <span class="op">==</span> out[<span class="st">"t_obs_m"</span>])</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>                <span class="op">&amp;</span> (out[<span class="st">"exit_kind"</span>] <span class="op">==</span> <span class="st">"default"</span>)).astype(<span class="bu">float</span>)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    out[<span class="st">"period"</span>] <span class="op">=</span> pd.cut(out[<span class="st">"t"</span>], BANDS, labels<span class="op">=</span>BAND_LABELS)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_logit(idx):</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> smf.glm(<span class="st">"y ~ C(period) + AgeClass + logIncome + Country - 1"</span>,</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>                    data<span class="op">=</span>expand(idx), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> np.empty((<span class="bu">len</span>(frame), HORIZON))</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, HORIZON <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>        grid <span class="op">=</span> frame.copy()</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>        grid[<span class="st">"period"</span>] <span class="op">=</span> pd.cut([k] <span class="op">*</span> <span class="bu">len</span>(frame), BANDS, labels<span class="op">=</span>BAND_LABELS)</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>        out[:, k <span class="op">-</span> <span class="dv">1</span>] <span class="op">=</span> model.predict(grid).to_numpy()</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, out</span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>dth, q_logit <span class="op">=</span> fit_logit(idx_learn)</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"logit fitted on </span><span class="sc">{</span><span class="bu">int</span>(dth.nobs)<span class="sc">:,}</span><span class="ss"> loan-months"</span>)</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> life_table(idx, horizon<span class="op">=</span>HORIZON):</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> frame[<span class="st">"t_obs_m"</span>].to_numpy()[idx].clip(<span class="bu">max</span><span class="op">=</span>horizon <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>    kind <span class="op">=</span> frame[<span class="st">"exit_kind"</span>].to_numpy()[idx]</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>    months <span class="op">=</span> np.arange(<span class="dv">1</span>, horizon <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>    n <span class="op">=</span> np.array([(t <span class="op">&gt;=</span> x).<span class="bu">sum</span>() <span class="cf">for</span> x <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> np.array([((t <span class="op">==</span> x) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"default"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> x <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> np.array([((t <span class="op">==</span> x) <span class="op">&amp;</span> (kind <span class="op">==</span> <span class="st">"settled"</span>)).<span class="bu">sum</span>() <span class="cf">for</span> x <span class="kw">in</span> months], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> months, n, d, s</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>months, n_k, d_k, s_k <span class="op">=</span> life_table(np.arange(base.height))</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>q_km <span class="op">=</span> d_k <span class="op">/</span> n_k</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a>S_km <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_km)</span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a>S_any_np <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_km <span class="op">-</span> s_k <span class="op">/</span> n_k)</span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a>cif_km <span class="op">=</span> np.cumsum(np.concatenate([[<span class="fl">1.0</span>], S_any_np[:<span class="op">-</span><span class="dv">1</span>]]) <span class="op">*</span> q_km)</span>
+<span id="cb11-48"><a href="#cb11-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-49"><a href="#cb11-49" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> null_hazards(idx):</span>
+<span id="cb11-50"><a href="#cb11-50" aria-hidden="true" tabindex="-1"></a>    _, n, d, _ <span class="op">=</span> life_table(idx)</span>
+<span id="cb11-51"><a href="#cb11-51" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.tile(d <span class="op">/</span> n, (<span class="bu">len</span>(frame), <span class="dv">1</span>))</span>
+<span id="cb11-52"><a href="#cb11-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-53"><a href="#cb11-53" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> deviance(q, idx):</span>
+<span id="cb11-54"><a href="#cb11-54" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-12</span></span>
+<span id="cb11-55"><a href="#cb11-55" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.clip(q[idx], eps, <span class="dv">1</span> <span class="op">-</span> eps)</span>
+<span id="cb11-56"><a href="#cb11-56" aria-hidden="true" tabindex="-1"></a>    y, m <span class="op">=</span> Yd[idx], M[idx]</span>
+<span id="cb11-57"><a href="#cb11-57" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">200.0</span> <span class="op">*</span> (<span class="op">-</span>(y <span class="op">*</span> np.log(p) <span class="op">+</span> (<span class="dv">1</span> <span class="op">-</span> y) <span class="op">*</span> np.log(<span class="dv">1</span> <span class="op">-</span> p)) <span class="op">*</span> m).<span class="bu">sum</span>() <span class="op">/</span> m.<span class="bu">sum</span>()</span>
+<span id="cb11-58"><a href="#cb11-58" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-59"><a href="#cb11-59" aria-hidden="true" tabindex="-1"></a>q_null <span class="op">=</span> null_hazards(idx_learn)</span>
+<span id="cb11-60"><a href="#cb11-60" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">deviance per at-risk cell, random split"</span>)</span>
+<span id="cb11-61"><a href="#cb11-61" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, q <span class="kw">in</span> ((<span class="st">"null (Kaplan-Meier hazards)"</span>, q_null),</span>
+<span id="cb11-62"><a href="#cb11-62" aria-hidden="true" tabindex="-1"></a>                 (<span class="st">"DtH logit (lecture S1)     "</span>, q_logit),</span>
+<span id="cb11-63"><a href="#cb11-63" aria-hidden="true" tabindex="-1"></a>                 (<span class="st">"survival head              "</span>, q_net)):</span>
+<span id="cb11-64"><a href="#cb11-64" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: learn </span><span class="sc">{</span>deviance(q, idx_learn)<span class="sc">:7.4f}</span><span class="ss">   "</span></span>
+<span id="cb11-65"><a href="#cb11-65" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"test </span><span class="sc">{</span>deviance(q, idx_test)<span class="sc">:7.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>logit fitted on 2,139,407 loan-months
+
+deviance per at-risk cell, random split
+  null (Kaplan-Meier hazards): learn 23.1779   test 23.3636
+  DtH logit (lecture S1)     : learn 22.1926   test 22.3360
+  survival head              : learn 22.0176   test 22.1848</code></pre>
+</div>
+</div>
+<p>The head improves on the logit out of sample, and the margin is best read against what there was to win. The null model leaves 1.1788 of deviance for the head to explain and 1.0276 for the logit, so the network recovers about fifteen per cent more of the covariate signal than the linear predictor does. That is a smaller advantage than the summer school’s French motor example produces, which is what three covariates and four countries should be expected to yield.</p>
+</section>
+<section id="the-term-structure" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="the-term-structure"><span class="header-section-number">3.3</span> The term structure</h2>
+<p>One fitted model now delivers a PD at every horizon, per loan. Chaining the predicted hazards and averaging over the portfolio gives the term structure of default risk, directly comparable with the two estimators of lecture S1.</p>
+<div id="b6abbfaf" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> term_structure(q):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">-</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q, axis<span class="op">=</span><span class="dv">1</span>).mean(<span class="dv">0</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>pd_net, pd_logit <span class="op">=</span> term_structure(q_net), term_structure(q_logit)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, curve <span class="kw">in</span> ((<span class="st">"survival head"</span>, pd_net), (<span class="st">"DtH logit    "</span>, pd_logit)):</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: PD_12 </span><span class="sc">{</span>curve[<span class="dv">11</span>]<span class="sc">:.4f}</span><span class="ss">   PD_60 </span><span class="sc">{</span>curve[<span class="dv">59</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Kaplan-Meier : PD_12 </span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_km[<span class="dv">11</span>]<span class="sc">:.4f}</span><span class="ss">   PD_60 </span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_km[<span class="dv">59</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"cumulative incidence: PD_12 </span><span class="sc">{</span>cif_km[<span class="dv">11</span>]<span class="sc">:.4f}</span><span class="ss">   PD_60 </span><span class="sc">{</span>cif_km[<span class="dv">59</span>]<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>survival head: PD_12 0.3062   PD_60 0.7148
+DtH logit    : PD_12 0.3066   PD_60 0.7097
+Kaplan-Meier : PD_12 0.3076   PD_60 0.7168
+cumulative incidence: PD_12 0.2771   PD_60 0.5469</code></pre>
+</div>
+</div>
+<div id="00130cba" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>risk_w <span class="op">=</span> M.<span class="bu">sum</span>(<span class="dv">0</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>haz_net <span class="op">=</span> (q_net <span class="op">*</span> M).<span class="bu">sum</span>(<span class="dv">0</span>) <span class="op">/</span> risk_w</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>haz_log <span class="op">=</span> (q_logit <span class="op">*</span> M).<span class="bu">sum</span>(<span class="dv">0</span>) <span class="op">/</span> risk_w</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>ax.plot(months, q_km <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">2.0</span>, label<span class="op">=</span><span class="st">"Kaplan-Meier, unconditional"</span>)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>ax.plot(months, haz_log <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>BLUE, lw<span class="op">=</span><span class="fl">1.3</span>, label<span class="op">=</span><span class="st">"DtH logit, banded baseline"</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>ax.plot(months, haz_net <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"survival head"</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"months on book $t$"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"hazard (%)"</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>)<span class="op">;</span> ax.set_title(<span class="st">"hazard by month"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">1</span>]</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>ax.plot(months, (<span class="dv">1</span> <span class="op">-</span> S_km) <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">2.0</span>, label<span class="op">=</span><span class="st">"Kaplan-Meier"</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>ax.plot(months, pd_logit <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>BLUE, lw<span class="op">=</span><span class="fl">1.3</span>, label<span class="op">=</span><span class="st">"DtH logit"</span>)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>ax.plot(months, pd_net <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"survival head"</span>)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>ax.plot(months, cif_km <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.2</span>, ls<span class="op">=</span><span class="st">"--"</span>,</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"cumulative incidence"</span>)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">12</span>, color<span class="op">=</span>RULE, ls<span class="op">=</span><span class="st">":"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"horizon $k$ (months)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"</span><span class="dv">$\m</span><span class="vs">athrm{PD}_k</span><span class="dv">$</span><span class="vs"> </span><span class="kw">(</span><span class="vs">%</span><span class="kw">)</span><span class="vs">"</span>)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"lower right"</span>)</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"term structure"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S3_deep-survival-credit_files/figure-html/cell-10-output-1.png" width="1338" height="587" class="figure-img"></p>
+<figcaption>(lhs): the fitted hazard by month, averaged over the loans at risk in that month, against the marginal Kaplan-Meier hazard. The logit’s baseline is banded into nine intervals and steps accordingly; the head carries one output per month and traces the lifecycle continuously. (rhs): the term structure of cumulative default risk. All three curves treat early repayment as censoring, and the cumulative incidence curve beneath them is the correction section 5 fits directly.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The left panel shows what the extra fifty-one output units bought. The logit’s baseline is a step function on nine bands, so its fitted hazard is flat across months four to six and again across months thirteen to eighteen, moving only as the composition of the risk set moves, whereas the head follows the peak at month five and the decline after it month by month. The right panel shows what they did not buy. The three cumulative curves span 0.14 percentage points at twelve months and 0.71 at sixty, because all three are anchored to the same marginal event counts.</p>
+<p>One cost of the wide readout is visible in the same panel. Beyond month forty-eight the head follows the month-to-month jitter of the Kaplan-Meier hazard rather than smoothing through it, which is what a free parameter per month permits when the risk set has thinned to a few thousand loans. Early stopping limits that and does not remove it, and a penalty on the differences <span class="math inline">\(\alpha_{t+1} - \alpha_t\)</span> would be the natural remedy, in the spirit of the regularisation lecture 8 applies to an ICE network.</p>
+</section>
+<section id="does-the-advantage-survive-the-out-of-time-split" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="does-the-advantage-survive-the-out-of-time-split"><span class="header-section-number">3.4</span> Does the advantage survive the out-of-time split?</h2>
+<p>Credit lecture 4 and 5 asked this of the twelve-month PD network and found the advantage narrowed. The same question is sharper here, since the out-of-time test loans are recent and therefore observed for only a few months each, so the test cells sit overwhelmingly in the low-hazard first year and the deviance level is not comparable across the two splits.</p>
+<div id="4cb6bead" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>head_t, scaler_t, hist_t, stop_t <span class="op">=</span> train_head(idx_learn_t)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>q_net_t, _ <span class="op">=</span> hazards(head_t, scaler_t, np.arange(base.height))</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>_, q_logit_t <span class="op">=</span> fit_logit(idx_learn_t)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>q_null_t <span class="op">=</span> null_hazards(idx_learn_t)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"out-of-time refit in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss">s, "</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"validation optimum at epoch </span><span class="sc">{</span>stop_t<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span><span class="bu">len</span>(hist_t)<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">deviance per at-risk cell, out-of-time split"</span>)</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, q <span class="kw">in</span> ((<span class="st">"null         "</span>, q_null_t), (<span class="st">"DtH logit    "</span>, q_logit_t),</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>                 (<span class="st">"survival head"</span>, q_net_t)):</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: learn </span><span class="sc">{</span>deviance(q, idx_learn_t)<span class="sc">:7.4f}</span><span class="ss">   "</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"test </span><span class="sc">{</span>deviance(q, idx_test_t)<span class="sc">:7.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>out-of-time refit in 35s, validation optimum at epoch 102 of 132
+
+deviance per at-risk cell, out-of-time split
+  null         : learn 24.3659   test  9.8664
+  DtH logit    : learn 23.3967   test  8.4869
+  survival head: learn 23.2195   test  8.3545</code></pre>
+</div>
+</div>
+<p>The ordering holds. Measured against the null, the head recovers 1.5119 of test deviance and the logit 1.3795, so the network’s edge falls from about fifteen per cent of the explained deviance on the random split to about ten out of time. Consequently the flexibility is genuine and it is also partly a fit to the vintages present in the learning sample, which is the finding credit lecture 4 and 5 reached by a different route.</p>
+</section>
+</section>
+<section id="three-balance-conditions" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Three balance conditions</h1>
+<p>Lecture 7 of the summer school states the balance property for a fitted model as the requirement that predictions add up to observations on the learning sample. A survival head admits three distinct readings of that requirement, and a model can satisfy any one of them while failing the others.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="The three conditions">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The three conditions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Write <span class="math inline">\(\mathcal{R}\)</span> for the set of at-risk cells <span class="math inline">\((i, t)\)</span> in the learning sample.</p>
+<ol type="1">
+<li><strong>Overall balance.</strong> <span class="math inline">\(\sum_{(i,t) \in \mathcal{R}} \hat q_{i,t} = \sum_{(i,t) \in \mathcal{R}} y_{i,t}\)</span>. The model reproduces the total number of defaults.</li>
+<li><strong>Balance per period.</strong> For every month <span class="math inline">\(t\)</span>, <span class="math inline">\(\sum_{i : (i,t) \in \mathcal{R}} \hat q_{i,t} = \sum_{i : (i,t) \in \mathcal{R}} y_{i,t}\)</span>. The model reproduces the term structure of event counts, which is <span class="math inline">\(m\)</span> conditions rather than one.</li>
+<li><strong>Balance at horizon <span class="math inline">\(k\)</span>.</strong> <span class="math inline">\(\frac{1}{n} \sum_{i} \left( 1 - \prod_{t \le k} (1 - \hat q_{i,t}) \right)\)</span> equals the observed <span class="math inline">\(\mathrm{PD}_k\)</span>. This is the condition a credit team reports against, and it is the one that does not follow from the others.</li>
+</ol>
+</div>
+</div>
+<section id="what-each-model-satisfies" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="what-each-model-satisfies"><span class="header-section-number">4.1</span> What each model satisfies</h2>
+<div id="f83a02bc" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>L <span class="op">=</span> idx_learn</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> balance(label, q):</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    pred_cell <span class="op">=</span> (q[L] <span class="op">*</span> M[L]).<span class="bu">sum</span>(<span class="dv">0</span>)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    obs_cell <span class="op">=</span> (Yd[L] <span class="op">*</span> M[L]).<span class="bu">sum</span>(<span class="dv">0</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    worst <span class="op">=</span> <span class="bu">int</span>(np.argmax(np.<span class="bu">abs</span>(pred_cell <span class="op">-</span> obs_cell)))</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    band <span class="op">=</span> pd.cut(months, BANDS, labels<span class="op">=</span>BAND_LABELS).astype(<span class="bu">str</span>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    bp <span class="op">=</span> pd.Series(pred_cell).groupby(band, observed<span class="op">=</span><span class="va">True</span>).<span class="bu">sum</span>()</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    bo <span class="op">=</span> pd.Series(obs_cell).groupby(band, observed<span class="op">=</span><span class="va">True</span>).<span class="bu">sum</span>()</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   overall   : </span><span class="sc">{</span>pred_cell<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:10,.1f}</span><span class="ss"> predicted against "</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"</span><span class="sc">{</span>obs_cell<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:10,.1f}</span><span class="ss"> observed, ratio </span><span class="sc">{</span>pred_cell<span class="sc">.</span><span class="bu">sum</span>() <span class="op">/</span> obs_cell<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   per band  : largest absolute gap </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(bp <span class="op">-</span> bo)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:9,.3f}</span><span class="ss">"</span>)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   per month : largest absolute gap </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(pred_cell <span class="op">-</span> obs_cell)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:9,.1f}</span><span class="ss"> "</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"(month </span><span class="sc">{</span>worst <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">), mean </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(pred_cell <span class="op">-</span> obs_cell)<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss">"</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pred_cell, obs_cell</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>pred_net, obs_cell <span class="op">=</span> balance(<span class="st">"survival head"</span>, q_net)</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>pred_log, _ <span class="op">=</span> balance(<span class="st">"DtH logit    "</span>, q_logit)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>survival head
+   overall   :   57,569.5 predicted against   56,893.0 observed, ratio 1.0119
+   per band  : largest absolute gap   336.061
+   per month : largest absolute gap     238.0 (month 5), mean 15.2
+DtH logit    
+   overall   :   56,893.0 predicted against   56,893.0 observed, ratio 1.0000
+   per band  : largest absolute gap     0.000
+   per month : largest absolute gap   1,273.5 (month 5), mean 72.6</code></pre>
+</div>
+</div>
+<p>Each reading returns a different verdict. The logit satisfies overall balance to the last decimal, because a generalised linear model with a canonical link and a full set of categorical indicators has the balance property built into its score equations, which is the result lecture 7 proves. It satisfies balance per band for the same reason, exactly. Nevertheless it misses balance per month by up to 1,273 defaults, because its baseline was banded into nine intervals and a step function cannot match sixty targets.</p>
+<p>The head fails all three, overstating the learning sample’s defaults by 676.5 on 56,893, a ratio of 1.0119. Yet its largest monthly gap is 238.0 against the logit’s 1,273.5, and its mean monthly gap is 15.2 against 72.6. Hence the two models fail in opposite directions: the logit is exactly right at the resolution it was given and badly wrong beneath it, while the head is approximately right everywhere and exactly right nowhere.</p>
+<p>That contrast generalises past this dataset. A GLM’s balance property is a property of the partition its indicators define, so it says nothing about any cell finer than that partition. The temptation is to read a satisfied balance condition as evidence of calibration at every resolution, and a banded baseline is precisely where that reading breaks.</p>
+</section>
+<section id="the-readout-re-fit" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="the-readout-re-fit"><span class="header-section-number">4.2</span> The readout re-fit</h2>
+<p>The correction credit lecture 4 and 5 applied to the PD network was a GLM readout re-fit, which holds the learned representation fixed and refits the final linear layer. Its survival analogue is one scalar offset per month, added to the network’s logit, chosen so that month <span class="math inline">\(t\)</span> balances:</p>
+<p><span class="math display">\[
+\sum_{i : (i,t) \in \mathcal{R}} \mathrm{logit}^{-1}
+\left( \hat\eta_{i,t} + \alpha_t \right)
+= \sum_{i : (i,t) \in \mathcal{R}} y_{i,t} .
+\]</span></p>
+<p>The left side is strictly increasing in <span class="math inline">\(\alpha_t\)</span> and the right side is a constant, so each <span class="math inline">\(\alpha_t\)</span> is the unique root of a one-dimensional monotone equation and bisection finds it to machine precision. This is exactly the fit of a saturated period-indicator logistic regression with the network’s logit as an offset, obtained without building the 2.1 million-row design matrix such a fit would need.</p>
+<div id="b5d54305" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> readout_refit(logits, idx):</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    alpha <span class="op">=</span> np.zeros(HORIZON)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(HORIZON):</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>        m, eta, y <span class="op">=</span> M[idx][:, t], logits[idx][:, t], Yd[idx][:, t]</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>        target <span class="op">=</span> (y <span class="op">*</span> m).<span class="bu">sum</span>()</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> target <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>            alpha[t] <span class="op">=</span> np.nan   <span class="co"># no events: the offset is not identified</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>        f <span class="op">=</span> <span class="kw">lambda</span> a: (m <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>(eta <span class="op">+</span> a)))).<span class="bu">sum</span>() <span class="op">-</span> target</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>        alpha[t] <span class="op">=</span> brentq(f, <span class="op">-</span><span class="dv">20</span>, <span class="dv">20</span>, xtol<span class="op">=</span><span class="fl">1e-12</span>)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> alpha</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>alpha <span class="op">=</span> readout_refit(logit_net, L)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>unidentified <span class="op">=</span> np.where(np.isnan(alpha))[<span class="dv">0</span>] <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"months with no learning-sample defaults, offset not identified: "</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>unidentified<span class="sc">.</span>tolist()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>alpha_filled <span class="op">=</span> np.where(np.isnan(alpha), <span class="fl">0.0</span>, alpha)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"offsets elsewhere: min </span><span class="sc">{</span>np<span class="sc">.</span>nanmin(alpha)<span class="sc">:+.4f}</span><span class="ss">  max </span><span class="sc">{</span>np<span class="sc">.</span>nanmax(alpha)<span class="sc">:+.4f}</span><span class="ss">  "</span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"median </span><span class="sc">{</span>np<span class="sc">.</span>nanmedian(alpha)<span class="sc">:+.4f}</span><span class="ss">"</span>)</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>q_bal <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>(logit_net <span class="op">+</span> alpha_filled[<span class="va">None</span>, :])))</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>pred_bal, _ <span class="op">=</span> balance(<span class="st">"head, after re-fit"</span>, q_bal)</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">test deviance: head </span><span class="sc">{</span>deviance(q_net, idx_test)<span class="sc">:.4f}</span><span class="ss">, "</span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"after re-fit </span><span class="sc">{</span>deviance(q_bal, idx_test)<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>months with no learning-sample defaults, offset not identified: [1]
+offsets elsewhere: min -0.8367  max +0.1808  median -0.0071
+head, after re-fit
+   overall   :   56,895.1 predicted against   56,893.0 observed, ratio 1.0000
+   per band  : largest absolute gap     2.097
+   per month : largest absolute gap       2.1 (month 1), mean 0.0
+
+test deviance: head 22.1848, after re-fit 22.1822</code></pre>
+</div>
+</div>
+<p>Balance now holds at every identified month to the precision of the root finder, and the 2.1 defaults still unaccounted for overall are month one alone. The out-of-sample deviance moves by 0.003, which is noise at this scale. Furthermore the offsets are small, with a median of <span class="math inline">\(-0.007\)</span> on the logit scale, so the re-fit is a nudge rather than a rebuild.</p>
+<p>Those offsets also verify the masking identity of section 2.1. Fitting the same model the other way, as a person-period logistic regression on the expanded rows with the network’s logit as an offset, must return the same coefficients if the two objectives really are the same function. The check runs on a subsample so the design matrix stays small.</p>
+<div id="e978458d" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>check <span class="op">=</span> np.random.default_rng(<span class="dv">11</span>).choice(base.height, <span class="dv">5000</span>, replace<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>CHECK_M <span class="op">=</span> <span class="dv">24</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>rows, cols <span class="op">=</span> np.nonzero(M[check][:, :CHECK_M])</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>identified <span class="op">=</span> [t <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, CHECK_M <span class="op">+</span> <span class="dv">1</span>) <span class="cf">if</span> (Yd[check][:, t <span class="op">-</span> <span class="dv">1</span>] <span class="op">*</span> M[check][:, t <span class="op">-</span> <span class="dv">1</span>]).<span class="bu">sum</span>() <span class="op">&gt;</span> <span class="dv">0</span>]</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>pp <span class="op">=</span> pd.DataFrame({<span class="st">"y"</span>: Yd[check][:, :CHECK_M][rows, cols],</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"month"</span>: pd.Categorical(cols <span class="op">+</span> <span class="dv">1</span>),</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"off"</span>: logit_net[check][:, :CHECK_M][rows, cols]})</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>pp <span class="op">=</span> pp[pp[<span class="st">"month"</span>].isin(identified)]</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>pp[<span class="st">"month"</span>] <span class="op">=</span> pp[<span class="st">"month"</span>].cat.remove_unused_categories()</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>by_glm <span class="op">=</span> smf.glm(<span class="st">"y ~ C(month) - 1"</span>, data<span class="op">=</span>pp, family<span class="op">=</span>sm.families.Binomial(),</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>                 offset<span class="op">=</span>pp[<span class="st">"off"</span>]).fit()</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>by_bisection <span class="op">=</span> readout_refit(logit_net, check)[[t <span class="op">-</span> <span class="dv">1</span> <span class="cf">for</span> t <span class="kw">in</span> identified]]</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>gap <span class="op">=</span> np.<span class="bu">abs</span>(by_bisection <span class="op">-</span> by_glm.params.to_numpy()).<span class="bu">max</span>()</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(pp)<span class="sc">:,}</span><span class="ss"> person-period rows, </span><span class="sc">{</span><span class="bu">len</span>(identified)<span class="sc">}</span><span class="ss"> identified months"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"largest gap between the two routes to the same offsets: </span><span class="sc">{</span>gap<span class="sc">:.2e}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>55,021 person-period rows, 22 identified months
+largest gap between the two routes to the same offsets: 1.54e-07</code></pre>
+</div>
+</div>
+<p>The two agree to the tolerance of the generalised linear model’s own iteration, so the masked objective and the person-period likelihood are the same function fitted two ways.</p>
+<p>Month one is the exception and it is the same exception lecture S1 met when it fitted a saturated baseline. No loan in the learning sample defaults in its first month, so exact balance there requires a hazard of zero and the offset runs to minus infinity. The month is left at the network’s own value and flagged rather than clamped silently.</p>
+<div id="6423c16a" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.5</span>, <span class="fl">3.8</span>))</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>ax.plot(months, obs_cell, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">2.4</span>, label<span class="op">=</span><span class="st">"observed defaults"</span>)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>ax.plot(months, pred_log, color<span class="op">=</span>BLUE, lw<span class="op">=</span><span class="fl">1.3</span>, label<span class="op">=</span><span class="st">"DtH logit"</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>ax.plot(months, pred_net, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.3</span>, label<span class="op">=</span><span class="st">"survival head"</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>ax.plot(months, pred_bal, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">1.0</span>, ls<span class="op">=</span><span class="st">"--"</span>, label<span class="op">=</span><span class="st">"head after re-fit"</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"months on book $t$"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"defaults in the learning sample"</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>)<span class="op">;</span> plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S3_deep-survival-credit_files/figure-html/cell-15-output-1.png" width="1114" height="558" class="figure-img"></p>
+<figcaption>Predicted against observed default counts per month on the learning sample. The logit’s banded baseline forces a step function through the peak at month five, which is where its largest errors sit; the head tracks the shape without matching any month exactly; the re-fitted head matches every month by construction, so its dashed line traces the observed curve throughout.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="why-balance-at-horizon-k-does-not-follow" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="why-balance-at-horizon-k-does-not-follow"><span class="header-section-number">4.3</span> Why balance at horizon <span class="math inline">\(k\)</span> does not follow</h2>
+<p>Enforcing every monthly condition still leaves the third condition open, and the reason is the survival product itself. Balance is a statement about a <strong>sum</strong> of hazards, whereas <span class="math inline">\(\mathrm{PD}_k\)</span> is built from a <strong>product</strong> of them, and averaging does not pass through a product.</p>
+<div id="6dc60a9e" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>q_bar <span class="op">=</span> pred_bal <span class="op">/</span> M[L].<span class="bu">sum</span>(<span class="dv">0</span>)           <span class="co"># balanced mean hazard per month</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>S_bar <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_bar)             <span class="co"># chain the average hazards</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>S_ind <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_bal[L], axis<span class="op">=</span><span class="dv">1</span>).mean(<span class="dv">0</span>)   <span class="co"># average the chained loans</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">12</span>, <span class="dv">60</span>):</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"k = </span><span class="sc">{</span>k<span class="sc">:2d}</span><span class="ss">: product of the balanced mean hazards "</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"</span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_bar[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">   average of the individual products "</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"</span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_ind[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">   gap </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (S_ind[k<span class="op">-</span><span class="dv">1</span>] <span class="op">-</span> S_bar[k<span class="op">-</span><span class="dv">1</span>])<span class="sc">:+.3f}</span><span class="ss">pp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>k = 12: product of the balanced mean hazards 0.3068   average of the individual products 0.3023   gap +0.453pp
+k = 60: product of the balanced mean hazards 0.7151   average of the individual products 0.7126   gap +0.250pp</code></pre>
+</div>
+</div>
+<p>The two differ by 0.45 percentage points at twelve months and 0.25 at sixty. The sign is the one heterogeneity predicts: a loan whose hazard is persistently above average contributes a small survival factor in every month, and the product punishes it more than the average of the monthly hazards suggests, so the cohort as a whole survives slightly better than the chained mean hazard implies.</p>
+<p>The magnitude is modest here because the fitted hazards are dispersed only as far as three covariates and four countries can disperse them. On a scorecard with a real range of risk grades the same mechanism would bite harder, and it does not go away by fitting the model better. Hence a survival head can be calibrated month by month and still report a lifetime PD that misses, which is a property of the estimand rather than a defect of the estimator.</p>
+</section>
+</section>
+<section id="two-causes-in-one-head" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Two causes in one head</h1>
+<p>Every hazard above treated a settled loan as censored, and lecture S1 measured what that costs: 3.05 percentage points at twelve months and 16.99 at sixty. The fix lecture S2 set out is to model the two exits jointly rather than to remove one of them from the risk set.</p>
+<p>The wide-output head extends to that directly. Emit two logits per month rather than one, append a fixed zero for the survive category, and take a softmax over the three:</p>
+<p><span class="math display">\[
+\left( q^{\text{def}}_{i,t},\, q^{\text{set}}_{i,t},\, 1 - q^{\text{def}}_{i,t} - q^{\text{set}}_{i,t} \right)
+= \mathrm{softmax}\left( \eta^{\text{def}}_{i,t},\, \eta^{\text{set}}_{i,t},\, 0 \right) ,
+\]</span></p>
+<p>with the multinomial log-likelihood over at-risk cells replacing the Bernoulli one. The two outputs are then the cause-specific discrete hazards of lecture S2, and the Aalen-Johansen recursion turns them into a cumulative incidence function per loan,</p>
+<p><span class="math display">\[
+\widehat{\mathrm{CIF}}^{\text{def}}_i(k)
+= \sum_{t=1}^{k} \widehat{S}^{\text{any}}_i(t-1) \, \hat q^{\text{def}}_{i,t} ,
+\qquad
+\widehat{S}^{\text{any}}_i(t) = \prod_{s \le t}
+\left( 1 - \hat q^{\text{def}}_{i,s} - \hat q^{\text{set}}_{i,s} \right) .
+\]</span></p>
+<div id="d4622466" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CauseSpecificHead(torch.nn.Module):</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Two logits per month; a three-way softmax over default, settle, survive."""</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n_cont, n_levels, horizon<span class="op">=</span>HORIZON, widths<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">10</span>),</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>                 emb<span class="op">=</span><span class="dv">2</span>, seed<span class="op">=</span><span class="dv">7</span>):</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>        torch.manual_seed(seed)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.emb <span class="op">=</span> torch.nn.Embedding(n_levels, emb)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>        layers, prev <span class="op">=</span> [], n_cont <span class="op">+</span> emb</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> w <span class="kw">in</span> widths:</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>            layers <span class="op">+=</span> [torch.nn.Linear(prev, w), torch.nn.Tanh()]</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>            prev <span class="op">=</span> w</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.body <span class="op">=</span> torch.nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.out <span class="op">=</span> torch.nn.Linear(prev, <span class="dv">2</span> <span class="op">*</span> horizon)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.out.bias.data.fill_(<span class="op">-</span><span class="fl">5.0</span>)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, xc, xk):</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>        z <span class="op">=</span> <span class="va">self</span>.out(<span class="va">self</span>.body(torch.cat([xc, <span class="va">self</span>.emb(xk)], dim<span class="op">=</span><span class="dv">1</span>)))</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> z.view(<span class="op">-</span><span class="dv">1</span>, HORIZON, <span class="dv">2</span>)</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> multinomial_deviance(logits, yd, ys, m):</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> torch.cat([logits, torch.zeros_like(logits[..., :<span class="dv">1</span>])], dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>    lse <span class="op">=</span> torch.logsumexp(z, dim<span class="op">=-</span><span class="dv">1</span>)</span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>    ll <span class="op">=</span> (yd <span class="op">*</span> (z[..., <span class="dv">0</span>] <span class="op">-</span> lse) <span class="op">+</span> ys <span class="op">*</span> (z[..., <span class="dv">1</span>] <span class="op">-</span> lse)</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>          <span class="op">+</span> (<span class="dv">1</span> <span class="op">-</span> yd <span class="op">-</span> ys) <span class="op">*</span> (z[..., <span class="dv">2</span>] <span class="op">-</span> lse))</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span><span class="fl">200.0</span> <span class="op">*</span> (ll <span class="op">*</span> m).<span class="bu">sum</span>() <span class="op">/</span> m.<span class="bu">sum</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="8b9f4b8f" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_cause_specific(idx, seed<span class="op">=</span><span class="dv">7</span>, epochs<span class="op">=</span><span class="dv">400</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">30</span>):</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.random.default_rng(seed).permutation(<span class="bu">len</span>(idx))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    tr, va <span class="op">=</span> idx[p[:<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p))]], idx[p[<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p)):]]</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    m_hat, s_hat <span class="op">=</span> Xc[tr].mean(<span class="dv">0</span>), Xc[tr].std(<span class="dv">0</span>)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    prep <span class="op">=</span> <span class="kw">lambda</span> i: torch.tensor(((Xc[i] <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).astype(np.float32))</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    Xtr, Xva <span class="op">=</span> prep(tr), prep(va)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    Ktr, Kva <span class="op">=</span> torch.tensor(codes[tr]), torch.tensor(codes[va])</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    T <span class="op">=</span> <span class="kw">lambda</span> arr, i: torch.tensor(arr[i])</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>    Dtr, Str, Mtr <span class="op">=</span> T(Yd, tr), T(Ys, tr), T(M, tr)</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>    Dva, Sva, Mva <span class="op">=</span> T(Yd, va), T(Ys, va), T(M, va)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> CauseSpecificHead(Xc.shape[<span class="dv">1</span>], n_country, seed<span class="op">=</span>seed)</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.NAdam(model.parameters())</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    gen <span class="op">=</span> torch.Generator().manual_seed(seed)</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    best, best_epoch, best_state, hist <span class="op">=</span> np.inf, <span class="dv">0</span>, <span class="va">None</span>, []</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, epochs <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>        model.train()</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> chunk <span class="kw">in</span> torch.randperm(<span class="bu">len</span>(tr), generator<span class="op">=</span>gen).split(batch):</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>            multinomial_deviance(model(Xtr[chunk], Ktr[chunk]), Dtr[chunk],</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>                                 Str[chunk], Mtr[chunk]).backward()</span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">eval</span>()</span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>            hist.append((multinomial_deviance(model(Xtr, Ktr), Dtr, Str, Mtr).item(),</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>                         multinomial_deviance(model(Xva, Kva), Dva, Sva, Mva).item()))</span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> hist[<span class="op">-</span><span class="dv">1</span>][<span class="dv">1</span>] <span class="op">&lt;</span> best:</span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a>            best, best_epoch <span class="op">=</span> hist[<span class="op">-</span><span class="dv">1</span>][<span class="dv">1</span>], epoch</span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a>            best_state <span class="op">=</span> {k: v.clone() <span class="cf">for</span> k, v <span class="kw">in</span> model.state_dict().items()}</span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">-</span> best_epoch <span class="op">&gt;=</span> patience:</span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a>    model.load_state_dict(best_state)</span>
+<span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, (m_hat, s_hat), np.array(hist), best_epoch</span>
+<span id="cb28-34"><a href="#cb28-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-35"><a href="#cb28-35" aria-hidden="true" tabindex="-1"></a>t0 <span class="op">=</span> time.time()</span>
+<span id="cb28-36"><a href="#cb28-36" aria-hidden="true" tabindex="-1"></a>cs_head, cs_scaler, cs_hist, cs_stop <span class="op">=</span> train_cause_specific(idx_learn)</span>
+<span id="cb28-37"><a href="#cb28-37" aria-hidden="true" tabindex="-1"></a>m_hat, s_hat <span class="op">=</span> cs_scaler</span>
+<span id="cb28-38"><a href="#cb28-38" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb28-39"><a href="#cb28-39" aria-hidden="true" tabindex="-1"></a>    z <span class="op">=</span> cs_head(torch.tensor(((Xc <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).astype(np.float32)),</span>
+<span id="cb28-40"><a href="#cb28-40" aria-hidden="true" tabindex="-1"></a>                torch.tensor(codes))</span>
+<span id="cb28-41"><a href="#cb28-41" aria-hidden="true" tabindex="-1"></a>P <span class="op">=</span> torch.softmax(torch.cat([z, torch.zeros_like(z[..., :<span class="dv">1</span>])], dim<span class="op">=-</span><span class="dv">1</span>), dim<span class="op">=-</span><span class="dv">1</span>).numpy()</span>
+<span id="cb28-42"><a href="#cb28-42" aria-hidden="true" tabindex="-1"></a>q_def, q_set <span class="op">=</span> P[..., <span class="dv">0</span>], P[..., <span class="dv">1</span>]</span>
+<span id="cb28-43"><a href="#cb28-43" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"parameters </span><span class="sc">{</span><span class="bu">sum</span>(p.numel() <span class="cf">for</span> p <span class="kw">in</span> cs_head.parameters())<span class="sc">:,}</span><span class="ss">, "</span></span>
+<span id="cb28-44"><a href="#cb28-44" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="dv">2</span> <span class="op">*</span> HORIZON<span class="sc">}</span><span class="ss"> outputs; validation optimum at epoch </span><span class="sc">{</span>cs_stop<span class="sc">}</span><span class="ss"> of "</span></span>
+<span id="cb28-45"><a href="#cb28-45" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(cs_hist)<span class="sc">}</span><span class="ss"> run in </span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss">s"</span>)</span>
+<span id="cb28-46"><a href="#cb28-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-47"><a href="#cb28-47" aria-hidden="true" tabindex="-1"></a>S_any <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_def <span class="op">-</span> q_set, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb28-48"><a href="#cb28-48" aria-hidden="true" tabindex="-1"></a>S_lag <span class="op">=</span> np.concatenate([np.ones((<span class="bu">len</span>(q_def), <span class="dv">1</span>)), S_any[:, :<span class="op">-</span><span class="dv">1</span>]], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb28-49"><a href="#cb28-49" aria-hidden="true" tabindex="-1"></a>cif_def_i <span class="op">=</span> np.cumsum(S_lag <span class="op">*</span> q_def, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb28-50"><a href="#cb28-50" aria-hidden="true" tabindex="-1"></a>cif_set_i <span class="op">=</span> np.cumsum(S_lag <span class="op">*</span> q_set, axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb28-51"><a href="#cb28-51" aria-hidden="true" tabindex="-1"></a>cif_def, cif_set <span class="op">=</span> cif_def_i.mean(<span class="dv">0</span>), cif_set_i.mean(<span class="dv">0</span>)</span>
+<span id="cb28-52"><a href="#cb28-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-53"><a href="#cb28-53" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">identity check, CIF_def + CIF_set + S_any = "</span></span>
+<span id="cb28-54"><a href="#cb28-54" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>cif_def[<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> cif_set[<span class="op">-</span><span class="dv">1</span>] <span class="op">+</span> S_any[:, <span class="op">-</span><span class="dv">1</span>]<span class="sc">.</span>mean()<span class="sc">:.9f}</span><span class="ss">"</span>)</span>
+<span id="cb28-55"><a href="#cb28-55" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">12</span>, <span class="dv">60</span>):</span>
+<span id="cb28-56"><a href="#cb28-56" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"k = </span><span class="sc">{</span>k<span class="sc">:2d}</span><span class="ss">: model CIF </span><span class="sc">{</span>cif_def[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb28-57"><a href="#cb28-57" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"Aalen-Johansen </span><span class="sc">{</span>cif_km[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb28-58"><a href="#cb28-58" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"difference </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (cif_def[k<span class="op">-</span><span class="dv">1</span>] <span class="op">-</span> cif_km[k<span class="op">-</span><span class="dv">1</span>])<span class="sc">:+.2f}</span><span class="ss">pp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>parameters 1,903, 120 outputs; validation optimum at epoch 276 of 306 run in 58s
+
+identity check, CIF_def + CIF_set + S_any = 1.000000002
+k = 12: model CIF 0.2711   Aalen-Johansen 0.2771   difference -0.60pp
+k = 60: model CIF 0.5436   Aalen-Johansen 0.5469   difference -0.33pp</code></pre>
+</div>
+</div>
+<p>The three probabilities sum to one to eight decimal places, which is the completeness check lecture S1 applied to the non-parametric estimator, now applied to a network. The fitted cumulative incidence sits within 0.60 percentage points of Aalen-Johansen at twelve months and 0.33 at sixty, so the head recovers the non-parametric estimate while adding what the non-parametric estimator cannot supply, namely a curve per loan.</p>
+<p>The same head also settles the question lecture S1 left open, because it can be read two ways. Chaining <span class="math inline">\(1 - q^{\text{def}}\)</span> alone reproduces the latent risks treatment, in which settlement is censoring; taking the cumulative incidence respects the competing risk.</p>
+<div id="eee866f6" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>S_latent <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_def, axis<span class="op">=</span><span class="dv">1</span>).mean(<span class="dv">0</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">12</span>, <span class="dv">60</span>):</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"k = </span><span class="sc">{</span>k<span class="sc">:2d}</span><span class="ss">: latent risks reading </span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> S_latent[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"cumulative incidence </span><span class="sc">{</span>cif_def[k<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"overstatement </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> ((<span class="dv">1</span> <span class="op">-</span> S_latent[k<span class="op">-</span><span class="dv">1</span>]) <span class="op">-</span> cif_def[k<span class="op">-</span><span class="dv">1</span>])<span class="sc">:+.2f}</span><span class="ss">pp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>k = 12: latent risks reading 0.3024   cumulative incidence 0.2711   overstatement +3.13pp
+k = 60: latent risks reading 0.7148   cumulative incidence 0.5436   overstatement +17.12pp</code></pre>
+</div>
+</div>
+<p>One fitted model, one set of parameters, and a difference of 17.1 percentage points at sixty months depending only on which quantity is read off it. Lecture S1 measured the same gap non-parametrically at 16.99, so the network has reproduced it rather than invented it.</p>
+<div id="7589e627" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>S_any_km <span class="op">=</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_km <span class="op">-</span> s_k <span class="op">/</span> n_k)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>cif_set_km <span class="op">=</span> np.cumsum(np.concatenate([[<span class="fl">1.0</span>], S_any_km[:<span class="op">-</span><span class="dv">1</span>]]) <span class="op">*</span> (s_k <span class="op">/</span> n_k))</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.5</span>, <span class="fl">4.0</span>))</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>ax.plot(months, cif_km <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">2.4</span>, label<span class="op">=</span><span class="st">"Aalen-Johansen, default"</span>)</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>ax.plot(months, cif_def <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"head CIF, default"</span>)</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>ax.plot(months, cif_set_km <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="fl">2.4</span>, ls<span class="op">=</span><span class="st">"-"</span>, alpha<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"Aalen-Johansen, settlement"</span>)</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>ax.plot(months, cif_set <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>BLUE, lw<span class="op">=</span><span class="fl">1.5</span>, label<span class="op">=</span><span class="st">"head CIF, settlement"</span>)</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>ax.plot(months, (<span class="dv">1</span> <span class="op">-</span> S_latent) <span class="op">*</span> <span class="dv">100</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.2</span>, ls<span class="op">=</span><span class="st">":"</span>,</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"head read as latent risks"</span>)</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"horizon $k$ (months)"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"cumulative incidence (%)"</span>)</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"upper left"</span>)</span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S3_deep-survival-credit_files/figure-html/cell-20-output-1.png" width="1114" height="586" class="figure-img"></p>
+<figcaption>Cumulative incidence from the cause-specific head against the non-parametric Aalen-Johansen estimator of lecture S1. The upper pair is default, the lower pair settlement, and the dotted line is the same head read as latent risks, meaning with settlement treated as censoring. The vertical distance between the dotted line and the default curve is the competing-risks correction, worth 17.1 percentage points at sixty months.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="calibration-where-it-counts" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Calibration where it counts</h1>
+<section id="the-seasoned-sample-verdict" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="the-seasoned-sample-verdict"><span class="header-section-number">6.1</span> The seasoned sample verdict</h2>
+<p>Lecture S1 built its test on the one sample where the twelve-month default rate is counted rather than estimated. On lecture 1’s seasoned loans every outcome window has closed, so no loan is administratively censored inside twelve months and the observed rate needs no estimator at all. Restricting that sample to the random split’s test loans gives an honest out-of-sample target for every model in this lecture.</p>
+<div id="3b86177a" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>flags <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>).select([<span class="st">"LoanId"</span>, <span class="st">"default_12m"</span>])</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>observed <span class="op">=</span> base.select(<span class="st">"LoanId"</span>).join(flags, on<span class="op">=</span><span class="st">"LoanId"</span>, how<span class="op">=</span><span class="st">"left"</span>)[<span class="st">"default_12m"</span>].to_numpy()</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>has_flag <span class="op">=</span> <span class="op">~</span>pd.isna(observed)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>in_test <span class="op">=</span> np.zeros(base.height, <span class="bu">bool</span>)<span class="op">;</span> in_test[idx_test] <span class="op">=</span> <span class="va">True</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>sel <span class="op">=</span> has_flag <span class="op">&amp;</span> in_test</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>truth <span class="op">=</span> observed[sel].astype(<span class="bu">float</span>).mean()</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"seasoned test loans </span><span class="sc">{</span>sel<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss">; observed 12-month default rate </span><span class="sc">{</span>truth<span class="sc">:.4f}</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> [</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"survival head          "</span>, <span class="dv">1</span> <span class="op">-</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_net, axis<span class="op">=</span><span class="dv">1</span>)[:, <span class="dv">11</span>]),</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"survival head, re-fit  "</span>, <span class="dv">1</span> <span class="op">-</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_bal, axis<span class="op">=</span><span class="dv">1</span>)[:, <span class="dv">11</span>]),</span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"DtH logit (lecture S1) "</span>, <span class="dv">1</span> <span class="op">-</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_logit, axis<span class="op">=</span><span class="dv">1</span>)[:, <span class="dv">11</span>]),</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>    (<span class="st">"cause-specific head CIF"</span>, cif_def_i[:, <span class="dv">11</span>]),</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>]</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, p <span class="kw">in</span> candidates:</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: mean </span><span class="sc">{</span>p[sel]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"bias </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (p[sel].mean() <span class="op">-</span> truth)<span class="sc">:+.2f}</span><span class="ss">pp   "</span></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"AUC </span><span class="sc">{</span>roc_auc_score(observed[sel].astype(<span class="bu">float</span>), p[sel])<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>seasoned test loans 29,730; observed 12-month default rate 0.2917
+
+survival head          : mean 0.3199   bias +2.82pp   AUC 0.7126
+survival head, re-fit  : mean 0.3159   bias +2.41pp   AUC 0.7126
+DtH logit (lecture S1) : mean 0.3190   bias +2.73pp   AUC 0.7112
+cause-specific head CIF: mean 0.2837   bias -0.80pp   AUC 0.7127</code></pre>
+</div>
+</div>
+<p>That table is the lecture’s argument in four rows. The survival head overstates the twelve-month PD by 2.82 percentage points. The readout re-fit, which imposed exact balance at every month of the learning sample, takes that to 2.41 and no further. The lecture S1 logit, which had exact overall balance by construction, sits at 2.73. The cause-specific head, which was never recalibrated at all, comes in at <span class="math inline">\(-0.80\)</span>.</p>
+<p>Recalibration therefore removed about fifteen per cent of the error and the change of estimand removed nearly all of it. The residue the first three models carry is the competing risk, and no amount of balancing a default hazard against observed default counts can reach it, because those counts are conditioned on a risk set that early repayment has already thinned. Discrimination meanwhile barely moves across the four, holding between 0.7112 and 0.7127, which is what should be expected of four models built from the same three covariates.</p>
+<p>Read the bias column for what it is, namely a portfolio mean against a portfolio mean. A model can hit the aggregate and still misplace individual loans, so the conditional check belongs beside it, and the reliability diagram in the next section supplies it.</p>
+</section>
+<section id="auto-calibration-and-the-score-decomposition" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="auto-calibration-and-the-score-decomposition"><span class="header-section-number">6.2</span> Auto-calibration and the score decomposition</h2>
+<p>Lecture 7 defines auto-calibration as the requirement that <span class="math inline">\(\mathbb{E}[Y \mid \hat\mu(\boldsymbol{X})] = \hat\mu(\boldsymbol{X})\)</span>, which is stronger than balance and is exactly what Murphy’s decomposition measures. The <code>model-diagnostics</code> package splits a strictly consistent scoring function into miscalibration, discrimination and uncertainty, and applies unchanged to the at-risk cells of a survival head.</p>
+<div id="628fe691" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> model_diagnostics.calibration <span class="im">import</span> compute_bias, plot_reliability_diagram</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> model_diagnostics.scoring <span class="im">import</span> decompose, LogLoss</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>cells <span class="op">=</span> M[idx_test].astype(<span class="bu">bool</span>)</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>y_cells <span class="op">=</span> Yd[idx_test][cells]</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"Murphy decomposition of the log loss, test at-risk cells</span><span class="ch">\n</span><span class="st">"</span>)</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, q <span class="kw">in</span> ((<span class="st">"survival head        "</span>, q_net), (<span class="st">"head after re-fit    "</span>, q_bal),</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>                 (<span class="st">"DtH logit            "</span>, q_logit)):</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    d <span class="op">=</span> decompose(y_obs<span class="op">=</span>y_cells, y_pred<span class="op">=</span>q[idx_test][cells],</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>                  scoring_function<span class="op">=</span>LogLoss())</span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: miscalibration </span><span class="sc">{</span><span class="bu">float</span>(d[<span class="st">'miscalibration'</span>][<span class="dv">0</span>])<span class="sc">:.6f}</span><span class="ss">   "</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"discrimination </span><span class="sc">{</span><span class="bu">float</span>(d[<span class="st">'discrimination'</span>][<span class="dv">0</span>])<span class="sc">:.6f}</span><span class="ss">   "</span></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"score </span><span class="sc">{</span><span class="bu">float</span>(d[<span class="st">'score'</span>][<span class="dv">0</span>])<span class="sc">:.6f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Murphy decomposition of the log loss, test at-risk cells
+
+survival head        : miscalibration 0.000154   discrimination 0.012879   score 0.110924
+head after re-fit    : miscalibration 0.000162   discrimination 0.012899   score 0.110911
+DtH logit            : miscalibration 0.000203   discrimination 0.012172   score 0.111680</code></pre>
+</div>
+</div>
+<p>Two readings. The head is better calibrated than the logit as well as more discriminating, at 0.000154 against 0.000203 and 0.012879 against 0.012172, so the flexibility bought accuracy on both terms rather than trading one for the other. Nevertheless the readout re-fit moved miscalibration the wrong way, from 0.000154 to 0.000162, which is the familiar result that imposing an in-sample moment condition carries no guarantee out of sample. Balance and auto-calibration are separate properties, and the second is the one that survives a change of sample.</p>
+<div id="4b17cec0" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>bias_feature <span class="op">=</span> np.tile(months, (<span class="bu">len</span>(idx_test), <span class="dv">1</span>))[cells]</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>bias <span class="op">=</span> compute_bias(y_obs<span class="op">=</span>y_cells, y_pred<span class="op">=</span>q_net[idx_test][cells],</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>                    feature<span class="op">=</span>bias_feature, n_bins<span class="op">=</span><span class="dv">12</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"bias bins </span><span class="sc">{</span><span class="bu">len</span>(bias)<span class="sc">}</span><span class="ss">, of which significant at 5 per cent: "</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">int</span>((bias[<span class="st">'p_value'</span>] <span class="op">&lt;</span> <span class="fl">0.05</span>).<span class="bu">sum</span>())<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.8</span>))</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>ax.errorbar(bias[<span class="st">"feature"</span>].to_numpy(), bias[<span class="st">"bias_mean"</span>].to_numpy() <span class="op">*</span> <span class="dv">100</span>,</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>            yerr<span class="op">=</span>bias[<span class="st">"bias_stderr"</span>].to_numpy() <span class="op">*</span> <span class="dv">100</span>, fmt<span class="op">=</span><span class="st">"o"</span>, ms<span class="op">=</span><span class="fl">3.5</span>,</span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>OX, ecolor<span class="op">=</span>GREY, elinewidth<span class="op">=</span><span class="dv">1</span>, capsize<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"months on book $t$"</span>)<span class="op">;</span> ax.set_ylabel(<span class="st">"bias (percentage points)"</span>)</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"bias by month, test cells"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">1</span>]</span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>p_single <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> np.cumprod(<span class="dv">1</span> <span class="op">-</span> q_net, axis<span class="op">=</span><span class="dv">1</span>)[:, <span class="dv">11</span>]</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>truth_sel <span class="op">=</span> observed[sel].astype(<span class="bu">float</span>)</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>plot_reliability_diagram(y_obs<span class="op">=</span>truth_sel, y_pred<span class="op">=</span>p_single[sel], ax<span class="op">=</span>ax)</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>plot_reliability_diagram(y_obs<span class="op">=</span>truth_sel, y_pred<span class="op">=</span>cif_def_i[sel, <span class="dv">11</span>], ax<span class="op">=</span>ax)</span>
+<span id="cb37-21"><a href="#cb37-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> line <span class="kw">in</span> ax.lines:  <span class="co"># the package draws in its own palette; restyle to ours</span></span>
+<span id="cb37-22"><a href="#cb37-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> line.get_color() <span class="op">==</span> <span class="st">"#1f77b4"</span>:</span>
+<span id="cb37-23"><a href="#cb37-23" aria-hidden="true" tabindex="-1"></a>        line.set_color(OX)<span class="op">;</span> line.set_label(<span class="st">"single-risk head"</span>)</span>
+<span id="cb37-24"><a href="#cb37-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> line.get_color() <span class="op">==</span> <span class="st">"#ff7f0e"</span>:</span>
+<span id="cb37-25"><a href="#cb37-25" aria-hidden="true" tabindex="-1"></a>        line.set_color(BLUE)<span class="op">;</span> line.set_label(<span class="st">"cause-specific head, CIF"</span>)</span>
+<span id="cb37-26"><a href="#cb37-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb37-27"><a href="#cb37-27" aria-hidden="true" tabindex="-1"></a>        line.set_color(RULE)<span class="op">;</span> line.set_label(<span class="st">"_none"</span>)</span>
+<span id="cb37-28"><a href="#cb37-28" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">8</span>, loc<span class="op">=</span><span class="st">"upper left"</span>)</span>
+<span id="cb37-29"><a href="#cb37-29" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="vs">r"reliability, </span><span class="dv">$\m</span><span class="vs">athrm{PD}_</span><span class="op">{12}</span><span class="dv">$</span><span class="vs">, seasoned test loans"</span>, fontsize<span class="op">=</span><span class="dv">10</span>)</span>
+<span id="cb37-30"><a href="#cb37-30" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>bias bins 21, of which significant at 5 per cent: 1</code></pre>
+</div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="S3_deep-survival-credit_files/figure-html/cell-23-output-2.png" width="1339" height="557" class="figure-img"></p>
+<figcaption>(lhs): bias by month on the test at-risk cells for the survival head, with the vertical bars covering one standard error either side of each binned estimate. Every bin sits within 0.52 percentage points of zero and one clears the five per cent level, which is the count a set of this many tests returns by chance, so no drift with months on book survives. (rhs): reliability diagram for the twelve-month PD on the seasoned test loans. The single-risk head runs below the diagonal from a predicted 0.25 upwards, meaning it promises more default than arrives; the cause-specific head’s cumulative incidence sits on the diagonal over the same range.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="deepsurv-deephit-and-what-is-not-fitted-here" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> DeepSurv, DeepHit, and what is not fitted here</h1>
+<p>Two named architectures dominate the deep-survival literature and neither is fitted in this lecture. The reasons are findings rather than omissions.</p>
+<p><strong>DeepSurv</strong> (Katzman et al.&nbsp;2018) replaces the linear predictor of a Cox proportional hazards model with a network, so the log relative risk becomes <span class="math inline">\(\theta(\boldsymbol{x}_i)\)</span> and the baseline hazard stays non-parametric. It is fitted by maximising the Cox partial likelihood. For this book that walks back from where lecture S1 left the reader in three ways. The partial likelihood conditions the baseline away, so absolute risk needs a separate Breslow estimator before any PD can be quoted. Proportional hazards is imposed rather than tested, and a lifecycle whose hazard peaks at month five and decays thereafter is exactly the shape that assumption struggles with when a covariate acts differently early and late. Above all, this data is heavily tied. Durations are recorded in whole months, so the 71,180 events in this sample fall into at most sixty distinct times and the partial likelihood needs a tie-handling approximation in almost every risk set. The discrete-time formulation has no ties to approximate, because it was discrete to begin with.</p>
+<p><strong>DeepHit</strong> (Lee et al.&nbsp;2018) is closer to what section 5 built. It outputs a joint distribution over cause and discrete time in a single softmax across all <span class="math inline">\(m \times J\)</span> cells, and adds a ranking term to the likelihood so that concordance improves. Two differences matter here. The single softmax over the whole grid models the unconditional joint distribution, whereas the cause-specific head above models the conditional hazards given survival, which keeps the Aalen-Johansen recursion of lecture S2 available and keeps every quantity interpretable as a hazard. And the ranking term trades calibration for discrimination by design, which makes DeepHit an awkward instrument for a lecture whose whole subject is calibration. Where the question is which loans to decline, that trade is a good one. Where the question is the size of the expected credit loss, calibration is the whole answer and the trade runs the wrong way.</p>
+<p>The wider map is lecture S2’s. Anything that produces a hazard per loan per month can be dropped into the identities of lecture S1, and the choice among them is a choice about functional form, tie handling and which loss is being optimised. The architecture is the smallest part of it.</p>
+</section>
+<section id="takeaways" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Takeaways</h1>
+<ol type="1">
+<li>A neural survival model is the discrete-time hazard model of lecture S1 with the linear predictor replaced. Sixty output logits and a mask reproduce the person-period likelihood term for term, so 179,171 rows do the work of 2,671,330 and the benchmark against the logit is exact.</li>
+<li>The balance property holds at the resolution a model was given and no finer. The logit matched its nine bands exactly and missed individual months by up to 1,273 defaults; the head matched nothing exactly and missed by at most 238.</li>
+<li>Enforcing balance at every month is one scalar per month and costs nothing out of sample, yet a lifetime PD is a product of hazards, so exact monthly balance still leaves the portfolio survival curve 0.45 percentage points out at twelve months. Balance is a statement about sums.</li>
+<li>Widening the head to two causes cut the twelve-month bias from 2.41 percentage points to 0.80 against a counted truth, having recalibrated nothing. When a model is biased because its estimand is wrong, recalibration reaches only the part of the error that was never the problem.</li>
+</ol>
+<p>The limitation of lecture S1 carries over undiminished. A single snapshot admits no time-varying covariate, so the portfolio-level block that a point-in-time PD needs still has nothing to estimate from. A survival head is the natural place to put a macroeconomic path once the data supports one, since it already carries one output per month, and <code>data/amex_panel.parquet</code> is where that question can be asked.</p>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+<p>This lecture answers no lecture of the summer school <strong>Deep Learning for Actuarial Modeling</strong> and is original to this repository. It applies the balance property and auto-calibration material of that course’s seventh lecture, and the feed-forward construction of its fourth and fifth, to a survival head. The discrete-time survival network follows Gensheimer and Narasimhan (2019); the discrete-time hazard identities and the cumulative incidence recursion follow Botha and Verster (2025) and lectures S1 and S2 of this series; the Bondora loan book is public.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<ul>
+<li>Aalen, O.O. and Johansen, S. (1978). <em>An empirical transition matrix for non-homogeneous Markov chains based on censored observations</em>. Scandinavian Journal of Statistics.</li>
+<li>Bondora AS. <em>Loan dataset (public reports)</em>. <a href="https://www.bondora.com/en/public-reports" class="uri">https://www.bondora.com/en/public-reports</a></li>
+<li>Botha, A. and Verster, T. (2025). <em>Approaches for modelling the term-structure of default risk under IFRS 9: a tutorial using discrete-time survival analysis</em>.</li>
+<li>Cox, D.R. (1972). <em>Regression models and life-tables</em>. Journal of the Royal Statistical Society, Series B.</li>
+<li>Gensheimer, M.F. and Narasimhan, B. (2019). <em>A scalable discrete-time survival model for neural networks</em>. PeerJ.</li>
+<li>Gneiting, T. and Resin, J. (2023). <em>Regression diagnostics meets forecast evaluation: conditional calibration, reliability diagrams, and coefficient of determination</em>. Electronic Journal of Statistics.</li>
+<li>Katzman, J.L., Shaham, U., Cloninger, A., Bates, J., Jiang, T. and Kluger, Y. (2018). <em>DeepSurv: personalized treatment recommender system using a Cox proportional hazards deep neural network</em>. BMC Medical Research Methodology.</li>
+<li>Lee, C., Zame, W.R., Yoon, J. and van der Schaar, M. (2018). <em>DeepHit: a deep learning approach to survival analysis with competing risks</em>. AAAI.</li>
+<li>Murphy, A.H. (1973). <em>A new vector partition of the probability score</em>. Journal of Applied Meteorology.</li>
+<li>Singer, J.D. and Willett, J.B. (1993). <em>It’s about time: using discrete-time survival analysis to study duration and the timing of events</em>. Journal of Educational Statistics.</li>
+<li>Scognamiglio, S., Maggi, M. and Wüthrich, M.V. (2026). <em>Deep Learning for Actuarial Modeling</em>, SSRN 5162304.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

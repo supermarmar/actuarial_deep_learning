@@ -536,6 +536,11 @@ one lecture 1 could not close either: no covariate here varies with calendar tim
 so the portfolio-level term of the Botha and Verster specification stays unfitted,
 and a point-in-time lifetime PD needs the panel rather than the cross-section.
 
+Lecture S3 closes the track by putting a network where the logistic regression of
+lecture S1 sat, and asks the balance property and auto-calibration questions of the
+result. The competing-risks estimator of this lecture reappears there as a softmax
+head, which is where the two strands of the survival track meet.
+
 # Copyright and attribution {.unnumbered}
 
 This lecture answers no lecture of the summer school **Deep Learning for Actuarial
