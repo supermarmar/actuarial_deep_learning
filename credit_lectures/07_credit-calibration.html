@@ -185,7 +185,7 @@ window.Quarto = {
 <p>Three properties are on the table and they nest, which is the organising claim. Global statistical unbiasedness is an out-of-sample statement about the fitting procedure, so a lender cannot check it. The balance property is its in-sample counterpart, which is cheap to verify and exact for a maximum likelihood GLM under the canonical link. Auto-calibration is stronger than both. Whereas balance constrains the portfolio as a whole, auto-calibration demands that every price cohort be self-financing on its own. Consequently we show what each property buys with a predictor built from the Bondora book, which satisfies the balance property exactly while charging its safest decile 13.7 percentage points more than that decile costs and its riskiest 23.4 percentage points less.</p>
 <p>The diagnostics then follow the source deck: the actual versus predicted plot under quantile binning, its smooth versions under local and isotonic regression, the lift chart, the double lift chart, and Murphy’s score decomposition. One appendix of the course deserves promotion to the main argument here. Although the Gini coefficient is the headline discrimination measure in every credit validation pack, it is purely rank based, and it is therefore blind by construction to everything this lecture is about.</p>
 <p>Two conventions carry over from the credit series and differ from the course. There is no exposure offset, since <code>default_12m</code> is a zero-one flag over a fixed twelve-month window, so every bin average below is an unweighted default rate and the case weights <span class="math inline">\(v_i\)</span> of the source deck are all one. Second, the Bondora book defaults at about 29 per cent, so deciles are richly populated and these diagnostics are stable. On a low-default portfolio, by contrast, each grade carries single-digit default counts, so decile binning collapses and the regulatory apparatus reaches for exact binomial tests instead. That machinery belongs to the IRB lecture rather than to this one.</p>
-<div id="e5bdfd93" class="cell" data-execution_count="1">
+<div id="1b91d943" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Imports and shared settings</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -233,7 +233,7 @@ window.Quarto = {
 <section id="where-the-credit-series-stands" class="level2" data-number="1.3">
 <h2 data-number="1.3" class="anchored" data-anchor-id="where-the-credit-series-stands"><span class="header-section-number">1.3</span> Where the credit series stands</h2>
 <p>We rebuild the fourth and fifth lecture’s two models exactly, with the same modelling frame, the same seeds, and the same architecture, so that every number below reconciles with that lecture exactly.</p>
-<div id="3b9f7c15" class="cell" data-execution_count="2">
+<div id="4a8f75ee" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Modelling table, design matrix and splits (lecture 4/5, unchanged)</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
@@ -289,7 +289,7 @@ window.Quarto = {
 random split: learn 118,933 / test 29,734</code></pre>
 </div>
 </div>
-<div id="53cbc6fc" class="cell" data-execution_count="3">
+<div id="8b70a605" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>GLM, network and evaluation helpers (lecture 4/5, unchanged)</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>FORMULA <span class="op">=</span> (<span class="st">"default_12m ~ AgeClass + logIncome + Country + C(Education)"</span></span>
@@ -372,7 +372,7 @@ random split: learn 118,933 / test 29,734</code></pre>
 </div>
 </div>
 <p>The reference numbers reproduce the fourth and fifth lecture exactly, which is the check that licenses everything below.</p>
-<div id="b27feb06" class="cell" data-execution_count="4">
+<div id="d61dd318" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> report(label, pred, obs):</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: deviance </span><span class="sc">{</span>bernoulli_deviance(pred, obs)<span class="sc">:7.3f}</span><span class="ss">   "</span></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"AUC </span><span class="sc">{</span>roc_auc_score(obs, pred)<span class="sc">:.4f}</span><span class="ss">   Gini </span><span class="sc">{</span>gini(pred, obs)<span class="sc">:.4f}</span><span class="ss">   "</span></span>
@@ -390,7 +390,7 @@ FNN, test     : deviance 107.621   AUC 0.7241   Gini 0.4481   mean PD 0.29111 vs
 </div>
 </div>
 <p>Now the balance property itself, in-sample, where it is a statement about counts rather than rates.</p>
-<div id="a9464bcc" class="cell" data-execution_count="5">
+<div id="13f3d8d2" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lbl, p <span class="kw">in</span> [(<span class="st">"GLM"</span>, p_glm_l), (<span class="st">"FNN"</span>, p_fnn_l)]:</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>lbl<span class="sc">}</span><span class="ss">: sum of fitted PDs </span><span class="sc">{</span>p<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:10,.2f}</span><span class="ss">   "</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"observed defaults </span><span class="sc">{</span>y_learn<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,.0f}</span><span class="ss">   "</span></span>
@@ -405,7 +405,7 @@ FNN: sum of fitted PDs  34,582.23   observed defaults 34,345   relative miss +0.
 <section id="in-sample-balance-does-not-deliver-out-of-sample-unbiasedness" class="level2" data-number="1.4">
 <h2 data-number="1.4" class="anchored" data-anchor-id="in-sample-balance-does-not-deliver-out-of-sample-unbiasedness"><span class="header-section-number">1.4</span> In-sample balance does not deliver out-of-sample unbiasedness</h2>
 <p>The distinction between the two properties is easy to state and easier to forget, so it is worth measuring. The GLM balances exactly on the learning sample. Applied to the held-out test sample it does not.</p>
-<div id="62251f98" class="cell" data-execution_count="6">
+<div id="975e7654" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lbl, p <span class="kw">in</span> [(<span class="st">"GLM"</span>, p_glm_t), (<span class="st">"FNN"</span>, p_fnn_t)]:</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>lbl<span class="sc">}</span><span class="ss">: sum of predicted PDs </span><span class="sc">{</span>p<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:9,.2f}</span><span class="ss">   "</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"observed defaults </span><span class="sc">{</span>y_test<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,.0f}</span><span class="ss">   "</span></span>
@@ -435,7 +435,7 @@ FNN: sum of predicted PDs  8,655.72   observed defaults 8,685   relative miss -0
 \qquad \bar{p} = \frac{1}{m}\sum_{t=1}^m \widehat{\mu}^{\rm GLM}(\boldsymbol{X}_t).
 \]</span></p>
 <p>Because the transform is affine about the mean, the sum of predictions is unchanged for every <span class="math inline">\(\lambda\)</span> and the balance property survives exactly. It is also strictly increasing, so it preserves the risk ranking perfectly, and every rank-based statistic with it.</p>
-<div id="a8260e88" class="cell" data-execution_count="7">
+<div id="fe3729df" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> msc_isotonic(pred, obs):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Miscalibration in deviance points: loss less the isotonically recalibrated loss."""</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    rc <span class="op">=</span> IsotonicRegression(out_of_bounds<span class="op">=</span><span class="st">"clip"</span>).fit(pred, obs).predict(pred)</span>
@@ -460,7 +460,7 @@ FNN: sum of predicted PDs  8,655.72   observed defaults 8,685   relative miss -0
 </div>
 </div>
 <p>At <span class="math inline">\(\lambda = 0.3\)</span> the predictor is exactly as balanced as the GLM, its mean PD is identical to five decimals, and its Gini coefficient is identical at 0.4364. Its out-of-sample deviance has nevertheless deteriorated by 6.1 points, from 108.20 to 114.28, while the isotonic miscalibration term has risen from 0.33 to 6.41 deviance points. Therefore the whole of the damage sits in auto-calibration, and the decile picture shows where.</p>
-<div id="b1f51862" class="cell" data-execution_count="8">
+<div id="ee2c1847" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Decile binning helper</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> decile_table(pred, obs, k<span class="op">=</span><span class="dv">10</span>):</span>
@@ -475,7 +475,7 @@ FNN: sum of predicted PDs  8,655.72   observed defaults 8,685   relative miss -0
 <span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame(rows), b</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="5e4ce2b3" class="cell" data-execution_count="9">
+<div id="d657f2ea" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>q_shrunk <span class="op">=</span> p_bar <span class="op">+</span> <span class="fl">0.3</span> <span class="op">*</span> (p_glm_t <span class="op">-</span> p_bar)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.6</span>, <span class="fl">3.5</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (lbl, p) <span class="kw">in</span> <span class="bu">zip</span>(axes, [(<span class="st">"GLM"</span>, p_glm_t), (<span class="vs">r"GLM shrunk, </span><span class="dv">$</span><span class="er">\</span><span class="vs">lambda=0</span><span class="dv">.</span><span class="vs">3</span><span class="dv">$</span><span class="vs">"</span>, q_shrunk)]):</span>
@@ -502,7 +502,7 @@ FNN: sum of predicted PDs  8,655.72   observed defaults 8,685   relative miss -0
 <section id="the-actual-versus-predicted-plot" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="the-actual-versus-predicted-plot"><span class="header-section-number">2.2</span> The actual versus predicted plot</h2>
 <p>The diagnostic used above is the actual versus predicted plot, and its recipe is worth stating precisely, because the binning variable decides what the plot means. One puts the observations <span class="math inline">\(Y\)</span> on the vertical axis against the predictions <span class="math inline">\(\widehat{\mu}(\boldsymbol{X})\)</span> on the horizontal, bins on quantiles of the predictions to reduce volatility, and takes empirical means within each bin for both. The horizontal coordinate of each dot is therefore the barycentre of the predictions in that decile rather than the decile’s midpoint. Furthermore, where the model has been fitted on <span class="math inline">\(\mathcal{L}\)</span>, the plot belongs on the test sample <span class="math inline">\(\mathcal{T}\)</span>, because an in-sample version flatters a flexible model.</p>
-<div id="3ce4505a" class="cell" data-execution_count="10">
+<div id="7bcb545a" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>tab_glm, _ <span class="op">=</span> decile_table(p_glm_t, y_test)</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>tab_fnn, _ <span class="op">=</span> decile_table(p_fnn_t, y_test)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>show <span class="op">=</span> pd.concat([tab_glm.set_index(<span class="st">"bin"</span>), tab_fnn.set_index(<span class="st">"bin"</span>)],</span>
@@ -524,7 +524,7 @@ bin
 10   2974 0.6218 0.6227  2974 0.6544 0.6204</code></pre>
 </div>
 </div>
-<div id="df7f924a" class="cell" data-execution_count="11">
+<div id="f9fc9000" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.6</span>, <span class="fl">3.5</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (lbl, t) <span class="kw">in</span> <span class="bu">zip</span>(axes, [(<span class="st">"GLM"</span>, tab_glm), (<span class="st">"FNN"</span>, tab_fnn)]):</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    lim <span class="op">=</span> [<span class="fl">0.05</span>, <span class="fl">0.70</span>]</span>
@@ -561,7 +561,7 @@ FNN: actuals monotone True;  largest within-decile miss 0.0340;  predicted sprea
 <p>Decile binning imposes ten bins by fiat, so two smoother readings of the same question are worth having. Local regression (Loader, 1999) fits a low-degree polynomial inside a moving window whose bandwidth is chosen so that the window holds a nearest-neighbour fraction <span class="math inline">\(\alpha\)</span> of the data. The course uses <code>locfit</code> in R with quadratic splines at <span class="math inline">\(\alpha =
 10\%\)</span>, whereas the Python counterpart here is <code>lowess</code>, which is locally linear. The substantive hyper-parameters are nonetheless the same, and both smoothers are sensitive to them, which is the objection.</p>
 <p>Isotonic regression, by contrast, answers the same question with no hyper-parameter at all. It returns the monotone step function closest to the actuals in squared error, its blocks are found by pool-adjacent- violators, and the result is exactly the recalibrated predictor <span class="math inline">\(\mu_{\rm rc}(\boldsymbol{X}) = \mathbb{E}[Y \mid \mu(\boldsymbol{X})]\)</span> that the definition of auto-calibration asks for. Fitted on the sample it is being read on, it is therefore empirically auto-calibrated by construction, which is the point Wüthrich and Ziegel (2024) make.</p>
-<div id="24b08128" class="cell" data-execution_count="12">
+<div id="6efe4c25" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.6</span>, <span class="fl">3.5</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (lbl, p) <span class="kw">in</span> <span class="bu">zip</span>(axes, [(<span class="st">"GLM"</span>, p_glm_t), (<span class="st">"FNN"</span>, p_fnn_t)]):</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    lo <span class="op">=</span> lowess(y_test, p, frac<span class="op">=</span><span class="fl">0.1</span>, it<span class="op">=</span><span class="dv">0</span>, delta<span class="op">=</span><span class="fl">0.001</span>, return_sorted<span class="op">=</span><span class="va">True</span>)</span>
@@ -603,7 +603,7 @@ FNN: isotonic blocks  50;  largest |prediction - recalibrated| 0.0935;  miscalib
 <p>Two repairs are available, and they sit in a hierarchy. Since both are applied after the fit, neither disturbs the model that produced the ranking.</p>
 <p>The intercept correction adds a constant on the linear predictor scale, choosing <span class="math inline">\(c\)</span> so that the mean prediction matches the observed rate. It has one parameter and it restores the balance property exactly, although it can do nothing about any individual cohort. In the third credit lecture’s vocabulary it is therefore the degenerate combined actuarial neural network, whose network component is switched off.</p>
 <p>The isotonic recalibration replaces <span class="math inline">\(\widehat{\mu}\)</span> by <span class="math inline">\(\widehat{\mu}_{\rm rc} = \widehat{\mathbb{E}}[Y \mid \widehat{\mu}]\)</span>, estimated by isotonic regression. It restores auto-calibration empirically on whatever sample it was fitted on, and therefore restores balance as a by-product. Moreover, because it is monotone, it leaves the risk ranking untouched up to the ties it creates.</p>
-<div id="d37e04c3" class="cell" data-execution_count="13">
+<div id="bd675d63" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> logit(p):</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.clip(p, <span class="fl">1e-12</span>, <span class="dv">1</span> <span class="op">-</span> <span class="fl">1e-12</span>)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.log(p <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p))</span>
@@ -655,14 +655,14 @@ GLM, for reference                -0.0000               -1.1348         106.6412
 </section>
 <section id="discrimination-and-the-gini-coefficient" class="level1" data-number="4">
 <h1 data-number="4"><span class="header-section-number">4</span> Discrimination and the Gini coefficient</h1>
-<p>Every credit validation pack this author has read leads on the Gini coefficient, and the course confines it to an appendix with a warning. The warning deserves the main text.</p>
+<p>The Gini coefficient is the statistic a credit validation pack leads on, whereas the course confines it to an appendix with a warning. That warning deserves the main text.</p>
 <p>The Gini coefficient of a PD model is a linear rescaling of the area under the ROC curve,</p>
 <p><span class="math display">\[
 {\rm Gini} = 2\,{\rm AUC} - 1 ,
 \]</span></p>
 <p>so the two carry identical information, and the credit convention simply puts a random model at zero rather than at one half. On the random split the GLM scores 0.4364 out-of-sample against the network’s 0.4481, a difference of 1.2 Gini points that a scorecard team would regard as real and modest.</p>
 <p>Both statistics are computed from the ordering of the predictions alone. Consequently any strictly increasing transform of a model’s predictions leaves the Gini coefficient exactly unchanged, whatever it does to the level, to the spread, or to the expected loss the model implies. Since that claim is exact rather than approximate, the demonstration takes one line per transform.</p>
-<div id="5f96aff2" class="cell" data-execution_count="14">
+<div id="5be262f1" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>transforms <span class="op">=</span> {</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"as fitted"</span>: p_glm_t,</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"cubed"</span>: p_glm_t <span class="op">**</span> <span class="dv">3</span>,</span>
@@ -686,7 +686,7 @@ logit shifted by +1 0.4364 0.7182  126.8943   0.4886         67.2621         19.
 </div>
 </div>
 <p>Cubing the GLM’s fitted PDs leaves the Gini coefficient at 0.4364 and the AUC at 0.7182, to four decimals, while the implied default count falls by 82 per cent and the deviance rises from 108.20 to 197.31. Similarly, halving them leaves the Gini identical, although it now understates the book’s defaults by half. A validation report that leads on Gini, and reports it alone, cannot distinguish any of these five models from one another, and one of them would understate a portfolio’s expected loss by four fifths.</p>
-<div id="151f5860" class="cell" data-execution_count="15">
+<div id="6a1b6dc0" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.6</span>, <span class="fl">3.6</span>))</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Marker shapes carry the two grey series apart, so the panels survive a</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="co"># greyscale print without the distinction resting on hue.</span></span>
@@ -728,7 +728,7 @@ logit shifted by +1 0.4364 0.7182  126.8943   0.4886         67.2621         19.
 <h1 data-number="5"><span class="header-section-number">5</span> Lift charts</h1>
 <p>A lift chart carries the same statistics as the actual versus predicted plot in a layout built for comparing models. One bins on the predictor as before, then plots both the binned prediction averages and the binned response averages against the bin labels, so the horizontal axis is ordinal. Goldburd et al.&nbsp;(2020) read three things off it, and all three transfer to a scorecard unchanged.</p>
 <p>Auto-calibration shows as agreement between the predictions and the actuals within each bin. Monotonicity shows as an increasing sequence of actuals, which under auto-calibration is what a correct risk ranking looks like. Discrimination, finally, shows as the gap between the lowest and the highest bin, which is the lift, so a model that separates the book more sharply has more of it.</p>
-<div id="b3b85765" class="cell" data-execution_count="16">
+<div id="e39cb5c6" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.6</span>, <span class="fl">3.5</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (lbl, t) <span class="kw">in</span> <span class="bu">zip</span>(axes, [(<span class="st">"GLM"</span>, tab_glm), (<span class="st">"FNN"</span>, tab_fnn)]):</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    ax.plot(t[<span class="st">"bin"</span>], t[<span class="st">"pred"</span>], <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">5</span>, color<span class="op">=</span><span class="st">"#C8873A"</span>, label<span class="op">=</span><span class="st">"predicted"</span>)</span>
@@ -768,7 +768,7 @@ FNN: realised lift 6.276x   predicted lift 8.568x   mean |actual - predicted| 0.
 \qquad 1 \le t \le m,
 \]</span></p>
 <p>and quantile-bin on <span class="math inline">\(\kappa\)</span>. The lowest bin holds the risks that Model 2 judges most favourably relative to Model 1, whereas the highest bin holds those it judges most harshly. The actuals then adjudicate, because the bins are selected precisely where the two models disagree.</p>
-<div id="87573423" class="cell" data-execution_count="17">
+<div id="32883a7c" class="cell" data-execution_count="17">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>kappa <span class="op">=</span> p_fnn_t <span class="op">/</span> p_glm_t</span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>qk <span class="op">=</span> np.quantile(kappa, np.arange(<span class="dv">11</span>) <span class="op">/</span> <span class="dv">10</span>)</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>bk <span class="op">=</span> np.ones(<span class="bu">len</span>(kappa), <span class="bu">int</span>)</span>
@@ -799,7 +799,7 @@ kappa ranges from 0.192 to 3.037
 mean absolute bin miss: GLM 0.0284, FNN 0.0176; the network is closer in 6 of 10 bins</code></pre>
 </div>
 </div>
-<div id="ad158ded" class="cell" data-execution_count="18">
+<div id="c06651b2" class="cell" data-execution_count="18">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.6</span>, <span class="fl">3.6</span>))</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>ax.plot(dl[<span class="st">"bin"</span>], dl[<span class="st">"GLM"</span>], <span class="st">"s-"</span>, ms<span class="op">=</span><span class="dv">4</span>, lw<span class="op">=</span><span class="dv">1</span>, color<span class="op">=</span>GREY, label<span class="op">=</span><span class="st">"GLM"</span>)</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>ax.plot(dl[<span class="st">"bin"</span>], dl[<span class="st">"FNN"</span>], <span class="st">"o-"</span>, ms<span class="op">=</span><span class="dv">4</span>, lw<span class="op">=</span><span class="dv">1</span>, color<span class="op">=</span>RED, label<span class="op">=</span><span class="st">"FNN"</span>)</span>
@@ -841,7 +841,7 @@ mean absolute bin miss: GLM 0.0284, FNN 0.0176; the network is closer in 6 of 10
 <p>where <span class="math inline">\(\mu_0\)</span> is the best constant predictor and <span class="math inline">\(\mu_{\rm
 rc}(\boldsymbol{X}) = \mathbb{E}[Y \mid \mu(\boldsymbol{X})]\)</span> is the recalibrated version. Strict consistency gives all three signs. Uncertainty belongs to the data, so no model can improve it, while discrimination is what the model earns by separating the book, and miscalibration is what it gives back by mispricing the cohorts it has separated.</p>
 <p>Credit modelling knows this partition under another name. With the squared-error scoring function the score is the Brier score, and its three terms are the reliability, resolution, and uncertainty of the classical Brier decomposition, which is the form Murphy’s 1973 paper states. Reliability is miscalibration, while resolution is discrimination. The log-loss version below is nonetheless more useful here, because it is the Bernoulli deviance the credit series has been quoting throughout, so multiplying by 200 puts the decomposition on exactly that scale.</p>
-<div id="128c2308" class="cell" data-execution_count="19">
+<div id="33fb9fae" class="cell" data-execution_count="19">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> model_diagnostics.scoring <span class="im">import</span> LogLoss, SquaredError, decompose</span>
 <span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>preds <span class="op">=</span> pd.DataFrame({<span class="st">"GLM"</span>: p_glm_t, <span class="st">"FNN"</span>: p_fnn_t})</span>
@@ -871,7 +871,7 @@ model  miscalibration  discrimination  uncertainty  score
 <section id="calibration-under-vintage-drift" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Calibration under vintage drift</h1>
 <p>Every result so far sits on the random split, where the learning and test samples are exchangeable. Since the second and the fourth and fifth credit lectures both carried an out-of-time contrast, and calibration is where that contrast does its worst damage, it belongs here too.</p>
-<div id="c10167fc" class="cell" data-execution_count="20">
+<div id="f2304ae0" class="cell" data-execution_count="20">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>X_learn_t <span class="op">=</span> X_all[mask_t]</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>fnn_oot, sc_oot, stop_oot <span class="op">=</span> train_fnn(X_learn_t, y_all[mask_t])</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>y_oot <span class="op">=</span> y_all[<span class="op">~</span>mask_t].to_numpy()</span>
@@ -893,7 +893,7 @@ GLM: balance miss +34.73%;  every decile overcharged True;  realised lift 7.49x;
 FNN: balance miss +38.42%;  every decile overcharged True;  realised lift 7.86x;  Gini 0.4293</code></pre>
 </div>
 </div>
-<div id="df3a0e6f" class="cell" data-execution_count="21">
+<div id="6d220460" class="cell" data-execution_count="21">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.6</span>, <span class="fl">3.5</span>), sharex<span class="op">=</span><span class="va">True</span>, sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (lbl, p) <span class="kw">in</span> <span class="bu">zip</span>(axes, [(<span class="st">"GLM"</span>, p_glm_oot), (<span class="st">"FNN"</span>, p_fnn_oot)]):</span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    t, _ <span class="op">=</span> decile_table(p, y_oot)</span>

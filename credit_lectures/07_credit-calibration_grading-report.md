@@ -164,10 +164,12 @@ the fronted discursive connectives.
   which passes the deletion test, since the negative half carries the section's whole finding.
   One instance passes.
 - **`J26`** name the relationship, **`J28`** attribution names its source: every claim about
-  practice is either attributed to a named paper or owned in the first person ("Every credit
-  validation pack this author has read"). The single regulatory claim, the CRR's 0.03 per cent
-  PD floor, is stated without an article number, and the article-level sourcing sits with the
-  IRB capital lecture, whose plan already carries that task.
+  practice is either attributed to a named paper or stated as standard practice without a
+  fabricated source. An earlier draft read "every credit validation pack this author has
+  read", which invented a reading history on the named author's behalf; it now reads "the
+  statistic a credit validation pack leads on". The single regulatory claim, the CRR's
+  0.03 per cent PD floor, is stated without an article number, and the article-level
+  sourcing sits with the IRB capital lecture, whose plan already carries that task.
 - **`M9`**, **`J5`**, **`J11`**, **`J12`**, **`J13`**, **`J15`**, **`J19`**: withdrawn,
   `not_applicable`.
 

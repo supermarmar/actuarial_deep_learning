@@ -706,9 +706,9 @@ is a better model.
 
 # Discrimination and the Gini coefficient
 
-Every credit validation pack this author has read leads on the Gini
-coefficient, and the course confines it to an appendix with a warning.
-The warning deserves the main text.
+The Gini coefficient is the statistic a credit validation pack leads on,
+whereas the course confines it to an appendix with a warning. That
+warning deserves the main text.
 
 The Gini coefficient of a PD model is a linear rescaling of the area
 under the ROC curve,

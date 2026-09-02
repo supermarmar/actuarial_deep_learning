@@ -479,22 +479,281 @@ chapter 8 of Hernán and Robins makes the same structural argument and is on the
 
 # The Table 2 fallacy on lecture 1's own model
 
-Intent: refit GLM3, print the coefficient table exactly as a model document would, and walk it
-row by row asking what adjustment set each coefficient would need to be read as an effect and
-whether GLM3 supplies it. Then state the constructive version, that a predictive model needs no
-causal reading and stays valid without one.
+Lecture 1 printed GLM3's coefficient table and read one row from it. This section prints the
+whole table, exactly as a model document would, and asks of every row what would have to hold
+for that number to be read as an effect.
+
+```{python}
+glm3_table = pd.DataFrame({
+    "coefficient": glm3.params,
+    "odds ratio": np.exp(glm3.params),
+    "std err": glm3.bse,
+    "p": glm3.pvalues,
+})
+print(glm3_table.round(4))
+```
+
+Every row is significant, several overwhelmingly. A model document would print this table under
+a heading such as "estimated risk drivers" and a reader would take each row as that covariate's
+effect on default. That reading is available for at most one row, and the reason is structural
+rather than statistical: the adjustment set that identifies one coefficient does not identify
+the others sitting beside it.
+
+Presenting several adjusted estimates from one model in one table invites three distinct errors.
+A covariate's coefficient may be a direct-effect estimate where the reader takes it for a total
+effect. A covariate's coefficient may be confounded even where the coefficient of primary
+interest is not. And once the primary effect varies across covariate levels, every coefficient
+in the table becomes harder to interpret again. Walking GLM3's rows makes each concrete.
+
+**`logIncome`, at -0.0766.** This is the row lecture 1 cares about and the only one with a
+defensible reading. Its backdoor path runs through `Country`, `Country` is in the model, so the
+path is blocked and the coefficient estimates income's effect conditional on market and age
+band. Two caveats survive. The estimate is conditional on age class as well, so it is the effect
+within an age band rather than overall, and section 7 does the work of getting from one to the
+other. And exchangeability is still an assumption: any unmeasured cause of both declared income
+and default, e.g. employment stability or financial literacy, reopens a path the model cannot
+see. Section 8 sizes that.
+
+**`Country[T.ES]` at +1.9051 and `Country[T.FI]` at +1.2529.** These rows have no causal reading
+at all, and the objection is not subtle. Country of residence admits no intervention, so there
+is no $D^{(k),\,a}_i$ to estimate: the counterfactual "this Estonian loan had it been Spanish"
+is undefined until somebody says what else would have changed with it, and everything would
+have. What the coefficients do carry is a legitimate and different meaning: conditional on
+income and age, Spanish loans in this book defaulted at 6.7 times the odds of Estonian ones.
+That is a composition statement and a perfectly good one, and section 5.2 showed a third of it
+travelling through the platform's pricing.
+
+**The seven `AgeClass` rows.** These are the clearest case of the total-against-direct confusion.
+Each is a direct effect of age class holding income and country fixed, so it deliberately
+excludes any part of ageing that runs through income, which for a lending book is most of it: a
+41-year-old earns more than a 21-year-old, and the age coefficient has that channel closed off
+by construction. Estimating the total effect of age would need a model **without** `logIncome`,
+which is a different model. Furthermore, the age coefficients could be confounded even though the
+income coefficient is not, since a cause of both age band and default that does not cause income
+would bias these rows and leave the income row alone.
+
+::: {.callout-tip icon=false title="What the sources recommend instead"}
+Three changes, and none of them costs predictive performance, because none of them touches the
+model.
+
+Firstly, build the causal diagram that encodes the covariate-selection assumptions and publish
+it with the model. It is the artefact that makes the adjustment set reviewable.
+
+Secondly, restrict the coefficient table to the primary covariate's estimates under the
+different models, with the adjustment covariates named in a footnote. Where total effects for
+the secondary covariates are genuinely wanted, they need several models with different covariate
+subsets, since a covariate that is intermediate with respect to another has to be left out of
+the model estimating that other's total effect.
+
+Thirdly, where a direct effect is what the table shows, say so in the text. The epidemiological
+version of this caution transfers to credit unchanged: defining the direct effect of age
+requires holding income and country fixed as a person ages, which is unavailable for the first
+and meaningless for the second, so the estimand names an intervention nobody could perform and
+violates positivity outright.
+:::
+
+## The constructive version
+
+None of this says GLM3 is a bad model. A model built to rank and to price needs no causal reading
+whatever, and every conventional validation test it passes, it still passes. Discrimination,
+calibration, stability and the balance property are all properties of the fitted mapping, and
+they are unaffected by whether any coefficient identifies an effect.
+
+The failure arrives at a specific moment, and it is a documentation moment rather than a
+modelling one. It arrives when a coefficient is quoted as a driver in a model document, when a
+credit policy discussion cites the age band coefficients as evidence about ageing borrowers, or
+when a validator is asked to confirm that the model's drivers are "economically sensible", which
+is a causal question asked of an object that answers a predictive one. So the remedy is a
+sentence in the model document rather than a change to the model: name which coefficient the
+adjustment set was chosen for, and mark the rest as conditional associations.
 
 # Standardisation: the marginal effect lecture 1 said could not be assembled
 
-Intent: average the country-conditional model over the observed country distribution and compare
-the result with lecture 1's raw pooled curve. Report the positivity check on the fifteen
-country-by-quintile cells first, since the average is only as good as its thinnest cell.
+Lecture 1's closing argument on this figure was that "multiplying marginal profiles would price
+this book absurdly", so $\mu(\boldsymbol{X})$ has to be estimated jointly. That is right, and it
+leaves a question open: if the marginal income curve cannot be read off the raw data and the
+conditional coefficient is not the marginal effect either, what is the marginal effect of income
+on this portfolio?
+
+Standardisation answers it. Fit the model conditional on country and age, then average its
+predictions over the **observed** distribution of country and age rather than over a chosen
+reference cell. That average is the marginal quantity, and computing it is the operation lecture
+1 said could not be done by combining marginal rates. It can be done; it just cannot be done by
+combining marginal rates.
+
+## Positivity first, because the average is only as good as its thinnest cell
+
+Section 3 counted the cells and found none empty. That is necessary and insufficient, since the
+standardisation evaluates every country's fitted model at every income level in the range, and
+at the extremes some of those combinations barely occur.
+
+```{python}
+supp = pd.DataFrame({
+    c: [dat.loc[dat.Country == c, "logIncome"].quantile(q) for q in (0.025, 0.975)]
+    for c in COUNTRIES}, index=["p2.5", "p97.5"]).T
+cs_lo, cs_hi = supp["p2.5"].max(), supp["p97.5"].min()
+pooled_lo, pooled_hi = np.percentile(dat["logIncome"], [5, 95])
+inside = ((dat.logIncome >= cs_lo) & (dat.logIncome <= cs_hi)).mean()
+
+print(supp.round(3))
+print(f"\ncommon support   {cs_lo:.3f} to {cs_hi:.3f}  "
+      f"({np.exp(cs_hi - cs_lo):.2f}x income ratio, {inside:.1%} of loans)")
+print(f"pooled 5th-95th  {pooled_lo:.3f} to {pooled_hi:.3f}  "
+      f"({np.exp(pooled_hi - pooled_lo):.2f}x income ratio)")
+```
+
+The three countries overlap over log-income 6.80 to 8.19, a fourfold income range holding 70 per
+cent of the book. Outside it the standardisation extrapolates: below 6.80 the model is asked
+what a Finnish borrower on an Estonian income would do, and Finland has almost no such loans.
+Hence positivity holds in the middle and degrades at both ends, which is the quiet form of the
+failure rather than the loud one. We compute the curve over both ranges and report the gap.
+
+```{python}
+country_w = dat["Country"].value_counts(normalize=True)
+age_w = dat["AgeClass"].value_counts(normalize=True)
+
+def standardise(model, log_income):
+    """Average the fitted model over the observed (Country, AgeClass) distribution."""
+    total = 0.0
+    for c, wc in country_w.items():
+        for a, wa in age_w.items():
+            row = pd.DataFrame({"AgeClass": [a], "logIncome": [log_income], "Country": [c]})
+            total += wc * wa * float(model.predict(row).iloc[0])
+    return total
+
+grid = np.linspace(pooled_lo, pooled_hi, 25)
+std_curve = np.array([standardise(glm3, li) for li in grid])
+
+edges = np.append(grid, np.inf)
+raw_curve = (dat.assign(bin=pd.cut(dat["logIncome"], edges, right=False))
+             .groupby("bin", observed=True)["default_12m"].mean().to_numpy()[:len(grid)])
+
+fig, ax = plt.subplots(figsize=(7, 3.8))
+ax.axvspan(cs_lo, cs_hi, color=RULE, alpha=0.06, lw=0)
+ax.plot(grid, raw_curve, "s--", ms=4, color=GREY, label="raw pooled empirical")
+ax.plot(grid, std_curve, "o-", ms=4, color=OX, label="standardised over country and age")
+ax.axvline(cs_lo, color=RULE, lw=0.8, ls=":"); ax.axvline(cs_hi, color=RULE, lw=0.8, ls=":")
+ax.set_xlabel("log-income"); ax.set_ylabel("12-month default probability")
+ax.legend(frameon=False, loc="upper right", fontsize=8)
+ax.set_title("Shaded band: common support of all three countries", fontsize=9, color=RULE)
+plt.tight_layout(); plt.show()
+```
+
+```{python}
+for label, (a, b) in [("common support", (cs_lo, cs_hi)),
+                      ("pooled 5th-95th", (pooled_lo, pooled_hi))]:
+    p_lo, p_hi = standardise(glm3, a), standardise(glm3, b)
+    print(f"{label:<17} standardised {p_lo:.4f} -> {p_hi:.4f}   "
+          f"risk difference {p_hi - p_lo:+.4f}   risk ratio {p_hi / p_lo:.4f}")
+print(f"\nraw pooled empirical over the same grid: "
+      f"{raw_curve[0]:.4f} -> {raw_curve[-1]:.4f}   change {raw_curve[-1] - raw_curve[0]:+.4f}")
+```
+
+The two curves disagree about the sign. Over the pooled fifth to ninety-fifth percentile the raw
+empirical rate climbs from 20.1 to 27.9 per cent, reproducing lecture 1's worrying figure, while
+the standardised curve falls monotonically from 30.4 to 27.8 per cent. Same data, same income
+range, opposite direction. This is the arithmetic that obeys lecture 1's warning instead of
+repeating it.
+
+Restricting to common support attenuates the effect, from a risk ratio of 0.9149 to 0.9363, so
+roughly a quarter of the pooled-range effect was extrapolation into cells the portfolio does not
+populate. The honest headline is therefore the common-support figure: standardised over the
+observed country and age distribution, quadrupling declared income is associated with a fall of
+1.9 percentage points in the twelve-month default probability, from 29.6 to 27.7 per cent.
+
+Two things follow that a reader should carry away. The standardised effect is much smaller than
+the raw gradient's magnitude and points the other way, so both the sign and the size of lecture
+1's figure were composition. And it is small next to the country coefficients: a fourfold income
+difference moves the default probability by under two points where residence in Spain rather
+than Estonia multiplies the odds by 6.7. Income matters and market dominates.
 
 # How much confounding would overturn this
 
-Intent: apply the assumption-free bounding factor to the standardised income effect, on the risk
-ratio scale rather than the odds ratio the logit hands us, and say plainly what the resulting
-number does and does not license.
+Every number in section 7 rests on exchangeability, and exchangeability cannot be checked against
+the data that raised the question. The available discipline is to ask how strong an unmeasured
+confounder would have to be before the finding disappeared, which turns an unanswerable objection
+into a quantity.
+
+The E-value is that quantity: the minimum strength of association, **on the risk ratio scale**,
+that an unmeasured confounder would need with both the covariate and the outcome to explain away
+the observed association, conditional on the covariates already in the model. It rests on a bound
+that assumes nothing about the confounder, so the confounder need not be binary, there may be
+several, and it may interact with income in its effect on default.
+
+::: {.callout-warning icon=false title="The scale trap, which is why section 7 came first"}
+The E-value is defined on the risk ratio scale, and a logit-fitted PD model reports odds ratios.
+On this book the two are nowhere near each other: the segment default rates run from 17 to 55 per
+cent, and the odds ratio exaggerates the risk ratio badly at those levels. GLM3's income odds
+ratio is 0.9262, while the standardised risk ratio on common support is 0.9363.
+
+Feeding the odds ratio into the E-value formula would return a number that looks like an E-value
+and is not one. The standardisation of section 7 exists partly to supply the correct input, which
+is why this section could not come first.
+:::
+
+The formula for a protective association takes the reciprocal of the risk ratio first, then adds
+the geometric correction:
+
+$$
+\text{E-value} = \frac{1}{\mathrm{RR}} + \sqrt{\frac{1}{\mathrm{RR}}\left(\frac{1}{\mathrm{RR}} - 1\right)},
+\qquad \mathrm{RR} < 1 .
+$$
+
+```{python}
+def e_value(rr):
+    """E-value for a risk ratio, taking the reciprocal for a protective association."""
+    r = 1 / rr if rr < 1 else rr
+    return r + np.sqrt(r * (r - 1))
+
+rr_cs = standardise(glm3, cs_hi) / standardise(glm3, cs_lo)
+
+rng_boot = np.random.default_rng(20260902)
+boot = []
+for _ in range(200):
+    b = dat.iloc[rng_boot.integers(0, len(dat), len(dat))]
+    m = smf.glm("default_12m ~ AgeClass + logIncome + Country",
+                data=b, family=sm.families.Binomial()).fit()
+    cw = b["Country"].value_counts(normalize=True)
+    aw = b["AgeClass"].value_counts(normalize=True)
+
+    def std_b(li):
+        return sum(wc * wa * float(m.predict(pd.DataFrame(
+            {"AgeClass": [a], "logIncome": [li], "Country": [c]})).iloc[0])
+            for c, wc in cw.items() for a, wa in aw.items())
+
+    boot.append(std_b(cs_hi) / std_b(cs_lo))
+
+ci_lo, ci_hi = np.percentile(boot, [2.5, 97.5])
+print(f"standardised risk ratio      {rr_cs:.4f}   95% CI {ci_lo:.4f} to {ci_hi:.4f}")
+print(f"E-value, point estimate      {e_value(rr_cs):.3f}")
+print(f"E-value, CI limit near null  {e_value(ci_hi):.3f}   (limit {ci_hi:.4f})")
+print(f"\nfor comparison, GLM3's income ODDS ratio is {np.exp(glm3.params['logIncome']):.4f}")
+print(f"and its E-value would be {e_value(np.exp(glm3.params['logIncome'])):.3f}, which is the wrong number")
+```
+
+The verdict is uncomfortable and worth stating flatly. An unmeasured confounder associated with
+declared income by a risk ratio of about 1.34, and with default by about the same, would explain
+away the whole standardised income effect. A confounder at roughly 1.28 on each arm would push
+the confidence limit to the null. Associations of that strength are entirely ordinary in credit
+data: employment stability, sector of employment, tenure at address and household composition
+would each plausibly clear 1.34 against both income and default, and none of them is in GLM3.
+
+Hence the finding is statistically firm and causally fragile, and both halves belong in the model
+document. The interval excludes one comfortably on 148,437 loans, so the association is not noise.
+An E-value of 1.34 means the causal reading of that association rests on the assumption that no
+ordinary omitted borrower characteristic is doing the work, which is an assumption the portfolio
+gives no reason to believe. The constructive move is the one the sources recommend: report the
+E-value beside the estimate, so a reader can weigh it rather than take the significance test as
+settling a question it never addressed.
+
+A useful calibration for a sceptical reader comes from the case the method was built on. In the
+Hammond and Horn smoking study the observed relative risk of lung cancer was 10.73 with an
+interval of 8.02 to 14.36, and Fisher's objection was that a common genetic confounder might
+account for all of it. Granting a confounder at the Cornfield strength of 10.73 on both arms, the
+joint bounding factor is 5.63, so the corrected estimate is still 1.91 and the corrected interval
+1.42 to 2.55, which excludes one. A confounder satisfying Cornfield fails to explain that
+association away. Our income effect is nowhere near that robust, and seeing the contrast is what
+makes an E-value of 1.34 legible.
 
 # Fairness is a causal claim
 

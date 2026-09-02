@@ -979,11 +979,13 @@ components of $\boldsymbol{X} = (X_1, \ldots, X_q)^\top$ rather than
 marginally.
 
 <!-- REVIEW (Mario, round 3, 2 Sep 2026): can we also show this as a 3d graph
-     together with the 2d ggraph. Outstanding. -->
+     together with the 2d ggraph. Answered below: two panels off one `rate` array,
+     one shared colour scale and one colourbar. -->
 
 ```{python}
-#| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income. White space marks covariate combinations too thin in the portfolio to estimate. The vertical banding reflects the income effect, the hump at young ages and the deterioration at old ages are visible along the age axis."
+#| fig-cap: "Kernel-smoothed empirical default rate as a function of borrower age and log-income, shown twice off one smoothed array. Both panels share the colour scale 0.10 to 0.50 and the single colourbar, so a colour means the same default rate in each. White space in the heatmap, and the gaps in the surface, mark covariate combinations too thin in the portfolio to estimate (fewer than eight effective loans after smoothing). The heatmap is the better panel for reading a value off a pair of covariates; the surface is the better panel for seeing that the joint shape is not additive, since the age profile changes its form as log-income moves rather than merely shifting up or down."
 from scipy.ndimage import gaussian_filter
+from matplotlib.colors import Normalize
 
 x = model_dat["Age"].to_numpy().astype(float)
 y = model_dat["logIncome"].to_numpy()
@@ -997,13 +999,36 @@ cnt_s = gaussian_filter(cnt, sigma=2.0)
 dft_s = gaussian_filter(dft, sigma=2.0)
 rate = np.where(cnt_s > 8, dft_s / np.maximum(cnt_s, 1e-9), np.nan)
 
-fig, ax = plt.subplots(figsize=(6.5, 4.2))
+# Both panels are drawn from this one array on this one scale, so the surface
+# cannot disagree with the heatmap. Bin centres, not edges, carry the surface.
+x_c = 0.5 * (x_edges[:-1] + x_edges[1:])
+y_c = 0.5 * (y_edges[:-1] + y_edges[1:])
+X_g, Y_g = np.meshgrid(x_c, y_c, indexing="ij")   # both (58, 70), as rate is
+norm = Normalize(vmin=0.1, vmax=0.5)
+
+fig = plt.figure(figsize=(10.5, 4.4), layout="constrained")
+ax = fig.add_subplot(1, 2, 1)
 im = ax.imshow(
     rate.T, origin="lower", aspect="auto",
-    extent=(18, 76, 5.5, 9.0), cmap="RdYlBu_r", vmin=0.1, vmax=0.5)
+    extent=(18, 76, 5.5, 9.0), cmap="RdYlBu_r", norm=norm)
 ax.set_xlabel("age of borrower"); ax.set_ylabel("log-income")
-fig.colorbar(im, label="smoothed default rate")
-plt.tight_layout(); plt.show()
+ax.set_title("heatmap", fontsize=10)
+
+ax3 = fig.add_subplot(1, 2, 2, projection="3d")
+ax3.plot_surface(
+    X_g, Y_g, rate, cmap="RdYlBu_r", norm=norm,
+    rcount=58, ccount=70, linewidth=0, edgecolor="none", antialiased=True)
+ax3.set_xlabel("age of borrower"); ax3.set_ylabel("log-income")
+ax3.set_zlabel("default rate")
+ax3.set_zlim(0.1, 0.5)
+ax3.view_init(elev=28, azim=-125)
+ax3.set_title("surface", fontsize=10)
+for pane in (ax3.xaxis.pane, ax3.yaxis.pane, ax3.zaxis.pane):
+    pane.set_facecolor("white"); pane.set_edgecolor("0.85")
+ax3.grid(False)
+
+fig.colorbar(im, ax=(ax, ax3), shrink=0.75, label="smoothed default rate")
+plt.show()
 ```
 
 The heatmap shows the empirical default rate as a function of the two
