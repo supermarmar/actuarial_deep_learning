@@ -11,12 +11,13 @@ abstract: >
   runs from conditional to unconditional and asks whether the loan has survived
   to the start of the window, the other runs from point-in-time to
   through-the-cycle and asks what the macroeconomy is doing. Separating them
-  gives a two-by-two map, and the map is what makes the rest legible: the term
-  structure IFRS 9 needs, forward-looking information and the FiT PD it produces,
-  the eleven ways the estimate is actually built and what each costs, and a
-  demonstration on the Bondora book expanded to 2.7 million loan-months with real
-  Eurostat series attached, where the collinearity lecture 1 complained about
-  breaks and a macro coefficient is finally identified.
+  gives a two-by-two map, and the map is what makes the rest legible. From it the
+  lecture builds the term structure IFRS 9 needs, introduces forward-looking
+  information and the FiT PD it produces, reviews the eleven ways that estimate is
+  actually built and what each one costs, and closes on a demonstration over the
+  Bondora book expanded to 2.7 million loan-months with real Eurostat series
+  attached, where the collinearity lecture 1 complained about breaks and a macro
+  coefficient is finally identified.
 format:
   html:
     toc: true
@@ -38,7 +39,7 @@ jupyter: python3
 
 Credit lecture 1 put the point-in-time question inside a callout, gave it a formula, and then
 conceded that the portfolio in front of it could not answer the question. The concession was
-honest and it was also incomplete. What follows pays the debt: it separates the two things the
+honest and it was also incomplete. What follows pays the debt. It separates the two things the
 word "conditional" is doing in this subject, builds the term structure IFRS 9 actually asks
 for, reviews the eleven ways practitioners build one, and then fits a macro coefficient on the
 Bondora book to show that the obstacle lecture 1 hit was a property of its table rather than
@@ -197,8 +198,8 @@ expectation runs over. It runs over the macro state alone, leaving survival unto
 is why this axis and the previous one are independent.
 
 The averaging has to happen on the model's output rather than on its input, and section 3.2
-gives the reason with a worked figure, because feeding average macroeconomic conditions into a
-fitted point-in-time model returns something that is not the through-the-cycle PD.
+gives the reason with a worked number, because feeding average macroeconomic conditions into a
+fitted point-in-time model returns something other than the through-the-cycle PD.
 
 ## The map
 
@@ -224,9 +225,9 @@ This lecture uses the survival reading throughout, following `03_notation.md`. W
 reading is meant, the words are point in time and through the cycle, which are unambiguous.
 :::
 
-That table is the map for the rest of the lecture. Section 3 works down the left column, from
+The rest of the lecture works through those cells. Section 3 runs down the left column, from
 point in time to through the cycle and back again with a macro forecast attached. Section 4
-asks which estimator fills the cells. Section 5 fills the top-left cell on real data.
+asks which estimator fills them. Section 5 fills the top-left one on real data.
 
 ## What competing risks do to all four cells
 
@@ -293,7 +294,7 @@ A PD carrying forward-looking information is called a **forward-in-time (FiT)** 
 course, sitting alongside PiT and TTC so that the three read as one family with one axis
 between them. The label is Mario's, from his credit risk notation, and it is worth being
 straight about its provenance: **the term appears nowhere in IFRS 9, nowhere in the EBA
-guidelines and nowhere in the literature this series cites.** A case-sensitive search of the
+guidelines, and nowhere in the literature this series cites.** A case-sensitive search of the
 research corpus behind these lectures returns no usage of it as a PD label.
 
 It survives here for one reason. The distinction it marks is real and the standard's own
@@ -431,7 +432,7 @@ for a Stage 1 exposure and the full remaining life for Stage 2 and Stage 3, so t
 test decides how much of the term structure gets used, and a loan can move between the two on
 a change in PD alone. And the scenario weights $\pi_s$ are judgemental. The EBA's 2023
 monitoring report found an average baseline weight of about 57 per cent across 37 EU
-institutions, downside around 27 and upside around 17, with wide dispersion and limited
+institutions, downside around 27, and upside around 17, with wide dispersion and limited
 evidence that severity and probability had been jointly calibrated. Consequently a term
 structure estimated to three decimal places is weighted by numbers chosen in a committee, and
 a modeller should know where the uncertainty actually lives.
@@ -446,7 +447,7 @@ counted. Selecting one predictor from that set by stepwise search or by an infor
 criterion will always succeed, and the model it returns is fitted to the noise.
 
 Djurovic (2025) sets out eight principles a well-specified FLI model should satisfy, among them
-economic plausibility, directional constraints, parsimony and calibration stability, and names
+economic plausibility, directional constraints, parsimony, and calibration stability, and names
 three enhancements over naive selection. **Model averaging** across a set of plausible
 specifications, rather than committing to the winner of a search. **Blockwise design**, which
 groups candidate predictors by economic theme so that the choice is made between themes rather
@@ -525,7 +526,7 @@ $$
 
 where $\boldsymbol{E}_{i,t}$ holds the period indicators, so the model carries no separate
 intercept, and the four blocks are the baseline, time-fixed covariates, spell-level
-time-varying covariates and portfolio-level time-varying covariates. The last block is where
+time-varying covariates, and portfolio-level time-varying covariates. The last block is where
 the macroeconomy lives, and $\boldsymbol{\delta}$ is the coefficient section 5 fits.
 
 **What it buys.** Every horizon from one fit, since chaining the hazards gives
@@ -853,7 +854,7 @@ settlement and write-off are modelled or assumed away.
 | Empirical term structure | observation-month cohort | no, through $R$ only | yes, attrition native | yes | a defaults table by cohort and horizon |
 | Run-off triangle, chain ladder | segment by development month | no | yes, closures native | yes | a triangle of defaults and closures |
 
-: Eleven methods for a point-in-time PD term structure, on the dimensions that decide which one a portfolio can support. Compiled from Botha and Verster (2025), Botha, Verster and Breedt (2025), Botha, Verster and Scheepers (2025), Bellotti and Crook (2009), Belkin, Suchower and Forest (1998), Breeden (2016) and Mario's IFRS 9 PD methodology. "By data construction" means the estimator itself is silent and the treatment is decided when the table is built.
+: Eleven methods for a point-in-time PD term structure, on the dimensions that decide which one a portfolio can support. Compiled from Botha and Verster (2025), Botha, Verster and Breedt (2025), Botha, Verster and Scheepers (2025), Bellotti and Crook (2009), Belkin, Suchower and Forest (1998), Breeden (2016), and Mario's IFRS 9 PD methodology. "By data construction" means the estimator itself is silent and the treatment is decided when the table is built.
 
 Two performance orderings are established in the literature and both are worth carrying,
 with the attribution stated so a reader can check them.
@@ -952,7 +953,7 @@ print(depth.with_columns(first=pl.col("first").map_elements(as_month, return_dty
                          last=pl.col("last").map_elements(as_month, return_dtype=pl.String)))
 ```
 
-That table is the whole answer to lecture 1's objection. Estonia is observed over 150 distinct
+Lecture 1's objection is answered in that table. Estonia is observed over 150 distinct
 calendar months with a median of nearly six thousand loans at risk in each, and within any one
 of those months the book holds loans of many different ages, because vintages from 2009 onwards
 all pass through it. Consequently the age effect and the calendar effect are separately
@@ -996,16 +997,26 @@ dr = (
 
 port = (dr.group_by("u").agg(n=pl.col("n").sum(), d=pl.col("d").sum())
           .sort("u").with_columns(rate=pl.col("d") / pl.col("n")))
-peak = port.filter(pl.col("rate") == pl.col("rate").max())
 print(f"portfolio series: {port.height} months, {as_month(port['u'].min())} "
       f"to {as_month(port['u'].max())}")
-print(f"DR^(12)_u mean {port['rate'].mean():.3f}, "
-      f"peak {peak['rate'][0]:.3f} in {as_month(peak['u'][0])}")
-print(f"months with fewer than 500 loans at risk: {dr.filter(pl.col('n') < 500).height}")
+print(f"country-months with fewer than 500 loans at risk: "
+      f"{dr.filter(pl.col('n') < 500).height} of {dr.height}")
+
+thick = port.filter(pl.col("n") >= 500)      # ignore months a rate cannot be read off
+lo = thick.filter(pl.col("rate") == pl.col("rate").min())
+hi = thick.filter(pl.col("rate") == pl.col("rate").max())
+print(f"\non the {thick.height} months carrying at least 500 loans at risk:")
+print(f"  mean {thick['rate'].mean():.3f}, "
+      f"low {lo['rate'][0]:.3f} in {as_month(lo['u'][0])}, "
+      f"high {hi['rate'][0]:.3f} in {as_month(hi['u'][0])}")
+pre = thick.filter(pl.col("u") < 2013 * 12)
+post = thick.filter(pl.col("u") >= 2013 * 12)
+print(f"  mean before 2013 {pre['rate'].mean():.3f} over {pre.height} months, "
+      f"from 2013 {post['rate'].mean():.3f} over {post.height}")
 ```
 
 ```{python}
-#| fig-cap: "The twelve-month portfolio default rate $\\mathrm{DR}^{(12)}_u$ on the Bondora book, by calendar month of window opening, for the three markets with a usable panel. (lhs): the rate, with Estonia in bronze as the only market observed across the 2009 downturn. (rhs): the number of loans at risk behind each point, on a log scale, since a rate computed on a thin risk set is noise and the reader needs to see which points to distrust. Both panels stop in July 2020, twelve months before the extract snapshot, because a later window is not fully observed. Early repayment is treated as censoring throughout."
+#| fig-cap: "The twelve-month portfolio default rate $\\mathrm{DR}^{(12)}_u$ on the Bondora book, by calendar month of window opening, for the three markets with a usable panel. (lhs): the rate, with Estonia in bronze as the only market observed across the 2009 downturn. (rhs): the number of loans at risk behind each point, on a log scale, since a rate computed on a thin risk set is noise and the reader needs to see which points to distrust. Both panels stop in July 2020, twelve months before the extract snapshot, because a later window is not fully observed. A loan that settles or is censored inside a window scores a zero and stays in that window's denominator, which is the fixed-horizon convention lecture 1 uses and differs from the censoring convention the hazard model below applies."
 fig, axs = plt.subplots(1, 2)
 style = {"EE": (OX, 1.6), "FI": (BLUE, 1.1), "ES": (GREY, 1.1)}
 
@@ -1040,9 +1051,12 @@ gives the point-in-time PD. One series, two uses.
 
 Two features of it deserve comment before any model is fitted. The level is very high for a
 retail book, averaging around 25 per cent over the window, which is what a peer-to-peer lender
-charging up to 100 per cent interest looks like from the inside. And the shape does not obey
-the European credit cycle: the peak sits in late 2017, in the middle of a long expansion, and
-the early years of high unemployment carry the lowest rates in the sample.
+charging up to 100 per cent interest looks like from the inside. And the shape refuses to
+follow the European credit cycle. Reading only the 127 months carrying at least 500 loans at
+risk, so that the thin early points are set aside, the peak sits at 34.9 per cent in October
+2017, in the middle of a long expansion, and the low sits at 11.4 per cent in July 2013. The
+crisis years average 21.7 per cent against 25.7 per cent from 2013 onwards, so the worst
+economy in the sample produced the better book.
 
 ## Attaching the macroeconomy
 
