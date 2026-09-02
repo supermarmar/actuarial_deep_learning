@@ -75,6 +75,32 @@ Mario settled all four on the day the plan was written, so nothing here blocks.
    The reasoning is in the data verdict below, and it forces the lecture 1 edit in
    task 8.
 
+## Corroboration found while planning the IRB lecture
+
+Two findings came out of reading the guides repo for plan 2, and both land here.
+
+Decision 2 is confirmed by Mario's own notation. `03_notation.md` in the guides' credit
+risk folder defines the $k$-month **unconditional** PiT marginal PD as
+$\mathrm{PD}^{\rm uPiT} = P(D^*_{i,t}(k,p) = 1 \mid X)$, "regardless of prior default or
+prepayment", against the **conditional** PiT marginal PD
+$\mathrm{PD}^{\rm PiT} = P(D^*_{i,t}(k,p) = 1 \mid D_{i,t}(p) = 0, X)$, which conditions
+on the loan sitting in the performing risk set. The axis is therefore survival, exactly as
+decision 2 assumed, so task 1 step 3 records this file as the primary source rather than
+searching for one. The same table already carries one-period survival, cumulative
+survival, cumulative PD, lifetime PD and the PD term structure, so task 2's new symbols
+should be checked against it and adopted where they agree.
+
+The same file defines FiT, and it defines it twice in incompatible ways. The notation
+table has $\mathrm{PD}^{\rm FiT} = \mathrm{PD}^{\rm PiT} \times \mathrm{FLI}_{t'}$, a
+multiplicative scalar on a probability, while the systemically conditional PD has
+$\mathrm{FLI}_{t'}$ entering a probit in the position of a standard normal factor
+realisation. Consequently decision 3 needs a second half, i.e. which of the two the
+lecture means, and the recommendation is the probit form, with the multiplicative version
+named as the practitioner shortcut and its bias stated. Plan 2 carries the same open
+point at `notes/plans/02-irb-capital-lecture.md`, and both lectures must answer it the
+same way. Plan 2's task 2 also owns the notation bridge between lecture 1 and the guides,
+including a genuine clash on $g$, so read it before starting task 2 here.
+
 ## Source material, all of it already on disk
 
 Read these before writing. The vault holds far more on this subject than the lecture
