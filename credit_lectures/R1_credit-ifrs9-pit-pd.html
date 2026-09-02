@@ -302,23 +302,120 @@ f_{i,t} = {}_{t-1} p_{i,0} \cdot q_{i,t} .
 </section>
 <section id="macro-conditioning-forward-looking-information-and-the-fit-pd" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Macro conditioning, forward-looking information and the FiT PD</h1>
-<!-- Intent: introduce IFRS 9's own wording, then the course's FiT label, settle
-which of the guides' two FiT definitions the series adopts, and state the design
-problem honestly. -->
+<p>Section 2 held the macro state fixed and asked what conditioning on it meant. This section asks where the macro state comes from, which is a harder question, because the reporting date is the last month for which anybody has data and every month in the term structure after it has to be forecast.</p>
 <section id="what-the-standard-actually-requires" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="what-the-standard-actually-requires"><span class="header-section-number">3.1</span> What the standard actually requires</h2>
+<p>The requirement is worth reading rather than paraphrasing. IFRS 9 paragraph 5.5.17 obliges an entity to measure expected credit losses in a way that reflects</p>
+<blockquote class="blockquote">
+<ol type="a">
+<li>an unbiased and probability-weighted amount that is determined by evaluating a range of possible outcomes; (b) the time value of money; and (c) reasonable and supportable information that is available without undue cost or effort at the reporting date about past events, current conditions and forecasts of future economic conditions.</li>
+</ol>
+</blockquote>
+<p>Three obligations sit in that sentence and each forces a piece of machinery. Probability weighting over a range of outcomes forces scenarios. The time value of money forces discounting, and therefore forces the loss to be dated, which is what makes a <strong>term structure</strong> unavoidable rather than a refinement. And “forecasts of future economic conditions” forces the macro conditioning this section is about.</p>
+<p>The standard’s own name for the third of those is <strong>forward-looking information</strong>, universally abbreviated <strong>FLI</strong>, and the phrase recurs through the EBA’s guidelines and through every bank’s model documentation. Paragraph 5.5.18 sets a floor that is much lower than practice: an entity “need not necessarily identify every possible scenario”, but must reflect both the possibility that a credit loss occurs and the possibility that none does, “even if the possibility of a credit loss occurring is very low”. Two outcomes is the legal minimum and three is the industry norm.</p>
+<p>Paragraph B5.5.52 is the one that names the variables. It requires that estimates of changes in expected credit losses</p>
+<blockquote class="blockquote">
+<p>reflect, and be directionally consistent with, changes in related observable data from period to period (such as changes in unemployment rates, property prices, commodity prices, payment status or other factors that are indicative of credit losses …).</p>
+</blockquote>
+<p>Unemployment is first on the standard’s own list, which is a convenient licence for the demonstration in section 5.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="FiT, and why this course uses a word the standard does not">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>FiT, and why this course uses a word the standard does not
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A PD carrying forward-looking information is called a <strong>forward-in-time (FiT)</strong> PD in this course, sitting alongside PiT and TTC so that the three read as one family with one axis between them. The label is Mario’s, from his credit risk notation, and it is worth being straight about its provenance: <strong>the term appears nowhere in IFRS 9, nowhere in the EBA guidelines and nowhere in the literature this series cites.</strong> A case-sensitive search of the research corpus behind these lectures returns no usage of it as a PD label.</p>
+<p>It survives here for one reason. The distinction it marks is real and the standard’s own vocabulary obscures it, because a PiT PD conditioned on the macro state <strong>as observed at the reporting date</strong> and a PiT PD conditioned on a <strong>forecast path</strong> for that state are different objects with different error properties, and calling both of them point in time hides that. So the lecture uses FiT for the second, and states the standard’s own wording first so a reader can find the same material in a bank’s documentation, where it will be filed under FLI.</p>
+</div>
+</div>
 </section>
 <section id="two-ways-to-put-the-macroeconomy-in-and-only-one-of-them-is-closed" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="two-ways-to-put-the-macroeconomy-in-and-only-one-of-them-is-closed"><span class="header-section-number">3.2</span> Two ways to put the macroeconomy in, and only one of them is closed</h2>
+<p>Conditioning a PD on the macroeconomy admits two constructions, and practitioners use both, often in the same model stack.</p>
+<p>The <strong>direct route</strong> puts <span class="math inline">\(\boldsymbol{Z}_u\)</span> inside the hazard as a covariate block, which is what Botha and Verster’s specification does with its portfolio-level time-varying term <span class="math inline">\(\boldsymbol{x}(t)\)</span>, and what Bellotti and Crook (2009) did in continuous time before them. The macro state then enters the linear predictor, the coefficient is estimated from history, and a forecast path for <span class="math inline">\(\boldsymbol{Z}\)</span> produces a forecast term structure by substitution. Section 5 fits exactly this.</p>
+<p>The <strong>scaling route</strong> fits a point-in-time PD without macro variables, then multiplies it by a scenario factor derived from a separate regression of the historical default rate series on macro predictors. The guides’ notation writes it</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm FiT}_{i,t,u}(k) = \mathrm{PD}^{\rm PiT}_{i,t}(k) \times \mathrm{FLI}_u ,
+\qquad
+\mathrm{FLI}_u = \frac{\text{scenario-adjusted portfolio PD}}{\text{base portfolio PD}} ,
+\]</span></p>
+<p>and this is what most production IFRS 9 stacks actually run, because it separates the ranking model from the macro model and lets each be governed by a different team.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="The scaling route is not closed on [0, 1], so the series takes the probit form">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The scaling route is not closed on [0, 1], so the series takes the probit form
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A multiplier on a probability leaves the unit interval. A downside factor of 1.4 applied to a point-in-time PD of 80 per cent returns 112 per cent, which is not a probability. On a low-PD book the breach never happens and the shortcut is harmless; on the distressed tail of a retail portfolio it happens routinely, and the usual repair is to cap at one, which silently flattens exactly the exposures the downside scenario was built to stress.</p>
+<p>The construction that stays closed puts the factor inside a probit instead. Writing <span class="math inline">\(Z_u\)</span> for the systematic factor and <span class="math inline">\(\rho\)</span> for the loan’s loading on it,</p>
+<p><span class="math display">\[
+\mathrm{PD}^{\rm FiT}_k\left( \boldsymbol{X}_i, Z_u \right)
+= \Phi\left( \frac{ \Phi^{-1}\left( \mathrm{PD}^{\rm TTC}_k\left( \boldsymbol{X}_i \right) \right)
+- \sqrt{\rho}\, Z_u }{ \sqrt{1 - \rho} } \right) ,
+\]</span></p>
+<p>which is Vasicek’s conditional default probability, lecture 1’s hybrid PD, and the same expression the IRB capital formula evaluates in the tail of the factor distribution. It is bounded by construction, it reduces to the through-the-cycle PD at <span class="math inline">\(\rho = 0\)</span>, and it averages back to the through-the-cycle PD exactly, which the scaling route does not.</p>
+<p><strong>This series adopts the probit form as the definition of a FiT PD</strong> and treats the multiplicative factor as the practitioner shortcut it is. The guides’ notation carries both, which is a genuine ambiguity in the source rather than a misreading, and the reason for choosing this way round is that the guides’ own FLI methodology derives <span class="math inline">\(\mathrm{FLI}_u\)</span> as a <strong>ratio of two fitted PDs</strong>, i.e.&nbsp;as an output of the scenario regression. An output cannot also be the primitive that enters a probit as a factor realisation.</p>
+<p>One sign convention to carry between documents. Lecture 1 and this lecture write <span class="math inline">\(-\sqrt{\rho}\, Z_u\)</span> with high <span class="math inline">\(Z_u\)</span> benign, following Vasicek. The guides write <span class="math inline">\(+\sqrt{\rho}\, \mathrm{FLI}_u\)</span>. The two agree under</p>
+<p><span class="math display">\[
+\mathrm{FLI}_u = -Z_u ,
+\]</span></p>
+<p>and a reader checking one formula against the other without that mapping will conclude that one of them has a sign error.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="Averaging happens on the output, and Jensen says why">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Averaging happens on the output, and Jensen says why
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This trap is where the calculation goes wrong in practice, and it applies to both routes above. A through-the-cycle PD is an average of point-in-time PDs, so the averaging has to happen <strong>downstream of the model</strong>, on its output. For a logistic point-in-time model with linear predictor <span class="math inline">\(\eta\)</span>, Jensen’s inequality gives <span class="math inline">\(\mathbb{E}[\sigma(\eta)] \ne \sigma(\mathbb{E}[\eta])\)</span>, so feeding mean macroeconomic conditions into a fitted point-in-time model returns a number that is not the through-the-cycle PD, and the discrepancy grows with the curvature of the link over the range the cycle covers.</p>
+<p>The probit form makes the size of the error concrete rather than abstract. Setting <span class="math inline">\(Z_u\)</span> to its mean of zero gives <span class="math inline">\(\Phi\left( \Phi^{-1}(\mathrm{PD}^{\rm TTC}_k) / \sqrt{1 - \rho} \right)\)</span>, which understates the through-the-cycle PD whenever that PD sits below one half. At a through-the-cycle PD of 3 per cent and <span class="math inline">\(\rho = 0.15\)</span> it returns 2.07 per cent, a shortfall of nearly a third. The same model gives the right answer when the average is taken over its output, by the identity <span class="math inline">\(\mathbb{E}\left[ \Phi(a - bZ) \right] = \Phi\left( a / \sqrt{1 + b^2} \right)\)</span>.</p>
+<p>The regulatory through-the-cycle estimator sidesteps the whole issue by averaging observed rates rather than model outputs, grade by grade and at <span class="math inline">\(k = 12\)</span>,</p>
+<p><span class="math display">\[
+\overline{\mathrm{DR}}^{(12)} = \frac{1}{\# U} \sum_{u \in U} \mathrm{DR}^{(12)}_u ,
+\]</span></p>
+<p>over a historical window <span class="math inline">\(U\)</span> of calendar months. Article 180 of the Capital Requirements Regulation is what forces <span class="math inline">\(U\)</span> to contain bad years as well as good ones, since it requires the long-run average to rest on a period covering the likely range of variability, and the EBA’s guidelines on PD estimation (EBA/GL/2017/16) hold the mechanics. Lecture R2 takes that estimator up properly.</p>
+</div>
+</div>
 </section>
 <section id="the-expected-credit-loss-this-serves" class="level2" data-number="3.3">
 <h2 data-number="3.3" class="anchored" data-anchor-id="the-expected-credit-loss-this-serves"><span class="header-section-number">3.3</span> The expected credit loss this serves</h2>
+<p>The term structure exists to be summed into a provision, and writing the sum down shows which of section 2’s quantities the accounting actually consumes.</p>
+<p>For a loan performing at the reporting date, with <span class="math inline">\(t\)</span> running over the months of remaining life from that date, scenario <span class="math inline">\(s\)</span> carrying probability <span class="math inline">\(\pi_s\)</span>, and <span class="math inline">\(r_i\)</span> the effective interest rate,</p>
+<p><span class="math display">\[
+\mathrm{ECL}_i = \sum_{s} \pi_s \sum_{t = 1}^{T_i}
+\frac{ f^{(s)}_{i,t} \cdot \mathrm{LGD}^{(s)}_{i,t} \cdot \mathrm{EAD}_{i,t} }
+{ \left( 1 + r_i \right)^{t} } ,
+\qquad
+\sum_s \pi_s = 1 .
+\]</span></p>
+<p>The weight on each period is the <strong>marginal PD</strong>, i.e.&nbsp;the one symbol section 2.2 added, and that is the whole reason it earns a symbol. A cumulative PD cannot appear in this sum, because a loss has to be dated before it can be discounted, and a hazard cannot appear either, because it is conditional on a survival the sum has already spent. Here <span class="math inline">\(f^{(s)}_{i,t}\)</span> is measured from the reporting date rather than from origination, so its survival factor is <span class="math inline">\({}_{t-1} p_{i,t_0}\)</span> with <span class="math inline">\(t_0\)</span> the loan’s age when the provision is struck.</p>
+<p>Two facts about that formula matter more than its algebra. The horizon <span class="math inline">\(T_i\)</span> is twelve months for a Stage 1 exposure and the full remaining life for Stage 2 and Stage 3, so the staging test decides how much of the term structure gets used, and a loan can move between the two on a change in PD alone. And the scenario weights <span class="math inline">\(\pi_s\)</span> are judgemental. The EBA’s 2023 monitoring report found an average baseline weight of about 57 per cent across 37 EU institutions, downside around 27 and upside around 17, with wide dispersion and limited evidence that severity and probability had been jointly calibrated. Consequently a term structure estimated to three decimal places is weighted by numbers chosen in a committee, and a modeller should know where the uncertainty actually lives.</p>
 </section>
 <section id="two-or-three-cycles-against-dozens-of-indicators" class="level2" data-number="3.4">
 <h2 data-number="3.4" class="anchored" data-anchor-id="two-or-three-cycles-against-dozens-of-indicators"><span class="header-section-number">3.4</span> Two or three cycles against dozens of indicators</h2>
+<p>The forward-looking regression is the weakest link in the chain and the reason is structural. Monthly or quarterly default history covering two or three economic cycles gives a modeller somewhere between 10 and 30 usable observations at the portfolio level, against a candidate set of macroeconomic indicators that runs into the dozens once lags and transformations are counted. Selecting one predictor from that set by stepwise search or by an information criterion will always succeed, and the model it returns is fitted to the noise.</p>
+<p>Djurovic (2025) sets out eight principles a well-specified FLI model should satisfy, among them economic plausibility, directional constraints, parsimony and calibration stability, and names three enhancements over naive selection. <strong>Model averaging</strong> across a set of plausible specifications, rather than committing to the winner of a search. <strong>Blockwise design</strong>, which groups candidate predictors by economic theme so that the choice is made between themes rather than between collinear members of one. And <strong>sign-constrained regression</strong>, which enforces the direction economics already knows, so that a fitted model cannot claim that rising unemployment lowers default risk.</p>
+<p>Two further findings from the same series belong in any validation of this step. In a dynamic regression of the form ARIMA(1,0,0), which is common in FLI work, the autoregressive coefficient is heavily downward-biased at sample sizes of 10 to 30 while the predictor coefficient stays largely unbiased, so a validator should treat the AR term with suspicion and ask the developer for simulation evidence that it can be estimated at all. Separately, the Augmented Dickey-Fuller test loses power precipitously at those sample sizes: at <span class="math inline">\(n = 20\)</span> it frequently fails to reject a non-stationary null on a genuinely stationary series, so a non-rejection is weak evidence and treating it as proof of non-stationarity inverts the inference.</p>
 </section>
 <section id="age-period-and-cohort-how-the-collinearity-breaks" class="level2" data-number="3.5">
 <h2 data-number="3.5" class="anchored" data-anchor-id="age-period-and-cohort-how-the-collinearity-breaks"><span class="header-section-number">3.5</span> Age, period and cohort: how the collinearity breaks</h2>
+<p>Lecture 1 raised an objection to the whole enterprise and it was a good one. Conditional on months on book <span class="math inline">\(t\)</span>, the vintage <span class="math inline">\(g_i\)</span> and the calendar month <span class="math inline">\(u\)</span> satisfy <span class="math inline">\(u = g_i + t\)</span> identically, so any two of the three determine the third. Lecture 1’s vintage figure runs the default rate from 7 per cent in the 2012 cohort to 37 per cent in 2017, and two stories fit that equally well: Bondora loosened its underwriting, or those cohorts lived through a worse environment. Lecture 1 concluded that more modelling would not separate them.</p>
+<p>That conclusion is right about a single cross-section and wrong as a general claim, and the reason is worth stating precisely. <strong>The identity binds within a loan, and identification comes from across loans.</strong> In a panel, a given calendar month <span class="math inline">\(u\)</span> is observed at many different loan ages <span class="math inline">\(t\)</span>, because loans originated at different times reach it at different points of their lives, and a given loan age is observed in many different calendar months. Once both hold, the age effect and the environment effect are separately identified, and section 5 shows that Bondora expanded to person-periods satisfies both.</p>
+<p>Breeden (2016) is the framework that formalises this. An age-period-cohort decomposition writes the outcome as three separable offsets, the lifecycle in loan age, the vintage quality of the origination cohort, and the environment at the observation date, then embeds all three into a GLM scorecard as additional predictors, which keeps the interpretability a validator needs and produces a PD conditioned on both loan age and the economy. On a US auto book the augmented scorecard holds its rank-ordering out of time where a plain scorecard decays.</p>
+<p>Breeden’s answer to the residual identification problem deserves scrutiny rather than applause. It is <strong>augmented macroeconomic history</strong>: anchor the environment sensitivity to an external series spanning several cycles, longer than the portfolio’s own history, then back-project onto the portfolio’s vintages. That stabilises coefficients which would otherwise be confounded on a short book, and it does so by importing a sensitivity estimated somewhere else. Whether that sensitivity transfers is an assumption, it is untestable on internal data by construction, and it arrives dressed as a data preparation step, which is where a validator should look hardest.</p>
 </section>
 </section>
 <section id="how-the-estimate-is-actually-produced" class="level1" data-number="4">
