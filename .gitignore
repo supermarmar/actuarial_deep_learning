@@ -1,8 +1,11 @@
 # Virtual environment
 .venv/
 
-# Course data, downloaded from the summer school site. See CLAUDE.md.
-data/
+# Course data, downloaded from the summer school site. See CLAUDE.md. Anchored to
+# the repository root, because the unanchored form matched credit_lectures/data/
+# too and a negation inside an excluded directory is inert: git stops the walk at
+# the directory, so an exception for one file below it never fires.
+/data/
 
 # Lecture figures, downloaded from the same site: 50 files and 5.6 MB of the
 # course authors' plots and diagrams. Ignored for the reason data/ is, and one
