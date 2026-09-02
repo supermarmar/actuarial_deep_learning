@@ -370,3 +370,119 @@ also be the primitive entering a probit), and states the mapping $\mathrm{FLI}_u
 
 R2 states the same reading in one sentence and cross-references `R1` rather than re-arguing it.
 The two lectures must not drift, so any future change to one is a change to both.
+
+---
+
+# Task 3: the citation register
+
+Every regulatory citation the guides make, checked against the vault and, where the vault is
+silent and a primary document sits on disk, against that. A citation appears in `R2` only if it
+carries a consequence, so the register states the consequence alongside the reference. A
+citation that cannot state one does not go in.
+
+Verified on 2 September 2026.
+
+## The decision the plan did not name: which rulebook vintage
+
+The guides cite CRR 2013 article numbers beside PRA SS4/24 (January 2026) and PS9/24. Those are
+two rulebooks a decade apart, and the vault holds material on both, including
+`regulation/crr-credit-risk-provisions.md` on CRR3 and
+`regulation/pra-crr-rulebook-restatement-2025.md`.
+
+**`R2` teaches the Basel framework and cites the CRR 2013 numbering the guides use, states once
+in a callout that CRR3 and the PRA's 2025 rulebook restatement renumber the articles and tighten
+the input floors, and attempts no article-by-article mapping.** The reason is that the mechanics
+the lecture teaches are unchanged across the two vintages while the numbering is not, and an
+unverified mapping would be worse than an explicit statement of vintage. UK expectations are
+cited at SS4/24 **section** level throughout, for the reason in the next-but-one subsection.
+
+The vault itself shows why the mapping is dangerous. `crr-credit-risk-provisions.md` reports
+CRR3 placing PD floors in Article 170, LGD floors in Article 179 and CCF floors in Article 180,
+which is irreconcilable with the 2013 numbering where 170 is rating system structure, 179 is the
+overall estimation requirements and 180 is PD estimation. One of the two numberings is being
+described and the vault article is the only support for it. **Treat that claim as uncertain and
+do not build on it.**
+
+## Verified against primary text on disk
+
+Source: `~/Documents/Repos/vault/raw/bcbs/2005-07_bcbs_irb-risk-weight-functions-explanatory-note.pdf`,
+which is the Basel Committee's own explanatory note on the IRB risk weight functions and the
+document the guides link to as `bis.org/bcbs/irbriskweight.pdf`. Extracted with `pdftotext
+-layout` and read directly.
+
+| Claim | Consequence it imposes on the lecture |
+|---|---|
+| $K = \left[\mathrm{LGD}\cdot N\!\left((1-R)^{-0.5}G(\mathrm{PD}) + (R/(1-R))^{0.5}G(0.999)\right) - \mathrm{PD}\cdot\mathrm{LGD}\right](1-1.5b)^{-1}(1+(M-2.5)b)$ | This is the formula `R2` derives. Note it is algebraically identical to the guides' $N\!\left((G(\mathrm{PD})+\sqrt{R}\,G(0.999))/\sqrt{1-R}\right)$ form, and showing that equality is a one-line check worth putting in the lecture |
+| $b(\mathrm{PD}) = (0.11852 - 0.05478\ln \mathrm{PD})^2$ | The maturity adjustment factor, quoted rather than recalled |
+| $\mathrm{RWA} = 12.5 \times K \times \mathrm{EAD}$, where 12.5 is the reciprocal of the 8 per cent minimum ratio | Explains why the conversion factor is 12.5 rather than an arbitrary constant, which is the kind of detail a reader remembers |
+| The confidence level is fixed at 99.9 per cent | Fixes $Z_u = -\Phi^{-1}(0.999)$ in the substitution from task 2 |
+| Corporate: $R = 0.12\,w + 0.24(1-w)$ with $w = (1-e^{-50\,\mathrm{PD}})/(1-e^{-50})$ | The contrast that makes the retail values legible |
+| **Residential mortgages: $R = 0.15$** | Prescribed, constant |
+| **Qualifying revolving retail: $R = 0.04$** | Prescribed, constant |
+| **Other retail: $R = 0.03\,w + 0.16(1-w)$ with $w = (1-e^{-35\,\mathrm{PD}})/(1-e^{-35})$** | **Bondora is unsecured consumer lending, so this is the curve the demonstration uses.** The $k$-factor is 35 rather than the corporate 50, so the correlation decays more slowly in PD |
+| Retail risk weight functions carry **no maturity adjustment**, because the reverse-engineered correlations already contain maturity effects that were never separately controlled for | $\mathrm{MA}$, $b$ and $M$ appear in the general derivation and drop out of the Bondora evaluation, and the lecture says why rather than letting them vanish |
+| The conditional expected loss is the product of a conditional PD and a downturn LGD, and capital covers the gap between it and the expected loss | The sentence section 3 rests on |
+| The retail correlations were reverse-engineered from banks' economic capital figures and G10 supervisory loss data | The honest provenance of the constants. They are calibrated to observed capital, so calling them empirical estimates of an asset correlation overstates what they are |
+
+## Verified against the vault
+
+| Citation | What it requires | Vault source |
+|---|---|---|
+| CRR Article 180(1)(a) | PD must be a long-run average of one-year default rates for the grade or pool | `regulation/eu-crr-2013-credit-risk.md` |
+| 0.03 per cent PD floor | Applies to non-defaulted **corporate, institution and central government** exposures under CRR 2013. **Not verified for retail** | same |
+| CRR Article 181(1)(b) | LGD estimates must reflect economic downturn conditions, with the methodology left to the institution subject to supervisory review | same |
+| CRR Article 178 | Defines default by the 90-days-past-due backstop and unlikeliness to pay; 178(5) sets the conditions for return to non-defaulted status | same, and `regulation/crr-credit-risk-provisions.md` |
+| CRR Article 143 | IRB use requires explicit supervisory permission, granted at approach level rather than portfolio level | `regulation/crr-credit-risk-provisions.md` |
+| F-IRB against A-IRB | Under F-IRB only PD is internally estimated; **retail exposures may only be treated under A-IRB** | `regulation/eu-crr-2013-credit-risk.md` |
+| EBA/GL/2017/16 | PD estimates represent a long-run average of one-year default rates; the reference period must capture a representative range of economic conditions including stress; where it falls short, apply a margin of conservatism rather than merely extending the window | `regulation/irb-pd-estimation.md` |
+| PRA SS4/24 section 4 | The use test is substantive. A firm holding IRB models solely for regulatory capital reporting does not satisfy it and faces revocation or partial-use restriction | `regulation/pra-ss4-24-irb-approach-2026.md` |
+| PRA SS4/24 sections 7 to 11, 21 | Section 7 rating system design including the number of grades; section 8 data representativeness; section 9 margin of conservatism; section 10 PD model development; section 11 PD calibration to the long-run average default rate; section 21 independent validation covering discriminatory power, calibration accuracy and stability | same |
+
+**One correction to carry into the lecture.** The guides state that for retail the foundation and
+advanced approaches are merged and all banks using A-IRB supply their own PD, LGD and EAD. The
+vault's reading of the CRR is stronger: retail exposures may **only** be treated under A-IRB.
+`R2` follows the vault.
+
+## Partially verified: section right, paragraph unverified
+
+The vault covers SS4/24 at section level and carries no paragraph numbering. Each guides
+citation below falls in a section whose subject matches, so the reference is consistent and the
+paragraph itself is unconfirmed.
+
+| Guides citation | Subject | Section check |
+|---|---|---|
+| SS4/24 10.10 | PiT, TTC and a blend are all permissible rating philosophies | Section 10 is PD model development. Consistent |
+| SS4/24 11.13 | Considerations in choosing the LRA period, namely ODR variability, the balance of good and bad years against the relevant macro variables, and structural change | Section 11 is PD calibration. Consistent |
+| SS4/24 11.10(c) | Overlapping performance windows are permitted, with an analysis of the bias from overweighting the overlap | Section 11. Consistent |
+| SS4/24 11.31 | PDs must increase monotonically across grades | Section 11. Consistent |
+| SS4/24 11.20 | Quantitative and qualitative validation tests during risk quantification | Section 11, though **validation is section 21**, so this one sits least comfortably. Flag if used |
+| SS4/24 12.2 | Two defaults within nine months are treated as one for LGD | Section 12 is LGD general expectations. Consistent, and out of scope anyway |
+
+**Rule for `R2`.** Cite these as "SS4/24 section 11" with the requirement stated, and give the
+paragraph number only where a reader can check it. The requirement is what the lecture is
+teaching, and a paragraph number nobody verified adds risk without adding meaning.
+
+## Unverified: do not repeat
+
+| Citation | Why it fails verification |
+|---|---|
+| CRR Article 180(2)(a), 180(2)(e) | The vault carries 180(1)(a) only, and does not say what paragraph 2 covers. The plan's claim that `08-lra.md` contradicts itself is **wrong**: that file is consistent on 180(2)(a) and 180(2)(e) throughout, and the 180(1)(a) citation is in `05_modelling/pd/02-model_design.md`. Most likely Article 180 splits paragraph 1 for corporate, institution and sovereign exposures from paragraph 2 for retail, in which case both guides files are right for different exposure classes and one is misapplied. The vault cannot settle it, so `R2` cites **Article 180 at article level** and states the requirement |
+| CRR Articles 169(3), 170(3)(b), 170(3)(c), 171(1), 172(2), 174, 179 | No paragraph-level coverage anywhere in the vault, and the CRR3 renumbering the vault reports makes the numbers actively unsafe. The **requirements** are transferable and go in the lecture as design constraints; the article numbers stay out |
+| CRR Article 144(1)(b), the use test | The vault covers the use test through SS4/24 section 4. Cite that instead |
+| CRR Article 154, retail risk weights, and the retail PD floor | The correlations themselves are verified from the BCBS note above, which is the substance. The CRR article number is not, so `R2` attributes the constants to the Basel framework |
+| PS9/24 paragraph 3.129, dynamic recalibration with a buffer | The vault holds `_meta/sources/pra-ps9-24-app2-crr-near-final.md` and no paragraph-level coverage. State the practice, drop the citation |
+| EL shortfall: CET1 deduction, and Tier 2 eligibility up to 0.6 per cent of RWA | Nothing in the vault. The guides are the only source, and the 0.6 per cent is a number worth being wrong about. State the mechanism, mark the threshold as one to check against the CRR own funds articles before the lecture asserts it |
+| Seven non-default grades and one default grade, ratings reviewed annually, three years of demonstrated use | Guides only. These are well-known Basel II minimum requirements, so state them as such rather than citing an article |
+
+## What this leaves the lecture
+
+The mathematics is fully sourced from primary text. The regulatory framing is sourced at
+requirement level and, for the UK, at SS4/24 section level. The exposed edges are three article
+numbers (180's paragraph split, the 170 and 171 grade-structure requirements, and Article 154),
+and the EL shortfall threshold.
+
+**Closing them is a vault ingest rather than a lecture task.** The CRR primary text is not in
+`vault/raw/`, and EUR-Lex would not render through `WebFetch` on 2 September 2026. Registering
+`Regulation (EU) No 575/2013` and PRA SS4/24 in the vault would settle all four at once and would
+serve every future piece of IRB work rather than this lecture alone. Recorded here as a
+follow-up, not a blocker: `R2` can be written in full without them by citing at the levels above.
