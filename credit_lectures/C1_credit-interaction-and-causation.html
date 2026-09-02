@@ -197,7 +197,7 @@ window.Quarto = {
 <section id="setting-up" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Setting up</h1>
 <p>We rebuild lecture 1’s modelling frame exactly, so that every number below is comparable with one the reader has already seen. The table is <code>bondora_pd.parquet</code>, the fixed-horizon frame of 148,733 seasoned loans and a twelve-month default flag, of which 148,437 sit in the three markets lecture 1 used.</p>
-<div id="215f90cd" class="cell" data-execution_count="1">
+<div id="f05c72f2" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -252,7 +252,7 @@ shape: (3, 4)
 <p>A randomised experiment supports a causal claim by design, since randomisation makes the treated and untreated groups comparable in expectation. An observational credit portfolio has to assume what randomisation would have delivered, and that assumption decomposes into three conditions. Each has a credit failure mode, and they are not equally hard to check.</p>
 <p><strong>Exchangeability</strong> requires that, conditional on the measured covariates, the loans at one income level be comparable in their counterfactual outcomes to the loans at another. Formally, <span class="math inline">\(D^{(k),\,a}_i\)</span> is independent of the observed income level given <span class="math inline">\(\boldsymbol{X}_i\)</span>. It fails in credit whenever an unmeasured borrower characteristic drives both the covariate and the outcome, and the standard case is unrecorded financial sophistication: a borrower who understands amortisation both declares income accurately and repays reliably, so a model without that variable attributes its effect to whatever correlates with it.</p>
 <p><strong>Positivity</strong> requires a non-zero probability of every covariate level within every stratum being conditioned on. This is the tractable one, because it is a property of the table rather than of the world, so it can be counted. A credit model violates it silently whenever a segment carries no variation in a driver, and the failure shows up as a coefficient estimated from a handful of loans, or from none.</p>
-<div id="6a8cb851" class="cell" data-execution_count="2">
+<div id="4e30e216" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> np.quantile(model_dat[<span class="st">"logIncome"</span>], [<span class="fl">0.2</span>, <span class="fl">0.4</span>, <span class="fl">0.6</span>, <span class="fl">0.8</span>])</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>banded <span class="op">=</span> model_dat.with_columns(</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    q<span class="op">=</span>pl.col(<span class="st">"logIncome"</span>).cut(<span class="bu">list</span>(qs), labels<span class="op">=</span>[<span class="st">"Q1"</span>, <span class="st">"Q2"</span>, <span class="st">"Q3"</span>, <span class="st">"Q4"</span>, <span class="st">"Q5"</span>]))</span>
@@ -262,17 +262,17 @@ shape: (3, 4)
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">thinnest cell: </span><span class="sc">{</span><span class="bu">min</span>(cells[c].<span class="bu">min</span>() <span class="cf">for</span> c <span class="kw">in</span> COUNTRIES)<span class="sc">:,}</span><span class="ss"> loans"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>shape: (5, 4)
-┌──────┬───────┬───────┬──────┐
-│ q    ┆ EE    ┆ FI    ┆ ES   │
-│ ---  ┆ ---   ┆ ---   ┆ ---  │
-│ enum ┆ u32   ┆ u32   ┆ u32  │
-╞══════╪═══════╪═══════╪══════╡
-│ Q1   ┆ 30218 ┆ 630   ┆ 1755 │
-│ Q2   ┆ 21880 ┆ 1785  ┆ 5909 │
-│ Q3   ┆ 14482 ┆ 4224  ┆ 8202 │
-│ Q4   ┆ 11680 ┆ 11644 ┆ 6458 │
-│ Q5   ┆ 8028  ┆ 17596 ┆ 3946 │
-└──────┴───────┴───────┴──────┘
+┌──────┬──────┬───────┬───────┐
+│ q    ┆ ES   ┆ FI    ┆ EE    │
+│ ---  ┆ ---  ┆ ---   ┆ ---   │
+│ enum ┆ u32  ┆ u32   ┆ u32   │
+╞══════╪══════╪═══════╪═══════╡
+│ Q1   ┆ 1755 ┆ 630   ┆ 30218 │
+│ Q2   ┆ 5909 ┆ 1785  ┆ 21880 │
+│ Q3   ┆ 8202 ┆ 4224  ┆ 14482 │
+│ Q4   ┆ 6458 ┆ 11644 ┆ 11680 │
+│ Q5   ┆ 3946 ┆ 17596 ┆ 8028  │
+└──────┴──────┴───────┴───────┘
 
 thinnest cell: 630 loans</code></pre>
 </div>
@@ -304,7 +304,7 @@ thinnest cell: 630 loans</code></pre>
 <section id="interaction-is-a-claim-about-a-scale-and-the-scale-is-usually-unstated" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="interaction-is-a-claim-about-a-scale-and-the-scale-is-usually-unstated"><span class="header-section-number">4.1</span> Interaction is a claim about a scale, and the scale is usually unstated</h2>
 <p>Here is the result that unsettles most credit modellers, and it takes four lines of arithmetic to see. Fit a logit with <code>logIncome</code> and <code>Country</code> and <strong>no interaction term at all</strong>. By construction the odds ratio for income is identical in every country. The risk differences are not.</p>
-<div id="69978008" class="cell" data-execution_count="3">
+<div id="ce9a919f" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>no_int <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ logIncome + Country"</span>,</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                 data<span class="op">=</span>dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -373,7 +373,7 @@ Lecture 1’s confounding structure. Country is a common cause of income and of 
 <p><code>Country</code> is a <strong>confounder</strong>: a common cause of the covariate of interest and the outcome. Conditioning on it is required, and lecture 1 does so.</p>
 <p><code>Interest</code> is a <strong>mediator</strong>, and lecture 1 excluded it with the right instinct and a different word. Its argument was that the contractual rate is “an output of the lender’s previous risk assessment rather than a property of the borrower”. In graph terms the rate sits on the path from the borrower’s characteristics to default, so conditioning on it removes part of the very effect the model is trying to estimate. Furthermore, <code>Interest</code> is simultaneously a collider on a second path, since the platform’s unobserved view of the borrower’s risk points into the rate and also into default. One variable, two roles, two independent reasons to leave it out. That is the collider-relative-to-a-path rule doing real work on a real portfolio.</p>
 <p>The cost of conditioning on it is measurable, and it is not where a reader would look for it.</p>
-<div id="04413bf4" class="cell" data-execution_count="4">
+<div id="d1190487" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>glm3 <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country"</span>,</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>               data<span class="op">=</span>dat, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>glm3i <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country + Interest"</span>,</span>
@@ -401,7 +401,7 @@ Interest        NaN           0.0168     NaN</code></pre>
 <h2 data-number="5.2" class="anchored" data-anchor-id="what-a-collider-costs-with-numbers"><span class="header-section-number">5.2</span> What a collider costs, with numbers</h2>
 <p>A confounder omitted biases the estimate. A collider included biases it too, and the second is the less familiar failure. To make the sign visible we construct the collider explicitly rather than hunt for one, because a constructed example proves the mechanism where a found one only illustrates it.</p>
 <p>Suppose the lender holds an operational <strong>affordability review</strong> flag, raised with high probability when declared income is low and also raised when the loan goes bad. Both arrows point into the flag, so it is a collider on the path from income to default. Most lenders hold several fields of exactly this shape, e.g.&nbsp;a collections referral, a hardship contact, or a manual underwrite override, and all of them are recorded after the covariates and around the outcome.</p>
-<div id="fb7d7bce" class="cell" data-execution_count="5">
+<div id="59995f4b" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">20260902</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>low_income <span class="op">=</span> (dat[<span class="st">"logIncome"</span>] <span class="op">&lt;</span> dat[<span class="st">"logIncome"</span>].quantile(<span class="fl">0.40</span>)).astype(<span class="bu">int</span>)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>p_review <span class="op">=</span> np.clip(<span class="fl">0.10</span> <span class="op">+</span> <span class="fl">0.55</span> <span class="op">*</span> low_income <span class="op">+</span> <span class="fl">0.55</span> <span class="op">*</span> dat[<span class="st">"default_12m"</span>], <span class="dv">0</span>, <span class="dv">1</span>)</span>
@@ -440,8 +440,8 @@ restrict to Review == 1               0.6233      1.8651   67597</code></pre>
 </div>
 </div>
 <p>Conditioning on the correct set gives an income coefficient of -0.119, so higher income lowers the odds of default. Adding the collider gives +0.475. Restricting to the reviewed loans gives +0.623. The sign flips and the magnitude lands at roughly five times the true coefficient pointing the other way, and the mechanism is mechanical: among loans that were reviewed, a high-income borrower is there disproportionately because the loan went bad, so income and default acquire a spurious positive association inside the stratum.</p>
-<p>Now the part that should worry a model developer.</p>
-<div id="8cbfe30b" class="cell" data-execution_count="6">
+<p>Now the part that should worry a model developer, because it is what a selection procedure sees.</p>
+<div id="9f1cf080" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, mod <span class="kw">in</span> [(<span class="st">"without Review"</span>, correct), (<span class="st">"with Review"</span>, with_col)]:</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    gini <span class="op">=</span> <span class="dv">2</span> <span class="op">*</span> roc_auc_score(dat[<span class="st">"default_12m"</span>], mod.predict(dat)) <span class="op">-</span> <span class="dv">1</span></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:&lt;15}</span><span class="ss"> AIC </span><span class="sc">{</span>mod<span class="sc">.</span>aic<span class="sc">:12,.1f}</span><span class="ss">   Gini </span><span class="sc">{</span>gini<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
@@ -475,7 +475,7 @@ AIC improves by 29,821.9 when the collider is added</code></pre>
 <section id="the-table-2-fallacy-on-lecture-1s-own-model" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> The Table 2 fallacy on lecture 1’s own model</h1>
 <p>Lecture 1 printed GLM3’s coefficient table and read one row from it. This section prints the whole table, exactly as a model document would, and asks of every row what would have to hold for that number to be read as an effect.</p>
-<div id="ff2f37b5" class="cell" data-execution_count="7">
+<div id="d96e9868" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>glm3_table <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"coefficient"</span>: glm3.params,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"odds ratio"</span>: np.exp(glm3.params),</span>
@@ -533,7 +533,7 @@ logIncome              -0.0766      0.9262      0.0110  0.0000</code></pre>
 <section id="positivity-first-because-the-average-is-only-as-good-as-its-thinnest-cell" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="positivity-first-because-the-average-is-only-as-good-as-its-thinnest-cell"><span class="header-section-number">7.1</span> Positivity first, because the average is only as good as its thinnest cell</h2>
 <p>Section 3 counted the cells and found none empty. That is necessary and insufficient, since the standardisation evaluates every country’s fitted model at every income level in the range, and at the extremes some of those combinations barely occur.</p>
-<div id="7ac948ec" class="cell" data-execution_count="8">
+<div id="2681dbf4" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>supp <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    c: [dat.loc[dat.Country <span class="op">==</span> c, <span class="st">"logIncome"</span>].quantile(q) <span class="cf">for</span> q <span class="kw">in</span> (<span class="fl">0.025</span>, <span class="fl">0.975</span>)]</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> c <span class="kw">in</span> COUNTRIES}, index<span class="op">=</span>[<span class="st">"p2.5"</span>, <span class="st">"p97.5"</span>]).T</span>
@@ -557,7 +557,7 @@ pooled 5th-95th  6.215 to 8.102  (6.60x income ratio)</code></pre>
 </div>
 </div>
 <p>The three countries overlap over log-income 6.80 to 8.19, a fourfold income range holding 70 per cent of the book. Outside it the standardisation extrapolates: below 6.80 the model is asked what a Finnish borrower on an Estonian income would do, and Finland has almost no such loans. Hence positivity holds in the middle and degrades at both ends, which is the quiet form of the failure rather than the loud one. We compute the curve over both ranges and report the gap.</p>
-<div id="72bfde3d" class="cell" data-execution_count="9">
+<div id="3bd0db15" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>country_w <span class="op">=</span> dat[<span class="st">"Country"</span>].value_counts(normalize<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>age_w <span class="op">=</span> dat[<span class="st">"AgeClass"</span>].value_counts(normalize<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -594,7 +594,7 @@ pooled 5th-95th  6.215 to 8.102  (6.60x income ratio)</code></pre>
 </div>
 </div>
 </div>
-<div id="e91ae1e4" class="cell" data-execution_count="10">
+<div id="244f719d" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> label, (a, b) <span class="kw">in</span> [(<span class="st">"common support"</span>, (cs_lo, cs_hi)),</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                      (<span class="st">"pooled 5th-95th"</span>, (pooled_lo, pooled_hi))]:</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    p_lo, p_hi <span class="op">=</span> standardise(glm3, a), standardise(glm3, b)</span>
@@ -637,7 +637,7 @@ raw pooled empirical over the same grid: 0.2007 -&gt; 0.2785   change +0.0778</c
 \text{E-value} = \frac{1}{\mathrm{RR}} + \sqrt{\frac{1}{\mathrm{RR}}\left(\frac{1}{\mathrm{RR}} - 1\right)},
 \qquad \mathrm{RR} &lt; 1 .
 \]</span></p>
-<div id="0af87197" class="cell" data-execution_count="11">
+<div id="77d57a02" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> e_value(rr):</span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""E-value for a risk ratio, taking the reciprocal for a protective association."""</span></span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> rr <span class="cf">if</span> rr <span class="op">&lt;</span> <span class="dv">1</span> <span class="cf">else</span> rr</span>
@@ -683,7 +683,7 @@ and its E-value would be 1.373, which is the wrong number</code></pre>
 <section id="fairness-is-a-causal-claim" class="level1" data-number="9">
 <h1 data-number="9"><span class="header-section-number">9</span> Fairness is a causal claim</h1>
 <p>A statement that a model discriminates is a statement about what would have happened to the same applicant under a different protected characteristic. That is a counterfactual, so a discrimination finding inherits every identification condition in section 3 and every reading restriction in section 6. This section works the Bondora gender differential far enough to show what a raw differential does and does not license, and it stops there. A tournament of fairness metrics would be a different lecture and a worse one.</p>
-<div id="7b4b9132" class="cell" data-execution_count="12">
+<div id="1f72862e" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>gender_tab <span class="op">=</span> (model_dat.group_by(<span class="st">"Gender"</span>)</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    .agg(pl.<span class="bu">len</span>().alias(<span class="st">"n"</span>),</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>         pl.col(<span class="st">"default_12m"</span>).mean().<span class="bu">round</span>(<span class="dv">4</span>).alias(<span class="st">"default rate"</span>))</span>
@@ -718,7 +718,7 @@ shape: (2, 2)
 </div>
 </div>
 <p>Start with the thing that would wreck the analysis if it went unnoticed. Bondora codes gender as 0 for male, 1 for female and 2 for undisclosed, and the undisclosed group carries the highest default rate in the book at 55.9 per cent. It is also, to within sixteen loans out of 12,180, entirely Spanish. So <code>Gender == 2</code> is not a third gender group with a striking risk profile: it is a Spanish listing convention wearing a gender label, and its 55.9 per cent rate is Spain’s 55.4 per cent rate. A model that one-hot encodes gender and reports the coefficient on the undisclosed level has put a country marker into a gender variable and will report it as a gender effect. Whether gender was recorded depends on the market, which makes the recording indicator a descendant of country, and section 5’s rules apply to it unchanged.</p>
-<div id="b98a76c9" class="cell" data-execution_count="13">
+<div id="97d00588" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>fair <span class="op">=</span> dat.copy()</span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>fair[<span class="st">"Gender"</span>] <span class="op">=</span> model_dat[<span class="st">"Gender"</span>].to_pandas()</span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>fair <span class="op">=</span> fair[fair[<span class="st">"Gender"</span>].isin([<span class="dv">0</span>, <span class="dv">1</span>])].copy()</span>
@@ -761,7 +761,7 @@ adjusted for age, income and country:
 <h1 data-number="10"><span class="header-section-number">10</span> What this means for a model built to predict</h1>
 <p>Nothing in this lecture says GLM3 is a bad model. Its discrimination, its calibration and its stability are properties of the fitted mapping, and they are untouched by whether any coefficient in it identifies an effect. A scorecard exists to rank and to price, and it does that job or fails at it on evidence this lecture has not examined.</p>
 <p>What the lecture changes is which sentences may appear in the document that accompanies the model. Four claims from lecture 1’s own worked example turned out to need different treatment, and they are a fair sample of what a model document usually contains.</p>
-<p>The income coefficient’s sign flip <strong>was</strong> evidence about composition, exactly as lecture 1 said, and the graph in section 5 is what makes that claim reviewable rather than merely plausible. The income coefficient <strong>may</strong> be read as an effect conditional on age and market, and section 7 converts it into the marginal quantity a policy discussion actually wants: quadrupling declared income is associated with 1.9 fewer percentage points of twelve-month default risk, standardised over the observed portfolio. That reading survives only under exchangeability, and section 8 prices exchangeability at an E-value of 1.34, which is weak enough that the sentence belongs in the document with the number attached.</p>
+<p>The income coefficient’s sign flip <strong>was</strong> evidence about composition, exactly as lecture 1 said, and the graph in section 5 is what turns that claim from a plausible story into a reviewable one. The income coefficient <strong>may</strong> be read as an effect conditional on age and market, and section 7 converts it into the marginal quantity a policy discussion actually wants: quadrupling declared income is associated with 1.9 fewer percentage points of twelve-month default risk, standardised over the observed portfolio. That reading survives only under exchangeability, and section 8 prices exchangeability at an E-value of 1.34, which is weak enough that the sentence belongs in the document with the number attached.</p>
 <p>The country coefficients and the age-class coefficients <strong>may not</strong> be read as effects at all, and one of the age rows is not an estimate. Neither restriction requires refitting anything. Both require a footnote.</p>
 <p>Two habits generalise beyond this portfolio. Choose the adjustment set for one covariate, name which one, and mark every other coefficient in the table as a conditional association rather than a driver. And where a covariate is added because it lifts the Gini, check what it is on the graph before believing what it does to the other coefficients: section 5.3’s constructed collider improved AIC by 29,822 while reversing the sign of the effect under study, and nothing in a conventional model-selection report would have caught it.</p>
 <p>The deeper point is the one lecture 1 was already acting on without the vocabulary. Deep learning models absorb composition effects silently, and the more flexible the model, the more of section 5’s structure disappears into the fitted surface where no coefficient table can show it. A network fits every interaction the data suggest on whatever scale its output layer imposes, so the scale question of section 4 survives the loss of a linear predictor and merely stops being visible. Attribution methods promise to put it back, and whether they can is the subject of <code>C2</code>.</p>
