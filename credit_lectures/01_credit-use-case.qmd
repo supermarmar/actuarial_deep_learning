@@ -933,7 +933,13 @@ is **endogenous**. It is an output of the lender's previous risk assessment
 rather than a property of the borrower, and a model built on it mostly
 recovers the incumbent model. We therefore leave it out of the regressions
 below and keep it as a benchmark of how much structure a good model should
-find.
+find. In causal language the rate is a **mediator**, sitting on the path from
+the borrower's characteristics to default, and it is simultaneously a
+**collider** on a second path, since the platform's unobserved view of the
+borrower points into both the rate and the outcome. Credit lecture C1 draws
+both paths and measures what conditioning on the rate costs: the income
+coefficient barely moves while a third of the estimated Spanish country effect
+disappears into the coupon.
 
 ## Covariates interact
 
@@ -977,6 +983,17 @@ book absurdly, and the same mechanism, in gentler form, is why the insurance
 lecture insists on estimating $\mu(\boldsymbol{X})$ **jointly** in the
 components of $\boldsymbol{X} = (X_1, \ldots, X_q)^\top$ rather than
 marginally.
+
+The mechanism has a name. `Country` is a **confounder** of income and default,
+being a common cause of both, so the pooled gradient carries an open path that
+runs from income back through country and on to default. Conditioning on
+country blocks it, which is exactly what GLM3 does below. Credit lecture C1
+takes that structure apart: it separates interaction from effect modification,
+derives an adjustment set from the graph rather than from predictive lift, and
+recovers the marginal income curve this figure cannot supply by averaging the
+country-conditional model over the observed country distribution. Standardised
+that way the curve **falls**, from 29.6 to 27.7 per cent across a fourfold
+income range, where the raw pooled curve above rises.
 
 <!-- REVIEW (Mario, round 3, 2 Sep 2026): can we also show this as a 3d graph
      together with the 2d ggraph. Answered below: two panels off one `rate` array,

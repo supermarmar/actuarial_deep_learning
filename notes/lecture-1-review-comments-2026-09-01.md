@@ -160,7 +160,46 @@ lectures** rather than edits to lecture 1, so each has a plan of its own under
    -0.083 and inflation at +0.093 with a twelve-month PD swinging 9.1 percentage points on
    the macro state. Research and notation contract in `notes/ifrs9-pit-pd-research.md`.
 2. Planned, not implemented. See `notes/plans/02-irb-capital-lecture.md`.
-3. Planned, not implemented. See `notes/plans/03-causal-inference-lecture.md`.
+3. **Answered on 2 September 2026.** The lecture is
+   `credit_lectures/C1_credit-interaction-and-causation.qmd`, on a new causal track prefixed `C`,
+   and lecture 1's section 3.1 keeps its figure and gains a paragraph naming the mechanism as
+   confounding. The deep research the comment asked for ran first and is recorded in
+   `notes/causation-research.md`: ten candidate citations verified against MEDLINE or Crossref,
+   one title corrected, and two better sources found during the search. Eleven sources are now
+   registered in the vault at T4 with three new wiki articles,
+   `methods/interaction-and-effect-modification`, `methods/adjustment-set-selection` and
+   `methods/unmeasured-confounding-sensitivity`, plus an extension to `methods/causal-inference`;
+   `kb-lint` reports zero broken citations and zero broken wikilinks. Four of the eleven are
+   paywalled at *Epidemiology* and *Annals* with no PMC deposit, so they are registered as
+   `not-ingested` stubs and every claim citing one is marked as tracing to the abstract rather
+   than to a read.
+
+   What the lecture does with that material is worth recording, because three results were
+   stronger than the plan expected. The scale demonstration is arithmetic rather than assertion:
+   a logit with no interaction term gives an odds ratio of 0.9107 in all three countries and risk
+   differences of -1.30, -2.23 and -2.31 percentage points, and the general result is that
+   interaction is present on at least one scale whenever both covariates matter, so a bare "no
+   interaction" claim conveys nothing. Lecture 1's `Interest` argument turns out to be a mediator
+   **and** a collider depending on the path, and conditioning on the rate leaves the income
+   coefficient almost untouched while taking a third off the Spanish country coefficient. And the
+   constructed collider flips the income coefficient from -0.119 to +0.623 while improving AIC by
+   29,822 and lifting the Gini from 0.386 to 0.635, so every conventional selection criterion in
+   credit would have chosen it.
+
+   The plan feared the standardisation would collapse on thin cells the way `R1`'s macro fit did.
+   It does not: all fifteen country-by-quintile cells are populated, the thinnest at 630 loans,
+   and standardising GLM3 over the observed country and age distribution reverses the sign of
+   lecture 1's figure, giving a curve that falls from 30.4 to 27.8 per cent where the raw pooled
+   rate climbs from 20.1 to 27.9. Restricting to the three-country common support, which holds
+   70 per cent of the book, attenuates the risk ratio from 0.9149 to 0.9363, so a quarter of the
+   pooled-range effect was extrapolation. The E-value is then computed on that standardised risk
+   ratio rather than on the logit's odds ratio, and at 1.338 it says an ordinary omitted borrower
+   characteristic would explain the effect away. Fairness is one section per the plan's decision,
+   and it catches that Bondora's `Gender == 2` is 12,164 Spanish loans out of 12,180.
+
+   `C2` was deferred per decision 2 of the plan, covering attribution read causally, i.e. SHAP,
+   LocalGLMnet and ICE marginal effects against the Table 2 fallacy. It gets its own plan when
+   the course reaches its LocalGLMnet lectures, which is where it belongs.
 4. **Answered on 2 September 2026.** Treated as a small change to lecture 1 rather than a
    plan, and mirrored into the `.qmd` at the figure so it survives the next render. The
    figure is now two panels, a heatmap beside a `plot_surface` view, and the guard against
