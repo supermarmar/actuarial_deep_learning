@@ -1010,9 +1010,295 @@ where the one becomes the other.
 
 # The capital formula
 
-*To be written: the single-factor model, the worst-case default rate, the capital requirement
-and the risk weight, the prescribed retail correlations, the risk weight curve, the Bondora
-evaluation, and what the model assumes away.*
+Everything so far produced one number per grade. This section spends it.
+
+## The single-factor model
+
+Merton's insight was that a firm's equity is an option on its assets, so default is an event
+about an asset value crossing a threshold. Take a borrower whose standardised asset return over
+the year is $X_i$, and say the borrower defaults when $X_i$ falls below some level $c$. If $X_i$
+is standard normal and the borrower's probability of default is $p$, then $c$ is pinned down
+immediately: $\Phi(c) = p$, so $c = \Phi^{-1}(p)$.
+
+Correlation enters by giving every borrower a share of one common driver. Write
+
+$$
+X_i = \sqrt{\rho}\, Z_u + \sqrt{1 - \rho}\; \varepsilon_i ,
+\qquad Z_u, \varepsilon_i \sim {\cal N}(0,1) \text{ independent},
+$$
+
+where $Z_u$ is the systematic factor for calendar month $u$, high values benign, and
+$\varepsilon_i$ is idiosyncratic. The construction keeps $X_i$ standard normal, so the
+unconditional probability is still $p$, and it makes any two borrowers correlated at exactly
+$\rho$. At $\rho = 0$ the borrowers are independent; at $\rho = 1$ they default in lockstep.
+
+Conditioning on a realisation of the factor is then one line of algebra:
+
+$$
+\mathbb{P}\left( X_i < \Phi^{-1}(p) \,\middle|\, Z_u \right)
+= \mathbb{P}\!\left( \varepsilon_i < \frac{\Phi^{-1}(p) - \sqrt{\rho}\, Z_u}{\sqrt{1-\rho}} \right)
+= \Phi\!\left( \frac{\Phi^{-1}(p) - \sqrt{\rho}\, Z_u}{\sqrt{1-\rho}} \right) .
+$$
+
+**That is lecture 1's hybrid probability of default, arrived at from the asset side rather than
+postulated.** Lecture 1 introduced it as a way of interpolating between a through-the-cycle and a
+point-in-time estimate; here it falls out of a structural model of default, which is why the same
+formula serves both purposes.
+
+## Why the conditional expectation is also a quantile
+
+The step that turns a conditional probability into a capital requirement is the asymptotic single
+risk factor result, and it is worth stating carefully because it is doing more work than it
+looks.
+
+In a portfolio of many small, equally weighted exposures sharing one factor, the realised loss
+rate given $Z_u$ converges to the conditional probability above, since conditional on $Z_u$ the
+defaults are independent and the law of large numbers applies. **Granularity therefore removes
+the idiosyncratic uncertainty entirely and leaves the systematic uncertainty alone.** The
+distribution of the loss rate is then just the distribution of one scalar, $Z_u$, pushed through
+a monotone decreasing function, and a quantile of the loss rate is that function evaluated at the
+opposite quantile of the factor.
+
+Capital at 99.9 per cent confidence therefore means evaluating the conditional probability at the
+0.1st percentile of $Z_u$, which is $-\Phi^{-1}(0.999)$. That gives the **worst-case default
+rate**:
+
+$$
+\mathrm{WCDR}
+= \Phi\!\left( \frac{ \Phi^{-1}\!\left(\mathrm{PD}^{\rm Reg}\right) + \sqrt{\rho}\,\Phi^{-1}(0.999) }{\sqrt{1-\rho}} \right) .
+$$
+
+Two consequences of the asymptotic argument deserve to be flagged now and are returned to in
+section 7.6. The result assumes **one** factor and **infinitely many** exposures. Neither holds.
+
+::: {.callout-note icon=false title="Three arrangements of one formula"}
+The regulation, the Basel Committee's own explanatory note and this series all write the same
+expression differently, and a reader checking one against another will suspect an error where
+there is none.
+
+$$
+\underbrace{\Phi\!\left(\frac{\Phi^{-1}(p) - \sqrt{\rho}\,Z_u}{\sqrt{1-\rho}}\right)}_{\text{this series, factor unstressed}}
+\qquad
+\underbrace{N\!\left(\frac{G(\mathrm{PD}) + \sqrt{R}\,G(0.999)}{\sqrt{1-R}}\right)}_{\text{the regulation}}
+\qquad
+\underbrace{N\!\left((1-R)^{-\frac12} G(\mathrm{PD}) + \left(\tfrac{R}{1-R}\right)^{\frac12} G(0.999)\right)}_{\text{the Basel explanatory note}}
+$$
+
+The second and third are the same after dividing through, and the first becomes the second on
+substituting $Z_u = -\Phi^{-1}(0.999)$ and reading $N = \Phi$, $G = \Phi^{-1}$, $R = \rho$.
+
+```{python}
+p_chk, R_chk = 0.05, 0.0526
+crr  = N((G(p_chk) + np.sqrt(R_chk) * G(0.999)) / np.sqrt(1 - R_chk))
+bcbs = N((1 - R_chk) ** -0.5 * G(p_chk) + (R_chk / (1 - R_chk)) ** 0.5 * G(0.999))
+ours = N((G(p_chk) - np.sqrt(R_chk) * (-G(0.999))) / np.sqrt(1 - R_chk))
+print(f"regulation {crr:.10f}   Basel note {bcbs:.10f}   this series {ours:.10f}")
+```
+:::
+
+## From the worst-case rate to a risk weight
+
+The capital requirement is the conditional expected loss less the expected loss, per unit of
+exposure, because provisions are expected to have covered the second:
+
+$$
+K = \mathrm{LGD} \times \mathrm{WCDR} \;-\; \mathrm{PD}^{\rm Reg} \times \mathrm{LGD}
+= \mathrm{LGD}\left( \mathrm{WCDR} - \mathrm{PD}^{\rm Reg} \right) .
+$$
+
+For exposures that can outlive the one-year horizon there is a further adjustment, because a loan
+maturing in five years carries the risk of the borrower's credit quality deteriorating as well as
+the risk of it defaulting outright. That is the maturity adjustment:
+
+$$
+\mathrm{MA} = \frac{1 + (M - 2.5)\, b}{1 - 1.5\, b} ,
+\qquad
+b = \left( 0.11852 - 0.05478 \ln \mathrm{PD} \right)^2 ,
+$$
+
+with $M$ the effective maturity in years. **Retail exposures carry no maturity adjustment at
+all**, and the reason is a piece of history rather than a piece of theory: the retail
+correlations below were reverse-engineered from banks' economic capital figures and supervisory
+loss data that already contained maturity effects, and those effects were never separately
+controlled for. The maturity premium is therefore baked into the correlation, and applying an
+adjustment on top would count it twice. Consequently $\mathrm{MA}$, $b$ and $M$ appear in the
+general derivation and disappear from everything below.
+
+Finally the requirement is converted back to the Basel I unit of account:
+
+$$
+\mathrm{RWA} = 12.5 \times K \times \mathrm{EAD} .
+$$
+
+## The correlation is prescribed, and it is not an estimate
+
+$\rho$ is the one parameter a bank does not supply. The regulation fixes it by exposure class:
+
+```{python}
+def rho_mortgage(pd_):
+    return np.full_like(np.asarray(pd_, dtype=float), 0.15)
+
+def rho_qrre(pd_):
+    return np.full_like(np.asarray(pd_, dtype=float), 0.04)
+
+def rho_other_retail(pd_):
+    """Structurally the corporate function with different bounds and decay."""
+    w = (1 - np.exp(-35 * np.asarray(pd_))) / (1 - np.exp(-35))
+    return 0.03 * w + 0.16 * (1 - w)
+
+def rho_corporate(pd_):
+    w = (1 - np.exp(-50 * np.asarray(pd_))) / (1 - np.exp(-50))
+    return 0.12 * w + 0.24 * (1 - w)
+
+def wcdr(pd_, rho):
+    return N((G(pd_) + np.sqrt(rho) * G(0.999)) / np.sqrt(1 - rho))
+
+def capital(pd_, lgd, rho):
+    return lgd * (wcdr(pd_, rho) - np.asarray(pd_))
+```
+
+Residential mortgages take a flat 0.15, qualifying revolving retail a flat 0.04, and other
+retail a function decreasing from 0.16 at a probability of zero to 0.03 at a probability of one.
+Corporate exposures take the same shape between 0.24 and 0.12, with an additional size
+adjustment for smaller firms.
+
+Two features of that decrease are worth understanding, because a validator will ask about both.
+
+**Correlation falls as the probability of default rises.** Empirical work supports the direction:
+a borrower already close to default is more likely to fail for reasons of its own than because
+the economy turned, so the systematic share of its risk is lower. A weak borrower is idiosyncratically
+weak.
+
+**These are not estimated asset correlations.** They were reverse-engineered so that the formula
+reproduced the economic capital that large internationally active banks were already holding and
+the loss variability that G10 supervisory databases already showed. Calling them empirical
+estimates of a correlation overstates what they are. They are the values that make a
+model reproduce a target, and a bank whose portfolio does not resemble the calibration sample has
+no reason to expect them to fit.
+
+## The risk weight curve, and where it stops rising
+
+```{python}
+#| fig-cap: "Risk weight against the regulatory probability of default for the three retail exposure classes, at a loss given default of 65 per cent and no maturity adjustment. (lhs): the full range, on which every curve rises, turns over and falls back towards zero, because as the probability approaches one the worst-case rate approaches one too and the gap the capital covers closes. (rhs): the range a bank's retail book actually occupies, up to a 5 per cent probability, where the curves are steeply concave and the 0.03 per cent floor sits at the far left. Bronze marks other retail, the class an unsecured consumer loan falls in and the one used for the Bondora evaluation below. The nine Bondora grades are marked on the left panel, and four of them sit at or beyond the turning point."
+LGD = 0.65
+curves = [("residential mortgage", rho_mortgage, GREY),
+          ("qualifying revolving", rho_qrre, BLUE),
+          ("other retail", rho_other_retail, OX)]
+
+fig, axs = plt.subplots(1, 2, figsize=(9, 3.6))
+wide = np.linspace(1e-5, 0.999, 3000)
+near = np.linspace(1e-5, 0.05, 3000)
+for ax, grid_ in ((axs[0], wide), (axs[1], near)):
+    for label, rho_f, colour in curves:
+        ax.plot(grid_, 12.5 * capital(grid_, LGD, rho_f(grid_)),
+                color=colour, lw=1.4 if colour == OX else 1.0,
+                label=label if ax is axs[1] else None)
+    ax.set_xlabel("regulatory PD"); ax.set_ylabel("risk weight")
+    ax.yaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
+    ax.xaxis.set_major_formatter(lambda v, _: f"{v:.0%}")
+axs[1].axvline(0.0003, color=RULE, lw=0.8, ls=":")
+axs[1].annotate("0.03% floor", (0.0003, 60), xytext=(4, 0),
+                textcoords="offset points", fontsize=7, color=RULE)
+axs[1].legend(frameon=False, fontsize=7.5)
+
+peak = wide[np.argmax(12.5 * capital(wide, LGD, rho_other_retail(wide)))]
+axs[0].axvline(peak, color=RULE, lw=0.8, ls="--")
+axs[0].annotate(f"other retail peaks\nat PD {peak:.0%}", (peak, 30),
+                xytext=(6, 0), textcoords="offset points", fontsize=7, color=RULE)
+plt.tight_layout(); plt.show()
+
+for label, rho_f, _ in curves:
+    rw = 12.5 * capital(wide, LGD, rho_f(wide))
+    i = int(np.argmax(rw))
+    print(f"{label:22s} peak risk weight {rw[i]:6.0%} at PD {wide[i]:5.1%};  "
+          f"at PD 1% it is {12.5 * capital(0.01, LGD, rho_f(0.01)):.0%}")
+```
+
+The left panel shows something the framework is rarely drawn far enough to reveal. **The risk
+weight is not monotone in the probability of default.** It rises steeply, flattens, and then
+falls, because $K = \mathrm{LGD}\left(\mathrm{WCDR} - \mathrm{PD}\right)$ and both terms approach
+one together. A borrower certain to default has no *unexpected* loss at all: the loss is entirely
+expected, and provisions rather than capital are the right instrument for it.
+
+The right panel is the part that matters for a bank. Over the range a real retail book occupies,
+below about 5 per cent, the curve is steeply concave, which is the structural procyclicality
+section 4 named: a probability rising from 1 to 2 per cent in a downturn adds far more capital
+than one rising from 4 to 5 per cent.
+
+## Bondora, evaluated
+
+The grades from section 6 now go through the formula. Loss given default is **assumed rather than
+estimated**, at 65 per cent, which is a plausible downturn figure for unsecured consumer credit
+and is stated here as an assumption because modelling it is a separate exercise. The capital
+requirement is linear in it, so the sensitivity is easy to read off.
+
+```{python}
+cap = grades[["lra", "moc_c", "pd_reg"]].copy()
+cap["rho"] = rho_other_retail(cap.pd_reg.values)
+cap["wcdr"] = wcdr(cap.pd_reg.values, cap.rho.values)
+cap["K"] = capital(cap.pd_reg.values, LGD, cap.rho.values)
+cap["risk weight"] = 12.5 * cap.K
+cap.style.format({"lra": "{:.2%}", "moc_c": "{:+.2%}", "pd_reg": "{:.2%}",
+                  "rho": "{:.4f}", "wcdr": "{:.2%}", "K": "{:.2%}",
+                  "risk weight": "{:.1%}"})
+```
+
+```{python}
+for lgd in (0.45, 0.65, 0.85):
+    k = capital(cap.pd_reg.values, lgd, cap.rho.values)
+    print(f"LGD {lgd:.0%}   mean risk weight {12.5 * k.mean():6.1%}   "
+          f"spanning {12.5 * k.min():.1%} to {12.5 * k.max():.1%}")
+print(f"\nstandardised approach for retail: a flat 75%")
+```
+
+Three results, none of them flattering to the exercise and all of them instructive.
+
+**The correlation has already bottomed out.** Every grade carries $\rho$ within a whisker of
+0.03, the floor of the other-retail function, because the function has fully decayed by a
+probability of about 15 per cent and the safest Bondora grade is above 18. The regulation's
+PD-dependent correlation contributes nothing here; it might as well be the constant 0.03.
+
+**The riskiest grade attracts less capital than the safest.** Grade 9 comes out at a risk weight
+of 133 per cent against grade 1's 141, because grade 9 sits past the turning point in the left
+panel above. A rating system whose top grade consumes less capital than its bottom grade has
+stopped being a risk-sensitive capital rule, and no amount of care in sections 5 and 6 repairs
+that.
+
+**The internal approach is roughly twice as expensive as the standardised one.** The mean risk
+weight is about 153 per cent against a flat 75 per cent for retail under the standardised
+approach. The folk belief that internal models save capital holds for portfolios like the ones
+the formula was calibrated on, and it is a statement about those portfolios rather than about
+internal models.
+
+Taken together those three say the same thing. **The formula was calibrated for books with
+default rates one to two orders of magnitude below this one, and Bondora is off the end of it.**
+The mechanics are exactly as demonstrated and the answer is meaningless, which is a more useful
+lesson than a plausible number would have been.
+
+## What the model assumes away
+
+Three assumptions carry the derivation, and each has a known cost.
+
+**One factor.** All correlation between any two borrowers runs through a single scalar. A real
+portfolio has industry, region and product effects that a single index cannot represent, so a
+bank lending to one sector in one region has a concentration the formula cannot see.
+
+**Infinite granularity.** The law of large numbers step needs many small exposures. A real
+portfolio has a largest exposure, and the idiosyncratic risk that granularity was assumed to
+diversify away does not vanish. The **granularity adjustment** of Gordy and Lütkebohmert supplies
+a first-order correction as a function of the exposure concentration, and it is positive: the
+asymptotic formula understates capital for a finite portfolio. Single-name and sector
+concentration are handled outside Pillar 1 as a result, which is one of the reasons Pillar 2
+exists.
+
+**Independence between the parameters.** Loss given default enters as a constant multiplying the
+worst-case rate, so any correlation between the loss severity and the default rate is absent from
+the algebra. The downturn loss given default requirement is the framework's answer, and it is an
+instruction rather than a model.
+
+None of these makes the formula wrong. They make it a deliberately conservative simplification
+whose conservatism was calibrated on portfolios of a particular shape, and knowing which
+assumption is being leaned on is most of what a validator is for.
 
 # What a validator asks
 
