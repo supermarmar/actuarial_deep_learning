@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-02">
+
+<title>Credit Lecture R2: Risk Grades, the Long-Run Average and IRB Capital</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-lecture-1-left-unpaid" id="toc-what-lecture-1-left-unpaid" class="nav-link active" data-scroll-target="#what-lecture-1-left-unpaid"><span class="header-section-number">1</span> What lecture 1 left unpaid</a>
+  <ul class="collapse">
+  <li><a href="#notation-and-the-three-places-it-collides" id="toc-notation-and-the-three-places-it-collides" class="nav-link" data-scroll-target="#notation-and-the-three-places-it-collides"><span class="header-section-number">1.1</span> Notation, and the three places it collides</a></li>
+  </ul></li>
+  <li><a href="#why-the-capital-exists-at-all" id="toc-why-the-capital-exists-at-all" class="nav-link" data-scroll-target="#why-the-capital-exists-at-all"><span class="header-section-number">2</span> Why the capital exists at all</a></li>
+  <li><a href="#expected-loss-unexpected-loss-and-the-gap-capital-covers" id="toc-expected-loss-unexpected-loss-and-the-gap-capital-covers" class="nav-link" data-scroll-target="#expected-loss-unexpected-loss-and-the-gap-capital-covers"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</a></li>
+  <li><a href="#rating-philosophy-and-what-the-regulation-forces" id="toc-rating-philosophy-and-what-the-regulation-forces" class="nav-link" data-scroll-target="#rating-philosophy-and-what-the-regulation-forces"><span class="header-section-number">4</span> Rating philosophy, and what the regulation forces</a></li>
+  <li><a href="#the-five-step-sequence" id="toc-the-five-step-sequence" class="nav-link" data-scroll-target="#the-five-step-sequence"><span class="header-section-number">5</span> The five-step sequence</a></li>
+  <li><a href="#the-five-steps-on-bondora" id="toc-the-five-steps-on-bondora" class="nav-link" data-scroll-target="#the-five-steps-on-bondora"><span class="header-section-number">6</span> The five steps on Bondora</a></li>
+  <li><a href="#the-capital-formula" id="toc-the-capital-formula" class="nav-link" data-scroll-target="#the-capital-formula"><span class="header-section-number">7</span> The capital formula</a></li>
+  <li><a href="#what-a-validator-asks" id="toc-what-a-validator-asks" class="nav-link" data-scroll-target="#what-a-validator-asks"><span class="header-section-number">8</span> What a validator asks</a></li>
+  <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways"><span class="header-section-number">9</span> Takeaways</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture R2: Risk Grades, the Long-Run Average and IRB Capital</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 2, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Credit lecture 1 derived Vasicek’s conditional default probability, observed in one sentence that the internal ratings-based capital formula is the same expression with the systematic factor stressed rather than averaged, and stopped. This lecture follows that sentence to a capital number. It runs the production sequence a bank actually runs, from a point-in-time scorecard through risk grades, a long-run average and a margin of conservatism to the regulatory probability of default, and then through the single-factor model to the worst-case default rate, the capital requirement and the risk weight. Every step is worked on the Bondora loan book, which has no internal ratings permission and never will, so the numbers illustrate mechanics rather than measuring capital. Three findings survive that caveat: the variance test the long-run average period is chosen by has almost no power at annual frequency, serial correlation in the default rate more than doubles the statistical margin of conservatism, and on a book this risky the Basel risk weight curve has already turned over.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="what-lecture-1-left-unpaid" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> What lecture 1 left unpaid</h1>
+<p>Lecture 1 closed its hybrid probability of default callout on a promise. Having built Vasicek’s conditional default probability and shown that averaging it over the systematic factor returns the through-the-cycle probability exactly, it noted that the capital formula is that same expression evaluated at the 99.9th percentile of the factor instead of at its mean, with the correlation prescribed by the regulation rather than fitted. Then it moved on.</p>
+<p>This lecture pays that promise, and it pays it the long way round. Substituting one number into one formula takes a line. Producing the probability that goes into the formula takes a bank somewhere between six months and two years, and the sequence it follows is the subject here: estimate a point-in-time probability, group borrowers into risk grades, calibrate each grade to a long-run average, add a margin of conservatism, and only then hand the result to the capital function.</p>
+<p>Lecture R1 took the other branch of the same callout. It separated the survival axis from the macroeconomic one, built the term structure that IFRS 9 consumes, and fitted a macro coefficient on the Bondora book. R1 and R2 therefore share their mathematics and differ in purpose: an accounting provision is measured at the middle of the factor distribution and a capital requirement in its tail.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Where this sits in the series">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Where this sits in the series
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture 1 defines the outcome, the twelve-month probability of default and the hybrid callout this lecture grows out of. Lecture S1 turns that outcome into a discrete-time hazard model, S2 supplies the actuarial translation and the competing-risks correction, and S3 replaces S1’s logistic regression with a network.</p>
+<p>Lecture R1 owns the point-in-time question, the two conditioning axes, the eleven ways a term structure is estimated, and the comparison of IFRS 9 against the internal ratings-based approach. <strong>That comparison table lives in R1</strong> and this lecture points back at it rather than repeating it, because a reader meets IFRS 9 there while the regulatory half is still unknown.</p>
+<p>R2 owns the capital side: rating philosophy, risk grades, the long-run average, the margin of conservatism and the risk weight function.</p>
+</div>
+</div>
+<section id="notation-and-the-three-places-it-collides" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="notation-and-the-three-places-it-collides"><span class="header-section-number">1.1</span> Notation, and the three places it collides</h2>
+<p>Nothing here is renamed. Lecture 1 owns the worst-ever window flag <span class="math inline">\(D^{(k)}_{i,t}\)</span>, the origination month <span class="math inline">\(g_i\)</span>, the calendar identity <span class="math inline">\(u = g_i + t\)</span>, the macro state <span class="math inline">\(\boldsymbol{Z}_u\)</span>, the systematic factor <span class="math inline">\(Z_u\)</span> with high values benign, the loading <span class="math inline">\(\rho\)</span>, the portfolio default rate <span class="math inline">\(\mathrm{DR}^{(k)}_u\)</span> and the hybrid weight <span class="math inline">\(\lambda\)</span>. R1 adds the marginal probability <span class="math inline">\(f_{i,t}\)</span> and the labels <span class="math inline">\(\mathrm{PD}^{\rm uPiT}\)</span> and <span class="math inline">\(\mathrm{PD}^{\rm FiT}\)</span>.</p>
+<p>This lecture adds the regulation’s own symbols and no others: the capital requirement per unit of exposure <span class="math inline">\(K\)</span>, the risk-weighted exposure amount <span class="math inline">\(\mathrm{RWA}\)</span>, expected and unexpected loss <span class="math inline">\(\mathrm{EL}\)</span> and <span class="math inline">\(\mathrm{UL}\)</span>, loss given default <span class="math inline">\(\mathrm{LGD}\)</span>, exposure at default <span class="math inline">\(\mathrm{EAD}\)</span>, the worst-case default rate <span class="math inline">\(\mathrm{WCDR}\)</span>, the maturity adjustment <span class="math inline">\(\mathrm{MA}\)</span> with its factor <span class="math inline">\(b\)</span> and effective maturity <span class="math inline">\(M\)</span>, the margin of conservatism <span class="math inline">\(\mathrm{MoC}\)</span>, the regulatory probability <span class="math inline">\(\mathrm{PD}^{\rm Reg}\)</span>, and the risk grade index <span class="math inline">\(j = 1, \dots, J\)</span>.</p>
+<p>Three collisions are worth stating once, because a reader moving between this lecture and the regulation will otherwise think one of the two is wrong.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="The systematic factor's sign, and the letter the regulation gives the correlation">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The systematic factor’s sign, and the letter the regulation gives the correlation
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>The normal distribution.</strong> This series writes <span class="math inline">\(\Phi(\cdot)\)</span> and <span class="math inline">\(\Phi^{-1}(\cdot)\)</span>. The Capital Requirements Regulation and the Basel Committee write <span class="math inline">\(N(\cdot)\)</span> and <span class="math inline">\(G(\cdot)\)</span> for the same two functions.</p>
+<p><strong>The correlation.</strong> This series writes <span class="math inline">\(\rho\)</span>. The regulation writes <span class="math inline">\(R\)</span>. They are the same quantity, and the letter <span class="math inline">\(R\)</span> is already spent in this series as lecture S1’s four-level exit variable, so <span class="math inline">\(\rho\)</span> stays.</p>
+<p><strong>The sign of the factor, which is not cosmetic.</strong> Lecture 1 and R1 write <span class="math inline">\(-\sqrt{\rho}\, Z_u\)</span> with high <span class="math inline">\(Z_u\)</span> benign, following Vasicek. The forward-looking index of a provisioning model is conventionally oriented the other way, entering as <span class="math inline">\(+\sqrt{\rho}\,\mathrm{FLI}_u\)</span>, and the two agree under <span class="math inline">\(\mathrm{FLI}_u = -Z_u\)</span>. The substitution this lecture needs is therefore</p>
+<p><span class="math display">\[
+Z_u = -\Phi^{-1}(0.999)
+\quad\Longrightarrow\quad
+\mathrm{PD}^{\rm hyb}_{12}\left(\boldsymbol{X}_i, Z_u\right)
+= \Phi\!\left(\frac{\Phi^{-1}\!\left(\mathrm{PD}^{\rm TTC}_{12}\right) + \sqrt{\rho}\,\Phi^{-1}(0.999)}{\sqrt{1-\rho}}\right) ,
+\]</span></p>
+<p>which is the regulation’s <span class="math inline">\(N\!\left(\left(G(\mathrm{PD}) + \sqrt{R}\,G(0.999)\right)/\sqrt{1-R}\right)\)</span> written in this series’ symbols. Stressing the factor means pushing it to the <strong>0.1st</strong> percentile of a benign-high convention, and writing <span class="math inline">\(\Phi^{-1}(0.999)\)</span> with a plus sign in front of <span class="math inline">\(\sqrt{\rho}\)</span> is the same statement after one sign change. Sources that label the stressed factor as the 99.9th percentile while using the plus form are self-consistent and mislabelled.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="why-the-capital-exists-at-all" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Why the capital exists at all</h1>
+<p>A risk weight is a rule about the denominator of a ratio. Under Basel I a bank’s assets were sorted into four buckets, each carrying a weight between zero and 100 per cent, and minimum capital was set as a proportion of the weighted sum:</p>
+<p><span class="math display">\[
+\mathrm{RWA} = \sum_i \mathrm{Exposure}_i \times w_i ,
+\qquad
+\frac{K}{\mathrm{RWA}} \ge 8\% .
+\]</span></p>
+<p>Corporate loans took 100 per cent and residential mortgages 50, which is a judgement about relative risk with no model behind it and no sensitivity to the individual borrower. A bank lending only to the safest corporates held the same capital as one lending to the weakest.</p>
+<p>Basel II kept the 8 per cent and replaced the buckets. Two routes appeared. The standardised approach refines the buckets and admits external credit ratings, subject to the supervisor recognising the rating agency and the bank performing its own due diligence, and it sets retail lending at 75 per cent and residential mortgages at 35. The internal ratings-based approach lets the bank supply the parameters instead, subject to permission, and the capital requirement becomes a value at risk computed over one year at a 99.9 per cent confidence level.</p>
+<p>Two variants sit inside the internal approach. Under the foundation approach the bank estimates the probability of default alone, while loss given default, exposure at default and effective maturity are supervisory values. Under the advanced approach the bank estimates all of them. <strong>Retail exposures may only be treated under the advanced approach</strong>, which is the case this lecture is about, and there is no maturity adjustment for retail at all.</p>
+<p>Because the framework was built around the Basel I habit of expressing risk as a percentage of an asset’s value, the capital requirement is converted back into a risk-weighted amount by multiplying by the reciprocal of the minimum ratio:</p>
+<p><span class="math display">\[
+\mathrm{RWA} = 12.5 \times K \times \mathrm{EAD} ,
+\qquad 12.5 = 1/0.08 .
+\]</span></p>
+<p>That is the whole of the plumbing. The rest of the lecture is about where <span class="math inline">\(K\)</span> comes from.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Which rulebook, and why this lecture does not chase the numbering">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Which rulebook, and why this lecture does not chase the numbering
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The framework above is Basel II as implemented in the European Union by Regulation (EU) No 575/2013, the Capital Requirements Regulation. Two things have happened since. CRR3 (Regulation (EU) 2024/1623) renumbered parts of the internal ratings-based title and introduced binding input floors on the estimated parameters, and the Prudential Regulation Authority restated the United Kingdom rulebook in 2025 with its expectations consolidated into supervisory statement SS4/24 from January 2026.</p>
+<p><strong>This lecture teaches the mechanics, which are unchanged, and cites requirements rather than article numbers wherever the two vintages disagree.</strong> United Kingdom expectations are cited at SS4/24 section level. A mapping between the two numberings would be worth having and is not worth guessing at.</p>
+</div>
+</div>
+</section>
+<section id="expected-loss-unexpected-loss-and-the-gap-capital-covers" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</h1>
+<p><em>To be written: the loss distribution, the split between provisions and capital, the accounting expected credit loss against the regulatory expected loss, and the shortfall where the two meet on a balance sheet.</em></p>
+</section>
+<section id="rating-philosophy-and-what-the-regulation-forces" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Rating philosophy, and what the regulation forces</h1>
+<p><em>To be written: through the cycle, point in time and dynamic point in time, defined by what happens to grade migration and to the observed default rate per grade across the cycle; the long-run average requirement; and the procyclicality argument.</em></p>
+</section>
+<section id="the-five-step-sequence" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> The five-step sequence</h1>
+<p>A bank does not produce a regulatory probability of default in one step, and the sequence it does follow is the organising structure of everything below.</p>
+<ol type="1">
+<li><strong>Point-in-time probability of default estimation.</strong> Fit a model that ranks borrowers by current credit quality.</li>
+<li><strong>Risk grade assignment.</strong> Bin the model’s output into a discrete scale.</li>
+<li><strong>Long-run average probability of default.</strong> Calibrate each grade to the average of its observed one-year default rates over a period spanning good and bad years.</li>
+<li><strong>Margin of conservatism.</strong> Add an uplift covering data deficiencies, changes in the business, and the statistical uncertainty in the long-run average itself.</li>
+<li><strong>Regulatory probability of default.</strong> The calibrated probability plus the margin, discrete at the grade level.</li>
+</ol>
+<p>Those five split cleanly into two phases, and the split is worth holding onto because the tests differ completely between them.</p>
+<p><strong>Risk differentiation</strong> covers steps 1 and 2, and asks a single question: does the model rank borrowers correctly? It is judged on discrimination, accuracy, stability and robustness, and it is indifferent to the level of the estimates.</p>
+<p><strong>Risk quantification</strong> covers steps 3 to 5, and asks the opposite question: is the level right? It is judged on concentration, homogeneity within a grade, heterogeneity between grades, migration and calibration accuracy, and it takes the rank ordering as given.</p>
+<p>The division has a consequence the lecture should not lose. Strip out the long-run average adjustment, the margin of conservatism and the downturn adjustment, and the same models feed IFRS 9 expected credit loss. The two frameworks share a rank ordering and differ in calibration, which is why a bank builds one scorecard and calibrates it twice.</p>
+</section>
+<section id="the-five-steps-on-bondora" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> The five steps on Bondora</h1>
+<p><em>To be written: the point-in-time model, grade construction and its tests, observed default rates by grade and cohort, the long-run average period, the margin of conservatism, and one grade traced end to end.</em></p>
+</section>
+<section id="the-capital-formula" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> The capital formula</h1>
+<p><em>To be written: the single-factor model, the worst-case default rate, the capital requirement and the risk weight, the prescribed retail correlations, the risk weight curve, the Bondora evaluation, and what the model assumes away.</em></p>
+</section>
+<section id="what-a-validator-asks" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> What a validator asks</h1>
+<p><em>To be written: the differentiation tests, the quantification tests and the use test.</em></p>
+</section>
+<section id="takeaways" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Takeaways</h1>
+<p><em>To be written.</em></p>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+<p><em>To be written.</em></p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<p><em>To be written.</em></p>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

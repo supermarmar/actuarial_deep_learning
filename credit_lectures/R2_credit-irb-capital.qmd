@@ -1,0 +1,247 @@
+---
+title: "Credit Lecture R2: Risk Grades, the Long-Run Average and IRB Capital"
+subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
+author: "Mario Ervedosa"
+date: "2026-09-02"
+abstract: >
+  Credit lecture 1 derived Vasicek's conditional default probability, observed in
+  one sentence that the internal ratings-based capital formula is the same
+  expression with the systematic factor stressed rather than averaged, and
+  stopped. This lecture follows that sentence to a capital number. It runs the
+  production sequence a bank actually runs, from a point-in-time scorecard
+  through risk grades, a long-run average and a margin of conservatism to the
+  regulatory probability of default, and then through the single-factor model to
+  the worst-case default rate, the capital requirement and the risk weight. Every
+  step is worked on the Bondora loan book, which has no internal ratings
+  permission and never will, so the numbers illustrate mechanics rather than
+  measuring capital. Three findings survive that caveat: the variance test the
+  long-run average period is chosen by has almost no power at annual frequency,
+  serial correlation in the default rate more than doubles the statistical margin
+  of conservatism, and on a book this risky the Basel risk weight curve has
+  already turned over.
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    # Render with scripts/render_lecture.sh, not bare `quarto render`.
+    css: ../lectures/lecture.css
+    embed-resources: false
+    fig-width: 9
+    fig-height: 4
+    fig-dpi: 150
+execute:
+  echo: true
+  warning: false
+jupyter: python3
+---
+
+# What lecture 1 left unpaid
+
+Lecture 1 closed its hybrid probability of default callout on a promise. Having built
+Vasicek's conditional default probability and shown that averaging it over the systematic
+factor returns the through-the-cycle probability exactly, it noted that the capital formula is
+that same expression evaluated at the 99.9th percentile of the factor instead of at its mean,
+with the correlation prescribed by the regulation rather than fitted. Then it moved on.
+
+This lecture pays that promise, and it pays it the long way round. Substituting one number into
+one formula takes a line. Producing the probability that goes into the formula takes a bank
+somewhere between six months and two years, and the sequence it follows is the subject here:
+estimate a point-in-time probability, group borrowers into risk grades, calibrate each grade to
+a long-run average, add a margin of conservatism, and only then hand the result to the capital
+function.
+
+Lecture R1 took the other branch of the same callout. It separated the survival axis from the
+macroeconomic one, built the term structure that IFRS 9 consumes, and fitted a macro
+coefficient on the Bondora book. R1 and R2 therefore share their mathematics and differ in
+purpose: an accounting provision is measured at the middle of the factor distribution and a
+capital requirement in its tail.
+
+::: {.callout-note icon=false title="Where this sits in the series"}
+Lecture 1 defines the outcome, the twelve-month probability of default and the hybrid callout
+this lecture grows out of. Lecture S1 turns that outcome into a discrete-time hazard model, S2
+supplies the actuarial translation and the competing-risks correction, and S3 replaces S1's
+logistic regression with a network.
+
+Lecture R1 owns the point-in-time question, the two conditioning axes, the eleven ways a term
+structure is estimated, and the comparison of IFRS 9 against the internal ratings-based
+approach. **That comparison table lives in R1** and this lecture points back at it rather than
+repeating it, because a reader meets IFRS 9 there while the regulatory half is still unknown.
+
+R2 owns the capital side: rating philosophy, risk grades, the long-run average, the margin of
+conservatism and the risk weight function.
+:::
+
+## Notation, and the three places it collides
+
+Nothing here is renamed. Lecture 1 owns the worst-ever window flag $D^{(k)}_{i,t}$, the
+origination month $g_i$, the calendar identity $u = g_i + t$, the macro state
+$\boldsymbol{Z}_u$, the systematic factor $Z_u$ with high values benign, the loading $\rho$, the
+portfolio default rate $\mathrm{DR}^{(k)}_u$ and the hybrid weight $\lambda$. R1 adds the
+marginal probability $f_{i,t}$ and the labels $\mathrm{PD}^{\rm uPiT}$ and $\mathrm{PD}^{\rm FiT}$.
+
+This lecture adds the regulation's own symbols and no others: the capital requirement per unit
+of exposure $K$, the risk-weighted exposure amount $\mathrm{RWA}$, expected and unexpected loss
+$\mathrm{EL}$ and $\mathrm{UL}$, loss given default $\mathrm{LGD}$, exposure at default
+$\mathrm{EAD}$, the worst-case default rate $\mathrm{WCDR}$, the maturity adjustment
+$\mathrm{MA}$ with its factor $b$ and effective maturity $M$, the margin of conservatism
+$\mathrm{MoC}$, the regulatory probability $\mathrm{PD}^{\rm Reg}$, and the risk grade index
+$j = 1, \dots, J$.
+
+Three collisions are worth stating once, because a reader moving between this lecture and the
+regulation will otherwise think one of the two is wrong.
+
+::: {.callout-warning icon=false title="The systematic factor's sign, and the letter the regulation gives the correlation"}
+**The normal distribution.** This series writes $\Phi(\cdot)$ and $\Phi^{-1}(\cdot)$. The
+Capital Requirements Regulation and the Basel Committee write $N(\cdot)$ and $G(\cdot)$ for the
+same two functions.
+
+**The correlation.** This series writes $\rho$. The regulation writes $R$. They are the same
+quantity, and the letter $R$ is already spent in this series as lecture S1's four-level exit
+variable, so $\rho$ stays.
+
+**The sign of the factor, which is not cosmetic.** Lecture 1 and R1 write
+$-\sqrt{\rho}\, Z_u$ with high $Z_u$ benign, following Vasicek. The forward-looking index of a
+provisioning model is conventionally oriented the other way, entering as
+$+\sqrt{\rho}\,\mathrm{FLI}_u$, and the two agree under $\mathrm{FLI}_u = -Z_u$. The
+substitution this lecture needs is therefore
+
+$$
+Z_u = -\Phi^{-1}(0.999)
+\quad\Longrightarrow\quad
+\mathrm{PD}^{\rm hyb}_{12}\left(\boldsymbol{X}_i, Z_u\right)
+= \Phi\!\left(\frac{\Phi^{-1}\!\left(\mathrm{PD}^{\rm TTC}_{12}\right) + \sqrt{\rho}\,\Phi^{-1}(0.999)}{\sqrt{1-\rho}}\right) ,
+$$
+
+which is the regulation's
+$N\!\left(\left(G(\mathrm{PD}) + \sqrt{R}\,G(0.999)\right)/\sqrt{1-R}\right)$ written in this
+series' symbols. Stressing the factor means pushing it to the **0.1st** percentile of a
+benign-high convention, and writing $\Phi^{-1}(0.999)$ with a plus sign in front of
+$\sqrt{\rho}$ is the same statement after one sign change. Sources that label the stressed
+factor as the 99.9th percentile while using the plus form are self-consistent and mislabelled.
+:::
+
+# Why the capital exists at all
+
+A risk weight is a rule about the denominator of a ratio. Under Basel I a bank's assets were
+sorted into four buckets, each carrying a weight between zero and 100 per cent, and minimum
+capital was set as a proportion of the weighted sum:
+
+$$
+\mathrm{RWA} = \sum_i \mathrm{Exposure}_i \times w_i ,
+\qquad
+\frac{K}{\mathrm{RWA}} \ge 8\% .
+$$
+
+Corporate loans took 100 per cent and residential mortgages 50, which is a judgement about
+relative risk with no model behind it and no sensitivity to the individual borrower. A bank
+lending only to the safest corporates held the same capital as one lending to the weakest.
+
+Basel II kept the 8 per cent and replaced the buckets. Two routes appeared. The standardised
+approach refines the buckets and admits external credit ratings, subject to the supervisor
+recognising the rating agency and the bank performing its own due diligence, and it sets retail
+lending at 75 per cent and residential mortgages at 35. The internal ratings-based approach
+lets the bank supply the parameters instead, subject to permission, and the capital requirement
+becomes a value at risk computed over one year at a 99.9 per cent confidence level.
+
+Two variants sit inside the internal approach. Under the foundation approach the bank estimates
+the probability of default alone, while loss given default, exposure at default and effective
+maturity are supervisory values. Under the advanced approach the bank estimates all of them.
+**Retail exposures may only be treated under the advanced approach**, which is the case this
+lecture is about, and there is no maturity adjustment for retail at all.
+
+Because the framework was built around the Basel I habit of expressing risk as a percentage of
+an asset's value, the capital requirement is converted back into a risk-weighted amount by
+multiplying by the reciprocal of the minimum ratio:
+
+$$
+\mathrm{RWA} = 12.5 \times K \times \mathrm{EAD} ,
+\qquad 12.5 = 1/0.08 .
+$$
+
+That is the whole of the plumbing. The rest of the lecture is about where $K$ comes from.
+
+::: {.callout-note icon=false title="Which rulebook, and why this lecture does not chase the numbering"}
+The framework above is Basel II as implemented in the European Union by Regulation (EU)
+No 575/2013, the Capital Requirements Regulation. Two things have happened since. CRR3
+(Regulation (EU) 2024/1623) renumbered parts of the internal ratings-based title and introduced
+binding input floors on the estimated parameters, and the Prudential Regulation Authority
+restated the United Kingdom rulebook in 2025 with its expectations consolidated into supervisory
+statement SS4/24 from January 2026.
+
+**This lecture teaches the mechanics, which are unchanged, and cites requirements rather than
+article numbers wherever the two vintages disagree.** United Kingdom expectations are cited at
+SS4/24 section level. A mapping between the two numberings would be worth having and is not
+worth guessing at.
+:::
+
+# Expected loss, unexpected loss and the gap capital covers
+
+*To be written: the loss distribution, the split between provisions and capital, the accounting
+expected credit loss against the regulatory expected loss, and the shortfall where the two meet
+on a balance sheet.*
+
+# Rating philosophy, and what the regulation forces
+
+*To be written: through the cycle, point in time and dynamic point in time, defined by what
+happens to grade migration and to the observed default rate per grade across the cycle; the
+long-run average requirement; and the procyclicality argument.*
+
+# The five-step sequence
+
+A bank does not produce a regulatory probability of default in one step, and the sequence it
+does follow is the organising structure of everything below.
+
+1. **Point-in-time probability of default estimation.** Fit a model that ranks borrowers by
+   current credit quality.
+2. **Risk grade assignment.** Bin the model's output into a discrete scale.
+3. **Long-run average probability of default.** Calibrate each grade to the average of its
+   observed one-year default rates over a period spanning good and bad years.
+4. **Margin of conservatism.** Add an uplift covering data deficiencies, changes in the
+   business, and the statistical uncertainty in the long-run average itself.
+5. **Regulatory probability of default.** The calibrated probability plus the margin, discrete
+   at the grade level.
+
+Those five split cleanly into two phases, and the split is worth holding onto because the tests
+differ completely between them.
+
+**Risk differentiation** covers steps 1 and 2, and asks a single question: does the model rank
+borrowers correctly? It is judged on discrimination, accuracy, stability and robustness, and it
+is indifferent to the level of the estimates.
+
+**Risk quantification** covers steps 3 to 5, and asks the opposite question: is the level right?
+It is judged on concentration, homogeneity within a grade, heterogeneity between grades,
+migration and calibration accuracy, and it takes the rank ordering as given.
+
+The division has a consequence the lecture should not lose. Strip out the long-run average
+adjustment, the margin of conservatism and the downturn adjustment, and the same models feed
+IFRS 9 expected credit loss. The two frameworks share a rank ordering and differ in calibration,
+which is why a bank builds one scorecard and calibrates it twice.
+
+# The five steps on Bondora
+
+*To be written: the point-in-time model, grade construction and its tests, observed default
+rates by grade and cohort, the long-run average period, the margin of conservatism, and one
+grade traced end to end.*
+
+# The capital formula
+
+*To be written: the single-factor model, the worst-case default rate, the capital requirement
+and the risk weight, the prescribed retail correlations, the risk weight curve, the Bondora
+evaluation, and what the model assumes away.*
+
+# What a validator asks
+
+*To be written: the differentiation tests, the quantification tests and the use test.*
+
+# Takeaways
+
+*To be written.*
+
+# Copyright and attribution {.unnumbered}
+
+*To be written.*
+
+# References {.unnumbered}
+
+*To be written.*
