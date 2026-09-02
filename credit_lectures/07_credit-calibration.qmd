@@ -471,6 +471,13 @@ def decile_table(pred, obs, k=10):
 ```{python}
 #| fig-cap: "Actual against predicted default rate by decile of the predictor, out-of-sample. The left panel is the logistic GLM, whose deciles sit close to the diagonal. The right panel is the same GLM shrunk 70 per cent towards the portfolio mean, which holds the balance property exactly and preserves the risk ranking exactly. Its lowest decile is charged 23.3 per cent against a realised 9.6, and its highest is charged 38.9 against a realised 62.3, so the safest decile pays 13.7 percentage points more than it costs while the riskiest pays 23.4 points less."
 q_shrunk = p_bar + 0.3 * (p_glm_t - p_bar)
+tab_shrunk, _ = decile_table(q_shrunk, y_test)
+print("shrunk predictor, decile 1 and decile 10 (test sample)")
+for j in (0, 9):
+    r = tab_shrunk.iloc[j]
+    print(f"  decile {int(r['bin']):2d}: charged {r['pred']:.4f}  realised {r['obs']:.4f}  "
+          f"transfer {r['pred'] - r['obs']:+.4f}")
+
 fig, axes = plt.subplots(1, 2, figsize=(7.6, 3.5), sharex=True, sharey=True)
 for ax, (lbl, p) in zip(axes, [("GLM", p_glm_t), (r"GLM shrunk, $\lambda=0.3$", q_shrunk)]):
     t, _ = decile_table(p, y_test)
@@ -586,6 +593,9 @@ plt.tight_layout(); plt.show()
 
 for lbl, p in [("GLM", p_glm_t), ("FNN", p_fnn_t)]:
     rc = IsotonicRegression(out_of_bounds="clip").fit(p, y_test).predict(p)
+    tail = p >= 0.6
+    print(f"{lbl}: above a predicted 0.60, n = {tail.sum():4d}, mean charged "
+          f"{p[tail].mean():.4f} against a realised {y_test[tail].mean():.4f}")
     print(f"{lbl}: isotonic blocks {np.unique(rc).size:3d};  "
           f"largest |prediction - recalibrated| {np.abs(p - rc).max():.4f};  "
           f"miscalibration {msc_isotonic(p, y_test):.4f} deviance points")
@@ -687,9 +697,10 @@ cannot support.
 An isotonic recalibration assigns each block the observed default rate
 inside it, so a block containing no defaults receives a PD of exactly
 zero. On the test sample above the recalibrated network assigns exactly
-zero to five loans and exactly one to two more. A PD of zero is
-inadmissible in a regulatory model, because the CRR carries a floor of
-0.03 per cent on non-defaulted exposures. It is also inadmissible
+zero to five loans and exactly one to two more. A PD of zero is inadmissible in a regulatory model, because the CRR
+floors PD at 0.03 per cent for the non-defaulted exposure classes it
+names. Which classes those are, and what the floor became under CRR3,
+belong with the IRB capital lecture that carries the sourcing. It is also inadmissible
 arithmetically, since a single default inside such a block makes the log
 likelihood infinite. Any production recalibration therefore needs a
 floor and a cap, and the choice of both is a modelling decision to be
@@ -1086,23 +1097,24 @@ repaired after it.
 
 # Copyright and attribution {.unnumbered}
 
-This document adapts the storyline, structure and notation of *Lecture
+This document adapts the storyline, structure, and notation of *Lecture
 7: Balance Property, Auto-Calibration and Lift Charts* from the summer
 school
 **Deep Learning for Actuarial Modeling** (Scognamiglio, Maggi and
 Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of
 the project *AI Tools for Actuaries*, used under CC BY-NC 4.0. Changes
 made: the Poisson claim-frequency thread is recast as the Bernoulli
-default thread on the public Bondora loan book, the code is Python with
-PyTorch, scikit-learn and statsmodels rather than R with `locfit`, and
-the following are new: the measurement that in-sample balance does not
+default thread on the public Bondora loan book, the code is Python with PyTorch, scikit-learn, and statsmodels rather
+than R with `locfit`, and the following are new: the measurement that in-sample balance does not
 deliver out-of-sample unbiasedness, the shrinkage counterexample of a
 predictor that balances exactly while cross-financing badly, the
 under-spread and over-spread reading of the decile tables, the repair
 hierarchy with both repairs measured in and out of sample, the finding
-that an in-sample balance correction worsened out-of-sample balance, the
-promotion of the Gini appendix to the main argument together with the
-invariance table and its two-panel figure, the PD-of-zero caution on
+that an in-sample balance correction worsened out-of-sample balance, the substitution of the fourth and fifth lecture's network for the
+course's second motor GLM as the comparison model, on which the lift-
+chart and double-lift sections rest, the promotion of the Gini appendix
+to the main argument together with the invariance table and its two-
+panel figure, the PD-of-zero caution on
 isotonic recalibration, the log-loss rescaling that reconciles Murphy's
 decomposition with the series' deviance scale, and the out-of-time
 calibration contrast. The numerical results concern the credit data

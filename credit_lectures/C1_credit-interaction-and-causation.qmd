@@ -436,7 +436,7 @@ pointing the other way, and the mechanism is mechanical: among loans that were r
 high-income borrower is there disproportionately because the loan went bad, so income and
 default acquire a spurious positive association inside the stratum.
 
-Now the part that should worry a model developer.
+Now the part that should worry a model developer, because it is what a selection procedure sees.
 
 ```{python}
 for name, mod in [("without Review", correct), ("with Review", with_col)]:
@@ -531,6 +531,16 @@ by construction. Estimating the total effect of age would need a model **without
 which is a different model. Furthermore, the age coefficients could be confounded even though the
 income coefficient is not, since a cause of both age band and default that does not cause income
 would bias these rows and leave the income row alone.
+
+**And one row that is not an estimate at all.** `AgeClass[T.71+]` prints a coefficient of
+-21.9175 with a standard error of 12,848.99 and a p-value of 0.9986. That is complete separation
+rather than a finding: the class holds 13 loans and none of them defaulted, so the likelihood is
+maximised by driving the coefficient to minus infinity and the optimiser stopped where it ran out
+of patience. Section 3's positivity condition is failing here in the most visible way it ever
+does, and it is failing inside a table whose other rows are being read as drivers. A model
+document that prints this row unremarked has printed a number with no content, and the giveaway
+is the standard error rather than the coefficient. Collapsing `71+` into `61-70` is the fix, and
+noticing is the skill.
 
 ::: {.callout-tip icon=false title="What the sources recommend instead"}
 Three changes, and none of them costs predictive performance, because none of them touches the
@@ -757,11 +767,134 @@ makes an E-value of 1.34 legible.
 
 # Fairness is a causal claim
 
-Intent: work the Bondora gender differential honestly, show what a raw differential does and
-does not license, and cite why the candidate fairness criteria cannot all hold at once. One
-section, and no metrics tournament.
+A statement that a model discriminates is a statement about what would have happened to the same
+applicant under a different protected characteristic. That is a counterfactual, so a
+discrimination finding inherits every identification condition in section 3 and every reading
+restriction in section 6. This section works the Bondora gender differential far enough to show
+what a raw differential does and does not license, and it stops there. A tournament of fairness
+metrics would be a different lecture and a worse one.
+
+```{python}
+gender_tab = (model_dat.group_by("Gender")
+    .agg(pl.len().alias("n"),
+         pl.col("default_12m").mean().round(4).alias("default rate"))
+    .sort("n", descending=True))
+print(gender_tab)
+print("\nGender == 2, by country:")
+print(model_dat.filter(pl.col("Gender") == 2)
+      .group_by("Country").agg(pl.len().alias("n")).sort("n", descending=True))
+```
+
+Start with the thing that would wreck the analysis if it went unnoticed. Bondora codes gender as
+0 for male, 1 for female and 2 for undisclosed, and the undisclosed group carries the highest
+default rate in the book at 55.9 per cent. It is also, to within sixteen loans out of 12,180,
+entirely Spanish. So `Gender == 2` is not a third gender group with a striking risk profile: it is
+a Spanish listing convention wearing a gender label, and its 55.9 per cent rate is Spain's 55.4
+per cent rate. A model that one-hot encodes gender and reports the coefficient on the undisclosed
+level has put a country marker into a gender variable and will report it as a gender effect.
+Whether gender was recorded depends on the market, which makes the recording indicator a
+descendant of country, and section 5's rules apply to it unchanged.
+
+```{python}
+fair = dat.copy()
+fair["Gender"] = model_dat["Gender"].to_pandas()
+fair = fair[fair["Gender"].isin([0, 1])].copy()
+fair["G"] = fair["Gender"].map({0: "male", 1: "female"})
+
+raw_rates = fair.groupby("G")["default_12m"].agg(["size", "mean"])
+raw_odds = raw_rates["mean"] / (1 - raw_rates["mean"])
+print(raw_rates.round(4))
+print(f"\nraw difference (male - female): "
+      f"{(raw_rates.loc['male', 'mean'] - raw_rates.loc['female', 'mean']) * 100:+.2f} pp")
+print(f"raw odds ratio (male vs female): {raw_odds['male'] / raw_odds['female']:.4f}")
+
+adj = smf.glm("default_12m ~ AgeClass + logIncome + Country + G",
+              data=fair, family=sm.families.Binomial()).fit()
+print(f"\nadjusted for age, income and country:")
+print(f"  G[male] coefficient {adj.params['G[T.male]']:+.4f}   "
+      f"odds ratio {np.exp(adj.params['G[T.male]']):.4f}   p {adj.pvalues['G[T.male]']:.2g}")
+```
+
+The differential is large and adjustment barely touches it. Male borrowers default at 28.7 per
+cent against 21.9 per cent for female borrowers, a gap of 6.8 percentage points and a raw odds
+ratio of 1.436. Conditioning on age class, log-income and country moves the odds ratio to 1.388,
+so composition across those three explains around a tenth of it. A validator handed this table
+would be entitled to ask what is going on, and would be wrong to conclude anything about
+discrimination from it.
+
+Three obstacles stand between that table and a discrimination finding, and they are the three
+conditions of section 3 wearing different clothes.
+
+**Consistency, and it is fatal here.** What intervention does the coefficient estimate? The
+counterfactual "this borrower had they been female" is undefined until somebody says what else
+would have changed, and in a lending context nearly everything would: labour market
+participation, sector, income trajectory, household role in the credit application, and the
+platform's own historical pricing. This is precisely the objection section 6 raised against the
+country coefficients, and it lands harder here because the policy stakes invite the causal
+reading. The literature's response is to define the estimand as an intervention on a specific
+mechanism, e.g. the applicant's recorded gender **as seen by the decision process**, which is a
+question about the lender's conduct and answerable, rather than an intervention on the person.
+
+**Exchangeability, with an adjustment set nobody can specify.** Adjusting for income and country
+narrows the gap by a tenth. Adjusting for employment sector, tenure and household composition
+would narrow it further, and every one of those is plausibly a mediator of the gender effect
+rather than a confounder of it. So conditioning on them removes part of the very thing under
+investigation, exactly as conditioning on `Interest` removed part of the country effect in
+section 5.2. Hence there is no adjustment set that is obviously correct, and the choice of set
+determines the answer.
+
+**Positivity, unevenly.** Female borrowers are 5.2 per cent of the Spanish book against 12.9 per
+cent of the male book, so the Spanish cell that drives the portfolio's default rate is the cell
+where the comparison is thinnest.
+
+The formal obstacle sits behind all three. The candidate fairness criteria cannot all hold at
+once: demographic parity, equalised odds and calibration within groups are mutually incompatible
+except in degenerate cases, so choosing a fairness definition is choosing which fairness to give
+up. Consequently a lender cannot satisfy fairness in general and must state which criterion it
+has adopted and why, and that is a governance decision rather than a modelling one.
+
+What the Bondora table does license is worth saying, because a lecture that only forbids is
+useless. It licenses the observation that a 6.8 point differential exists and survives adjustment
+for the three covariates GLM3 holds, which is a reason to investigate rather than a finding. It
+licenses a monitoring metric. And it licenses one concrete design instruction: keep the
+undisclosed level out of any gender variable, since including it imports a country effect and
+would produce a "gender" finding that is really a Spanish one.
 
 # What this means for a model built to predict
 
-Intent: close on the constructive position. Nothing here says the model is wrong. It says which
-sentences in the model document are unsupported by the model that produced them.
+Nothing in this lecture says GLM3 is a bad model. Its discrimination, its calibration and its
+stability are properties of the fitted mapping, and they are untouched by whether any coefficient
+in it identifies an effect. A scorecard exists to rank and to price, and it does that job or
+fails at it on evidence this lecture has not examined.
+
+What the lecture changes is which sentences may appear in the document that accompanies the
+model. Four claims from lecture 1's own worked example turned out to need different treatment, and
+they are a fair sample of what a model document usually contains.
+
+The income coefficient's sign flip **was** evidence about composition, exactly as lecture 1 said,
+and the graph in section 5 is what turns that claim from a plausible story into a reviewable one. The
+income coefficient **may** be read as an effect conditional on age and market, and section 7
+converts it into the marginal quantity a policy discussion actually wants: quadrupling declared
+income is associated with 1.9 fewer percentage points of twelve-month default risk, standardised
+over the observed portfolio. That reading survives only under exchangeability, and section 8
+prices exchangeability at an E-value of 1.34, which is weak enough that the sentence belongs in
+the document with the number attached.
+
+The country coefficients and the age-class coefficients **may not** be read as effects at all, and
+one of the age rows is not an estimate. Neither restriction requires refitting anything. Both
+require a footnote.
+
+Two habits generalise beyond this portfolio. Choose the adjustment set for one covariate, name
+which one, and mark every other coefficient in the table as a conditional association rather than
+a driver. And where a covariate is added because it lifts the Gini, check what it is on the graph
+before believing what it does to the other coefficients: section 5.3's constructed collider
+improved AIC by 29,822 while reversing the sign of the effect under study, and nothing in a
+conventional model-selection report would have caught it.
+
+The deeper point is the one lecture 1 was already acting on without the vocabulary. Deep learning
+models absorb composition effects silently, and the more flexible the model, the more of section
+5's structure disappears into the fitted surface where no coefficient table can show it. A
+network fits every interaction the data suggest on whatever scale its output layer imposes, so
+the scale question of section 4 survives the loss of a linear predictor and merely stops being
+visible. Attribution methods promise to put it back, and whether they can is the subject of `C2`.
+

@@ -66,6 +66,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
@@ -129,7 +132,20 @@ window.Quarto = {
   <li><a href="#the-same-data-calibrated-twice" id="toc-the-same-data-calibrated-twice" class="nav-link" data-scroll-target="#the-same-data-calibrated-twice"><span class="header-section-number">4.4</span> The same data, calibrated twice</a></li>
   </ul></li>
   <li><a href="#the-five-step-sequence" id="toc-the-five-step-sequence" class="nav-link" data-scroll-target="#the-five-step-sequence"><span class="header-section-number">5</span> The five-step sequence</a></li>
-  <li><a href="#the-five-steps-on-bondora" id="toc-the-five-steps-on-bondora" class="nav-link" data-scroll-target="#the-five-steps-on-bondora"><span class="header-section-number">6</span> The five steps on Bondora</a></li>
+  <li><a href="#the-five-steps-on-bondora" id="toc-the-five-steps-on-bondora" class="nav-link" data-scroll-target="#the-five-steps-on-bondora"><span class="header-section-number">6</span> The five steps on Bondora</a>
+  <ul class="collapse">
+  <li><a href="#step-1-the-point-in-time-model" id="toc-step-1-the-point-in-time-model" class="nav-link" data-scroll-target="#step-1-the-point-in-time-model"><span class="header-section-number">6.1</span> Step 1: the point-in-time model</a></li>
+  <li><a href="#step-2-risk-grades" id="toc-step-2-risk-grades" class="nav-link" data-scroll-target="#step-2-risk-grades"><span class="header-section-number">6.2</span> Step 2: risk grades</a></li>
+  <li><a href="#step-3-observed-default-rates-by-grade-and-cohort" id="toc-step-3-observed-default-rates-by-grade-and-cohort" class="nav-link" data-scroll-target="#step-3-observed-default-rates-by-grade-and-cohort"><span class="header-section-number">6.3</span> Step 3: observed default rates by grade and cohort</a></li>
+  <li><a href="#step-4-the-long-run-average-and-the-period-it-is-taken-over" id="toc-step-4-the-long-run-average-and-the-period-it-is-taken-over" class="nav-link" data-scroll-target="#step-4-the-long-run-average-and-the-period-it-is-taken-over"><span class="header-section-number">6.4</span> Step 4: the long-run average, and the period it is taken over</a>
+  <ul class="collapse">
+  <li><a href="#deriving-an-economic-factor" id="toc-deriving-an-economic-factor" class="nav-link" data-scroll-target="#deriving-an-economic-factor"><span class="header-section-number">6.4.1</span> Deriving an economic factor</a></li>
+  <li><a href="#classifying-good-and-bad-years-and-marking-the-cycle" id="toc-classifying-good-and-bad-years-and-marking-the-cycle" class="nav-link" data-scroll-target="#classifying-good-and-bad-years-and-marking-the-cycle"><span class="header-section-number">6.4.2</span> Classifying good and bad years, and marking the cycle</a></li>
+  <li><a href="#testing-the-window" id="toc-testing-the-window" class="nav-link" data-scroll-target="#testing-the-window"><span class="header-section-number">6.4.3</span> Testing the window</a></li>
+  </ul></li>
+  <li><a href="#step-5-the-margin-of-conservatism" id="toc-step-5-the-margin-of-conservatism" class="nav-link" data-scroll-target="#step-5-the-margin-of-conservatism"><span class="header-section-number">6.5</span> Step 5: the margin of conservatism</a></li>
+  <li><a href="#one-grade-end-to-end" id="toc-one-grade-end-to-end" class="nav-link" data-scroll-target="#one-grade-end-to-end"><span class="header-section-number">6.6</span> One grade, end to end</a></li>
+  </ul></li>
   <li><a href="#the-capital-formula" id="toc-the-capital-formula" class="nav-link" data-scroll-target="#the-capital-formula"><span class="header-section-number">7</span> The capital formula</a></li>
   <li><a href="#what-a-validator-asks" id="toc-what-a-validator-asks" class="nav-link" data-scroll-target="#what-a-validator-asks"><span class="header-section-number">8</span> What a validator asks</a></li>
   <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways"><span class="header-section-number">9</span> Takeaways</a></li>
@@ -262,7 +278,7 @@ Z_u = -\Phi^{-1}(0.999)
 <section id="expected-loss-unexpected-loss-and-the-gap-capital-covers" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Expected loss, unexpected loss and the gap capital covers</h1>
 <p>Everything downstream rests on one picture, so it is worth drawing before any formula. A credit portfolio has a distribution of losses over the coming year. That distribution is heavily right skewed, because most years are unremarkable and a few are catastrophic, and the framework picks two points on it.</p>
-<div id="5a4b475b" class="cell" data-execution_count="1">
+<div id="c8e79a2b" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -279,7 +295,7 @@ Z_u = -\Phi^{-1}(0.999)
 <span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#1F4E79"</span></span>
 <span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>N, G <span class="op">=</span> norm.cdf, norm.ppf</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div id="317c0969" class="cell" data-execution_count="2">
+<div id="213054a5" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> vasicek_pdf(x, p, rho):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Density of the asymptotic single-factor loss rate."""</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    a, b <span class="op">=</span> G(x), G(p)</span>
@@ -467,7 +483,977 @@ Z_u = -\Phi^{-1}(0.999)
 </section>
 <section id="the-five-steps-on-bondora" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> The five steps on Bondora</h1>
-<p><em>To be written: the point-in-time model, grade construction and its tests, observed default rates by grade and cohort, the long-run average period, the margin of conservatism, and one grade traced end to end.</em></p>
+<div class="callout callout-style-default callout-important no-icon callout-titled" title="What this demonstration is and is not">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>What this demonstration is and is not
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Bondora is a peer-to-peer marketplace lender. It has no internal ratings-based permission, it will never apply for one, and its book breaks several of the assumptions the capital formula rests on. <strong>Every number below illustrates a mechanic and none of them measures capital.</strong></p>
+<p>Three departures from a bank’s version are worth naming before they cause confusion.</p>
+<p>The modelling table carries <strong>one row per loan</strong> with the outcome window opening at origination, so a cohort here is an origination vintage rather than a calendar snapshot of the whole book. That is a legitimate reading of a one-year default rate and it is not the one a bank uses, and it means grade <strong>migration cannot be shown at all</strong>, since no loan is observed in two grades.</p>
+<p>The book is <strong>small and young</strong>: twelve origination years, of which the first four contribute a few hundred loans each.</p>
+<p>The <strong>default rate is enormous</strong>. Roughly 29 per cent of these loans default within twelve months of origination, which is one to two orders of magnitude above a bank’s retail book. That turns out to matter in section 7, where the capital formula does something surprising.</p>
+</div>
+</div>
+<section id="step-1-the-point-in-time-model" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="step-1-the-point-in-time-model"><span class="header-section-number">6.1</span> Step 1: the point-in-time model</h2>
+<p>The scorecard is lecture 1’s GLM3, reused unchanged so the two lectures agree: a Bernoulli regression with a logit link on age class, log income and country, fitted to the twelve-month default flag. It is a deliberately thin model, and section 8 asks what a validator would make of it.</p>
+<div id="e24eafb8" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log()))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>AGE_CUTS <span class="op">=</span> [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>]</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>AGE_LABELS <span class="op">=</span> [<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61-70"</span>, <span class="st">"71+"</span>]</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>book <span class="op">=</span> model_dat.select(</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"LoanDate"</span>, <span class="st">"Rating"</span>]).to_pandas()</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>book[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(book[<span class="st">"Age"</span>], AGE_CUTS, labels<span class="op">=</span>AGE_LABELS, include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>book[<span class="st">"cohort"</span>] <span class="op">=</span> pd.to_datetime(book[<span class="st">"LoanDate"</span>]).dt.year</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>pit_model <span class="op">=</span> smf.glm(<span class="st">"default_12m ~ AgeClass + logIncome + Country"</span>,</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>                    data<span class="op">=</span>book, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>book[<span class="st">"pit"</span>] <span class="op">=</span> pit_model.predict(book)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"loans </span><span class="sc">{</span><span class="bu">len</span>(book)<span class="sc">:,}</span><span class="ss">   observed default rate </span><span class="sc">{</span>book<span class="sc">.</span>default_12m<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss">   "</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"mean fitted PD </span><span class="sc">{</span>book<span class="sc">.</span>pit<span class="sc">.</span>mean()<span class="sc">:.2%}</span><span class="ss">"</span>)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"fitted PD spans </span><span class="sc">{</span>book<span class="sc">.</span>pit<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.2%}</span><span class="ss"> to </span><span class="sc">{</span>book<span class="sc">.</span>pit<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.2%}</span><span class="ss">   "</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"cohorts </span><span class="sc">{</span>book<span class="sc">.</span>cohort<span class="sc">.</span><span class="bu">min</span>()<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>book<span class="sc">.</span>cohort<span class="sc">.</span><span class="bu">max</span>()<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>loans 148,670   observed default rate 28.95%   mean fitted PD 28.95%
+fitted PD spans 0.00% to 80.77%   cohorts 2009 to 2020</code></pre>
+</div>
+</div>
+<p>The fitted probability and the observed rate agree at the portfolio level, which they must for a generalised linear model with a canonical link and an intercept. That is the balance property the course lecture 7 makes so much of, and it is worth noticing that it holds here for free and will not survive step 3.</p>
+</section>
+<section id="step-2-risk-grades" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="step-2-risk-grades"><span class="header-section-number">6.2</span> Step 2: risk grades</h2>
+<p>Grade construction is the step where regulation, rather than statistics, decides the answer. The requirements are that the scale be discrete, that probabilities rise monotonically across it, that no grade holds too little of the portfolio to calibrate reliably or so much that it encodes nothing, that borrowers within a grade have similar default rates, and that adjacent grades have different ones. A bank must also maintain at least seven grades for non-defaulted exposures plus one for those in default.</p>
+<p>The procedure follows from those constraints. Rank the book on the fitted probability, cut it into fine bins, then merge adjacent bins until every constraint holds.</p>
+<div id="2e7afb07" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>MIN_SHARE, MAX_SHARE <span class="op">=</span> <span class="fl">0.01</span>, <span class="fl">0.30</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_grades(pit, y, n_fine, min_share<span class="op">=</span>MIN_SHARE):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Fine quantile bins, merged upwards until the volume floor and monotone</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co">    observed default rates both hold. Merging adjacent bins is the only move,</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="co">    so the grades stay intervals of the score."""</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    edges <span class="op">=</span> np.unique(np.quantile(pit, np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, n_fine <span class="op">+</span> <span class="dv">1</span>)))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    edges[<span class="dv">0</span>], edges[<span class="op">-</span><span class="dv">1</span>] <span class="op">=</span> <span class="op">-</span>np.inf, np.inf</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    fine <span class="op">=</span> np.digitize(pit, edges[<span class="dv">1</span>:<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    groups <span class="op">=</span> [[k] <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(fine.<span class="bu">max</span>() <span class="op">+</span> <span class="dv">1</span>)]</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    n_tot <span class="op">=</span> <span class="bu">len</span>(pit)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> stat(gr):</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>        m <span class="op">=</span> np.isin(fine, gr)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> m.<span class="bu">sum</span>(), y[m].mean()</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1000</span>):</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> [stat(gr) <span class="cf">for</span> gr <span class="kw">in</span> groups]</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>        small <span class="op">=</span> [i <span class="cf">for</span> i, (n, _) <span class="kw">in</span> <span class="bu">enumerate</span>(s) <span class="cf">if</span> n <span class="op">&lt;</span> min_share <span class="op">*</span> n_tot]</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> small:                                   <span class="co"># volume floor first</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>            i <span class="op">=</span> small[<span class="dv">0</span>]</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>            j <span class="op">=</span> i <span class="op">+</span> <span class="dv">1</span> <span class="cf">if</span> i <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> i <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>            groups[<span class="bu">min</span>(i, j)] <span class="op">=</span> <span class="bu">sorted</span>(groups[i] <span class="op">+</span> groups[j])</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>            <span class="kw">del</span> groups[<span class="bu">max</span>(i, j)]</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>        breaks <span class="op">=</span> [i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(s) <span class="op">-</span> <span class="dv">1</span>) <span class="cf">if</span> s[i][<span class="dv">1</span>] <span class="op">&gt;=</span> s[i <span class="op">+</span> <span class="dv">1</span>][<span class="dv">1</span>]]</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> breaks:                                  <span class="co"># then monotonicity</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>            i <span class="op">=</span> breaks[<span class="dv">0</span>]</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>            groups[i] <span class="op">=</span> <span class="bu">sorted</span>(groups[i] <span class="op">+</span> groups[i <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>            <span class="kw">del</span> groups[i <span class="op">+</span> <span class="dv">1</span>]</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    lab <span class="op">=</span> np.empty(<span class="bu">len</span>(pit), dtype<span class="op">=</span><span class="bu">int</span>)</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> k, gr <span class="kw">in</span> <span class="bu">enumerate</span>(groups, start<span class="op">=</span><span class="dv">1</span>):</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>        lab[np.isin(fine, gr)] <span class="op">=</span> k</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> lab</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>How fine to cut before merging is the one free parameter, and it decides how many grades come out. The guides’ own process tests several candidate schemes against the regulatory objectives and picks one, so this does the same.</p>
+<div id="2fcda6e0" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> z_between(n1, d1, n2, d2):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Two-proportion z-test on adjacent grades. Small p means they differ."""</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    p1, p2 <span class="op">=</span> d1 <span class="op">/</span> n1, d2 <span class="op">/</span> n2</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> (d1 <span class="op">+</span> d2) <span class="op">/</span> (n1 <span class="op">+</span> n2)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    se <span class="op">=</span> np.sqrt(p <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> p) <span class="op">*</span> (<span class="dv">1</span> <span class="op">/</span> n1 <span class="op">+</span> <span class="dv">1</span> <span class="op">/</span> n2))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">2</span> <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> sps.norm.cdf(<span class="bu">abs</span>(p1 <span class="op">-</span> p2) <span class="op">/</span> se)) <span class="cf">if</span> se <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="fl">1.0</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> chi2_within(y, rng, reps<span class="op">=</span><span class="dv">20</span>, rate<span class="op">=</span><span class="fl">0.05</span>):</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Chi-square across bootstrapped subsamples of one grade. Small p means the</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co">    grade is not homogeneous."""</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    base, obs, exp <span class="op">=</span> y.mean(), [], []</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(reps):</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        s <span class="op">=</span> y[rng.random(<span class="bu">len</span>(y)) <span class="op">&lt;</span> rate]</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(s) <span class="op">&lt;</span> <span class="dv">30</span>:</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        obs.append(s.<span class="bu">sum</span>())<span class="op">;</span> exp.append(base <span class="op">*</span> <span class="bu">len</span>(s))</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(obs) <span class="op">&lt;</span> <span class="dv">5</span>:</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">1.0</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    obs, exp <span class="op">=</span> np.array(obs), np.array(exp)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">1</span> <span class="op">-</span> sps.chi2.cdf(((obs <span class="op">-</span> exp) <span class="op">**</span> <span class="dv">2</span> <span class="op">/</span> exp).<span class="bu">sum</span>(), <span class="bu">len</span>(obs) <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">7</span>)</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>candidates <span class="op">=</span> []</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n_fine <span class="kw">in</span> (<span class="dv">10</span>, <span class="dv">15</span>, <span class="dv">25</span>, <span class="dv">50</span>):</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    lab <span class="op">=</span> build_grades(book.pit.values, book.default_12m.values, n_fine)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> pd.DataFrame({<span class="st">"grade"</span>: lab, <span class="st">"y"</span>: book.default_12m.values})</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    agg <span class="op">=</span> t.groupby(<span class="st">"grade"</span>).agg(n<span class="op">=</span>(<span class="st">"y"</span>, <span class="st">"size"</span>), d<span class="op">=</span>(<span class="st">"y"</span>, <span class="st">"sum"</span>), odr<span class="op">=</span>(<span class="st">"y"</span>, <span class="st">"mean"</span>))</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>    share <span class="op">=</span> agg.n <span class="op">/</span> <span class="bu">len</span>(t)</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>    het <span class="op">=</span> [z_between(agg.n.iloc[i], agg.d.iloc[i], agg.n.iloc[i <span class="op">+</span> <span class="dv">1</span>], agg.d.iloc[i <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>           <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(agg) <span class="op">-</span> <span class="dv">1</span>)]</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    hom <span class="op">=</span> [chi2_within(t.y[t.grade <span class="op">==</span> k].values, rng) <span class="cf">for</span> k <span class="kw">in</span> agg.index]</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    candidates.append({</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>        <span class="st">"fine bins"</span>: n_fine, <span class="st">"grades"</span>: <span class="bu">len</span>(agg),</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>        <span class="st">"min %"</span>: <span class="bu">round</span>(share.<span class="bu">min</span>() <span class="op">*</span> <span class="dv">100</span>, <span class="dv">2</span>), <span class="st">"max %"</span>: <span class="bu">round</span>(share.<span class="bu">max</span>() <span class="op">*</span> <span class="dv">100</span>, <span class="dv">2</span>),</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>        <span class="st">"HHI"</span>: <span class="bu">round</span>((share <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>(), <span class="dv">4</span>),</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>        <span class="st">"heterogeneity fails %"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> np.mean(np.array(het) <span class="op">&gt;</span> <span class="fl">0.10</span>), <span class="dv">1</span>),</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>        <span class="st">"homogeneity fails %"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> np.mean(np.array(hom) <span class="op">&lt;</span> <span class="fl">0.05</span>), <span class="dv">1</span>)})</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(candidates).set_index(<span class="st">"fine bins"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="9">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">grades</th>
+<th data-quarto-table-cell-role="th">min %</th>
+<th data-quarto-table-cell-role="th">max %</th>
+<th data-quarto-table-cell-role="th">HHI</th>
+<th data-quarto-table-cell-role="th">heterogeneity fails %</th>
+<th data-quarto-table-cell-role="th">homogeneity fails %</th>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">fine bins</th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">10</th>
+<td>9</td>
+<td>9.65</td>
+<td>19.98</td>
+<td>0.1200</td>
+<td>0.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">15</th>
+<td>13</td>
+<td>6.49</td>
+<td>13.13</td>
+<td>0.0834</td>
+<td>16.7</td>
+<td>0.0</td>
+</tr>
+<tr class="odd">
+<th data-quarto-table-cell-role="th">25</th>
+<td>21</td>
+<td>3.64</td>
+<td>11.93</td>
+<td>0.0559</td>
+<td>45.0</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<th data-quarto-table-cell-role="th">50</th>
+<td>30</td>
+<td>1.70</td>
+<td>11.93</td>
+<td>0.0496</td>
+<td>72.4</td>
+<td>0.0</td>
+</tr>
+</tbody>
+</table>
+
+</div>
+</div>
+</div>
+<p>That table earns its place, because the trade-off in it is the whole reason grade construction is iterative. Every scheme is monotone and every scheme clears the volume bounds and the concentration test, since the merging procedure enforces all three by construction. What granularity costs is <strong>separation</strong>: at nine grades no adjacent pair is statistically indistinguishable, at thirteen one pair in six is, and at thirty nearly three quarters are. A finer scale looks more discriminating and is mostly reporting noise.</p>
+<p>Nine grades it is. That clears the seven-grade minimum with room to spare and passes every test.</p>
+<div id="47cbc3f3" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>book[<span class="st">"grade"</span>] <span class="op">=</span> build_grades(book.pit.values, book.default_12m.values, <span class="dv">10</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>grades <span class="op">=</span> (book.groupby(<span class="st">"grade"</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>              .agg(loans<span class="op">=</span>(<span class="st">"default_12m"</span>, <span class="st">"size"</span>), defaults<span class="op">=</span>(<span class="st">"default_12m"</span>, <span class="st">"sum"</span>),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                   odr<span class="op">=</span>(<span class="st">"default_12m"</span>, <span class="st">"mean"</span>), pd_lo<span class="op">=</span>(<span class="st">"pit"</span>, <span class="st">"min"</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                   pd_hi<span class="op">=</span>(<span class="st">"pit"</span>, <span class="st">"max"</span>), pd_mean<span class="op">=</span>(<span class="st">"pit"</span>, <span class="st">"mean"</span>)))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>grades[<span class="st">"share"</span>] <span class="op">=</span> grades.loans <span class="op">/</span> <span class="bu">len</span>(book)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>grades[[<span class="st">"loans"</span>, <span class="st">"defaults"</span>, <span class="st">"share"</span>, <span class="st">"pd_lo"</span>, <span class="st">"pd_hi"</span>, <span class="st">"pd_mean"</span>, <span class="st">"odr"</span>]].style.<span class="bu">format</span>({</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"loans"</span>: <span class="st">"</span><span class="sc">{:,.0f}</span><span class="st">"</span>, <span class="st">"defaults"</span>: <span class="st">"</span><span class="sc">{:,.0f}</span><span class="st">"</span>, <span class="st">"share"</span>: <span class="st">"</span><span class="sc">{:.1%}</span><span class="st">"</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"pd_lo"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"pd_hi"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"pd_mean"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"odr"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="10">
+<style type="text/css">
+</style>
+
+<table id="T_4b84d" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_4b84d_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">loans</th>
+<th id="T_4b84d_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">defaults</th>
+<th id="T_4b84d_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">share</th>
+<th id="T_4b84d_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">pd_lo</th>
+<th id="T_4b84d_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">pd_hi</th>
+<th id="T_4b84d_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">pd_mean</th>
+<th id="T_4b84d_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">odr</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col5" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col6" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_4b84d_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_4b84d_row0_col0" class="data row0 col0">29,701</td>
+<td id="T_4b84d_row0_col1" class="data row0 col1">4,133</td>
+<td id="T_4b84d_row0_col2" class="data row0 col2">20.0%</td>
+<td id="T_4b84d_row0_col3" class="data row0 col3">0.00%</td>
+<td id="T_4b84d_row0_col4" class="data row0 col4">14.90%</td>
+<td id="T_4b84d_row0_col5" class="data row0 col5">14.07%</td>
+<td id="T_4b84d_row0_col6" class="data row0 col6">13.92%</td>
+</tr>
+<tr class="even">
+<th id="T_4b84d_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_4b84d_row1_col0" class="data row1 col0">14,351</td>
+<td id="T_4b84d_row1_col1" class="data row1 col1">2,136</td>
+<td id="T_4b84d_row1_col2" class="data row1 col2">9.7%</td>
+<td id="T_4b84d_row1_col3" class="data row1 col3">14.90%</td>
+<td id="T_4b84d_row1_col4" class="data row1 col4">15.73%</td>
+<td id="T_4b84d_row1_col5" class="data row1 col5">15.33%</td>
+<td id="T_4b84d_row1_col6" class="data row1 col6">14.88%</td>
+</tr>
+<tr class="odd">
+<th id="T_4b84d_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_4b84d_row2_col0" class="data row2 col0">15,413</td>
+<td id="T_4b84d_row2_col1" class="data row2 col1">2,531</td>
+<td id="T_4b84d_row2_col2" class="data row2 col2">10.4%</td>
+<td id="T_4b84d_row2_col3" class="data row2 col3">15.73%</td>
+<td id="T_4b84d_row2_col4" class="data row2 col4">16.59%</td>
+<td id="T_4b84d_row2_col5" class="data row2 col5">16.06%</td>
+<td id="T_4b84d_row2_col6" class="data row2 col6">16.42%</td>
+</tr>
+<tr class="even">
+<th id="T_4b84d_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_4b84d_row3_col0" class="data row3 col0">14,869</td>
+<td id="T_4b84d_row3_col1" class="data row3 col1">2,763</td>
+<td id="T_4b84d_row3_col2" class="data row3 col2">10.0%</td>
+<td id="T_4b84d_row3_col3" class="data row3 col3">16.60%</td>
+<td id="T_4b84d_row3_col4" class="data row3 col4">21.17%</td>
+<td id="T_4b84d_row3_col5" class="data row3 col5">18.73%</td>
+<td id="T_4b84d_row3_col6" class="data row3 col6">18.58%</td>
+</tr>
+<tr class="odd">
+<th id="T_4b84d_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_4b84d_row4_col0" class="data row4 col0">14,768</td>
+<td id="T_4b84d_row4_col1" class="data row4 col1">3,962</td>
+<td id="T_4b84d_row4_col2" class="data row4 col2">9.9%</td>
+<td id="T_4b84d_row4_col3" class="data row4 col3">21.19%</td>
+<td id="T_4b84d_row4_col4" class="data row4 col4">34.21%</td>
+<td id="T_4b84d_row4_col5" class="data row4 col5">27.14%</td>
+<td id="T_4b84d_row4_col6" class="data row4 col6">26.83%</td>
+</tr>
+<tr class="even">
+<th id="T_4b84d_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_4b84d_row5_col0" class="data row5 col0">14,967</td>
+<td id="T_4b84d_row5_col1" class="data row5 col1">5,315</td>
+<td id="T_4b84d_row5_col2" class="data row5 col2">10.1%</td>
+<td id="T_4b84d_row5_col3" class="data row5 col3">34.21%</td>
+<td id="T_4b84d_row5_col4" class="data row5 col4">36.78%</td>
+<td id="T_4b84d_row5_col5" class="data row5 col5">35.40%</td>
+<td id="T_4b84d_row5_col6" class="data row5 col6">35.51%</td>
+</tr>
+<tr class="odd">
+<th id="T_4b84d_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_4b84d_row6_col0" class="data row6 col0">14,863</td>
+<td id="T_4b84d_row6_col1" class="data row6 col1">5,870</td>
+<td id="T_4b84d_row6_col2" class="data row6 col2">10.0%</td>
+<td id="T_4b84d_row6_col3" class="data row6 col3">36.78%</td>
+<td id="T_4b84d_row6_col4" class="data row6 col4">43.77%</td>
+<td id="T_4b84d_row6_col5" class="data row6 col5">38.69%</td>
+<td id="T_4b84d_row6_col6" class="data row6 col6">39.49%</td>
+</tr>
+<tr class="even">
+<th id="T_4b84d_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_4b84d_row7_col0" class="data row7 col0">14,871</td>
+<td id="T_4b84d_row7_col1" class="data row7 col1">7,736</td>
+<td id="T_4b84d_row7_col2" class="data row7 col2">10.0%</td>
+<td id="T_4b84d_row7_col3" class="data row7 col3">43.77%</td>
+<td id="T_4b84d_row7_col4" class="data row7 col4">53.87%</td>
+<td id="T_4b84d_row7_col5" class="data row7 col5">51.31%</td>
+<td id="T_4b84d_row7_col6" class="data row7 col6">52.02%</td>
+</tr>
+<tr class="odd">
+<th id="T_4b84d_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_4b84d_row8_col0" class="data row8 col0">14,867</td>
+<td id="T_4b84d_row8_col1" class="data row8 col1">8,587</td>
+<td id="T_4b84d_row8_col2" class="data row8 col2">10.0%</td>
+<td id="T_4b84d_row8_col3" class="data row8 col3">53.88%</td>
+<td id="T_4b84d_row8_col4" class="data row8 col4">80.77%</td>
+<td id="T_4b84d_row8_col5" class="data row8 col5">58.56%</td>
+<td id="T_4b84d_row8_col6" class="data row8 col6">57.76%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="11ef9cfe" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>hhi <span class="op">=</span> <span class="bu">float</span>((grades.share <span class="op">**</span> <span class="dv">2</span>).<span class="bu">sum</span>())</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>het_p <span class="op">=</span> [z_between(grades.loans.iloc[i], grades.defaults.iloc[i],</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                   grades.loans.iloc[i <span class="op">+</span> <span class="dv">1</span>], grades.defaults.iloc[i <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>         <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(grades) <span class="op">-</span> <span class="dv">1</span>)]</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>hom_p <span class="op">=</span> [chi2_within(book.default_12m.values[book.grade.values <span class="op">==</span> k], rng)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>         <span class="cf">for</span> k <span class="kw">in</span> grades.index]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"concentration:  max grade </span><span class="sc">{</span>grades<span class="sc">.</span>share<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1%}</span><span class="ss"> of the book, "</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"min </span><span class="sc">{</span>grades<span class="sc">.</span>share<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:.1%}</span><span class="ss">, HHI </span><span class="sc">{</span>hhi<span class="sc">:.4f}</span><span class="ss"> against a 0.25 threshold"</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"heterogeneity:  largest p-value between adjacent grades </span><span class="sc">{</span><span class="bu">max</span>(het_p)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"homogeneity:    smallest p-value within a grade </span><span class="sc">{</span><span class="bu">min</span>(hom_p)<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"monotonicity:   </span><span class="sc">{</span><span class="st">'holds'</span> <span class="cf">if</span> grades<span class="sc">.</span>odr<span class="sc">.</span>is_monotonic_increasing <span class="cf">else</span> <span class="st">'BREAKS'</span><span class="sc">}</span><span class="ss">, "</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>grades<span class="sc">.</span>odr<span class="sc">.</span>iloc[<span class="dv">0</span>]<span class="sc">:.1%}</span><span class="ss"> to </span><span class="sc">{</span>grades<span class="sc">.</span>odr<span class="sc">.</span>iloc[<span class="op">-</span><span class="dv">1</span>]<span class="sc">:.1%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>concentration:  max grade 20.0% of the book, min 9.7%, HHI 0.1200 against a 0.25 threshold
+heterogeneity:  largest p-value between adjacent grades 0.0064
+homogeneity:    smallest p-value within a grade 0.4050
+monotonicity:   holds, 13.9% to 57.8%</code></pre>
+</div>
+</div>
+<p>One test the guides list cannot be run here at all. <strong>Grade migration</strong> asks how often a borrower moves grade between consecutive observation dates, and the fixed-horizon table observes each loan exactly once. A bank would build the migration matrix from monthly snapshots and read off the proportion staying within one band; the survival table lecture S1 uses could support that and it is outside this lecture’s scope.</p>
+</section>
+<section id="step-3-observed-default-rates-by-grade-and-cohort" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="step-3-observed-default-rates-by-grade-and-cohort"><span class="header-section-number">6.3</span> Step 3: observed default rates by grade and cohort</h2>
+<p>The long-run average is an average of one-year default rates, so the rates have to exist as a time series before anything can be averaged. Splitting the book by grade and origination year gives that series, and it also gives the first honest look at what this portfolio is.</p>
+<div id="99620fef" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>cell <span class="op">=</span> (book.groupby([<span class="st">"grade"</span>, <span class="st">"cohort"</span>])[<span class="st">"default_12m"</span>]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>            .agg([<span class="st">"size"</span>, <span class="st">"mean"</span>]).reset_index())</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>cell <span class="op">=</span> cell[cell[<span class="st">"size"</span>] <span class="op">&gt;=</span> <span class="dv">30</span>]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.6</span>))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="bu">sorted</span>(book.grade.unique()):</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    s <span class="op">=</span> cell[cell.grade <span class="op">==</span> k]</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    axs[<span class="dv">0</span>].plot(s.cohort, s[<span class="st">"mean"</span>], <span class="st">"-o"</span>, ms<span class="op">=</span><span class="fl">2.5</span>, lw<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>                color<span class="op">=</span>OX <span class="cf">if</span> k <span class="op">==</span> <span class="dv">9</span> <span class="cf">else</span> GREY,</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>                alpha<span class="op">=</span><span class="fl">1.0</span> <span class="cf">if</span> k <span class="op">==</span> <span class="dv">9</span> <span class="cf">else</span> <span class="fl">0.35</span> <span class="op">+</span> <span class="fl">0.06</span> <span class="op">*</span> k)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">len</span>(s):</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        axs[<span class="dv">0</span>].annotate(<span class="ss">f"</span><span class="sc">{</span>k<span class="sc">}</span><span class="ss">"</span>, (s.cohort.iloc[<span class="op">-</span><span class="dv">1</span>], s[<span class="st">"mean"</span>].iloc[<span class="op">-</span><span class="dv">1</span>]),</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                        xytext<span class="op">=</span>(<span class="dv">3</span>, <span class="op">-</span><span class="dv">2</span>), textcoords<span class="op">=</span><span class="st">"offset points"</span>, fontsize<span class="op">=</span><span class="dv">7</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>                        color<span class="op">=</span>OX <span class="cf">if</span> k <span class="op">==</span> <span class="dv">9</span> <span class="cf">else</span> RULE)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"origination year"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"12-month default rate"</span>)</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>n_by_year <span class="op">=</span> book.groupby(<span class="st">"cohort"</span>).size()</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].bar(n_by_year.index, n_by_year.values, color<span class="op">=</span>GREY)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_yscale(<span class="st">"log"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_xlabel(<span class="st">"origination year"</span>)</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_ylabel(<span class="st">"loans originated"</span>)</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="R2_credit-irb-capital_files/figure-html/cell-9-output-1.png" width="1339" height="527" class="figure-img"></p>
+<figcaption>Twelve-month default rate by risk grade and origination year, on the Bondora book. (lhs): each grade’s series, bronze for the riskiest grade and grey shading from light for grade 1; cells behind fewer than 30 loans are dropped, which is why grades 6 to 9 begin in 2013. (rhs): loans originated per year on a log scale, showing that the first four cohorts are a rounding error against the last three. The grades separate cleanly in every year, which is the rank ordering holding out of time, and the level moves together across grades, which is the cycle. Grades 6 to 9 have no pre-2013 history because the early book was almost entirely Estonian and almost entirely low-risk, and that gap is a data limitation the margin of conservatism has to price.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="step-4-the-long-run-average-and-the-period-it-is-taken-over" class="level2" data-number="6.4">
+<h2 data-number="6.4" class="anchored" data-anchor-id="step-4-the-long-run-average-and-the-period-it-is-taken-over"><span class="header-section-number">6.4</span> Step 4: the long-run average, and the period it is taken over</h2>
+<p>Two decisions sit inside a long-run average and only one of them is arithmetic.</p>
+<p>The arithmetic decision is what to average. <strong>An average of annual rates is not the rate of the pooled data</strong>, because the cohorts differ enormously in size, and the regulation asks for the former.</p>
+<div id="31b48d35" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>WINDOW <span class="op">=</span> <span class="bu">range</span>(<span class="dv">2009</span>, <span class="dv">2021</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>win <span class="op">=</span> book[book.cohort.isin(WINDOW)]</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>annual <span class="op">=</span> (win.groupby([<span class="st">"grade"</span>, <span class="st">"cohort"</span>])[<span class="st">"default_12m"</span>]</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>             .agg([<span class="st">"size"</span>, <span class="st">"mean"</span>]).reset_index())</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>annual <span class="op">=</span> annual[annual[<span class="st">"size"</span>] <span class="op">&gt;=</span> <span class="dv">30</span>]</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>lra <span class="op">=</span> annual.groupby(<span class="st">"grade"</span>)[<span class="st">"mean"</span>].agg(lra<span class="op">=</span><span class="st">"mean"</span>, sd<span class="op">=</span><span class="st">"std"</span>, years<span class="op">=</span><span class="st">"count"</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>grades <span class="op">=</span> grades.join(lra)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="bu">cmp</span> <span class="op">=</span> grades[[<span class="st">"odr"</span>, <span class="st">"lra"</span>, <span class="st">"years"</span>]].copy()</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="bu">cmp</span>[<span class="st">"difference"</span>] <span class="op">=</span> <span class="bu">cmp</span>.lra <span class="op">-</span> <span class="bu">cmp</span>.odr</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="bu">cmp</span>.style.<span class="bu">format</span>({<span class="st">"odr"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"lra"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>,</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"years"</span>: <span class="st">"</span><span class="sc">{:.0f}</span><span class="st">"</span>, <span class="st">"difference"</span>: <span class="st">"</span><span class="sc">{:+.2%}</span><span class="st">"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<style type="text/css">
+</style>
+
+<table id="T_31178" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_31178_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">odr</th>
+<th id="T_31178_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">lra</th>
+<th id="T_31178_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">years</th>
+<th id="T_31178_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">difference</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_31178_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_31178_row0_col0" class="data row0 col0">13.92%</td>
+<td id="T_31178_row0_col1" class="data row0 col1">13.16%</td>
+<td id="T_31178_row0_col2" class="data row0 col2">12</td>
+<td id="T_31178_row0_col3" class="data row0 col3">-0.75%</td>
+</tr>
+<tr class="even">
+<th id="T_31178_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_31178_row1_col0" class="data row1 col0">14.88%</td>
+<td id="T_31178_row1_col1" class="data row1 col1">10.95%</td>
+<td id="T_31178_row1_col2" class="data row1 col2">11</td>
+<td id="T_31178_row1_col3" class="data row1 col3">-3.94%</td>
+</tr>
+<tr class="odd">
+<th id="T_31178_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_31178_row2_col0" class="data row2 col0">16.42%</td>
+<td id="T_31178_row2_col1" class="data row2 col1">15.14%</td>
+<td id="T_31178_row2_col2" class="data row2 col2">12</td>
+<td id="T_31178_row2_col3" class="data row2 col3">-1.28%</td>
+</tr>
+<tr class="even">
+<th id="T_31178_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_31178_row3_col0" class="data row3 col0">18.58%</td>
+<td id="T_31178_row3_col1" class="data row3 col1">17.79%</td>
+<td id="T_31178_row3_col2" class="data row3 col2">12</td>
+<td id="T_31178_row3_col3" class="data row3 col3">-0.79%</td>
+</tr>
+<tr class="odd">
+<th id="T_31178_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_31178_row4_col0" class="data row4 col0">26.83%</td>
+<td id="T_31178_row4_col1" class="data row4 col1">26.03%</td>
+<td id="T_31178_row4_col2" class="data row4 col2">12</td>
+<td id="T_31178_row4_col3" class="data row4 col3">-0.80%</td>
+</tr>
+<tr class="even">
+<th id="T_31178_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_31178_row5_col0" class="data row5 col0">35.51%</td>
+<td id="T_31178_row5_col1" class="data row5 col1">32.36%</td>
+<td id="T_31178_row5_col2" class="data row5 col2">8</td>
+<td id="T_31178_row5_col3" class="data row5 col3">-3.15%</td>
+</tr>
+<tr class="odd">
+<th id="T_31178_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_31178_row6_col0" class="data row6 col0">39.49%</td>
+<td id="T_31178_row6_col1" class="data row6 col1">38.23%</td>
+<td id="T_31178_row6_col2" class="data row6 col2">8</td>
+<td id="T_31178_row6_col3" class="data row6 col3">-1.26%</td>
+</tr>
+<tr class="even">
+<th id="T_31178_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_31178_row7_col0" class="data row7 col0">52.02%</td>
+<td id="T_31178_row7_col1" class="data row7 col1">50.21%</td>
+<td id="T_31178_row7_col2" class="data row7 col2">8</td>
+<td id="T_31178_row7_col3" class="data row7 col3">-1.81%</td>
+</tr>
+<tr class="odd">
+<th id="T_31178_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_31178_row8_col0" class="data row8 col0">57.76%</td>
+<td id="T_31178_row8_col1" class="data row8 col1">53.43%</td>
+<td id="T_31178_row8_col2" class="data row8 col2">8</td>
+<td id="T_31178_row8_col3" class="data row8 col3">-4.33%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The long-run average comes out <strong>below</strong> the pooled rate in every grade. The reason is that Bondora’s largest cohorts are its most recent and its riskiest, so pooling weights the bad years heavily while averaging the annual rates does not. A bank meets the same effect whenever its book has grown, and the direction is not always favourable.</p>
+<p>The judgement decision is the period. Article 180 sets a five-year minimum and requires a mix of good and bad years, and SS4/24’s calibration section expands on it: consider the variability of the observed one-year default rates, the balance of good and bad years measured against the macroeconomic variables that actually drive the exposures, and any structural change in the economic, legal or business environment. The four-step procedure below is the standard way of turning those words into a defensible window.</p>
+<section id="deriving-an-economic-factor" class="level3" data-number="6.4.1">
+<h3 data-number="6.4.1" class="anchored" data-anchor-id="deriving-an-economic-factor"><span class="header-section-number">6.4.1</span> Deriving an economic factor</h3>
+<p>Three Eurostat series carry the economic state: the harmonised unemployment rate, annual HICP inflation, and real gross domestic product growth year on year. A principal component compresses them into one index, oriented so that a high value means benign conditions.</p>
+<div id="f276c342" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>MV <span class="op">=</span> [<span class="st">"unemployment"</span>, <span class="st">"inflation"</span>, <span class="st">"gdp_growth"</span>]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>macro <span class="op">=</span> pl.read_csv(<span class="st">"data/macro_eurostat.csv"</span>, comment_prefix<span class="op">=</span><span class="st">"#"</span>).to_pandas()</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ee <span class="op">=</span> macro[macro.country <span class="op">==</span> <span class="st">"EE"</span>].copy()</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ee[<span class="st">"cohort"</span>] <span class="op">=</span> ee.month.<span class="bu">str</span>.<span class="bu">slice</span>(<span class="dv">0</span>, <span class="dv">4</span>).astype(<span class="bu">int</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>annual_macro <span class="op">=</span> ee[ee.cohort.isin(WINDOW)].groupby(<span class="st">"cohort"</span>)[MV].mean()</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> ((annual_macro <span class="op">-</span> annual_macro.mean()) <span class="op">/</span> annual_macro.std(ddof<span class="op">=</span><span class="dv">0</span>)).values</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>_, sv, vt <span class="op">=</span> np.linalg.svd(Z, full_matrices<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>loading <span class="op">=</span> vt[<span class="dv">0</span>]</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>factor <span class="op">=</span> Z <span class="op">@</span> loading</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> np.corrcoef(factor, annual_macro.unemployment)[<span class="dv">0</span>, <span class="dv">1</span>] <span class="op">&gt;</span> <span class="dv">0</span>:   <span class="co"># orient: high = benign</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    factor, loading <span class="op">=</span> <span class="op">-</span>factor, <span class="op">-</span>loading</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>factor <span class="op">=</span> pd.Series(factor, index<span class="op">=</span>annual_macro.index)</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"first principal component explains </span><span class="sc">{</span>sv[<span class="dv">0</span>] <span class="op">**</span> <span class="dv">2</span> <span class="op">/</span> (sv <span class="op">**</span> <span class="dv">2</span>)<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1%}</span><span class="ss"> "</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>      <span class="st">"of the variance in the three standardised series"</span>)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"loadings (high factor = benign): "</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>      <span class="op">+</span> <span class="st">"  "</span>.join(<span class="ss">f"</span><span class="sc">{</span>v<span class="sc">}</span><span class="ss"> </span><span class="sc">{</span>l<span class="sc">:+.3f}</span><span class="ss">"</span> <span class="cf">for</span> v, l <span class="kw">in</span> <span class="bu">zip</span>(MV, loading)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>first principal component explains 53.5% of the variance in the three standardised series
+loadings (high factor = benign): unemployment -0.203  inflation +0.647  gdp_growth +0.735</code></pre>
+</div>
+</div>
+<p>The loadings say something worth pausing on. Growth and inflation dominate the index while unemployment barely enters it, which looks wrong until the series are read: Estonian unemployment peaked in 2010, a full year after output had bottomed out and begun recovering. Unemployment is a lagging indicator, and a factor built to date the cycle should not be led by one.</p>
+<p>Only Estonia is used. Lecture R1 established that a macroeconomic coefficient fitted across Bondora’s three markets comes back with economically backwards signs, because the Finnish and Spanish books opened in 2013 and expanded through a period of steadily falling unemployment, so within those markets the lender’s own descent down the credit spectrum runs against the cycle. Estonia is the only market observed through the 2009 downturn, and this lecture inherits that restriction rather than rediscovering the failure.</p>
+</section>
+<section id="classifying-good-and-bad-years-and-marking-the-cycle" class="level3" data-number="6.4.2">
+<h3 data-number="6.4.2" class="anchored" data-anchor-id="classifying-good-and-bad-years-and-marking-the-cycle"><span class="header-section-number">6.4.2</span> Classifying good and bad years, and marking the cycle</h3>
+<div id="ead2ead8" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ee_rate <span class="op">=</span> win[win.Country <span class="op">==</span> <span class="st">"EE"</span>].groupby(<span class="st">"cohort"</span>)[<span class="st">"default_12m"</span>].mean()</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>all_rate <span class="op">=</span> win.groupby(<span class="st">"cohort"</span>)[<span class="st">"default_12m"</span>].mean()</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>state <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"factor"</span>: factor.<span class="bu">round</span>(<span class="dv">2</span>),</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"state"</span>: np.where(factor <span class="op">&gt;</span> <span class="dv">0</span>, <span class="st">"good"</span>, <span class="st">"bad"</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"EE default rate"</span>: ee_rate.<span class="bu">round</span>(<span class="dv">4</span>),</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"whole-book default rate"</span>: all_rate.<span class="bu">round</span>(<span class="dv">4</span>)})</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(state.to_string())</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">good years </span><span class="sc">{</span><span class="bu">int</span>((factor <span class="op">&gt;</span> <span class="dv">0</span>).<span class="bu">sum</span>())<span class="sc">}</span><span class="ss">, bad years </span><span class="sc">{</span><span class="bu">int</span>((factor <span class="op">&lt;=</span> <span class="dv">0</span>).<span class="bu">sum</span>())<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"correlation of the factor with the Estonian default rate  "</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span>corrcoef(factor, ee_rate)[<span class="dv">0</span>, <span class="dv">1</span>]<span class="sc">:+.3f}</span><span class="ss">"</span>)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"correlation of the factor with the whole-book rate        "</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span>corrcoef(factor, all_rate)[<span class="dv">0</span>, <span class="dv">1</span>]<span class="sc">:+.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        factor state  EE default rate  whole-book default rate
+cohort                                                        
+2009     -3.17   bad           0.2722                   0.2722
+2010     -0.14   bad           0.2262                   0.2262
+2011      1.66  good           0.1357                   0.1357
+2012      0.97  good           0.0750                   0.0750
+2013      0.44  good           0.1016                   0.1155
+2014     -0.32   bad           0.1334                   0.2837
+2015     -0.52   bad           0.1439                   0.3215
+2016     -0.17   bad           0.2127                   0.3455
+2017      1.22  good           0.2203                   0.3651
+2018      0.94  good           0.1691                   0.2699
+2019      0.57  good           0.1707                   0.2978
+2020     -1.47   bad           0.1277                   0.2113
+
+good years 6, bad years 6
+correlation of the factor with the Estonian default rate  -0.441
+correlation of the factor with the whole-book rate        -0.226</code></pre>
+</div>
+</div>
+<div id="1e15d474" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.4</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].axhline(<span class="dv">0</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].bar(factor.index, factor.values,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>           color<span class="op">=</span>[BLUE <span class="cf">if</span> v <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> OX <span class="cf">for</span> v <span class="kw">in</span> factor.values])</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">0</span>].set_xlabel(<span class="st">"year"</span>)<span class="op">;</span> axs[<span class="dv">0</span>].set_ylabel(<span class="st">"economic factor"</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(ee_rate.index, ee_rate.values, <span class="st">"-o"</span>, ms<span class="op">=</span><span class="dv">3</span>, color<span class="op">=</span>OX, label<span class="op">=</span><span class="st">"Estonia"</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].plot(all_rate.index, all_rate.values, <span class="st">"-o"</span>, ms<span class="op">=</span><span class="dv">3</span>, color<span class="op">=</span>GREY,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>            label<span class="op">=</span><span class="st">"whole book"</span>)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].set_xlabel(<span class="st">"origination year"</span>)<span class="op">;</span> axs[<span class="dv">1</span>].set_ylabel(<span class="st">"12-month default rate"</span>)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>axs[<span class="dv">1</span>].legend(frameon<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="R2_credit-irb-capital_files/figure-html/cell-13-output-1.png" width="1336" height="497" class="figure-img"></p>
+<figcaption>The Estonian economic factor and the Bondora default rate, 2009 to 2020. (lhs): the first principal component of unemployment, inflation and real growth, oriented so that positive is benign, with bad years shaded. (rhs): the twelve-month default rate on the Estonian book in bronze against the whole book in grey, both by origination year. The Estonian series moves against the factor at minus 0.44, which is the sign economics expects. The whole-book series is weaker at minus 0.23, because from 2014 it mixes in the Finnish and Spanish books, whose default rates are two and three times the Estonian level and whose growth had nothing to do with the European cycle.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Six good years and six bad, which is as balanced as a window gets. The factor also dates the cycle: a deep trough in 2009, a peak in 2011, a second trough running 2014 to 2016, a second peak in 2017, and the pandemic in 2020. <strong>A peak-to-peak cycle is therefore 2011 to 2017</strong>, which is seven years and, awkwardly, excludes the only genuine downturn in the data.</p>
+</section>
+<section id="testing-the-window" class="level3" data-number="6.4.3">
+<h3 data-number="6.4.3" class="anchored" data-anchor-id="testing-the-window"><span class="header-section-number">6.4.3</span> Testing the window</h3>
+<p>The remaining step compares the variability of the observed default rates inside a candidate window against their variability over the reference cycle, using an F-test on the two variances. A window whose variability differs materially from the cycle’s is not representative of it.</p>
+<div id="946e91fb" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_test(a, b):</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Two-sided F-test on two variances, larger over smaller."""</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    va, vb <span class="op">=</span> np.var(a, ddof<span class="op">=</span><span class="dv">1</span>), np.var(b, ddof<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    (hi, lo), (d1, d2) <span class="op">=</span> ((va, vb), (<span class="bu">len</span>(a) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">len</span>(b) <span class="op">-</span> <span class="dv">1</span>)) <span class="cf">if</span> va <span class="op">&gt;=</span> vb <span class="op">\</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> ((vb, va), (<span class="bu">len</span>(b) <span class="op">-</span> <span class="dv">1</span>, <span class="bu">len</span>(a) <span class="op">-</span> <span class="dv">1</span>))</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    stat <span class="op">=</span> hi <span class="op">/</span> lo</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> stat, <span class="dv">2</span> <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> sps.f.cdf(stat, d1, d2))</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>full <span class="op">=</span> ee_rate.loc[<span class="dv">2009</span>:<span class="dv">2020</span>]</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> a, b <span class="kw">in</span> [(<span class="dv">2009</span>, <span class="dv">2020</span>), (<span class="dv">2011</span>, <span class="dv">2017</span>), (<span class="dv">2013</span>, <span class="dv">2020</span>), (<span class="dv">2014</span>, <span class="dv">2020</span>),</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>             (<span class="dv">2015</span>, <span class="dv">2020</span>), (<span class="dv">2016</span>, <span class="dv">2020</span>)]:</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    w, fw <span class="op">=</span> ee_rate.loc[a:b], factor.loc[a:b]</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    comp <span class="op">=</span> ee_rate.drop(index<span class="op">=</span><span class="bu">range</span>(a, b <span class="op">+</span> <span class="dv">1</span>), errors<span class="op">=</span><span class="st">"ignore"</span>)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    f1, p1 <span class="op">=</span> f_test(w.values, full.values)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    f2, p2 <span class="op">=</span> f_test(w.values, comp.values) <span class="cf">if</span> <span class="bu">len</span>(comp) <span class="op">&gt;</span> <span class="dv">1</span> <span class="cf">else</span> (np.nan, np.nan)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"window"</span>: <span class="ss">f"</span><span class="sc">{</span>a<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span>, <span class="st">"years"</span>: <span class="bu">len</span>(w),</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"good"</span>: <span class="bu">int</span>((fw <span class="op">&gt;</span> <span class="dv">0</span>).<span class="bu">sum</span>()), <span class="st">"bad"</span>: <span class="bu">int</span>((fw <span class="op">&lt;=</span> <span class="dv">0</span>).<span class="bu">sum</span>()),</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"LRA"</span>: w.mean(), <span class="st">"sd"</span>: w.std(),</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"F vs cycle"</span>: f1, <span class="st">"p"</span>: p1,</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"F vs complement"</span>: f2, <span class="st">"p "</span>: p2})</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>pd.DataFrame(rows).set_index(<span class="st">"window"</span>).style.<span class="bu">format</span>(</span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    {<span class="st">"LRA"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"sd"</span>: <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>, <span class="st">"F vs cycle"</span>: <span class="st">"</span><span class="sc">{:.2f}</span><span class="st">"</span>, <span class="st">"p"</span>: <span class="st">"</span><span class="sc">{:.3f}</span><span class="st">"</span>,</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>     <span class="st">"F vs complement"</span>: <span class="st">"</span><span class="sc">{:.2f}</span><span class="st">"</span>, <span class="st">"p "</span>: <span class="st">"</span><span class="sc">{:.3f}</span><span class="st">"</span>}, na_rep<span class="op">=</span><span class="st">""</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="17">
+<style type="text/css">
+</style>
+
+<table id="T_bb8e2" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_bb8e2_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">years</th>
+<th id="T_bb8e2_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">good</th>
+<th id="T_bb8e2_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">bad</th>
+<th id="T_bb8e2_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">LRA</th>
+<th id="T_bb8e2_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">sd</th>
+<th id="T_bb8e2_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">F vs cycle</th>
+<th id="T_bb8e2_level0_col6" class="col_heading level0 col6" data-quarto-table-cell-role="th">p</th>
+<th id="T_bb8e2_level0_col7" class="col_heading level0 col7" data-quarto-table-cell-role="th">F vs complement</th>
+<th id="T_bb8e2_level0_col8" class="col_heading level0 col8" data-quarto-table-cell-role="th">p</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">window</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col5" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col6" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col7" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col8" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_bb8e2_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">2009-2020</th>
+<td id="T_bb8e2_row0_col0" class="data row0 col0">12</td>
+<td id="T_bb8e2_row0_col1" class="data row0 col1">6</td>
+<td id="T_bb8e2_row0_col2" class="data row0 col2">6</td>
+<td id="T_bb8e2_row0_col3" class="data row0 col3">16.57%</td>
+<td id="T_bb8e2_row0_col4" class="data row0 col4">0.0575</td>
+<td id="T_bb8e2_row0_col5" class="data row0 col5">1.00</td>
+<td id="T_bb8e2_row0_col6" class="data row0 col6">1.000</td>
+<td id="T_bb8e2_row0_col7" class="data row0 col7"></td>
+<td id="T_bb8e2_row0_col8" class="data row0 col8"></td>
+</tr>
+<tr class="even">
+<th id="T_bb8e2_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2011-2017</th>
+<td id="T_bb8e2_row1_col0" class="data row1 col0">7</td>
+<td id="T_bb8e2_row1_col1" class="data row1 col1">4</td>
+<td id="T_bb8e2_row1_col2" class="data row1 col2">3</td>
+<td id="T_bb8e2_row1_col3" class="data row1 col3">14.61%</td>
+<td id="T_bb8e2_row1_col4" class="data row1 col4">0.0536</td>
+<td id="T_bb8e2_row1_col5" class="data row1 col5">1.15</td>
+<td id="T_bb8e2_row1_col6" class="data row1 col6">0.906</td>
+<td id="T_bb8e2_row1_col7" class="data row1 col7">1.11</td>
+<td id="T_bb8e2_row1_col8" class="data row1 col8">0.868</td>
+</tr>
+<tr class="odd">
+<th id="T_bb8e2_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">2013-2020</th>
+<td id="T_bb8e2_row2_col0" class="data row2 col0">8</td>
+<td id="T_bb8e2_row2_col1" class="data row2 col1">4</td>
+<td id="T_bb8e2_row2_col2" class="data row2 col2">4</td>
+<td id="T_bb8e2_row2_col3" class="data row2 col3">15.99%</td>
+<td id="T_bb8e2_row2_col4" class="data row2 col4">0.0415</td>
+<td id="T_bb8e2_row2_col5" class="data row2 col5">1.93</td>
+<td id="T_bb8e2_row2_col6" class="data row2 col6">0.394</td>
+<td id="T_bb8e2_row2_col7" class="data row2 col7">4.57</td>
+<td id="T_bb8e2_row2_col8" class="data row2 col8">0.089</td>
+</tr>
+<tr class="even">
+<th id="T_bb8e2_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">2014-2020</th>
+<td id="T_bb8e2_row3_col0" class="data row3 col0">7</td>
+<td id="T_bb8e2_row3_col1" class="data row3 col1">3</td>
+<td id="T_bb8e2_row3_col2" class="data row3 col2">4</td>
+<td id="T_bb8e2_row3_col3" class="data row3 col3">16.83%</td>
+<td id="T_bb8e2_row3_col4" class="data row3 col4">0.0368</td>
+<td id="T_bb8e2_row3_col5" class="data row3 col5">2.44</td>
+<td id="T_bb8e2_row3_col6" class="data row3 col6">0.285</td>
+<td id="T_bb8e2_row3_col7" class="data row3 col7">5.19</td>
+<td id="T_bb8e2_row3_col8" class="data row3 col8">0.075</td>
+</tr>
+<tr class="odd">
+<th id="T_bb8e2_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">2015-2020</th>
+<td id="T_bb8e2_row4_col0" class="data row4 col0">6</td>
+<td id="T_bb8e2_row4_col1" class="data row4 col1">3</td>
+<td id="T_bb8e2_row4_col2" class="data row4 col2">3</td>
+<td id="T_bb8e2_row4_col3" class="data row4 col3">17.41%</td>
+<td id="T_bb8e2_row4_col4" class="data row4 col4">0.0367</td>
+<td id="T_bb8e2_row4_col5" class="data row4 col5">2.46</td>
+<td id="T_bb8e2_row4_col6" class="data row4 col6">0.330</td>
+<td id="T_bb8e2_row4_col7" class="data row4 col7">4.29</td>
+<td id="T_bb8e2_row4_col8" class="data row4 col8">0.136</td>
+</tr>
+<tr class="even">
+<th id="T_bb8e2_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">2016-2020</th>
+<td id="T_bb8e2_row5_col0" class="data row5 col0">5</td>
+<td id="T_bb8e2_row5_col1" class="data row5 col1">3</td>
+<td id="T_bb8e2_row5_col2" class="data row5 col2">2</td>
+<td id="T_bb8e2_row5_col3" class="data row5 col3">18.01%</td>
+<td id="T_bb8e2_row5_col4" class="data row5 col4">0.0375</td>
+<td id="T_bb8e2_row5_col5" class="data row5 col5">2.35</td>
+<td id="T_bb8e2_row5_col6" class="data row5 col6">0.425</td>
+<td id="T_bb8e2_row5_col7" class="data row5 col7">3.43</td>
+<td id="T_bb8e2_row5_col8" class="data row5 col8">0.253</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Every candidate passes, including one that excludes the 2009 crisis outright. That result is the opposite of the one this section was expected to produce, and taking it at face value would be a mistake. <strong>The test has essentially no power at annual frequency.</strong></p>
+<div id="18e7ff39" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> f_power(ratio, n1, n2, alpha<span class="op">=</span><span class="fl">0.05</span>):</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    d1, d2 <span class="op">=</span> n1 <span class="op">-</span> <span class="dv">1</span>, n2 <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    lo, hi <span class="op">=</span> sps.f.ppf(alpha <span class="op">/</span> <span class="dv">2</span>, d1, d2), sps.f.ppf(<span class="dv">1</span> <span class="op">-</span> alpha <span class="op">/</span> <span class="dv">2</span>, d1, d2)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sps.f.sf(hi <span class="op">/</span> ratio, d1, d2) <span class="op">+</span> sps.f.cdf(lo <span class="op">/</span> ratio, d1, d2)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> n1, n2, label <span class="kw">in</span> [(<span class="dv">8</span>, <span class="dv">12</span>, <span class="st">"8 against 12 annual rates"</span>),</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>                      (<span class="dv">96</span>, <span class="dv">144</span>, <span class="st">"the same windows in monthly cohorts"</span>)]:</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> np.linspace(<span class="fl">1.01</span>, <span class="dv">40</span>, <span class="dv">8000</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.array([f_power(x, n1, n2) <span class="cf">for</span> x <span class="kw">in</span> r])</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    r80 <span class="op">=</span> r[np.argmax(p <span class="op">&gt;=</span> <span class="fl">0.80</span>)]</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:36s}</span><span class="ss"> power at a doubled variance </span><span class="sc">{</span>f_power(<span class="dv">2</span>, n1, n2)<span class="sc">:.0%}</span><span class="ss">   "</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"variance ratio needed for 80% power </span><span class="sc">{</span>r80<span class="sc">:.1f}</span><span class="ss">x "</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"(a </span><span class="sc">{</span>np<span class="sc">.</span>sqrt(r80)<span class="sc">:.1f}</span><span class="ss">x difference in standard deviation)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>8 against 12 annual rates            power at a doubled variance 17%   variance ratio needed for 80% power 7.2x (a 2.7x difference in standard deviation)
+the same windows in monthly cohorts  power at a doubled variance 96%   variance ratio needed for 80% power 1.7x (a 1.3x difference in standard deviation)</code></pre>
+</div>
+</div>
+<p>A window has to have roughly seven times the variance of the cycle before this test notices, on eight annual observations. Move to monthly cohorts and the same comparison detects a 1.7-fold difference, which is the range real windows differ by. <strong>The F-test is a good test computed at the wrong frequency</strong>, and passing it here is close to no evidence at all.</p>
+<p>Consequently the window is chosen on the qualitative criteria the regulation states first, and the test is reported as the weak corroboration it is. <strong>The window is 2009 to 2020</strong>: it is the longest available, it splits six good years against six bad, and it is the only window containing the single downturn this book has lived through. Excluding the pandemic year would be defensible on the reasoning that payment holidays and state support suppressed defaults artificially, and it is not done here, because dropping the second of only two stress episodes to gain nothing measurable is a poor trade.</p>
+</section>
+</section>
+<section id="step-5-the-margin-of-conservatism" class="level2" data-number="6.5">
+<h2 data-number="6.5" class="anchored" data-anchor-id="step-5-the-margin-of-conservatism"><span class="header-section-number">6.5</span> Step 5: the margin of conservatism</h2>
+<p>The margin exists because the calibrated probability is an estimate and estimates are wrong in both directions, while capital is only allowed to be wrong in one. The European Central Bank’s guide to internal models splits it into three types, and the split is useful because the three call for completely different evidence.</p>
+<p><strong>Type A</strong> covers deficiencies in the data and the method. On this book that would include the absence of any behavioural information, a default definition derived from a status field rather than from days past due, an outcome window opening at origination rather than at a calendar snapshot, and above all the four grades with no observations before 2013.</p>
+<p><strong>Type B</strong> covers changes in underwriting standards, risk appetite, and collection and recovery policy. Bondora’s expansion into Finland and Spain, and its accompanying move down the credit spectrum, is a Type B adjustment of the first order: the development sample is not representative of the current book because the lender deliberately changed what it lends.</p>
+<p><strong>Type C</strong> covers the general estimation error in the long-run average itself, and it is the one that can be computed rather than argued. Paragraph 327 of the guide requires the autocorrelation of the default rate series to be reflected in it, and the requirement has teeth.</p>
+<div id="8e8d23f0" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>port <span class="op">=</span> win.groupby(<span class="st">"cohort"</span>)[<span class="st">"default_12m"</span>].mean()</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>dev <span class="op">=</span> port.values <span class="op">-</span> port.values.mean()</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>phi <span class="op">=</span> <span class="bu">float</span>(np.<span class="bu">sum</span>(dev[<span class="dv">1</span>:] <span class="op">*</span> dev[:<span class="op">-</span><span class="dv">1</span>]) <span class="op">/</span> np.<span class="bu">sum</span>(dev <span class="op">**</span> <span class="dv">2</span>))</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>z95 <span class="op">=</span> sps.norm.ppf(<span class="fl">0.95</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>grades[<span class="st">"n_eff"</span>] <span class="op">=</span> grades.years <span class="op">*</span> (<span class="dv">1</span> <span class="op">-</span> phi) <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> phi)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>grades[<span class="st">"moc_naive"</span>] <span class="op">=</span> z95 <span class="op">*</span> grades.sd <span class="op">/</span> np.sqrt(grades.years)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>grades[<span class="st">"moc_c"</span>] <span class="op">=</span> z95 <span class="op">*</span> grades.sd <span class="op">/</span> np.sqrt(grades.n_eff)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"first-order autocorrelation of the annual default rate: phi = </span><span class="sc">{</span>phi<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"an eleven-year series is worth </span><span class="sc">{</span>grades<span class="sc">.</span>n_eff<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.1f}</span><span class="ss"> independent observations</span><span class="ch">\n</span><span class="ss">"</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>grades[[<span class="st">"lra"</span>, <span class="st">"sd"</span>, <span class="st">"years"</span>, <span class="st">"n_eff"</span>, <span class="st">"moc_naive"</span>, <span class="st">"moc_c"</span>]].style.<span class="bu">format</span>({</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">"lra"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"sd"</span>: <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>, <span class="st">"years"</span>: <span class="st">"</span><span class="sc">{:.0f}</span><span class="st">"</span>, <span class="st">"n_eff"</span>: <span class="st">"</span><span class="sc">{:.1f}</span><span class="st">"</span>,</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"moc_naive"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>, <span class="st">"moc_c"</span>: <span class="st">"</span><span class="sc">{:.2%}</span><span class="st">"</span>})</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>first-order autocorrelation of the annual default rate: phi = 0.656
+an eleven-year series is worth 2.5 independent observations
+</code></pre>
+</div>
+<div class="cell-output cell-output-display" data-execution_count="19">
+<style type="text/css">
+</style>
+
+<table id="T_0a5a7" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th class="blank level0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th id="T_0a5a7_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">lra</th>
+<th id="T_0a5a7_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">sd</th>
+<th id="T_0a5a7_level0_col2" class="col_heading level0 col2" data-quarto-table-cell-role="th">years</th>
+<th id="T_0a5a7_level0_col3" class="col_heading level0 col3" data-quarto-table-cell-role="th">n_eff</th>
+<th id="T_0a5a7_level0_col4" class="col_heading level0 col4" data-quarto-table-cell-role="th">moc_naive</th>
+<th id="T_0a5a7_level0_col5" class="col_heading level0 col5" data-quarto-table-cell-role="th">moc_c</th>
+</tr>
+<tr class="even">
+<th class="index_name level0" data-quarto-table-cell-role="th">grade</th>
+<th class="blank col0" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col1" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col2" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col3" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col4" data-quarto-table-cell-role="th">&nbsp;</th>
+<th class="blank col5" data-quarto-table-cell-role="th">&nbsp;</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<th id="T_0a5a7_level0_row0" class="row_heading level0 row0" data-quarto-table-cell-role="th">1</th>
+<td id="T_0a5a7_row0_col0" class="data row0 col0">13.16%</td>
+<td id="T_0a5a7_row0_col1" class="data row0 col1">0.0546</td>
+<td id="T_0a5a7_row0_col2" class="data row0 col2">12</td>
+<td id="T_0a5a7_row0_col3" class="data row0 col3">2.5</td>
+<td id="T_0a5a7_row0_col4" class="data row0 col4">2.59%</td>
+<td id="T_0a5a7_row0_col5" class="data row0 col5">5.69%</td>
+</tr>
+<tr class="even">
+<th id="T_0a5a7_level0_row1" class="row_heading level0 row1" data-quarto-table-cell-role="th">2</th>
+<td id="T_0a5a7_row1_col0" class="data row1 col0">10.95%</td>
+<td id="T_0a5a7_row1_col1" class="data row1 col1">0.0649</td>
+<td id="T_0a5a7_row1_col2" class="data row1 col2">11</td>
+<td id="T_0a5a7_row1_col3" class="data row1 col3">2.3</td>
+<td id="T_0a5a7_row1_col4" class="data row1 col4">3.22%</td>
+<td id="T_0a5a7_row1_col5" class="data row1 col5">7.06%</td>
+</tr>
+<tr class="odd">
+<th id="T_0a5a7_level0_row2" class="row_heading level0 row2" data-quarto-table-cell-role="th">3</th>
+<td id="T_0a5a7_row2_col0" class="data row2 col0">15.14%</td>
+<td id="T_0a5a7_row2_col1" class="data row2 col1">0.0444</td>
+<td id="T_0a5a7_row2_col2" class="data row2 col2">12</td>
+<td id="T_0a5a7_row2_col3" class="data row2 col3">2.5</td>
+<td id="T_0a5a7_row2_col4" class="data row2 col4">2.11%</td>
+<td id="T_0a5a7_row2_col5" class="data row2 col5">4.62%</td>
+</tr>
+<tr class="even">
+<th id="T_0a5a7_level0_row3" class="row_heading level0 row3" data-quarto-table-cell-role="th">4</th>
+<td id="T_0a5a7_row3_col0" class="data row3 col0">17.79%</td>
+<td id="T_0a5a7_row3_col1" class="data row3 col1">0.0711</td>
+<td id="T_0a5a7_row3_col2" class="data row3 col2">12</td>
+<td id="T_0a5a7_row3_col3" class="data row3 col3">2.5</td>
+<td id="T_0a5a7_row3_col4" class="data row3 col4">3.37%</td>
+<td id="T_0a5a7_row3_col5" class="data row3 col5">7.40%</td>
+</tr>
+<tr class="odd">
+<th id="T_0a5a7_level0_row4" class="row_heading level0 row4" data-quarto-table-cell-role="th">5</th>
+<td id="T_0a5a7_row4_col0" class="data row4 col0">26.03%</td>
+<td id="T_0a5a7_row4_col1" class="data row4 col1">0.0849</td>
+<td id="T_0a5a7_row4_col2" class="data row4 col2">12</td>
+<td id="T_0a5a7_row4_col3" class="data row4 col3">2.5</td>
+<td id="T_0a5a7_row4_col4" class="data row4 col4">4.03%</td>
+<td id="T_0a5a7_row4_col5" class="data row4 col5">8.83%</td>
+</tr>
+<tr class="even">
+<th id="T_0a5a7_level0_row5" class="row_heading level0 row5" data-quarto-table-cell-role="th">6</th>
+<td id="T_0a5a7_row5_col0" class="data row5 col0">32.36%</td>
+<td id="T_0a5a7_row5_col1" class="data row5 col1">0.0992</td>
+<td id="T_0a5a7_row5_col2" class="data row5 col2">8</td>
+<td id="T_0a5a7_row5_col3" class="data row5 col3">1.7</td>
+<td id="T_0a5a7_row5_col4" class="data row5 col4">5.77%</td>
+<td id="T_0a5a7_row5_col5" class="data row5 col5">12.65%</td>
+</tr>
+<tr class="odd">
+<th id="T_0a5a7_level0_row6" class="row_heading level0 row6" data-quarto-table-cell-role="th">7</th>
+<td id="T_0a5a7_row6_col0" class="data row6 col0">38.23%</td>
+<td id="T_0a5a7_row6_col1" class="data row6 col1">0.1134</td>
+<td id="T_0a5a7_row6_col2" class="data row6 col2">8</td>
+<td id="T_0a5a7_row6_col3" class="data row6 col3">1.7</td>
+<td id="T_0a5a7_row6_col4" class="data row6 col4">6.60%</td>
+<td id="T_0a5a7_row6_col5" class="data row6 col5">14.46%</td>
+</tr>
+<tr class="even">
+<th id="T_0a5a7_level0_row7" class="row_heading level0 row7" data-quarto-table-cell-role="th">8</th>
+<td id="T_0a5a7_row7_col0" class="data row7 col0">50.21%</td>
+<td id="T_0a5a7_row7_col1" class="data row7 col1">0.0892</td>
+<td id="T_0a5a7_row7_col2" class="data row7 col2">8</td>
+<td id="T_0a5a7_row7_col3" class="data row7 col3">1.7</td>
+<td id="T_0a5a7_row7_col4" class="data row7 col4">5.19%</td>
+<td id="T_0a5a7_row7_col5" class="data row7 col5">11.38%</td>
+</tr>
+<tr class="odd">
+<th id="T_0a5a7_level0_row8" class="row_heading level0 row8" data-quarto-table-cell-role="th">9</th>
+<td id="T_0a5a7_row8_col0" class="data row8 col0">53.43%</td>
+<td id="T_0a5a7_row8_col1" class="data row8 col1">0.1192</td>
+<td id="T_0a5a7_row8_col2" class="data row8 col2">8</td>
+<td id="T_0a5a7_row8_col3" class="data row8 col3">1.7</td>
+<td id="T_0a5a7_row8_col4" class="data row8 col4">6.93%</td>
+<td id="T_0a5a7_row8_col5" class="data row8 col5">15.20%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The default rate series is strongly autocorrelated, at <span class="math inline">\(\phi = 0.66\)</span>, which is what the systematic factor’s own persistence produces. Correcting the effective sample size for it takes twelve annual observations down to about two and a half, and the margin of conservatism correspondingly up:</p>
+<div id="6d7e34f5" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Type C uplift, autocorrelation-adjusted against naive: "</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>(grades.moc_c <span class="op">/</span> grades.moc_naive)<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss">x"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Type C uplift, autocorrelation-adjusted against naive: 2.19x</code></pre>
+</div>
+</div>
+<p>An institution using the textbook standard error of the mean would understate this component by a factor of more than two. That is the entire content of paragraph 327 and it is not a subtle effect.</p>
+<p>Only Type C is quantified here, because Types A and B are sized against a model’s own deficiency register and this book does not have one. On a real submission the three would be combined and the total would be considerably larger than the figure below.</p>
+<div id="4f82aaac" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>grades[<span class="st">"pd_reg"</span>] <span class="op">=</span> np.minimum(grades.lra <span class="op">+</span> grades.moc_c, <span class="fl">0.9999</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="one-grade-end-to-end" class="level2" data-number="6.6">
+<h2 data-number="6.6" class="anchored" data-anchor-id="one-grade-end-to-end"><span class="header-section-number">6.6</span> One grade, end to end</h2>
+<p>The point of the whole sequence is that a single number can be traced through it. Grade 5 sits in the middle of the scale and is as good a witness as any.</p>
+<div id="421a59e9" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>trace <span class="op">=</span> grades.loc[<span class="dv">5</span>]</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>steps <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quantity"</span>: [<span class="st">"1. point-in-time PD, mean over the grade"</span>,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"2. grade assignment: score interval"</span>,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"2. grade assignment: share of the book"</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"3. pooled observed default rate"</span>,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"3. long-run average over 2009-2020"</span>,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"4. margin of conservatism, Type C"</span>,</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"5. regulatory PD"</span>],</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"value"</span>: [<span class="ss">f"</span><span class="sc">{</span>trace<span class="sc">.</span>pd_mean<span class="sc">:.2%}</span><span class="ss">"</span>,</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"</span><span class="sc">{</span>trace<span class="sc">.</span>pd_lo<span class="sc">:.2%}</span><span class="ss"> to </span><span class="sc">{</span>trace<span class="sc">.</span>pd_hi<span class="sc">:.2%}</span><span class="ss">"</span>,</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"</span><span class="sc">{</span>trace<span class="sc">.</span>share<span class="sc">:.1%}</span><span class="ss"> (</span><span class="sc">{</span>trace<span class="sc">.</span>loans<span class="sc">:,.0f}</span><span class="ss"> loans)"</span>,</span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"</span><span class="sc">{</span>trace<span class="sc">.</span>odr<span class="sc">:.2%}</span><span class="ss">"</span>,</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"</span><span class="sc">{</span>trace<span class="sc">.</span>lra<span class="sc">:.2%}</span><span class="ss"> (mean of </span><span class="sc">{</span>trace<span class="sc">.</span>years<span class="sc">:.0f}</span><span class="ss"> annual rates)"</span>,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"+</span><span class="sc">{</span>trace<span class="sc">.</span>moc_c<span class="sc">:.2%}</span><span class="ss">"</span>,</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"</span><span class="sc">{</span>trace<span class="sc">.</span>pd_reg<span class="sc">:.2%}</span><span class="ss">"</span>]})</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>steps.style.hide(axis<span class="op">=</span><span class="st">"index"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="22">
+<style type="text/css">
+</style>
+
+<table id="T_6614f" class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th id="T_6614f_level0_col0" class="col_heading level0 col0" data-quarto-table-cell-role="th">quantity</th>
+<th id="T_6614f_level0_col1" class="col_heading level0 col1" data-quarto-table-cell-role="th">value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td id="T_6614f_row0_col0" class="data row0 col0">1. point-in-time PD, mean over the grade</td>
+<td id="T_6614f_row0_col1" class="data row0 col1">27.14%</td>
+</tr>
+<tr class="even">
+<td id="T_6614f_row1_col0" class="data row1 col0">2. grade assignment: score interval</td>
+<td id="T_6614f_row1_col1" class="data row1 col1">21.19% to 34.21%</td>
+</tr>
+<tr class="odd">
+<td id="T_6614f_row2_col0" class="data row2 col0">2. grade assignment: share of the book</td>
+<td id="T_6614f_row2_col1" class="data row2 col1">9.9% (14,768 loans)</td>
+</tr>
+<tr class="even">
+<td id="T_6614f_row3_col0" class="data row3 col0">3. pooled observed default rate</td>
+<td id="T_6614f_row3_col1" class="data row3 col1">26.83%</td>
+</tr>
+<tr class="odd">
+<td id="T_6614f_row4_col0" class="data row4 col0">3. long-run average over 2009-2020</td>
+<td id="T_6614f_row4_col1" class="data row4 col1">26.03% (mean of 12 annual rates)</td>
+</tr>
+<tr class="even">
+<td id="T_6614f_row5_col0" class="data row5 col0">4. margin of conservatism, Type C</td>
+<td id="T_6614f_row5_col1" class="data row5 col1">+8.83%</td>
+</tr>
+<tr class="odd">
+<td id="T_6614f_row6_col0" class="data row6 col0">5. regulatory PD</td>
+<td id="T_6614f_row6_col1" class="data row6 col1">34.87%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Three things happen along that column and each is worth naming.</p>
+<p>The <strong>point-in-time probability and the pooled default rate agree</strong>, at 27.1 against 26.8 per cent, because the model is calibrated by construction and the grade is an interval of its own output.</p>
+<p>The <strong>long-run average sits below both</strong>, at 26.0 per cent, because averaging annual rates un-weights the large recent cohorts that pooling had over-weighted.</p>
+<p>The <strong>margin of conservatism then pushes the answer well above where it started</strong>, to 34.9 per cent. The regulatory probability of default is roughly a third higher than the model’s own estimate for the same borrowers, and every point of that gap comes from the shortness and the serial correlation of an eleven-year annual series. <strong>That is the balance property being broken deliberately</strong>, which is the thing to hold onto from this section: a calibrated model is what step 1 delivers and a conservative model is what the regulation requires, and steps 3 to 5 are where the one becomes the other.</p>
+</section>
 </section>
 <section id="the-capital-formula" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> The capital formula</h1>

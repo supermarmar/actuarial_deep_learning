@@ -9,7 +9,10 @@ HTML, for the reason recorded in the R1 report: the skill's `extract_text.py` re
 inlined CSS and JavaScript alongside the prose on these documents. Code cells, display maths,
 table rows and `#| fig-cap` lines were stripped, and inline maths was replaced with a token.
 Prose total is 4,474 words across eighteen graded sections, with references and the copyright
-note excluded from the `J25` counts.
+note excluded from the `J25` counts. The mechanical criteria were then re-run over the
+copyright block as well, since excluding a section from a density measure is defensible and
+excluding it from a regex check is not: it carried two three-item lists without the serial
+comma, both since corrected.
 
 ## Headline
 
@@ -68,9 +71,10 @@ subject and its second verb. The logit identification now stands as its own sent
 ### `J18` colon doing a full stop's job: one instance
 
 "the honest conclusion is the course's: a genuinely better model would beat both" became two
-sentences. The one remaining colon in the document introduces a genuine list of five
+sentences. The one remaining colon in the graded prose introduces a genuine list of five
 diagnostics, which the criterion permits, and one colon per 4,474 words sits far inside the
-budget of one per 500.
+budget of one per 500. The copyright block carries two more in its prose, both introducing genuine
+lists, and one inside a cited paper title.
 
 ### `J24` abstract-pointer summary: one instance
 

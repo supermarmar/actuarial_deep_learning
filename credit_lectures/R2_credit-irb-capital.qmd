@@ -500,9 +500,512 @@ which is why a bank builds one scorecard and calibrates it twice.
 
 # The five steps on Bondora
 
-*To be written: the point-in-time model, grade construction and its tests, observed default
-rates by grade and cohort, the long-run average period, the margin of conservatism, and one
-grade traced end to end.*
+::: {.callout-important icon=false title="What this demonstration is and is not"}
+Bondora is a peer-to-peer marketplace lender. It has no internal ratings-based permission, it
+will never apply for one, and its book breaks several of the assumptions the capital formula
+rests on. **Every number below illustrates a mechanic and none of them measures capital.**
+
+Three departures from a bank's version are worth naming before they cause confusion.
+
+The modelling table carries **one row per loan** with the outcome window opening at origination,
+so a cohort here is an origination vintage rather than a calendar snapshot of the whole book.
+That is a legitimate reading of a one-year default rate and it is not the one a bank uses, and
+it means grade **migration cannot be shown at all**, since no loan is observed in two grades.
+
+The book is **small and young**: twelve origination years, of which the first four contribute a
+few hundred loans each.
+
+The **default rate is enormous**. Roughly 29 per cent of these loans default within twelve
+months of origination, which is one to two orders of magnitude above a bank's retail book. That
+turns out to matter in section 7, where the capital formula does something surprising.
+:::
+
+## Step 1: the point-in-time model
+
+The scorecard is lecture 1's GLM3, reused unchanged so the two lectures agree: a Bernoulli
+regression with a logit link on age class, log income and country, fitted to the twelve-month
+default flag. It is a deliberately thin model, and section 8 asks what a validator would make of
+it.
+
+```{python}
+dat = pl.read_parquet("../data/bondora_pd.parquet")
+model_dat = (dat.filter(pl.col("Age").is_not_null() & (pl.col("IncomeTotal") > 0))
+                .with_columns(logIncome=pl.col("IncomeTotal").log()))
+
+AGE_CUTS = [18, 20, 25, 30, 40, 50, 60, 70, 101]
+AGE_LABELS = ["18-20", "21-25", "26-30", "31-40", "41-50", "51-60", "61-70", "71+"]
+
+book = model_dat.select(
+    ["default_12m", "Age", "logIncome", "Country", "LoanDate", "Rating"]).to_pandas()
+book["AgeClass"] = pd.cut(book["Age"], AGE_CUTS, labels=AGE_LABELS, include_lowest=True)
+book["cohort"] = pd.to_datetime(book["LoanDate"]).dt.year
+
+pit_model = smf.glm("default_12m ~ AgeClass + logIncome + Country",
+                    data=book, family=sm.families.Binomial()).fit()
+book["pit"] = pit_model.predict(book)
+
+print(f"loans {len(book):,}   observed default rate {book.default_12m.mean():.2%}   "
+      f"mean fitted PD {book.pit.mean():.2%}")
+print(f"fitted PD spans {book.pit.min():.2%} to {book.pit.max():.2%}   "
+      f"cohorts {book.cohort.min()} to {book.cohort.max()}")
+```
+
+The fitted probability and the observed rate agree at the portfolio level, which they must for a
+generalised linear model with a canonical link and an intercept. That is the balance property the
+course lecture 7 makes so much of, and it is worth noticing that it holds here for free and will
+not survive step 3.
+
+## Step 2: risk grades
+
+Grade construction is the step where regulation, rather than statistics, decides the answer. The
+requirements are that the scale be discrete, that probabilities rise monotonically across it,
+that no grade holds too little of the portfolio to calibrate reliably or so much that it
+encodes nothing, that borrowers within a grade have similar default rates, and that adjacent
+grades have different ones. A bank must also maintain at least seven grades for non-defaulted
+exposures plus one for those in default.
+
+The procedure follows from those constraints. Rank the book on the fitted probability, cut it
+into fine bins, then merge adjacent bins until every constraint holds.
+
+```{python}
+MIN_SHARE, MAX_SHARE = 0.01, 0.30
+
+def build_grades(pit, y, n_fine, min_share=MIN_SHARE):
+    """Fine quantile bins, merged upwards until the volume floor and monotone
+    observed default rates both hold. Merging adjacent bins is the only move,
+    so the grades stay intervals of the score."""
+    edges = np.unique(np.quantile(pit, np.linspace(0, 1, n_fine + 1)))
+    edges[0], edges[-1] = -np.inf, np.inf
+    fine = np.digitize(pit, edges[1:-1])
+    groups = [[k] for k in range(fine.max() + 1)]
+    n_tot = len(pit)
+
+    def stat(gr):
+        m = np.isin(fine, gr)
+        return m.sum(), y[m].mean()
+
+    for _ in range(1000):
+        s = [stat(gr) for gr in groups]
+        small = [i for i, (n, _) in enumerate(s) if n < min_share * n_tot]
+        if small:                                   # volume floor first
+            i = small[0]
+            j = i + 1 if i == 0 else i - 1
+            groups[min(i, j)] = sorted(groups[i] + groups[j])
+            del groups[max(i, j)]
+            continue
+        breaks = [i for i in range(len(s) - 1) if s[i][1] >= s[i + 1][1]]
+        if breaks:                                  # then monotonicity
+            i = breaks[0]
+            groups[i] = sorted(groups[i] + groups[i + 1])
+            del groups[i + 1]
+            continue
+        break
+
+    lab = np.empty(len(pit), dtype=int)
+    for k, gr in enumerate(groups, start=1):
+        lab[np.isin(fine, gr)] = k
+    return lab
+```
+
+How fine to cut before merging is the one free parameter, and it decides how many grades come
+out. The guides' own process tests several candidate schemes against the regulatory objectives
+and picks one, so this does the same.
+
+```{python}
+def z_between(n1, d1, n2, d2):
+    """Two-proportion z-test on adjacent grades. Small p means they differ."""
+    p1, p2 = d1 / n1, d2 / n2
+    p = (d1 + d2) / (n1 + n2)
+    se = np.sqrt(p * (1 - p) * (1 / n1 + 1 / n2))
+    return 2 * (1 - sps.norm.cdf(abs(p1 - p2) / se)) if se > 0 else 1.0
+
+def chi2_within(y, rng, reps=20, rate=0.05):
+    """Chi-square across bootstrapped subsamples of one grade. Small p means the
+    grade is not homogeneous."""
+    base, obs, exp = y.mean(), [], []
+    for _ in range(reps):
+        s = y[rng.random(len(y)) < rate]
+        if len(s) < 30:
+            continue
+        obs.append(s.sum()); exp.append(base * len(s))
+    if len(obs) < 5:
+        return 1.0
+    obs, exp = np.array(obs), np.array(exp)
+    return 1 - sps.chi2.cdf(((obs - exp) ** 2 / exp).sum(), len(obs) - 1)
+
+rng = np.random.default_rng(7)
+candidates = []
+for n_fine in (10, 15, 25, 50):
+    lab = build_grades(book.pit.values, book.default_12m.values, n_fine)
+    t = pd.DataFrame({"grade": lab, "y": book.default_12m.values})
+    agg = t.groupby("grade").agg(n=("y", "size"), d=("y", "sum"), odr=("y", "mean"))
+    share = agg.n / len(t)
+    het = [z_between(agg.n.iloc[i], agg.d.iloc[i], agg.n.iloc[i + 1], agg.d.iloc[i + 1])
+           for i in range(len(agg) - 1)]
+    hom = [chi2_within(t.y[t.grade == k].values, rng) for k in agg.index]
+    candidates.append({
+        "fine bins": n_fine, "grades": len(agg),
+        "min %": round(share.min() * 100, 2), "max %": round(share.max() * 100, 2),
+        "HHI": round((share ** 2).sum(), 4),
+        "heterogeneity fails %": round(100 * np.mean(np.array(het) > 0.10), 1),
+        "homogeneity fails %": round(100 * np.mean(np.array(hom) < 0.05), 1)})
+
+pd.DataFrame(candidates).set_index("fine bins")
+```
+
+That table earns its place, because the trade-off in it is the whole reason grade construction is
+iterative. Every scheme is monotone and every scheme clears the volume bounds and the
+concentration test, since the merging procedure enforces all three by construction. What
+granularity costs is **separation**: at nine grades no adjacent pair is statistically
+indistinguishable, at thirteen one pair in six is, and at thirty nearly three quarters are. A
+finer scale looks more discriminating and is mostly reporting noise.
+
+Nine grades it is. That clears the seven-grade minimum with room to spare and passes every test.
+
+```{python}
+book["grade"] = build_grades(book.pit.values, book.default_12m.values, 10)
+
+grades = (book.groupby("grade")
+              .agg(loans=("default_12m", "size"), defaults=("default_12m", "sum"),
+                   odr=("default_12m", "mean"), pd_lo=("pit", "min"),
+                   pd_hi=("pit", "max"), pd_mean=("pit", "mean")))
+grades["share"] = grades.loans / len(book)
+grades[["loans", "defaults", "share", "pd_lo", "pd_hi", "pd_mean", "odr"]].style.format({
+    "loans": "{:,.0f}", "defaults": "{:,.0f}", "share": "{:.1%}",
+    "pd_lo": "{:.2%}", "pd_hi": "{:.2%}", "pd_mean": "{:.2%}", "odr": "{:.2%}"})
+```
+
+```{python}
+hhi = float((grades.share ** 2).sum())
+het_p = [z_between(grades.loans.iloc[i], grades.defaults.iloc[i],
+                   grades.loans.iloc[i + 1], grades.defaults.iloc[i + 1])
+         for i in range(len(grades) - 1)]
+hom_p = [chi2_within(book.default_12m.values[book.grade.values == k], rng)
+         for k in grades.index]
+print(f"concentration:  max grade {grades.share.max():.1%} of the book, "
+      f"min {grades.share.min():.1%}, HHI {hhi:.4f} against a 0.25 threshold")
+print(f"heterogeneity:  largest p-value between adjacent grades {max(het_p):.4f}")
+print(f"homogeneity:    smallest p-value within a grade {min(hom_p):.4f}")
+print(f"monotonicity:   {'holds' if grades.odr.is_monotonic_increasing else 'BREAKS'}, "
+      f"{grades.odr.iloc[0]:.1%} to {grades.odr.iloc[-1]:.1%}")
+```
+
+One test the guides list cannot be run here at all. **Grade migration** asks how often a borrower
+moves grade between consecutive observation dates, and the fixed-horizon table observes each loan
+exactly once. A bank would build the migration matrix from monthly snapshots and read off the
+proportion staying within one band; the survival table lecture S1 uses could support that and it
+is outside this lecture's scope.
+
+## Step 3: observed default rates by grade and cohort
+
+The long-run average is an average of one-year default rates, so the rates have to exist as a
+time series before anything can be averaged. Splitting the book by grade and origination year
+gives that series, and it also gives the first honest look at what this portfolio is.
+
+```{python}
+#| fig-cap: "Twelve-month default rate by risk grade and origination year, on the Bondora book. (lhs): each grade's series, bronze for the riskiest grade and grey shading from light for grade 1; cells behind fewer than 30 loans are dropped, which is why grades 6 to 9 begin in 2013. (rhs): loans originated per year on a log scale, showing that the first four cohorts are a rounding error against the last three. The grades separate cleanly in every year, which is the rank ordering holding out of time, and the level moves together across grades, which is the cycle. Grades 6 to 9 have no pre-2013 history because the early book was almost entirely Estonian and almost entirely low-risk, and that gap is a data limitation the margin of conservatism has to price."
+cell = (book.groupby(["grade", "cohort"])["default_12m"]
+            .agg(["size", "mean"]).reset_index())
+cell = cell[cell["size"] >= 30]
+
+fig, axs = plt.subplots(1, 2, figsize=(9, 3.6))
+for k in sorted(book.grade.unique()):
+    s = cell[cell.grade == k]
+    axs[0].plot(s.cohort, s["mean"], "-o", ms=2.5, lw=1,
+                color=OX if k == 9 else GREY,
+                alpha=1.0 if k == 9 else 0.35 + 0.06 * k)
+    if len(s):
+        axs[0].annotate(f"{k}", (s.cohort.iloc[-1], s["mean"].iloc[-1]),
+                        xytext=(3, -2), textcoords="offset points", fontsize=7,
+                        color=OX if k == 9 else RULE)
+axs[0].set_xlabel("origination year"); axs[0].set_ylabel("12-month default rate")
+
+n_by_year = book.groupby("cohort").size()
+axs[1].bar(n_by_year.index, n_by_year.values, color=GREY)
+axs[1].set_yscale("log"); axs[1].set_xlabel("origination year")
+axs[1].set_ylabel("loans originated")
+plt.tight_layout(); plt.show()
+```
+
+## Step 4: the long-run average, and the period it is taken over
+
+Two decisions sit inside a long-run average and only one of them is arithmetic.
+
+The arithmetic decision is what to average. **An average of annual rates is not the rate of the
+pooled data**, because the cohorts differ enormously in size, and the regulation asks for the
+former.
+
+```{python}
+WINDOW = range(2009, 2021)
+win = book[book.cohort.isin(WINDOW)]
+annual = (win.groupby(["grade", "cohort"])["default_12m"]
+             .agg(["size", "mean"]).reset_index())
+annual = annual[annual["size"] >= 30]
+lra = annual.groupby("grade")["mean"].agg(lra="mean", sd="std", years="count")
+
+grades = grades.join(lra)
+cmp = grades[["odr", "lra", "years"]].copy()
+cmp["difference"] = cmp.lra - cmp.odr
+cmp.style.format({"odr": "{:.2%}", "lra": "{:.2%}",
+                  "years": "{:.0f}", "difference": "{:+.2%}"})
+```
+
+The long-run average comes out **below** the pooled rate in every grade. The reason is that
+Bondora's largest cohorts are its most recent and its riskiest, so pooling weights the bad years
+heavily while averaging the annual rates does not. A bank meets the same effect whenever its book
+has grown, and the direction is not always favourable.
+
+The judgement decision is the period. Article 180 sets a five-year minimum and requires a mix of
+good and bad years, and SS4/24's calibration section expands on it: consider the variability of
+the observed one-year default rates, the balance of good and bad years measured against the
+macroeconomic variables that actually drive the exposures, and any structural change in the
+economic, legal or business environment. The four-step procedure below is the standard way of
+turning those words into a defensible window.
+
+### Deriving an economic factor
+
+Three Eurostat series carry the economic state: the harmonised unemployment rate, annual HICP
+inflation, and real gross domestic product growth year on year. A principal component compresses
+them into one index, oriented so that a high value means benign conditions.
+
+```{python}
+MV = ["unemployment", "inflation", "gdp_growth"]
+macro = pl.read_csv("data/macro_eurostat.csv", comment_prefix="#").to_pandas()
+ee = macro[macro.country == "EE"].copy()
+ee["cohort"] = ee.month.str.slice(0, 4).astype(int)
+annual_macro = ee[ee.cohort.isin(WINDOW)].groupby("cohort")[MV].mean()
+
+Z = ((annual_macro - annual_macro.mean()) / annual_macro.std(ddof=0)).values
+_, sv, vt = np.linalg.svd(Z, full_matrices=False)
+loading = vt[0]
+factor = Z @ loading
+if np.corrcoef(factor, annual_macro.unemployment)[0, 1] > 0:   # orient: high = benign
+    factor, loading = -factor, -loading
+factor = pd.Series(factor, index=annual_macro.index)
+
+print(f"first principal component explains {sv[0] ** 2 / (sv ** 2).sum():.1%} "
+      "of the variance in the three standardised series")
+print("loadings (high factor = benign): "
+      + "  ".join(f"{v} {l:+.3f}" for v, l in zip(MV, loading)))
+```
+
+The loadings say something worth pausing on. Growth and inflation dominate the index while
+unemployment barely enters it, which looks wrong until the series are read: Estonian unemployment
+peaked in 2010, a full year after output had bottomed out and begun recovering. Unemployment is a
+lagging indicator, and a factor built to date the cycle should not be led by one.
+
+Only Estonia is used. Lecture R1 established that a macroeconomic coefficient fitted across
+Bondora's three markets comes back with economically backwards signs, because the Finnish and
+Spanish books opened in 2013 and expanded through a period of steadily falling unemployment, so
+within those markets the lender's own descent down the credit spectrum runs against the cycle.
+Estonia is the only market observed through the 2009 downturn, and this lecture inherits that
+restriction rather than rediscovering the failure.
+
+### Classifying good and bad years, and marking the cycle
+
+```{python}
+ee_rate = win[win.Country == "EE"].groupby("cohort")["default_12m"].mean()
+all_rate = win.groupby("cohort")["default_12m"].mean()
+state = pd.DataFrame({
+    "factor": factor.round(2),
+    "state": np.where(factor > 0, "good", "bad"),
+    "EE default rate": ee_rate.round(4),
+    "whole-book default rate": all_rate.round(4)})
+print(state.to_string())
+print(f"\ngood years {int((factor > 0).sum())}, bad years {int((factor <= 0).sum())}")
+print(f"correlation of the factor with the Estonian default rate  "
+      f"{np.corrcoef(factor, ee_rate)[0, 1]:+.3f}")
+print(f"correlation of the factor with the whole-book rate        "
+      f"{np.corrcoef(factor, all_rate)[0, 1]:+.3f}")
+```
+
+```{python}
+#| fig-cap: "The Estonian economic factor and the Bondora default rate, 2009 to 2020. (lhs): the first principal component of unemployment, inflation and real growth, oriented so that positive is benign, with bad years shaded. (rhs): the twelve-month default rate on the Estonian book in bronze against the whole book in grey, both by origination year. The Estonian series moves against the factor at minus 0.44, which is the sign economics expects. The whole-book series is weaker at minus 0.23, because from 2014 it mixes in the Finnish and Spanish books, whose default rates are two and three times the Estonian level and whose growth had nothing to do with the European cycle."
+fig, axs = plt.subplots(1, 2, figsize=(9, 3.4))
+axs[0].axhline(0, color=RULE, lw=0.8)
+axs[0].bar(factor.index, factor.values,
+           color=[BLUE if v > 0 else OX for v in factor.values])
+axs[0].set_xlabel("year"); axs[0].set_ylabel("economic factor")
+axs[1].plot(ee_rate.index, ee_rate.values, "-o", ms=3, color=OX, label="Estonia")
+axs[1].plot(all_rate.index, all_rate.values, "-o", ms=3, color=GREY,
+            label="whole book")
+axs[1].set_xlabel("origination year"); axs[1].set_ylabel("12-month default rate")
+axs[1].legend(frameon=False)
+plt.tight_layout(); plt.show()
+```
+
+Six good years and six bad, which is as balanced as a window gets. The factor also dates the
+cycle: a deep trough in 2009, a peak in 2011, a second trough running 2014 to 2016, a second peak
+in 2017, and the pandemic in 2020. **A peak-to-peak cycle is therefore 2011 to 2017**, which is
+seven years and, awkwardly, excludes the only genuine downturn in the data.
+
+### Testing the window
+
+The remaining step compares the variability of the observed default rates inside a candidate
+window against their variability over the reference cycle, using an F-test on the two variances.
+A window whose variability differs materially from the cycle's is not representative of it.
+
+```{python}
+def f_test(a, b):
+    """Two-sided F-test on two variances, larger over smaller."""
+    va, vb = np.var(a, ddof=1), np.var(b, ddof=1)
+    (hi, lo), (d1, d2) = ((va, vb), (len(a) - 1, len(b) - 1)) if va >= vb \
+        else ((vb, va), (len(b) - 1, len(a) - 1))
+    stat = hi / lo
+    return stat, 2 * (1 - sps.f.cdf(stat, d1, d2))
+
+full = ee_rate.loc[2009:2020]
+rows = []
+for a, b in [(2009, 2020), (2011, 2017), (2013, 2020), (2014, 2020),
+             (2015, 2020), (2016, 2020)]:
+    w, fw = ee_rate.loc[a:b], factor.loc[a:b]
+    comp = ee_rate.drop(index=range(a, b + 1), errors="ignore")
+    f1, p1 = f_test(w.values, full.values)
+    f2, p2 = f_test(w.values, comp.values) if len(comp) > 1 else (np.nan, np.nan)
+    rows.append({"window": f"{a}-{b}", "years": len(w),
+                 "good": int((fw > 0).sum()), "bad": int((fw <= 0).sum()),
+                 "LRA": w.mean(), "sd": w.std(),
+                 "F vs cycle": f1, "p": p1,
+                 "F vs complement": f2, "p ": p2})
+pd.DataFrame(rows).set_index("window").style.format(
+    {"LRA": "{:.2%}", "sd": "{:.4f}", "F vs cycle": "{:.2f}", "p": "{:.3f}",
+     "F vs complement": "{:.2f}", "p ": "{:.3f}"}, na_rep="")
+```
+
+Every candidate passes, including one that excludes the 2009 crisis outright. That result is the
+opposite of the one this section was expected to produce, and taking it at face value would be a
+mistake. **The test has essentially no power at annual frequency.**
+
+```{python}
+def f_power(ratio, n1, n2, alpha=0.05):
+    d1, d2 = n1 - 1, n2 - 1
+    lo, hi = sps.f.ppf(alpha / 2, d1, d2), sps.f.ppf(1 - alpha / 2, d1, d2)
+    return sps.f.sf(hi / ratio, d1, d2) + sps.f.cdf(lo / ratio, d1, d2)
+
+for n1, n2, label in [(8, 12, "8 against 12 annual rates"),
+                      (96, 144, "the same windows in monthly cohorts")]:
+    r = np.linspace(1.01, 40, 8000)
+    p = np.array([f_power(x, n1, n2) for x in r])
+    r80 = r[np.argmax(p >= 0.80)]
+    print(f"{label:36s} power at a doubled variance {f_power(2, n1, n2):.0%}   "
+          f"variance ratio needed for 80% power {r80:.1f}x "
+          f"(a {np.sqrt(r80):.1f}x difference in standard deviation)")
+```
+
+A window has to have roughly seven times the variance of the cycle before this test notices, on
+eight annual observations. Move to monthly cohorts and the same comparison detects a 1.7-fold
+difference, which is the range real windows differ by. **The F-test is a good test computed at
+the wrong frequency**, and passing it here is close to no evidence at all.
+
+Consequently the window is chosen on the qualitative criteria the regulation states first, and
+the test is reported as the weak corroboration it is. **The window is 2009 to 2020**: it is the
+longest available, it splits six good years against six bad, and it is the only window containing
+the single downturn this book has lived through. Excluding the pandemic year would be defensible
+on the reasoning that payment holidays and state support suppressed defaults artificially, and it
+is not done here, because dropping the second of only two stress episodes to gain nothing
+measurable is a poor trade.
+
+## Step 5: the margin of conservatism
+
+The margin exists because the calibrated probability is an estimate and estimates are wrong in
+both directions, while capital is only allowed to be wrong in one. The European Central Bank's
+guide to internal models splits it into three types, and the split is useful because the three
+call for completely different evidence.
+
+**Type A** covers deficiencies in the data and the method. On this book that would include the
+absence of any behavioural information, a default definition derived from a status field rather
+than from days past due, an outcome window opening at origination rather than at a calendar
+snapshot, and above all the four grades with no observations before 2013.
+
+**Type B** covers changes in underwriting standards, risk appetite, and collection and recovery
+policy. Bondora's expansion into Finland and Spain, and its accompanying move down the credit
+spectrum, is a Type B adjustment of the first order: the development sample is not
+representative of the current book because the lender deliberately changed what it lends.
+
+**Type C** covers the general estimation error in the long-run average itself, and it is the one
+that can be computed rather than argued. Paragraph 327 of the guide requires the autocorrelation
+of the default rate series to be reflected in it, and the requirement has teeth.
+
+```{python}
+port = win.groupby("cohort")["default_12m"].mean()
+dev = port.values - port.values.mean()
+phi = float(np.sum(dev[1:] * dev[:-1]) / np.sum(dev ** 2))
+z95 = sps.norm.ppf(0.95)
+
+grades["n_eff"] = grades.years * (1 - phi) / (1 + phi)
+grades["moc_naive"] = z95 * grades.sd / np.sqrt(grades.years)
+grades["moc_c"] = z95 * grades.sd / np.sqrt(grades.n_eff)
+
+print(f"first-order autocorrelation of the annual default rate: phi = {phi:.3f}")
+print(f"an eleven-year series is worth {grades.n_eff.max():.1f} independent observations\n")
+grades[["lra", "sd", "years", "n_eff", "moc_naive", "moc_c"]].style.format({
+    "lra": "{:.2%}", "sd": "{:.4f}", "years": "{:.0f}", "n_eff": "{:.1f}",
+    "moc_naive": "{:.2%}", "moc_c": "{:.2%}"})
+```
+
+The default rate series is strongly autocorrelated, at $\phi = 0.66$, which is what the
+systematic factor's own persistence produces. Correcting the effective sample size for it takes
+twelve annual observations down to about two and a half, and the margin of conservatism
+correspondingly up:
+
+```{python}
+print(f"Type C uplift, autocorrelation-adjusted against naive: "
+      f"{(grades.moc_c / grades.moc_naive).mean():.2f}x")
+```
+
+An institution using the textbook standard error of the mean would understate this component by
+a factor of more than two. That is the entire content of paragraph 327 and it is not a subtle
+effect.
+
+Only Type C is quantified here, because Types A and B are sized against a model's own deficiency
+register and this book does not have one. On a real submission the three would be combined and
+the total would be considerably larger than the figure below.
+
+```{python}
+grades["pd_reg"] = np.minimum(grades.lra + grades.moc_c, 0.9999)
+```
+
+## One grade, end to end
+
+The point of the whole sequence is that a single number can be traced through it. Grade 5 sits in
+the middle of the scale and is as good a witness as any.
+
+```{python}
+trace = grades.loc[5]
+steps = pd.DataFrame({
+    "quantity": ["1. point-in-time PD, mean over the grade",
+                 "2. grade assignment: score interval",
+                 "2. grade assignment: share of the book",
+                 "3. pooled observed default rate",
+                 "3. long-run average over 2009-2020",
+                 "4. margin of conservatism, Type C",
+                 "5. regulatory PD"],
+    "value": [f"{trace.pd_mean:.2%}",
+              f"{trace.pd_lo:.2%} to {trace.pd_hi:.2%}",
+              f"{trace.share:.1%} ({trace.loans:,.0f} loans)",
+              f"{trace.odr:.2%}",
+              f"{trace.lra:.2%} (mean of {trace.years:.0f} annual rates)",
+              f"+{trace.moc_c:.2%}",
+              f"{trace.pd_reg:.2%}"]})
+steps.style.hide(axis="index")
+```
+
+Three things happen along that column and each is worth naming.
+
+The **point-in-time probability and the pooled default rate agree**, at 27.1 against 26.8 per
+cent, because the model is calibrated by construction and the grade is an interval of its own
+output.
+
+The **long-run average sits below both**, at 26.0 per cent, because averaging annual rates
+un-weights the large recent cohorts that pooling had over-weighted.
+
+The **margin of conservatism then pushes the answer well above where it started**, to 34.9 per
+cent. The regulatory probability of default is roughly a third higher than the model's own
+estimate for the same borrowers, and every point of that gap comes from the shortness and the
+serial correlation of an eleven-year annual series. **That is the balance property being broken
+deliberately**, which is the thing to hold onto from this section: a calibrated model is what
+step 1 delivers and a conservative model is what the regulation requires, and steps 3 to 5 are
+where the one becomes the other.
 
 # The capital formula
 
