@@ -255,3 +255,48 @@ target encoding, leakage and embeddings, so the two lectures meet without overla
 6 asks how, and `C1` asks whether. The deferred `C2` will own attribution read causally,
 covering SHAP, LocalGLMnet and ICE marginal effects against the Table 2 fallacy, and it belongs
 beside the course's LocalGLMnet lectures rather than here.
+
+## What the ingest actually produced, recorded 2 September 2026
+
+Task 2 is done, committed in the vault as `cb5d289` on `feat/ingest-causal-inference-epi`.
+Eleven sources are registered at T4 and `kb-lint` reports zero broken citations and zero broken
+wikilinks across 477 articles.
+
+Three articles rather than the two decision 5 anticipated. The reason is the length envelope
+rather than a change of mind: loading `methods/causal-inference.md` with both the
+coefficient-reading material and the sensitivity material took it to 1,127 prose words against
+the profile's 800-word envelope, so the sensitivity analysis was split out under the profile's
+own decomposition rule. The result is `methods/interaction-and-effect-modification` at 802
+words, `methods/adjustment-set-selection` at 824, `methods/unmeasured-confounding-sensitivity`
+at 656, and the hub at 886. Three of the four carry the soft long-article warning, and none was
+cut further, since shaving cited prose to clear a soft threshold costs more than the warning
+does. The Table 2 fallacy went into the adjustment-set article rather than the hub, because its
+mechanism is a claim about adjustment sets and the paper itself argues it with causal diagrams.
+
+Two things the ingest turned up that change what the lecture can say.
+
+**The scale result is stronger than the plan assumed.** Section 1.5 of VanderWeele and Knol was
+read directly rather than taken from the abstract, and it states that provided both exposures
+affect the outcome there will always be interaction on at least one scale, so the only way to
+have none on any scale is for one exposure to have no effect at all. Hence "this model carries
+no interaction" is always a claim about one scale, and a model whose covariates all matter
+carries interaction somewhere by construction. The same section reports that in a random sample
+of 25 cohort and 50 case-control studies from the five highest-ranked epidemiology journals,
+61 per cent assessed interaction and exactly one reported an additive measure. That is a
+better opening for section 3 of the lecture than the scale-dependence claim alone.
+
+**The E-value has an obtainable worked example with real numbers.** Ding and VanderWeele's
+illustration takes the Hammond and Horn smoking study, observed relative risk 10.73 with a
+95 per cent interval of 8.02 to 14.36, and grants Fisher's hypothetical genetic confounder at
+the Cornfield strength of 10.73 on both arms. The joint bounding factor is then 5.63, so the
+corrected estimate is 1.91 and the corrected interval 1.42 to 2.55, which still excludes one.
+The lecture can show the arithmetic on a case the reader already believes before applying the
+same bound to Bondora.
+
+**Four sources are paywalled and are registered as `not-ingested` stubs**, namely VanderWeele
+2009, Greenland 2003, Hernán et al. 2004 and VanderWeele and Ding 2017. Requests sit in
+`vault/raw/_ingest-2026-09-02_manual-downloads-outstanding.md`. Every claim the wiki cites to
+one of them traces to the published abstract, and each citing article says so in
+`fact_check_notes`. The lecture inherits that limit and must attribute those claims to the
+abstract in the same way, above all Greenland 2003's magnitude comparison, which has no
+substitute anywhere on the list.
