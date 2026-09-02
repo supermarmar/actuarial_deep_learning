@@ -193,6 +193,55 @@ window.Quarto = {
 </section>
 <section id="exponential-dispersion-family-a-bit-of-theory" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Exponential dispersion family: a bit of theory</h1>
+<p>The density below is written once and covers both a discrete and a continuous response, so it is worth fixing what each of those objects is before the theory starts.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Mass functions, densities and distribution functions">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Mass functions, densities and distribution functions
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A <strong>discrete</strong> random variable places its probability on individual outcomes, and its <strong>probability mass function</strong> records how much sits on each,</p>
+<p><span class="math display">\[
+p(y) = \mathbb{P}(Y = y) \ge 0,
+\qquad
+\sum_{y \in \mathcal{Y}} p(y) = 1 ,
+\]</span></p>
+<p>the sum running over the support <span class="math inline">\(\mathcal{Y}\)</span>. By contrast, a <strong>continuous</strong> random variable has no atoms, i.e.&nbsp;<span class="math inline">\(\mathbb{P}(Y = y) = 0\)</span> for every single value <span class="math inline">\(y\)</span>, so probability is carried instead by a <strong>density</strong> <span class="math inline">\(f\)</span> and recovered only over intervals,</p>
+<p><span class="math display">\[
+f(y) \ge 0,
+\qquad
+\int_{\mathbb{R}} f(y)\,\mathrm{d}y = 1,
+\qquad
+\mathbb{P}(a &lt; Y \le b) = \int_a^b f(y)\,\mathrm{d}y .
+\]</span></p>
+<p>Similarly, the <strong>cumulative distribution function</strong> accumulates either of them,</p>
+<p><span class="math display">\[
+F(y) = \mathbb{P}(Y \le y) = \sum_{z \le y} p(z)
+\quad \text{(discrete)},
+\qquad
+F(y) = \mathbb{P}(Y \le y) = \int_{-\infty}^{y} f(z)\,\mathrm{d}z
+\quad \text{(continuous)} ,
+\]</span></p>
+<p>and it is non-decreasing and right-continuous, with <span class="math inline">\(F(y) \to 0\)</span> as <span class="math inline">\(y \to -\infty\)</span> and <span class="math inline">\(F(y) \to 1\)</span> as <span class="math inline">\(y \to +\infty\)</span>. In the continuous case <span class="math inline">\(f = F'\)</span> wherever the derivative exists, so a density and a distribution function hold the same information in differential and in accumulated form. The complement <span class="math inline">\(S(y) = 1 - F(y)\)</span> is the <strong>survival function</strong>, and it is the object lecture S1 attaches its monthly hazards to.</p>
+<p>Consequently both quantities the first lecture defined sit on this list. The default indicator has a mass function with two atoms,</p>
+<p><span class="math display">\[
+\mathbb{P}\left(D_i^{(k)} = 1 \,\middle|\, \boldsymbol{X}_i\right) = \mu_k(\boldsymbol{X}_i),
+\qquad
+\mathbb{P}\left(D_i^{(k)} = 0 \,\middle|\, \boldsymbol{X}_i\right) = 1 - \mu_k(\boldsymbol{X}_i) ,
+\]</span></p>
+<p>and the time to default <span class="math inline">\(T_i\)</span> has a distribution function whose value at the horizon is the probability of default itself,</p>
+<p><span class="math display">\[
+\mathrm{PD}_k(\boldsymbol{X}_i)
+= \mathbb{P}\left( T_i \le k \,\middle|\, \boldsymbol{X}_i \right)
+= F_{T_i \mid \boldsymbol{X}_i}(k) .
+\]</span></p>
+<p>A PD is therefore a conditional distribution function read at a single point, which is why moving the horizon <span class="math inline">\(k\)</span> produces a whole term structure from one distribution. Since <span class="math inline">\(T_i\)</span> is measured in whole months on book, the discrete forms above are the operative ones throughout this series, and the continuous forms are the idealisation that makes the calculus convenient.</p>
+</div>
+</div>
 <p>A random variable <span class="math inline">\(Y\)</span> belongs to the exponential dispersion family if its density (or probability mass function) can be written as</p>
 <p><span class="math display">\[
 Y \sim f_{\theta}(y)
@@ -204,22 +253,67 @@ Y \sim f_{\theta}(y)
 \qquad
 \mathrm{Var}(Y) = \frac{\varphi}{v}\, \kappa''(\theta).
 \]</span></p>
+<p>Those two formulas are asserted here and the callout proves them, which also explains where the cumulant function gets its name.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Moments, and the function that generates them">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Moments, and the function that generates them
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The <strong><span class="math inline">\(m\)</span>th raw moment</strong> of <span class="math inline">\(Y\)</span> is <span class="math inline">\(\mathbb{E}[Y^m]\)</span>, and the <strong><span class="math inline">\(m\)</span>th central moment</strong> is <span class="math inline">\(\mathbb{E}\left[(Y - \mathbb{E}[Y])^m\right]\)</span>. The first raw moment is the mean, the second central moment is the variance, and the third and fourth central moments, standardised by the variance, give the skewness and the kurtosis. Moments are averages of powers, so each one summarises a single shape feature of the distribution.</p>
+<p>The <strong>moment generating function</strong> collects all of them at once,</p>
+<p><span class="math display">\[
+M_Y(s) = \mathbb{E}\left[ e^{sY} \right]
+= \sum_{m = 0}^{\infty} \frac{s^m}{m!} \, \mathbb{E}\left[Y^m\right] ,
+\]</span></p>
+<p>for <span class="math inline">\(s\)</span> in a neighbourhood of the origin on which the expectation is finite. Therefore the moments need no separate calculation. Differentiate <span class="math inline">\(m\)</span> times and evaluate at zero, which leaves one term of that series, hence <span class="math inline">\(\mathbb{E}[Y^m] = M_Y^{(m)}(0)\)</span>. Moreover, where <span class="math inline">\(M_Y\)</span> exists on an open interval around zero it pins down the distribution completely. Its logarithm <span class="math inline">\(K_Y(s) = \log M_Y(s)\)</span> is the <strong>cumulant generating function</strong>, whose derivatives at zero are the cumulants, the first two being the mean and the variance directly.</p>
+<p>For an EDF member that logarithm comes out in closed form. Writing <span class="math inline">\(\psi = \varphi / v\)</span> for brevity, and reading the integral as a sum for a discrete member,</p>
+<p><span class="math display">\[
+M_Y(s)
+= \int \exp\left( sy + \frac{y\theta - \kappa(\theta)}{\psi} + c(y, \psi) \right) \mathrm{d}y
+= \exp\left( \frac{\kappa(\theta + s\psi) - \kappa(\theta)}{\psi} \right)
+\int f_{\theta + s\psi}(y) \, \mathrm{d}y ,
+\]</span></p>
+<p>since the exponent rearranges as <span class="math inline">\(sy + (y\theta - \kappa(\theta))/\psi
+= \left(y(\theta + s\psi) - \kappa(\theta + s\psi)\right)/\psi
++ \left(\kappa(\theta + s\psi) - \kappa(\theta)\right)/\psi\)</span>. The remaining integrand is the same family member at canonical parameter <span class="math inline">\(\theta + s\psi\)</span>, so it integrates to one for every <span class="math inline">\(s\)</span> small enough to keep <span class="math inline">\(\theta + s\psi\)</span> inside <span class="math inline">\(\boldsymbol{\Theta}\)</span>. Consequently</p>
+<p><span class="math display">\[
+K_Y(s) = \frac{\kappa(\theta + s\psi) - \kappa(\theta)}{\psi},
+\qquad
+K_Y'(s) = \kappa'(\theta + s\psi),
+\qquad
+K_Y''(s) = \psi \, \kappa''(\theta + s\psi) ,
+\]</span></p>
+<p>and setting <span class="math inline">\(s = 0\)</span> returns <span class="math inline">\(\mathbb{E}[Y] = \kappa'(\theta)\)</span> and <span class="math inline">\(\mathrm{Var}(Y) = (\varphi/v)\,\kappa''(\theta)\)</span>. The name follows, since <span class="math inline">\(\kappa\)</span> generates the cumulants of the family up to that affine change of argument.</p>
+<p>In particular, the Bernoulli case is immediate, with <span class="math inline">\(\psi = 1\)</span> and <span class="math inline">\(\kappa(\theta) = \log(1 + e^{\theta})\)</span>,</p>
+<p><span class="math display">\[
+M_{D^{(k)}}(s) = \frac{1 + e^{\theta + s}}{1 + e^{\theta}} = 1 - \mu_k + \mu_k e^{s} ,
+\]</span></p>
+<p>whose two terms are the two atoms of the mass function read off as coefficients. The third cumulant is <span class="math inline">\(\kappa'''(\theta) = \mu_k (1 - \mu_k)(1 - 2\mu_k)\)</span>, so the skewness of the indicator is <span class="math inline">\((1 - 2\mu_k) / \sqrt{\mu_k (1 - \mu_k)}\)</span>, which reaches <span class="math inline">\(4.13\)</span> at a PD of 5 per cent and vanishes only at <span class="math inline">\(\mu_k = 1/2\)</span>. Consequently a handful of defaults carries much of the weight in a small cell, which is a recurring difficulty in low-default portfolios.</p>
+</div>
+</div>
 <p>Since <span class="math inline">\(\kappa\)</span> is strictly convex on the interior of <span class="math inline">\(\boldsymbol{\Theta}\)</span>, the mean function <span class="math inline">\(\kappa'\)</span> is strictly increasing and therefore invertible. Its inverse</p>
 <p><span class="math display">\[
 h := (\kappa')^{-1}
 \]</span></p>
-<p>is called the <strong>canonical link</strong>, and it identifies means with canonical parameters one to one, <span class="math inline">\(h(\mathbb{E}[Y]) = \theta\)</span>.</p>
+<p>is called the <strong>canonical link</strong>. Hence means and canonical parameters correspond one to one, <span class="math inline">\(h(\mathbb{E}[Y]) = \theta\)</span>.</p>
 <section id="the-bernoulli-member" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="the-bernoulli-member"><span class="header-section-number">2.1</span> The Bernoulli member</h2>
-<p>The default indicator <span class="math inline">\(D \in \{0, 1\}\)</span> of the first lecture has probability mass function <span class="math inline">\(\mathbb{P}(D = y) = \mu^{y} (1 - \mu)^{1-y}\)</span> for <span class="math inline">\(y \in \{0,1\}\)</span>, where <span class="math inline">\(\mu = \mathrm{PD}\)</span> is the default probability. Rewriting,</p>
+<p>The first lecture’s notation carries over unchanged, and this lecture keeps it. The response is the fixed-horizon default indicator <span class="math inline">\(D_i^{(k)} = \mathbf{1}\{T_i \le k\} \in \{0, 1\}\)</span> of loan <span class="math inline">\(i\)</span> over a window of <span class="math inline">\(k\)</span> months, and its conditional mean is <span class="math inline">\(\mu_k(\boldsymbol{X}_i) = \mathbb{E}\left[D_i^{(k)} \mid \boldsymbol{X}_i\right]
+= \mathrm{PD}_k(\boldsymbol{X}_i)\)</span>. The horizon travels with both, since a PD means nothing without the window it was measured over, and here <span class="math inline">\(k = 12\)</span> months throughout. Where a subscript slot is already occupied, by a parameterisation <span class="math inline">\(\vartheta\)</span> or by a learning sample <span class="math inline">\(\mathcal{L}\)</span>, the window rides on the response instead of being written twice.</p>
+<p>Suppressing the loan index while the distributional theory is in view, the indicator has probability mass function <span class="math inline">\(\mathbb{P}\left(D^{(k)} = y\right) = \mu_k^{y} (1 - \mu_k)^{1-y}\)</span> for <span class="math inline">\(y \in \{0,1\}\)</span>. Rewriting,</p>
 <p><span class="math display">\[
-\mathbb{P}(D = y)
-= \exp\left( y \log\frac{\mu}{1-\mu} + \log(1 - \mu) \right)
+\mathbb{P}\left(D^{(k)} = y\right)
+= \exp\left( y \log\frac{\mu_k}{1-\mu_k} + \log(1 - \mu_k) \right)
 = \exp\left( y\theta - \log(1 + e^{\theta}) \right),
 \]</span></p>
 <p>which is the EDF form with</p>
 <p><span class="math display">\[
-\theta = \log\frac{\mu}{1-\mu},
+\theta = \log\frac{\mu_k}{1-\mu_k},
 \qquad
 \kappa(\theta) = \log\left(1 + e^{\theta}\right),
 \qquad
@@ -227,11 +321,11 @@ h := (\kappa')^{-1}
 \]</span></p>
 <p>The canonical parameter is the <strong>log-odds</strong> of default, an object every credit modeller already works with. Differentiating the cumulant function,</p>
 <p><span class="math display">\[
-\kappa'(\theta) = \frac{e^{\theta}}{1 + e^{\theta}} = \mu,
+\kappa'(\theta) = \frac{e^{\theta}}{1 + e^{\theta}} = \mu_k,
 \qquad
-\kappa''(\theta) = \mu (1 - \mu),
+\kappa''(\theta) = \mu_k (1 - \mu_k),
 \]</span></p>
-<p>so the mean function is the sigmoid, the variance is <span class="math inline">\(\mu(1-\mu)\)</span>, and the canonical link is the <strong>logit</strong>, <span class="math inline">\(h(\mu) = \log(\mu/(1-\mu))\)</span>. The dispersion is fixed at <span class="math inline">\(\varphi = 1\)</span>; a single binary observation carries no free variance parameter, so overdispersion is a phenomenon of aggregated default counts rather than of individual indicators. The weight is <span class="math inline">\(v = 1\)</span> because the fixed-horizon construction of the first lecture gave every loan the same twelve-month window. This is the simplification that credit buys: where the insurance lectures carry <span class="math inline">\(v_i\)</span> through every formula as a time exposure, our formulas carry <span class="math inline">\(v_i \equiv 1\)</span> and <span class="math inline">\(\varphi = 1\)</span>, and the general theory specialises accordingly.</p>
+<p>so the mean function is the sigmoid, the variance is <span class="math inline">\(\mu_k(1-\mu_k)\)</span>, and the canonical link is the <strong>logit</strong>, <span class="math inline">\(h(\mu) = \log(\mu/(1-\mu))\)</span>. The dispersion is fixed at <span class="math inline">\(\varphi = 1\)</span>; a single binary observation carries no free variance parameter, so overdispersion arises only once default counts are aggregated; a single indicator cannot exhibit it. The weight is <span class="math inline">\(v = 1\)</span> because the fixed-horizon construction of the first lecture gave every loan the same twelve-month window; its alternative exposure <span class="math inline">\(v_i = \min(T_i, k)\)</span> belongs to the hazard convention that lecture S1 takes up. This is the simplification that credit buys: where the insurance lectures carry <span class="math inline">\(v_i\)</span> through every formula as a time exposure, our formulas carry <span class="math inline">\(v_i \equiv 1\)</span> and <span class="math inline">\(\varphi = 1\)</span>, and the general theory specialises accordingly.</p>
 </section>
 <section id="deviance-loss-function" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="deviance-loss-function"><span class="header-section-number">2.2</span> Deviance loss function</h2>
@@ -307,19 +401,19 @@ L(y, m) = 2 \left( -y \log m - (1-y) \log(1-m) \right),
 <h1 data-number="3"><span class="header-section-number">3</span> Model validation and model selection</h1>
 <p>Model fitting minimises an <strong>in-sample loss</strong> over a learning sample</p>
 <p><span class="math display">\[
-\mathcal{L} = \left( D_i, \boldsymbol{X}_i \right)_{i=1}^{n},
+\mathcal{L} = \left( D_i^{(k)}, \boldsymbol{X}_i \right)_{i=1}^{n},
 \qquad
 \widehat{\mu}_{\mathcal{L}} \in \underset{\mu}{\arg\min}
-\sum_{i=1}^{n} L\left(D_i, \mu(\boldsymbol{X}_i)\right),
+\sum_{i=1}^{n} L\left(D_i^{(k)}, \mu(\boldsymbol{X}_i)\right),
 \]</span></p>
-<p>where the general theory’s weights <span class="math inline">\(v_i/\varphi\)</span> have already been set to one. A model can achieve a small in-sample loss by memorising noise, so a fair assessment requires a <strong>test sample</strong> <span class="math inline">\(\mathcal{T} = (D_t, \boldsymbol{X}_t)_{t=1}^{m}\)</span> that took no part in the fitting. The <strong>out-of-sample loss</strong> (generalisation loss)</p>
+<p>where the general theory’s weights <span class="math inline">\(v_i/\varphi\)</span> have already been set to one. A model can achieve a small in-sample loss by memorising noise, so a fair assessment requires a <strong>test sample</strong> <span class="math inline">\(\mathcal{T} = (D_t^{(k)}, \boldsymbol{X}_t)_{t=1}^{m}\)</span> that took no part in the fitting. The <strong>out-of-sample loss</strong> (generalisation loss)</p>
 <p><span class="math display">\[
 \widehat{\mathrm{GL}}\left(\mathcal{T}, \widehat{\mu}_{\mathcal{L}}\right)
-= \frac{1}{m} \sum_{t=1}^{m} L\left(D_t, \widehat{\mu}_{\mathcal{L}}(\boldsymbol{X}_t)\right)
+= \frac{1}{m} \sum_{t=1}^{m} L\left(D_t^{(k)}, \widehat{\mu}_{\mathcal{L}}(\boldsymbol{X}_t)\right)
 \]</span></p>
 <p>is the main workhorse for model validation and model selection in machine learning, and it is the quantity every model comparison in this lecture series reports.</p>
 <p>The course partitions the insurance data at random. Credit adds a complication that the first lecture already exposed: the Bondora vintage default rates run from 7 per cent in 2012 to 37 per cent in 2017, so consecutive loans are far from exchangeable in time. A random split places loans from every vintage on both sides of the partition, and the test sample then resembles the learning sample by construction. Credit validation practice therefore prefers an <strong>out-of-time split</strong>, holding out the most recent vintages, because the model will only ever be used on business written after its development window. We build both partitions below and let the numbers make the argument.</p>
-<div id="5201e2c9" class="cell" data-execution_count="1">
+<div id="baaba9c3" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -340,7 +434,7 @@ L(y, m) = 2 \left( -y \log m - (1-y) \log(1-m) \right),
 </div>
 </div>
 <p>We start from the modelling sample of the first lecture and additionally drop the three loans whose education field carries the unknown code <span class="math inline">\(-1\)</span>, which leaves <span class="math inline">\(n = 148{,}667\)</span> loans. The learning and test samples are then constructed twice, once at random and once by origination date.</p>
-<div id="bda3b37a" class="cell" data-execution_count="2">
+<div id="53786aca" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> model_dat.select(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"Education"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>     <span class="st">"HomeOwnershipType"</span>, <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>,</span>
@@ -381,7 +475,7 @@ cutoff date: 2019-11-04, test window 2019-11-05 to 2020-07-19</code></pre>
 = \vartheta_0 + \sum_{j=1}^{q} \vartheta_j X_j
 =: \langle \vartheta, \boldsymbol{X} \rangle,
 \]</span></p>
-<p>with regression parameter <span class="math inline">\(\vartheta = (\vartheta_0, \ldots, \vartheta_q)^\top \in \mathbb{R}^{q+1}\)</span>. The conditional mean is linear in the covariates up to the link transformation, <span class="math inline">\(\mu_{\vartheta}(\boldsymbol{X}) = \mathbb{E}[D \,|\, \boldsymbol{X}] = g^{-1}\langle \vartheta, \boldsymbol{X} \rangle\)</span>, which in credit is the PD functional <span class="math inline">\(\mathrm{PD}(\boldsymbol{X}) = \mu_{\vartheta}(\boldsymbol{X})\)</span> of the first lecture.</p>
+<p>with regression parameter <span class="math inline">\(\vartheta = (\vartheta_0, \ldots, \vartheta_q)^\top \in \mathbb{R}^{q+1}\)</span>. The conditional mean is linear in the covariates up to the link transformation, <span class="math inline">\(\mu_{\vartheta}(\boldsymbol{X}) = \mathbb{E}[D^{(k)} \,|\, \boldsymbol{X}] = g^{-1}\langle \vartheta, \boldsymbol{X} \rangle\)</span>, which in credit is the PD functional <span class="math inline">\(\mathrm{PD}_k(\boldsymbol{X}) = \mu_{\vartheta}(\boldsymbol{X})\)</span> of the first lecture.</p>
 <section id="logit-link-example" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="logit-link-example"><span class="header-section-number">4.1</span> Logit-link example</h2>
 <p>The insurance lectures favour the log-link, under which the mean is a product of factors <span class="math inline">\(e^{\vartheta_j X_j}\)</span> that pricing actuaries read as price relativities. The credit analogue uses the logit link <span class="math inline">\(g(\mu) = \log(\mu / (1 - \mu))\)</span>, under which the <strong>odds</strong> of default are multiplicative,</p>
@@ -390,7 +484,7 @@ cutoff date: 2019-11-04, test window 2019-11-05 to 2020-07-19</code></pre>
 = e^{\vartheta_0} \prod_{j=1}^{q} e^{\vartheta_j X_j}.
 \]</span></p>
 <p>Each covariate contributes its own <strong>odds ratio</strong> <span class="math inline">\(e^{\vartheta_j}\)</span> per unit of <span class="math inline">\(X_j\)</span>, and the intercept <span class="math inline">\(\vartheta_0\)</span> calibrates the overall level, in exact parallel to the bias parameter of the log-link example. Odds ratios are the credit scorer’s price relativities. They also explain the industry’s <strong>scorecard points</strong>. A traditional scorecard reports <span class="math inline">\(\mathrm{score} = A - B \,\langle \vartheta, \boldsymbol{X} \rangle\)</span> for display constants <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span>, so the score is an affine transformation of the GLM’s linear predictor, and the familiar “points to double the odds” is <span class="math inline">\(B \log 2\)</span>. A scorecard is a logistic GLM wearing different units.</p>
-<div id="5c4afbcc" class="cell" data-execution_count="3">
+<div id="f7d291d0" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ages <span class="op">=</span> np.arange(<span class="dv">18</span>, <span class="dv">91</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>b0, b1, b2 <span class="op">=</span> <span class="fl">1.2</span>, <span class="op">-</span><span class="fl">0.045</span>, <span class="fl">0.55</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x2, colour, lab <span class="kw">in</span> [(<span class="dv">0</span>, <span class="st">"#3B4A75"</span>, <span class="st">"repeat customer"</span>),</span>
@@ -473,7 +567,7 @@ cutoff date: 2019-11-04, test window 2019-11-05 to 2020-07-19</code></pre>
 <p>The insurance lectures note that the canonical link is sometimes inconvenient (the gamma’s canonical link violates positivity of the mean, so the log-link is used instead) and sometimes exactly right (the log-link is the Poisson’s canonical link). Credit sits in the comfortable case. The logit is the Bernoulli’s canonical link, its canonical parameter space is all of <span class="math inline">\(\mathbb{R}\)</span>, and its mean parameter space is <span class="math inline">\((0,1)\)</span>, so predicted PDs respect their natural range automatically. Logistic regression therefore enjoys both structural properties above without giving anything up.</p>
 <p>The balance property deserves its credit translation. Under the canonical link, the maximum likelihood score equations include, through the intercept,</p>
 <p><span class="math display">\[
-\sum_{i=1}^{n} \widehat{\mu}(\boldsymbol{X}_i) = \sum_{i=1}^{n} D_i,
+\sum_{i=1}^{n} \widehat{\mu}(\boldsymbol{X}_i) = \sum_{i=1}^{n} D_i^{(k)},
 \]</span></p>
 <p>so the fitted PDs sum exactly to the observed number of defaults on the learning sample. Credit modellers call this <strong>calibration in the large</strong>: the model reproduces the portfolio’s central tendency on its development data. In insurance the same identity guarantees that the estimated prices collect the right total premium. The theorem holds on <span class="math inline">\(\mathcal{L}\)</span>, as an algebraic consequence of the score equations, and it is silent about every other sample. The out-of-time exercise below shows how hard that limitation bites.</p>
 </section>
@@ -484,8 +578,8 @@ cutoff date: 2019-11-04, test window 2019-11-05 to 2020-07-19</code></pre>
 <p><span class="math display">\[
 \vartheta \mapsto \ell(\vartheta)
 = \sum_{i=1}^{n}
-D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
-+ (1 - D_i) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right),
+D_i^{(k)} \log \mu_{\vartheta}(\boldsymbol{X}_i)
++ \left(1 - D_i^{(k)}\right) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right),
 \]</span></p>
 <p>and <span class="math inline">\(\widehat{\vartheta}^{\rm MLE} \in \arg\max_{\vartheta} \ell(\vartheta)\)</span> has no closed form. It is computed by Fisher’s scoring method, equivalently iteratively reweighted least squares (IRLS), exactly as in Nelder and Wedderburn (1972); <code>statsmodels</code> reports the iteration count with every fit.</p>
 <section id="relationship-to-deviance-losses" class="level2" data-number="5.1">
@@ -494,16 +588,16 @@ D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
 <p><span class="math display">\[
 \widehat{\vartheta}^{\rm MLE}
 \in \underset{\vartheta}{\arg\min}
-\sum_{i=1}^{n} 2 \left( -D_i \log \mu_{\vartheta}(\boldsymbol{X}_i)
-- (1 - D_i) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right) \right),
+\sum_{i=1}^{n} 2 \left( -D_i^{(k)} \log \mu_{\vartheta}(\boldsymbol{X}_i)
+- \left(1 - D_i^{(k)}\right) \log\left(1 - \mu_{\vartheta}(\boldsymbol{X}_i)\right) \right),
 \]</span></p>
 <p>because the two objectives differ by the saturated log-likelihood, which is zero for binary data, and by the factor <span class="math inline">\(-2\)</span>. In-sample loss minimisation, maximum likelihood and log-loss minimisation are one estimation problem seen from three angles, and by the finite-sample result quoted earlier this common estimator is also the one that uses the data best.</p>
 </section>
 <section id="glm-example-bondora-data" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="glm-example-bondora-data"><span class="header-section-number">5.2</span> GLM example: Bondora data</h2>
 <p>We now fit a logistic GLM whose scope mirrors the seven-covariate French MTPL fit of the course. The first lecture’s covariates <code>AgeClass</code>, <code>logIncome</code> and <code>Country</code> are joined by five further application-time variables: education, home ownership, the new-customer flag, income verification and employment duration.</p>
-<p>Two data points force small engineering decisions, and both are worth stating openly. First, <code>HomeOwnershipType</code> is missing for 1,604 loans and <code>EmploymentDurationCurrentEmployer</code> for 820. In credit data, missingness is routinely informative (an applicant who skips a field differs from one who fills it in), so we assign each an explicit <code>missing</code> category rather than dropping rows or imputing values, and we let the model estimate what missingness is worth. Second, the first lecture’s oldest age class <code>71+</code> contains 13 loans and zero defaults. In a logistic GLM a covariate class with no defaults drives its coefficient to <span class="math inline">\(-\infty\)</span>; the likelihood keeps improving as the fitted PD of the class falls to zero, IRLS runs until it hits its iteration cap, and the reported coefficient and standard error are numerical artefacts. This is <strong>quasi-complete separation</strong>, the standard failure mode of maximum likelihood in sparse categorical data, and it is the fine print behind “the MLE is unique when it exists”. The practical remedy at these volumes is coarser classes, so we merge the two oldest bands into <code>61+</code>.</p>
-<div id="9aa0ecaf" class="cell" data-execution_count="4">
+<p>Two data points force small engineering decisions, and both are worth stating openly. First, <code>HomeOwnershipType</code> is missing for 1,604 loans and <code>EmploymentDurationCurrentEmployer</code> for 820. In credit data, missingness is routinely informative (an applicant who skips a field differs from one who fills it in), so we assign each an explicit <code>missing</code> category, drop no rows, impute no values, and let the model estimate what missingness is worth. Second, the first lecture’s oldest age class <code>71+</code> contains 13 loans and zero defaults. In a logistic GLM a covariate class with no defaults drives its coefficient to <span class="math inline">\(-\infty\)</span>; the likelihood keeps improving as the fitted PD of the class falls to zero, IRLS runs until it hits its iteration cap, and the reported coefficient and standard error are numerical artefacts. This is <strong>quasi-complete separation</strong>, the standard failure mode of maximum likelihood in sparse categorical data, and it is the fine print behind “the MLE is unique when it exists”. The practical remedy at these volumes is coarser classes, so we merge the two oldest bands into <code>61+</code>.</p>
+<div id="0962630f" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    g[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">101</span>],</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61+"</span>],</span>
@@ -532,8 +626,8 @@ Model:                            GLM   Df Residuals:                   118894
 Model Family:                Binomial   Df Model:                           38
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -63416.
-Date:                Mon, 31 Aug 2026   Deviance:                   1.2683e+05
-Time:                        16:54:15   Pearson chi2:                 1.18e+05
+Date:                Wed, 02 Sep 2026   Deviance:                   1.2683e+05
+Time:                        11:38:41   Pearson chi2:                 1.18e+05
 No. Iterations:                     5   Pseudo R-squ. (CS):             0.1269
 Covariance Type:            nonrobust                                         
 ========================================================================================================
@@ -583,7 +677,7 @@ logIncome                               -0.0311      0.014     -2.208      0.027
 </div>
 <p>The fit estimates 39 regression parameters and converges in five IRLS iterations. A few coefficients read as odds ratios illustrate the logit link’s interpretability. A Spanish borrower carries <span class="math inline">\(e^{1.963} \approx 7.1\)</span> times the default odds of an otherwise identical Estonian borrower, which quantifies the country effect that resolved the first lecture’s Simpson’s paradox. A new customer carries <span class="math inline">\(e^{0.301} \approx 1.35\)</span> times the odds of a repeat customer. Higher education (level 5) multiplies the odds by <span class="math inline">\(e^{-0.430} \approx 0.65\)</span> relative to primary education. Meanwhile the income coefficient sits at <span class="math inline">\(-0.031\)</span>: once country and the other application variables are controlled, declared income has almost no residual work left to do, continuing its demotion from the confounded <span class="math inline">\(+0.255\)</span> of the first lecture’s GLM1.</p>
 <p>Because the logit is the canonical link, the balance property must hold on the learning sample to machine precision, and it does:</p>
-<div id="7d9b60fb" class="cell" data-execution_count="5">
+<div id="98845703" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"sum of fitted PDs:       </span><span class="sc">{</span>glm_r<span class="sc">.</span>fittedvalues<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,.4f}</span><span class="ss">"</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"observed defaults in L:  </span><span class="sc">{</span>learn_r[<span class="st">'default_12m'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -595,7 +689,7 @@ observed defaults in L:  34,345</code></pre>
 <section id="bernoulli-deviance-loss-in-sample-and-out-of-sample" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="bernoulli-deviance-loss-in-sample-and-out-of-sample"><span class="header-section-number">5.3</span> Bernoulli deviance loss: in-sample and out-of-sample</h2>
 <p>We evaluate the fitted GLM with the scaled Bernoulli deviance loss, in <span class="math inline">\(10^{-2}\)</span> units as the course does for its Poisson losses, and we report the AUC alongside. For each test sample we also report the deviance of the <strong>null model</strong> that predicts that sample’s own mean default rate for every loan, because Bernoulli deviance levels depend on the base rate and are comparable across samples only relative to such a floor.</p>
-<div id="7628307e" class="cell" data-execution_count="6">
+<div id="a7f8a56c" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bernoulli_deviance(pred, obs):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.asarray(pred, <span class="bu">float</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.asarray(obs, <span class="bu">float</span>)</span>
@@ -618,7 +712,7 @@ mean predicted PD on random test: 0.2888   observed rate: 0.2921</code></pre>
 </div>
 </div>
 <p>On the random split the picture is exactly the course’s. The out-of-sample deviance, 108.197, sits just above the in-sample 106.641, so the model generalises with a small gap, and the AUC declines only from 0.726 to 0.718. The mean predicted PD on the test sample, 28.9 per cent, agrees with the observed 29.2 per cent, so the balance property transfers to the test sample almost perfectly. It transfers because a random split makes the two samples statistically identical, and that is the flattering assumption the out-of-time split now removes.</p>
-<div id="594754db" class="cell" data-execution_count="7">
+<div id="e27465c3" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>glm_t <span class="op">=</span> smf.glm(FORMULA, data<span class="op">=</span>learn_t, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"oot fit, in-sample         "</span>, glm_t.fittedvalues, learn_t[<span class="st">"default_12m"</span>])</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"oot fit, out-of-time test  "</span>, glm_t.predict(test_t), test_t[<span class="st">"default_12m"</span>])</span>
@@ -632,7 +726,7 @@ mean predicted PD on oot test: 0.3072   observed rate: 0.2280</code></pre>
 </div>
 <p>Read these numbers carefully, because the naive reading gets them backwards. The out-of-time test deviance, 100.400, is <strong>lower</strong> than the random-split test deviance, and a careless comparison would conclude the model performs better out of time. The null deviances expose the mechanics. The out-of-time window’s base rate of 22.8 per cent makes its null deviance 107.4, against 120.8 on the random test sample, so the entire apparent improvement is the lower entropy of a lower base rate. Relative to its own null, the model explains far less out of time. The calibration failure is where the drift actually lands. The refit predicts a mean PD of 30.7 per cent on the held-out window against an observed 22.8 per cent, an overstatement of nearly eight percentage points from a model whose fitted PDs summed exactly to the observed defaults on its own development window. The balance property is an in-sample identity, and the out-of-time split is what reveals that.</p>
 <p>The AUC tells the complementary story. It falls only to 0.716 on the out-of-time window, so the model still ranks borrowers nearly as well as it ever did, while its level is badly off. This combination, ranking that survives the drift and a level that does not, is the routine experience of credit scorecards, and it explains the industry’s standing practice of keeping a scorecard’s coefficients while recalibrating its intercept to the current central tendency. The calibration lecture’s companion takes this up properly.</p>
-<div id="da9a5155" class="cell" data-execution_count="8">
+<div id="703257cb" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>g_oot <span class="op">=</span> g.copy()</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>g_oot[<span class="st">"pred"</span>] <span class="op">=</span> glm_t.predict(g_oot)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>g_oot[<span class="st">"month"</span>] <span class="op">=</span> g_oot[<span class="st">"LoanDate"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp()</span>
@@ -660,7 +754,7 @@ mean predicted PD on oot test: 0.3072   observed rate: 0.2280</code></pre>
 <h2 data-number="5.4" class="anchored" data-anchor-id="individual-bernoulli-versus-grouped-binomial"><span class="header-section-number">5.4</span> Individual Bernoulli versus grouped binomial</h2>
 <p>The course closes its GLM lecture by showing that two formulations of the Poisson GLM coincide: regressing claim counts with <span class="math inline">\(\log v_i\)</span> as an offset, and regressing claim frequencies with <span class="math inline">\(v_i\)</span> as weights. The weights mechanism has an exact Bernoulli counterpart. Borrowers who share one covariate cell contribute a product of identical Bernoulli likelihood terms, and that product depends on the cell’s data only through its number of loans and its number of defaults. Consequently, fitting the GLM on one row per loan and fitting it on one row per covariate cell, with the cell’s default rate as response and its loan count as weight, are the same likelihood and must return the same estimate. Aggregation over identical covariate rows plays the role that aggregation over exposure plays for counts.</p>
 <p>We verify this on a purely categorical sub-model, since exact aggregation needs discrete cells.</p>
-<div id="7794d5af" class="cell" data-execution_count="9">
+<div id="3239f4f6" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>SUB <span class="op">=</span> <span class="st">"default_12m ~ AgeClass + Country + C(Education)"</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>glm_ind <span class="op">=</span> smf.glm(SUB, data<span class="op">=</span>learn_r, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -680,7 +774,7 @@ mean predicted PD on oot test: 0.3072   observed rate: 0.2280</code></pre>
 max |coefficient difference|: 9.92e-13</code></pre>
 </div>
 </div>
-<p>The learning sample of 118,933 loans collapses to 124 cells, and the two coefficient vectors agree to <span class="math inline">\(10^{-12}\)</span>, which is IRLS convergence tolerance rather than approximation. The reported deviances differ, because the saturated model changes when the data are grouped, and the coefficient estimates are unaffected. In practice the grouped form is how logistic GLMs are fitted on aggregated cohort data, e.g.&nbsp;historical default-rate tables where loan-level records no longer exist, and it is also a substantial computational saving whenever the covariates are categorical.</p>
+<p>The learning sample of 118,933 loans collapses to 124 cells, and the two coefficient vectors agree to <span class="math inline">\(10^{-12}\)</span>, which is the IRLS convergence tolerance, so the two fits are the same fit. The reported deviances differ, because the saturated model changes when the data are grouped, and the coefficient estimates are unaffected. In practice the grouped form is how logistic GLMs are fitted on aggregated cohort data, e.g.&nbsp;historical default-rate tables where loan-level records no longer exist, and it is also a substantial computational saving whenever the covariates are categorical.</p>
 </section>
 </section>
 <section id="takeaways-and-outlook" class="level1 unnumbered">
@@ -702,7 +796,7 @@ max |coefficient difference|: 9.92e-13</code></pre>
 </section>
 <section id="copyright-and-attribution" class="level1 unnumbered">
 <h1 class="unnumbered">Copyright and attribution</h1>
-<p>This document adapts the storyline, structure and notation of <em>Lecture 2: Exponential Dispersion Family and Generalized Linear Models</em> from the summer school <strong>Deep Learning for Actuarial Modeling</strong> (Scognamiglio, Maggi and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of the project <em>AI Tools for Actuaries</em>, used under CC BY-NC 4.0. Changes made: the Poisson claim-frequency thread is recast as the Bernoulli default thread on the public Bondora loan book, the code is Python rather than R, the out-of-time validation contrast, the quasi-complete separation remark, the scorecard points aside and the grouped binomial equivalence are new, and the offsets-versus-weights section is replaced by its Bernoulli counterpart. The original lecture notes are available at <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a>.</p>
+<p>This document adapts the storyline, structure and notation of <em>Lecture 2: Exponential Dispersion Family and Generalized Linear Models</em> from the summer school <strong>Deep Learning for Actuarial Modeling</strong> (Scognamiglio, Maggi and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of the project <em>AI Tools for Actuaries</em>, used under CC BY-NC 4.0. Changes made: the Poisson claim-frequency thread is recast as the Bernoulli default thread on the public Bondora loan book, the code is Python where the original is R, the out-of-time validation contrast, the quasi-complete separation remark, the scorecard points aside and the grouped binomial equivalence are new, and the offsets-versus-weights section is replaced by its Bernoulli counterpart. The original lecture notes are available at <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a>.</p>
 </section>
 <section id="references" class="level1 unnumbered">
 <h1 class="unnumbered">References</h1>
