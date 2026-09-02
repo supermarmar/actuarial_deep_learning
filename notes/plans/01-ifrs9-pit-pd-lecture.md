@@ -53,31 +53,27 @@ writing rules, and they are the constraints most easily lost in a fresh session.
   list, matching the pattern already used in `credit_lectures/S2_survival-insurance-to-credit.qmd`.
 - Small logical commits under Conventional Commits, scope `credit_lectures`.
 
-## Decisions needed before task 3
+## Decisions taken, 2 September 2026
 
-Raise these with Mario and get an answer. Tasks 1 and 2 can proceed without them.
+Mario settled all four on the day the plan was written, so nothing here blocks.
 
-1. **[DECISION NEEDED] File prefix.** This lecture answers no course lecture, so it
-   needs an out-of-sequence prefix the way `S1` to `S3` did. The recommendation is a
-   regulatory track shared with plan 2, giving `R1_credit-ifrs9-pit-pd.qmd` here and
-   `R2_credit-irb-capital.qmd` there. The alternative is a standalone letter per
-   subject, e.g. `F1` for IFRS 9 and `I1` for IRB.
-2. **[DECISION NEEDED] What "conditional" and "unconditional" name.** Both terms are
-   used two ways in the literature and the lecture has to pick one and say so. Reading A
-   is the survival axis, where a conditional PD is the hazard given survival to the
-   start of the period and an unconditional PD is the marginal probability that mixes in
-   the chance of surviving that far. Reading B is the macro axis, where a conditional PD
-   conditions on the state of the economy and an unconditional PD averages over it,
-   which makes "unconditional PiT" close to a contradiction. The recommendation is to
-   adopt reading A for conditional versus unconditional, keep PiT versus TTC for the
-   macro axis, and open the lecture by separating the two axes explicitly, since the
-   confusion between them is exactly what a reader arrives with.
-3. **[DECISION NEEDED] Whether "FiT" is adopted as a term.** "Forward in time" is
-   Mario's coinage. The literature and the guides repo both call this forward-looking
-   information, or FLI, and IFRS 9 itself uses "forward-looking information". The
-   recommendation is to introduce FLI as the standard term, then state that this course
-   calls the resulting PD forward in time (FiT) to sit alongside PiT and TTC, so the
-   reader can find the material in a bank's own documentation.
+1. **File prefix.** A regulatory track shared with plan 2, giving
+   `R1_credit-ifrs9-pit-pd.qmd` here and `R2_credit-irb-capital.qmd` there. Plan 3's
+   causal inference lecture takes `C1`.
+2. **What "conditional" and "unconditional" name.** The survival axis. A conditional PD
+   is the hazard given survival to the start of the period; an unconditional PD is the
+   marginal probability that mixes in the chance of surviving that far. PiT against TTC
+   stays the macro axis, and the lecture opens by separating the two axes explicitly in
+   a two-by-two table, since confusing them is what a reader arrives with.
+3. **Whether "FiT" is adopted.** Both, in order. Introduce forward-looking information
+   as IFRS 9's own wording, then state that this course calls the resulting PD forward
+   in time, so PiT, TTC and FiT read as one family and a reader can still find the
+   material in a bank's own documentation.
+4. **Empirical spine and macro data.** Bondora expanded to person-periods, with real
+   Eurostat series attached, and a small curated CSV committed at
+   `credit_lectures/data/macro_eurostat.csv` so the lecture renders on a fresh clone.
+   The reasoning is in the data verdict below, and it forces the lecture 1 edit in
+   task 8.
 
 ## Source material, all of it already on disk
 
@@ -153,12 +149,11 @@ lecture 1 models, and it stops being true once the book is expanded to person-pe
 Task 8 handles that edit.
 
 Macro series to attach, by calendar month, for EE, FI and ES: harmonised unemployment
-rate, HICP inflation and real GDP growth from Eurostat. **[DECISION NEEDED]** whether to
-download them (Eurostat is public and free, so no confidentiality question arises) and
-commit a small CSV under `data/`, which is gitignored, or to commit a tiny curated
-`credit_lectures/data/macro_eurostat.csv` so the lecture renders on a fresh clone. The
-recommendation is the second, since a lecture that cannot render is worse than a 30 kB
-CSV in git.
+rate, HICP inflation and real GDP growth from Eurostat. Per decision 4, download them
+(Eurostat is public and free, so no confidentiality question arises) and commit the
+curated extract at `credit_lectures/data/macro_eurostat.csv`, which is the one data file
+in this repo that is committed rather than gitignored, because a lecture nobody can
+render is worse than a 30 kB CSV in git. Say so in a comment at the top of the CSV.
 
 ---
 
@@ -178,10 +173,11 @@ task selects and fills two gaps rather than starting from nothing.
       with time-varying macro covariates, its Andersen-Gill and
       Prentice-Williams-Peterson recurrent-event subtypes, Vasicek Z-factor scaling of a
       TTC grade PD, and the age-period-cohort decomposition.
-- [ ] **Step 3.** Fill gap one, the conditional versus unconditional terminology. Search
-      for the primary usage in the Botha tutorial and in the guides' IFRS 9 PD
-      methodology, and record which reading each uses, with a quotation and a section
-      reference. This settles decision 2 with evidence instead of preference.
+- [ ] **Step 3.** Corroborate decision 2. The survival reading is settled, so this step
+      records the evidence for it rather than choosing: find the primary usage in the
+      Botha tutorial and in the guides' IFRS 9 PD methodology, quote it with a section
+      reference, and flag loudly in the note if either source uses the macro reading
+      instead, since the lecture would then have to say so explicitly.
 - [ ] **Step 4.** Fill gap two, the FiT and FLI naming. Confirm against IFRS 9 itself,
       i.e. the standard's own wording on forward-looking information, and against the
       guides FLI methodology file. Record whether "forward in time" appears anywhere in
@@ -230,7 +226,7 @@ grep -n 'h_{i,t}\|S_{i,t}\|m\^{(k)}' credit_lectures/*.qmd
 
 ## Task 3: the lecture skeleton
 
-**Files:** create `credit_lectures/R1_credit-ifrs9-pit-pd.qmd` (name subject to decision 1).
+**Files:** create `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`.
 
 - [ ] **Step 1.** Copy the YAML header and the provenance comment pattern from
       `credit_lectures/S2_survival-insurance-to-credit.qmd`, which is the closest
@@ -281,8 +277,8 @@ This is the section that earns the lecture. Get it right before writing anything
 
 **Files:** modify `credit_lectures/R1_credit-ifrs9-pit-pd.qmd`.
 
-- [ ] **Step 1.** Introduce FLI with the standard's own term, then the course's FiT
-      label, per decision 3.
+- [ ] **Step 1.** Introduce forward-looking information with IFRS 9's own wording, then
+      the course's FiT label, per decision 3, and define both on first use.
 - [ ] **Step 2.** Write the scenario-weighted ECL as a formula, so the lecture states
       why a term structure is needed at all, and cite
       `concepts/ifrs9-expected-credit-loss.md`'s sources.
