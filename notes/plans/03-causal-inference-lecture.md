@@ -54,30 +54,29 @@ demonstration of the Table 2 fallacy on lecture 1's own GLM3 coefficients.
 1. **File name.** `credit_lectures/C1_credit-interaction-and-causation.qmd`, on a causal
    track of its own, alongside the regulatory `R1` and `R2` from plans 1 and 2.
 
-## Decisions to settle before task 4
+## Decisions taken, 2 September 2026, continued
 
-1. **[DECISION NEEDED] One lecture or two.** The comment says "a seperate lecture or
-   more". The recommendation is `C1` now, covering interaction, confounding, the
-   adjustment decision and marginal against conditional effects, with a follow-on `C2`
-   named but not planned, covering attribution read causally, i.e. SHAP, LocalGLMnet and
-   ICE marginal effects against the Table 2 fallacy. `C2` belongs with the course
-   lectures on LocalGLMnet rather than here, so splitting keeps each lecture attached to
-   its course counterpart.
-2. **[DECISION NEEDED] How far the empirical work goes.** The recommendation is
-   standardisation only, i.e. compute the marginal income effect correctly from the
-   country-conditional model by averaging over the country distribution, which is
-   precisely the operation lecture 1 says cannot be done by combining marginal rates.
-   Propensity scores and instrumental variables get named and defined, and are not
-   demonstrated, because Bondora carries no treatment variable and a staged
-   demonstration would teach the mechanics of a method nobody should apply here.
-3. **[DECISION NEEDED] Whether fairness is in scope.** A discrimination claim is a causal
-   claim, the vault holds `concepts/ml-fairness.md` and
-   `concepts/lending-discrimination-evidence.md`, and Bondora carries `Gender`, `Age`,
-   `Country` and `Education`. The recommendation is one section, framed as what a causal
-   reading does and does not license, and no fairness metrics tournament.
-4. **[DECISION NEEDED] Ingest size.** The recommendation is six to eight sources, the
-   core list marked "core" below. More than that turns a lecture's reading into a
-   literature review and the vault's own health check will flag thin articles.
+Mario settled all four on the day the plan was written, so nothing here blocks.
+
+2. **One lecture or two.** `C1` now, covering interaction, confounding, the adjustment
+   decision and marginal against conditional effects. A follow-on `C2` is named and
+   deferred, covering attribution read causally, i.e. SHAP, LocalGLMnet and ICE marginal
+   effects against the Table 2 fallacy. `C2` belongs beside the course's LocalGLMnet
+   lectures rather than here, so it gets its own plan when that part of the syllabus
+   comes up. Task 8 records whether it was created or deferred.
+3. **How far the empirical work goes.** Standardisation only. Compute the marginal income
+   effect by averaging the country-conditional model over the observed country
+   distribution, which is precisely the operation lecture 1 says cannot be done by
+   combining marginal rates. Propensity scores and instrumental variables get named and
+   defined, and are not demonstrated, because Bondora carries no treatment variable and a
+   staged demonstration would teach the mechanics of a method nobody should apply here.
+4. **Fairness is in scope, as one section.** A discrimination claim is a causal claim, so
+   it inherits every identification condition above. Work the Bondora differential
+   honestly, cite `concepts/ml-fairness.md` on why the candidate criteria cannot all hold
+   at once, and resist a metrics tournament. Task 7 carries it.
+5. **Ingest size.** Six to eight core papers, i.e. the items marked **core** below.
+   Extend `methods/causal-inference.md` and add two new articles rather than one article
+   per paper, since fewer and denser articles survive the vault's health check better.
 
 ## What ground is already taken
 
@@ -204,7 +203,8 @@ each carries a credit translation.
 `markdown/`, articles into `wiki/`, registrations into `wiki/_meta/sources/`, and any
 exclusion into `audit/`.
 
-- [ ] **Step 1.** Confirm with Mario which of the core set to ingest, per decision 4.
+- [ ] **Step 1.** Take the core set as the ingest scope, per decision 5, i.e. six to
+      eight papers, and drop any item that failed verification in task 1.
 - [ ] **Step 2.** Download each source. Every item on the core list is a journal article,
       so check for an open-access version first. Where a paper is paywalled, record it in
       `raw/_stubs` following the pattern of the existing
@@ -219,7 +219,8 @@ exclusion into `audit/`.
       `methods/causal-inference.md` rather than create one article per paper, and to add
       two new articles where the subject genuinely stands alone: one on interaction and
       effect modification, and one on choosing an adjustment set with causal diagrams.
-      Fewer, denser articles survive the vault's own health check better.
+      Fewer, denser articles survive the vault's own health check better, and decision 5
+      settles this shape.
 - [ ] **Step 6.** Record an audit entry for anything downloaded and not used, per the
       curation workflow rule. Never silently skip a document.
 - [ ] **Step 7.** Run `kb-lint` and fix what it reports on the new articles.
@@ -315,8 +316,8 @@ This is the section that will change how a reader looks at their own model docum
 
 ## Task 7: fairness, if in scope
 
-**Files:** modify `credit_lectures/C1_credit-interaction-and-causation.qmd`. Skip
-entirely if decision 3 goes the other way.
+**Files:** modify `credit_lectures/C1_credit-interaction-and-causation.qmd`. In scope per
+decision 4, as one section only.
 
 - [ ] **Step 1.** State the position plainly: a claim that a model discriminates is a
       causal claim, so it inherits every identification condition above.
@@ -344,7 +345,8 @@ doing work where it stands. What it gains is a forward reference.
 - [ ] **Step 4.** Add `C1` to the `credit_lectures/` row of the key directories table in
       `CLAUDE.md`, naming the causal track and what the lecture reads.
 - [ ] **Step 5.** Mark round 3 comment 3 as answered, one paragraph on how, and record
-      whether `C2` was created or deferred.
+      that `C2` was deferred per decision 2, to be planned beside the course's
+      LocalGLMnet lectures.
 - [ ] **Step 6.** Commit.
 
 **Done when** a reader of lecture 1 section 3.1 is pointed at the lecture that explains
