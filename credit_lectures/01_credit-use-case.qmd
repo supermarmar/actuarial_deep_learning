@@ -627,8 +627,8 @@ $$
 
 For $Y = D^{(k)} \in \{0, 1\}$ that sum has two terms and the $y = 0$ term vanishes, leaving
 $\mu_k(\boldsymbol{x}) = \mathbb{P}(D^{(k)} = 1 \mid \boldsymbol{X} = \boldsymbol{x})$. The
-conditional mean and the conditional probability are then the same number, which is the algebra
-behind the callout below.
+conditional mean and the conditional probability are then the same number, which is what makes
+$\mathrm{PD}_k$ a regression problem rather than something exotic.
 
 Second, among all functions of the covariates it is the best square-error predictor,
 
@@ -651,27 +651,6 @@ $$
 The tower property, and in this setting the **balance property** just mentioned. A model
 estimating $\mu_k$ ought to reproduce the portfolio default rate once its predictions are
 averaged, and lecture 7 is about what breaks that and how to restore it.
-
-::: {.callout-tip icon=false title="Reading a conditional expectation"}
-The notation $\mathbb{E}[\,D^{(k)} \mid \boldsymbol{X}\,]$ is doing something concrete, and the
-heatmap later in this lecture is a picture of it.
-
-**Conditioning means restricting.** Take every loan sharing a given borrower age and income, i.e.
-one cell of that heatmap, and set the rest of the portfolio aside. The conditional expectation is
-a property of that cell alone.
-
-**For a 0/1 outcome, the mean is the proportion.** Averaging a variable that only ever takes the
-values 0 and 1 returns the share of ones, so the conditional mean and the conditional probability
-are the same number. This is what makes $\mathrm{PD}_k$ a regression problem rather than something
-exotic. Nothing similar happens for claim severity, where the mean and any probability are
-different objects.
-
-**Cells run out.** The empirical rate inside a cell estimates $\mu_k$ for that cell, and with
-148,733 loans the cells thin out fast; the white space in that heatmap marks the combinations too
-sparse to estimate at all. Fitting a model rather than tabulating cells is how we borrow strength
-across them, and choosing which model class to borrow it with is the subject of the lectures that
-follow.
-:::
 
 The point-in-time question the previous section raised can now be stated in the language of
 $\mathrm{PD}_k$, which is why it was held back to here.
