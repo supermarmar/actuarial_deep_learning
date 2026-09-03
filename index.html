@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!--
+  Landing page for the credit risk companion lectures.
+
+  It links `lectures/lecture.css` rather than the Gini documents layer, so that
+  the index and the thirteen lectures it points at share one register. That
+  sheet states the deviation at its own head: warm paper, oxblood accent, Tufte
+  reading layout, chosen for long-form study rather than for client delivery.
+  Every value below therefore comes from its token block, and nothing here
+  introduces a colour, a size or a spacing step of its own.
+
+  The `.abstract` and `#title-block-header` classes are Quarto's, reused so the
+  index opens exactly as a lecture does. The `.entry` grid is the only markup
+  this page adds.
+
+  Published by `.github/workflows/pages.yml`, which copies an explicit list of
+  files into the site. The course authors' own lecture documents in `lectures/`
+  are deliberately not on that list.
+-->
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Learning for Actuarial Modeling: a credit risk companion</title>
+<meta name="description" content="Thirteen companion lectures reading the Milan 2026 actuarial deep learning course through a consumer credit probability of default problem.">
+<link rel="stylesheet" href="lectures/lecture.css">
+<style>
+  /* Layout. The lectures put a table-of-contents rail beside the prose; this
+     page has no rail, so it centres the same measure instead. */
+  .index-page {
+    max-width: calc(var(--measure) + var(--hang));
+    margin: 0 auto;
+    padding: var(--sp-8) var(--sp-6) var(--sp-9);
+  }
+
+  .index-page h2 {
+    font-size: var(--t-h2);
+    margin: var(--sp-8) 0 var(--sp-5);
+    padding-bottom: var(--sp-2);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .track-note {
+    font-size: var(--t-small);
+    color: var(--ink-soft);
+    margin: calc(var(--sp-5) * -1 + var(--sp-2)) 0 var(--sp-6);
+  }
+
+  /* One entry per lecture. The numeral hangs in the left margin, on the same
+     principle as the section numerals inside a lecture. */
+  .entry {
+    display: grid;
+    grid-template-columns: var(--hang) minmax(0, 1fr);
+    align-items: baseline;
+    padding: var(--sp-4) 0;
+    border-top: 1px solid var(--rule-faint);
+  }
+  .entry:first-of-type { border-top: none; }
+
+  .entry-num {
+    font-family: var(--font-sans);
+    font-size: var(--t-small);
+    font-weight: var(--fw-bold);
+    letter-spacing: var(--tracking-caps);
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .entry-title {
+    font-family: var(--font-serif);
+    font-size: var(--t-h3);
+    line-height: var(--lh-heading);
+    font-weight: var(--fw-normal);
+    margin: 0 0 var(--sp-2);
+  }
+
+  .entry-note {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--t-small);
+    line-height: 1.55;
+    color: var(--ink-soft);
+  }
+
+  .entry-links {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--t-micro);
+    letter-spacing: 0.02em;
+    color: var(--ink-faint);
+  }
+  .entry-links a { text-decoration: none; }
+  .entry-links a:hover { text-decoration: underline; }
+  .entry-links .sep { padding: 0 var(--sp-2); }
+
+  .colophon {
+    margin-top: var(--sp-9);
+    padding-top: var(--sp-5);
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-sans);
+    font-size: var(--t-micro);
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+  .colophon p { margin: 0 0 var(--sp-3); }
+  .colophon p:last-child { margin-bottom: 0; }
+
+  @media (max-width: 34rem) {
+    .index-page { padding: var(--sp-6) var(--sp-4) var(--sp-8); }
+    .entry { grid-template-columns: minmax(0, 1fr); }
+    .entry-num { margin-bottom: var(--sp-1); }
+  }
+</style>
+</head>
+
+<body>
+<div class="index-page">
+
+<header id="title-block-header">
+  <h1 class="title">Deep Learning for Actuarial Modeling</h1>
+  <div class="abstract">
+    <div class="block-title">A credit risk companion</div>
+    <p>Thirteen lectures read the Milan 2026 summer school through one running
+    example: a consumer probability of default problem on the Bondora
+    peer-to-peer loan book. Eight follow the course lecture for lecture, and
+    five answer questions the course does not ask, on survival analysis,
+    regulatory capital and causation. Every figure and every number on these
+    pages is computed by the lecture that displays it.</p>
+  </div>
+</header>
+
+<h2>The course sequence</h2>
+<p class="track-note">Numbered to match the summer school, so lecture 7 here
+answers lecture 7 there.</p>
+
+<div class="entry">
+  <div class="entry-num">1</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/01_credit-use-case.html">Introduction and Data Example</a></p>
+    <p class="entry-note">Sets up the Bondora loan book as a PD problem, fixes the
+    outcome window and the two exposure conventions, and reads the course's opening
+    lecture through them.</p>
+    <p class="entry-links"><a href="credit_lectures/01_credit-use-case.html">Read</a><span class="sep">·</span><a href="credit_lectures/01_credit-use-case.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">2</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/02_credit-edf-glm.html">Exponential Dispersion Family and Generalised Linear Models</a></p>
+    <p class="entry-note">Works the family with the Bernoulli member in place of the
+    Poisson, then fits a logistic GLM and validates it on a random and an
+    out-of-time split.</p>
+    <p class="entry-links"><a href="credit_lectures/02_credit-edf-glm.html">Read</a><span class="sep">·</span><a href="credit_lectures/02_credit-edf-glm.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">3</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/03_credit-deep-learning-overview.html">Deep Learning, an Overview</a></p>
+    <p class="entry-note">Asks what representation learning is for, comparing
+    principal components, an autoencoder and a supervised extractor on a wide
+    credit card portfolio, since Bondora's interpretable columns make no case for
+    it.</p>
+    <p class="entry-links"><a href="credit_lectures/03_credit-deep-learning-overview.html">Read</a><span class="sep">·</span><a href="credit_lectures/03_credit-deep-learning-overview.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">4 &amp; 5</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/04-05_credit-fnn.html">Feed-Forward Neural Networks</a></p>
+    <p class="entry-note">Replaces the GLM readout's hand-built features with learned
+    ones, trains the network in PyTorch by stochastic gradient descent with early
+    stopping, and benchmarks it on both splits.</p>
+    <p class="entry-links"><a href="credit_lectures/04-05_credit-fnn.html">Read</a><span class="sep">·</span><a href="credit_lectures/04-05_credit-fnn.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">6</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/06_credit-covariate-engineering.html">Ensembling and Entity Embedding</a></p>
+    <p class="entry-note">Averages twenty networks to take the randomness out of the
+    fit, which buys as much out-of-sample deviance as the move from GLM to network
+    did, then encodes high-cardinality categoricals as learned embeddings.</p>
+    <p class="entry-links"><a href="credit_lectures/06_credit-covariate-engineering.html">Read</a><span class="sep">·</span><a href="credit_lectures/06_credit-covariate-engineering.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">7</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/07_credit-calibration.html">Balance Property, Auto-Calibration and Lift Charts</a></p>
+    <p class="entry-note">Nests three calibration properties, measures the network's
+    0.69 per cent balance miss against the GLM's exact zero, and asks whether every
+    price cohort finances its own defaults.</p>
+    <p class="entry-links"><a href="credit_lectures/07_credit-calibration.html">Read</a><span class="sep">·</span><a href="credit_lectures/07_credit-calibration.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">8</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/08_credit-icenet-regularisation.html">ICEnet and Regularisation</a></p>
+    <p class="entry-note">Runs ridge, LASSO and group LASSO over the Bondora design
+    matrix, shows that excluding the intercept from the penalty restates the balance
+    property, then imposes monotonicity and smoothness through ICEnet.</p>
+    <p class="entry-links"><a href="credit_lectures/08_credit-icenet-regularisation.html">Read</a><span class="sep">·</span><a href="credit_lectures/08_credit-icenet-regularisation.pdf">PDF</a></p>
+  </div>
+</div>
+
+<h2>Survival track</h2>
+<p class="track-note">Numbered outside the course sequence, because no course
+lecture answers them. They pick up the discrete-hazard convention lecture 1
+defines but never uses.</p>
+
+<div class="entry">
+  <div class="entry-num">S1</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/S1_credit-survival-bridge.html">From a Fixed-Horizon PD to a Discrete Hazard</a></p>
+    <p class="entry-note">Derives the survival product that turns monthly hazards
+    into a lifetime PD, and shows a discrete-time hazard model is a logistic
+    regression on a person-period expansion.</p>
+    <p class="entry-links"><a href="credit_lectures/S1_credit-survival-bridge.html">Read</a><span class="sep">·</span><a href="credit_lectures/S1_credit-survival-bridge.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">S2</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/S2_survival-insurance-to-credit.html">Survival Analysis from Insurance to Credit</a></p>
+    <p class="entry-note">Maps the four vocabularies that describe the same
+    mathematics, identifies the central exposed to risk with the person-period
+    denominator, and supplies the Fine-Gray correction S1 defers.</p>
+    <p class="entry-links"><a href="credit_lectures/S2_survival-insurance-to-credit.html">Read</a><span class="sep">·</span><a href="credit_lectures/S2_survival-insurance-to-credit.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">S3</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/S3_deep-survival-credit.html">Neural Survival Heads</a></p>
+    <p class="entry-note">Emits one logit per month from a single forward pass, so
+    the whole term structure arrives without materialising 2.7 million person-period
+    rows, then asks lecture 7's calibration questions of it.</p>
+    <p class="entry-links"><a href="credit_lectures/S3_deep-survival-credit.html">Read</a><span class="sep">·</span><a href="credit_lectures/S3_deep-survival-credit.pdf">PDF</a></p>
+  </div>
+</div>
+
+<h2>Regulatory track</h2>
+<p class="track-note">Also outside the sequence. Both grow out of callouts in
+lecture 1 that named a regulatory idea and then admitted the fixed-horizon
+cross-section could not carry it.</p>
+
+<div class="entry">
+  <div class="entry-num">R1</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/R1_credit-ifrs9-pit-pd.html">Point-in-Time PD and the IFRS 9 Term Structure</a></p>
+    <p class="entry-note">Separates the survival conditioning axis from the
+    macroeconomic one, reviews eleven ways to estimate a point-in-time term
+    structure, and fits one against real Eurostat unemployment, inflation and
+    growth.</p>
+    <p class="entry-links"><a href="credit_lectures/R1_credit-ifrs9-pit-pd.html">Read</a><span class="sep">·</span><a href="credit_lectures/R1_credit-ifrs9-pit-pd.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="entry">
+  <div class="entry-num">R2</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/R2_credit-irb-capital.html">Risk Grades, the Long-Run Average and IRB Capital</a></p>
+    <p class="entry-note">Runs the five-step production sequence a bank actually
+    runs, from a point-in-time scorecard through grades, a long-run average and a
+    margin of conservatism to the regulatory PD, then on to the risk weight.</p>
+    <p class="entry-links"><a href="credit_lectures/R2_credit-irb-capital.html">Read</a><span class="sep">·</span><a href="credit_lectures/R2_credit-irb-capital.pdf">PDF</a></p>
+  </div>
+</div>
+
+<h2>Causal track</h2>
+<p class="track-note">Lecture 1 made a causal argument correctly and without a
+single causal word. This track supplies the vocabulary and then spends it.</p>
+
+<div class="entry">
+  <div class="entry-num">C1</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/C1_credit-interaction-and-causation.html">Interaction, Confounding and What a Coefficient Means</a></p>
+    <p class="entry-note">Separates interaction from effect modification, derives an
+    adjustment set from a causal diagram rather than from predictive lift, and prices
+    the exposure to unmeasured confounding at an E-value of 1.34.</p>
+    <p class="entry-links"><a href="credit_lectures/C1_credit-interaction-and-causation.html">Read</a><span class="sep">·</span><a href="credit_lectures/C1_credit-interaction-and-causation.pdf">PDF</a></p>
+  </div>
+</div>
+
+<div class="colophon">
+  <p>Written by Mario Ervedosa alongside <a href="https://people.math.ethz.ch/~wueth/Lecture/SummerSchool2026/SummerSchoolMilano.html">Deep
+  Learning for Actuarial Modeling</a>, run at Università Cattolica del Sacro
+  Cuore, Milan, from 31 August to 4 September 2026 by Salvatore Scognamiglio,
+  Marco Maggi, Mario V. Wüthrich and Ronald Richman. The course's own storyline
+  and notation are followed throughout, and its lecture notes are on
+  <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304">SSRN</a>.
+  The authors' lecture documents are theirs, so they are not published here.</p>
+
+  <p>The data is the public <a href="https://www.bondora.com/en/public-reports">Bondora
+  loan book</a>, extract dated 20 July 2021, with three public Eurostat series
+  behind the R track. Each lecture renders from a Quarto source, and every
+  displayed figure is computed at render time. No client data is involved
+  anywhere on this site.</p>
+</div>
+
+</div>
+</body>
+</html>
