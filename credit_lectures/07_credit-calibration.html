@@ -503,7 +503,7 @@ FNN: sum of predicted PDs  8,655.72   observed defaults 8,685   relative miss -0
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="07_credit-calibration_files/figure-html/cell-10-output-2.png" width="1129" height="510" class="figure-img"></p>
+<p><img src="figures/07_credit-calibration/cell-10-output-2.png" width="1129" height="510" class="figure-img"></p>
 <figcaption>Actual against predicted default rate by decile of the predictor, out-of-sample. The left panel is the logistic GLM, whose deciles sit close to the diagonal. The right panel is the same GLM shrunk 70 per cent towards the portfolio mean, which holds the balance property exactly and preserves the risk ranking exactly. Its lowest decile is charged 23.3 per cent against a realised 9.6, and its highest is charged 38.9 against a realised 62.3, so the safest decile pays 13.7 percentage points more than it costs while the riskiest pays 23.4 points less.</figcaption>
 </figure>
 </div>
@@ -556,7 +556,7 @@ bin
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="07_credit-calibration_files/figure-html/cell-12-output-1.png" width="1129" height="511" class="figure-img"></p>
+<p><img src="figures/07_credit-calibration/cell-12-output-1.png" width="1129" height="511" class="figure-img"></p>
 <figcaption>Actual against predicted plot by decile binning on the random split’s test sample, GLM in the left panel and network in the right. Both sets of actuals are monotone in the predictor, so both models rank risk correctly at decile resolution. The GLM’s largest within-decile miss is 1.8 percentage points and the network’s is 3.4, at the two ends of its range: the network charges its lowest decile 7.6 per cent against a realised 9.9 and its highest 65.4 against a realised 62.0.</figcaption>
 </figure>
 </div>
@@ -600,7 +600,7 @@ FNN: actuals monotone True;  largest within-decile miss 0.0340;  predicted sprea
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="07_credit-calibration_files/figure-html/cell-13-output-1.png" width="1129" height="511" class="figure-img"></p>
+<p><img src="figures/07_credit-calibration/cell-13-output-1.png" width="1129" height="511" class="figure-img"></p>
 <figcaption>Smooth actual against predicted readings on the test sample. The grey line is a locally linear regression at a nearest-neighbour fraction of 10 per cent, the blue step function is an isotonic regression of the actuals on the predictions, and the gold diagonal is exact auto-calibration. Both models track the diagonal closely across the bulk of the range. Above a predicted 0.6 the network’s isotonic curve flattens beneath the diagonal, charging that tail a mean 67.4 per cent against a realised 64.1, and both step functions then jump to 1.0 in their terminal block, which is the end-of-range overfitting the next section has to handle.</figcaption>
 </figure>
 </div>
@@ -733,7 +733,7 @@ logit shifted by +1 0.4364 0.7182  126.8943   0.4886         67.2621         19.
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="07_credit-calibration_files/figure-html/cell-16-output-1.png" width="1129" height="527" class="figure-img"></p>
+<p><img src="figures/07_credit-calibration/cell-16-output-1.png" width="1129" height="527" class="figure-img"></p>
 <figcaption>The same five predictors under two lenses. The left panel holds the ROC curves of all five, which coincide exactly because each is a strictly increasing transform of the others, so all five score a Gini of 0.4364. The right panel holds their isotonic calibration curves against the gold diagonal, where the cubed and halved variants (red) sit far above the diagonal and the square-root and logit-shifted variants (grey, marked with triangles and squares) far below. Discrimination cannot see the difference; calibration is the whole difference.</figcaption>
 </figure>
 </div>
@@ -766,7 +766,7 @@ logit shifted by +1 0.4364 0.7182  126.8943   0.4886         67.2621         19.
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="07_credit-calibration_files/figure-html/cell-17-output-1.png" width="1129" height="511" class="figure-img"></p>
+<p><img src="figures/07_credit-calibration/cell-17-output-1.png" width="1129" height="511" class="figure-img"></p>
 <figcaption>Lift charts on the random split’s test sample, GLM in the left panel and network in the right. Orange circles are the binned prediction averages and blue triangles the binned realised default rates. Both models produce monotone actuals, so both rank correctly at this resolution. The network’s predictions fan wider than its actuals at both ends, which is the over-spread the decile table measured; the GLM’s sit inside its actuals at the bottom end.</figcaption>
 </figure>
 </div>
@@ -829,7 +829,7 @@ mean absolute bin miss: GLM 0.0284, FNN 0.0176; the network is closer in 6 of 10
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="07_credit-calibration_files/figure-html/cell-19-output-1.png" width="979" height="527" class="figure-img"></p>
+<p><img src="figures/07_credit-calibration/cell-19-output-1.png" width="979" height="527" class="figure-img"></p>
 <figcaption>Double lift chart on the test sample, binned on the ratio of the network’s prediction to the GLM’s. Where the two models disagree most, in the outer bins, the actuals side with the network: in the tenth bin the network charges 31.9 per cent against the GLM’s 21.6 and the cohort realises 29.9. In the first bin the network charges 12.6 against the GLM’s 20.6 and the cohort realises 16.8, so there the truth sits between them and slightly nearer the GLM.</figcaption>
 </figure>
 </div>
@@ -925,7 +925,7 @@ FNN: balance miss +38.42%;  every decile overcharged True;  realised lift 7.86x;
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="07_credit-calibration_files/figure-html/cell-22-output-1.png" width="1129" height="511" class="figure-img"></p>
+<p><img src="figures/07_credit-calibration/cell-22-output-1.png" width="1129" height="511" class="figure-img"></p>
 <figcaption>Actual against predicted plot by decile on the out-of-time test window, the final fifth of origination dates. Every decile of both models sits below the diagonal, so every cohort is charged more than it realises, and the two models are nearly indistinguishable. The GLM overstates the window’s default count by 35 per cent and the network by 38, while both rank the book more sharply here than on the random split.</figcaption>
 </figure>
 </div>

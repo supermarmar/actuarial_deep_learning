@@ -12,6 +12,17 @@
 # `theme: none` is not an alternative: it drops the wrapper markup itself, so
 # the stylesheet's two-column rail never engages.
 #
+# The script then moves the figures out of Quarto's own output directory. Quarto
+# writes them to `<stem>_files/figure-html/`, which gave credit_lectures/ one
+# directory per lecture and sixteen of them in a listing, so they are collapsed
+# into `<dir>/figures/<stem>/` and the `src` paths in the HTML are rewritten to
+# match. Quarto recreates `<stem>_files` on every render, so this step is what
+# keeps the layout from reverting; it also clears the empty `_files` directory
+# that a figure-free lecture leaves behind once its libs/ has gone. Note that
+# `lectures/figures/` is gitignored, holding the authors' downloads, so a
+# lecture rendered there that does emit a figure lands in an ignored directory;
+# the three reconstructed lectures execute no code, so none does today.
+#
 # Two kinds of .qmd go through here, and the only difference is the directory:
 # credit_lectures/ holds Mario's credit risk companion lectures, and lectures/
 # holds the three course lectures reconstructed from their PDF decks.
@@ -62,4 +73,26 @@ removed = len(raw) - len(stripped)
 print(f"stripped {removed:,} bytes of theme assets from {path}")
 EOF
   rm -rf "$libs"
+
+  # Relocate the figures and rewrite the paths that point at them.
+  files_dir="${qmd%.qmd}_files"
+  stem="$(basename "${qmd%.qmd}")"
+  dir="$(dirname "$qmd")"
+  if [[ -d "$files_dir/figure-html" ]]; then
+    mkdir -p "$dir/figures"
+    rm -rf "$dir/figures/$stem"
+    mv "$files_dir/figure-html" "$dir/figures/$stem"
+    .venv/bin/python - "$html" "$stem" <<'EOF'
+import sys
+
+path, stem = sys.argv[1], sys.argv[2]
+raw = open(path).read()
+moved = raw.replace(f"{stem}_files/figure-html/", f"figures/{stem}/")
+open(path, "w").write(moved)
+print(f"moved figures to figures/{stem}/ and rewrote "
+      f"{raw.count(f'{stem}_files/figure-html/')} paths in {path}")
+EOF
+  fi
+  # Empty by now whether or not the lecture emitted figures.
+  rmdir "$files_dir" 2>/dev/null || true
 done

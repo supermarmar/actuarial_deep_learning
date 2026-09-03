@@ -521,7 +521,7 @@ trainable parameters: 217</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="04-05_credit-fnn_files/figure-html/cell-9-output-1.png" width="955" height="527" class="figure-img"></p>
+<p><img src="figures/04-05_credit-fnn/cell-9-output-1.png" width="955" height="527" class="figure-img"></p>
 <figcaption>Training and validation Bernoulli deviance by epoch on the random split, our computed counterpart of the course’s early-stopping illustration. The training deviance keeps falling; the validation deviance bottoms out at epoch 71 (dashed line) and then drifts upward as the network starts memorising the training sample. The retained parameter is the epoch-71 checkpoint.</figcaption>
 </figure>
 </div>
@@ -606,7 +606,7 @@ FNN, test      : deviance 107.621   null 120.802   AUC 0.7241   mean PD 0.2911 v
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="04-05_credit-fnn_files/figure-html/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="figures/04-05_credit-fnn/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Predicted PD against borrower age for the reference profile, network against GLM, fitted on the random split’s learning sample. The GLM is constant within each hand-chosen age band; the network traces a smooth curve through the same territory, steep to age 40, flat at the bottom through the 40s and 50s, and rising gently into old age. Above the censoring point of 70 the network’s input is constant, so its curve is flat by construction.</figcaption>
 </figure>
 </div>
@@ -654,7 +654,7 @@ FNN, oot test  : deviance 101.329   null 107.365   AUC 0.7146   mean PD 0.3156 v
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="04-05_credit-fnn_files/figure-html/cell-15-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="figures/04-05_credit-fnn/cell-15-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Monthly observed default rate (dots) against the mean predicted PD of the out-of-time GLM and FNN. The two models are nearly indistinguishable at monthly resolution, inside and outside the development window alike; right of the dashed cutoff both track the vintage cycle they were fitted on while the observed rates fall away beneath them. Months from 2013 onward are shown, as in the second lecture.</figcaption>
 </figure>
 </div>
