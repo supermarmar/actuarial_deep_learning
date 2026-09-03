@@ -477,7 +477,24 @@ L(y, m) = 2 \left( -y \log m - (1-y) \log(1-m) \right),
 \]</span></p>
 <p>is the main workhorse for model validation and model selection in machine learning, and it is the quantity every model comparison in this lecture series reports.</p>
 <p>The course partitions the insurance data at random. Credit adds a complication that the first lecture already exposed: the Bondora vintage default rates run from 7 per cent in 2012 to 37 per cent in 2017, so consecutive loans are far from exchangeable in time. A random split places loans from every vintage on both sides of the partition, and the test sample then resembles the learning sample by construction. Credit validation practice therefore prefers an <strong>out-of-time split</strong>, holding out the most recent vintages, because the model will only ever be used on business written after its development window. We build both partitions below and let the numbers make the argument.</p>
-<div id="21245e62" class="cell" data-execution_count="1">
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="This partition is audited in lecture R3">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>This partition is audited in lecture R3
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The split built below is the one lectures 4 to 8 and S3 inherit, and lecture R3 examines it rather than taking it on trust. Three of its findings bear on the numbers in this section.</p>
+<p>The held-out window is 28.6 per cent pandemic-era originations, so the fall in the default rate reported just below mixes a tightened underwriting standard, a relief programme that suppressed the flag, and the economy itself. R3 dates the relief distortion to a two-month notch in the monthly hazard, in April and May 2020.</p>
+<p>That distortion cannot be excluded on this table. Because the outcome window opens at origination, dropping every loan whose window overlaps the notch empties the test sample completely, and R3 shows the count is exactly zero. The demonstration moves to lecture R1’s calendar-indexed table, where excluding the notch lifts the twelve-month probability of default by 2.4 per cent relative.</p>
+<p>Finally, the development and out-of-time samples are separable by a classifier at an area under the curve of 0.96, while most marginal stability indices call the covariates unchanged.</p>
+<p><strong>The results in this lecture are left as they stand.</strong> They are correct for the partition they were computed on, and R3 is the lecture that questions the partition.</p>
+</div>
+</div>
+<div id="3353f575" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -498,7 +515,7 @@ L(y, m) = 2 \left( -y \log m - (1-y) \log(1-m) \right),
 </div>
 </div>
 <p>We start from the modelling sample of the first lecture and additionally drop the three loans whose education field carries the unknown code <span class="math inline">\(-1\)</span>, which leaves <span class="math inline">\(n = 148{,}667\)</span> loans. The learning and test samples are then constructed twice, once at random and once by origination date.</p>
-<div id="e6bc6ad4" class="cell" data-execution_count="2">
+<div id="7e843b63" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> model_dat.select(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"Education"</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>     <span class="st">"HomeOwnershipType"</span>, <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>,</span>
@@ -548,7 +565,7 @@ cutoff date: 2019-11-04, test window 2019-11-05 to 2020-07-19</code></pre>
 = e^{\vartheta_0} \prod_{j=1}^{q} e^{\vartheta_j X_j}.
 \]</span></p>
 <p>Each covariate contributes its own <strong>odds ratio</strong> <span class="math inline">\(e^{\vartheta_j}\)</span> per unit of <span class="math inline">\(X_j\)</span>, and the intercept <span class="math inline">\(\vartheta_0\)</span> calibrates the overall level, in exact parallel to the bias parameter of the log-link example. Odds ratios are the credit scorer’s price relativities. They also explain the industry’s <strong>scorecard points</strong>. A traditional scorecard reports <span class="math inline">\(\mathrm{score} = A - B \,\langle \vartheta, \boldsymbol{X} \rangle\)</span> for display constants <span class="math inline">\(A\)</span> and <span class="math inline">\(B\)</span>, so the score is an affine transformation of the GLM’s linear predictor, and the familiar “points to double the odds” is <span class="math inline">\(B \log 2\)</span>. A scorecard is a logistic GLM wearing different units.</p>
-<div id="1f532085" class="cell" data-execution_count="3">
+<div id="431d2487" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ages <span class="op">=</span> np.arange(<span class="dv">18</span>, <span class="dv">91</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>b0, b1, b2 <span class="op">=</span> <span class="fl">1.2</span>, <span class="op">-</span><span class="fl">0.045</span>, <span class="fl">0.55</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x2, colour, lab <span class="kw">in</span> [(<span class="dv">0</span>, <span class="st">"#3B4A75"</span>, <span class="st">"repeat customer"</span>),</span>
@@ -716,7 +733,7 @@ z_i = \langle \vartheta^{(t)}, \boldsymbol{X}_i \rangle
 <h2 data-number="5.2" class="anchored" data-anchor-id="glm-example-bondora-data"><span class="header-section-number">5.2</span> GLM example: Bondora data</h2>
 <p>We now fit a logistic GLM whose scope mirrors the seven-covariate French motor third-party liability (MTPL) fit of the course. The first lecture’s covariates <code>AgeClass</code>, <code>logIncome</code> and <code>Country</code> are joined by five further application-time variables: education, home ownership, the new-customer flag, income verification, and employment duration.</p>
 <p>Two data points force small engineering decisions, and both are worth stating openly. First, <code>HomeOwnershipType</code> is missing for 1,604 loans and <code>EmploymentDurationCurrentEmployer</code> for 820. In credit data, missingness is routinely informative (an applicant who skips a field differs from one who fills it in), so we assign each an explicit <code>missing</code> category, drop no rows, impute no values, and let the model estimate what missingness is worth. Second, the first lecture’s oldest age class <code>71+</code> contains 13 loans and zero defaults. In a logistic GLM a covariate class with no defaults drives its coefficient to <span class="math inline">\(-\infty\)</span>; the likelihood keeps improving as the fitted PD of the class falls to zero, IRLS runs until it hits its iteration cap, and the reported coefficient and standard error are numerical artefacts. This is <strong>quasi-complete separation</strong>, the standard failure mode of maximum likelihood in sparse categorical data, and it is the fine print behind “the MLE is unique when it exists”. The practical remedy at these volumes is coarser classes, so we merge the two oldest bands into <code>61+</code>.</p>
-<div id="37df7e1e" class="cell" data-execution_count="4">
+<div id="d9d6792b" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    g[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">101</span>],</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>, <span class="st">"51-60"</span>, <span class="st">"61+"</span>],</span>
@@ -746,7 +763,7 @@ Model Family:                Binomial   Df Model:                           38
 Link Function:                  Logit   Scale:                          1.0000
 Method:                          IRLS   Log-Likelihood:                -63416.
 Date:                Thu, 03 Sep 2026   Deviance:                   1.2683e+05
-Time:                        10:15:40   Pearson chi2:                 1.18e+05
+Time:                        11:33:03   Pearson chi2:                 1.18e+05
 No. Iterations:                     5   Pseudo R-squ. (CS):             0.1269
 Covariance Type:            nonrobust                                         
 ========================================================================================================
@@ -796,7 +813,7 @@ logIncome                               -0.0311      0.014     -2.208      0.027
 </div>
 <p>The fit estimates 39 regression parameters and converges in five IRLS iterations. A few coefficients read as odds ratios illustrate the logit link’s interpretability. A Spanish borrower carries <span class="math inline">\(e^{1.963} \approx 7.1\)</span> times the default odds of an otherwise identical Estonian borrower, which quantifies the country effect that resolved the first lecture’s Simpson’s paradox. A new customer carries <span class="math inline">\(e^{0.301} \approx 1.35\)</span> times the odds of a repeat customer. Higher education (level 5) multiplies the odds by <span class="math inline">\(e^{-0.430} \approx 0.65\)</span> relative to primary education. Meanwhile the income coefficient sits at <span class="math inline">\(-0.031\)</span>: once country and the other application variables are controlled, declared income has almost no residual work left to do, continuing its demotion from the confounded <span class="math inline">\(+0.255\)</span> of the first lecture’s GLM1.</p>
 <p>Because the logit is the canonical link, the balance property must hold on the learning sample to machine precision, and it does:</p>
-<div id="167c4479" class="cell" data-execution_count="5">
+<div id="4a3cec87" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"sum of fitted PDs:       </span><span class="sc">{</span>glm_r<span class="sc">.</span>fittedvalues<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,.4f}</span><span class="ss">"</span>)</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"observed defaults in L:  </span><span class="sc">{</span>learn_r[<span class="st">'default_12m'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
@@ -808,7 +825,7 @@ observed defaults in L:  34,345</code></pre>
 <section id="bernoulli-deviance-loss-in-sample-and-out-of-sample" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="bernoulli-deviance-loss-in-sample-and-out-of-sample"><span class="header-section-number">5.3</span> Bernoulli deviance loss: in-sample and out-of-sample</h2>
 <p>We evaluate the fitted GLM with the scaled Bernoulli deviance loss, in <span class="math inline">\(10^{-2}\)</span> units as the course does for its Poisson losses, and we report the AUC alongside. For each test sample we also report the deviance of the <strong>null model</strong> that predicts that sample’s own mean default rate for every loan, because Bernoulli deviance levels depend on the base rate and are comparable across samples only relative to such a floor.</p>
-<div id="7e191544" class="cell" data-execution_count="6">
+<div id="3af4471e" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> bernoulli_deviance(pred, obs):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.asarray(pred, <span class="bu">float</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.asarray(obs, <span class="bu">float</span>)</span>
@@ -831,7 +848,7 @@ mean predicted PD on random test: 0.2888   observed rate: 0.2921</code></pre>
 </div>
 </div>
 <p>On the random split the picture is exactly the course’s. The out-of-sample deviance, 108.197, sits just above the in-sample 106.641, so the model generalises with a small gap, and the AUC declines only from 0.726 to 0.718. The mean predicted PD on the test sample, 28.9 per cent, agrees with the observed 29.2 per cent, so the balance property transfers to the test sample almost perfectly. It transfers because a random split makes the two samples statistically identical, and that is the flattering assumption the out-of-time split now removes.</p>
-<div id="a128752c" class="cell" data-execution_count="7">
+<div id="687eb9e2" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>glm_t <span class="op">=</span> smf.glm(FORMULA, data<span class="op">=</span>learn_t, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"oot fit, in-sample         "</span>, glm_t.fittedvalues, learn_t[<span class="st">"default_12m"</span>])</span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"oot fit, out-of-time test  "</span>, glm_t.predict(test_t), test_t[<span class="st">"default_12m"</span>])</span>
@@ -845,7 +862,7 @@ mean predicted PD on oot test: 0.3072   observed rate: 0.2280</code></pre>
 </div>
 <p>Read these numbers carefully, because the naive reading gets them backwards. The out-of-time test deviance, 100.400, is <strong>lower</strong> than the random-split test deviance, and a careless comparison would conclude the model performs better out of time. The null deviances expose the mechanics. The out-of-time window’s base rate of 22.8 per cent makes its null deviance 107.4, against 120.8 on the random test sample, so the entire apparent improvement is the lower entropy of a lower base rate. Relative to its own null, the model explains far less out of time. The calibration failure is where the drift actually lands. The refit predicts a mean PD of 30.7 per cent on the held-out window against an observed 22.8 per cent, an overstatement of nearly eight percentage points from a model whose fitted PDs summed exactly to the observed defaults on its own development window. The balance property is an in-sample identity, and the out-of-time split is what reveals that.</p>
 <p>The AUC tells the complementary story. It falls only to 0.716 on the out-of-time window, so the model still ranks borrowers nearly as well as it ever did, while its level is badly off. This combination, ranking that survives the drift and a level that does not, is the routine experience of credit scorecards, and it explains the industry’s standing practice of keeping a scorecard’s coefficients while recalibrating its intercept to the current central tendency. The calibration lecture’s companion takes this up properly.</p>
-<div id="a3dd22e6" class="cell" data-execution_count="8">
+<div id="50ae0aae" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>g_oot <span class="op">=</span> g.copy()</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>g_oot[<span class="st">"pred"</span>] <span class="op">=</span> glm_t.predict(g_oot)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>g_oot[<span class="st">"month"</span>] <span class="op">=</span> g_oot[<span class="st">"LoanDate"</span>].dt.to_period(<span class="st">"M"</span>).dt.to_timestamp()</span>
@@ -873,7 +890,7 @@ mean predicted PD on oot test: 0.3072   observed rate: 0.2280</code></pre>
 <h2 data-number="5.4" class="anchored" data-anchor-id="individual-bernoulli-versus-grouped-binomial"><span class="header-section-number">5.4</span> Individual Bernoulli versus grouped binomial</h2>
 <p>The course closes its GLM lecture by showing that two formulations of the Poisson GLM coincide: regressing claim counts with <span class="math inline">\(\log v_i\)</span> as an offset, and regressing claim frequencies with <span class="math inline">\(v_i\)</span> as weights. The weights mechanism has an exact Bernoulli counterpart. Borrowers who share one covariate cell contribute a product of identical Bernoulli likelihood terms, and that product depends on the cell’s data only through its number of loans and its number of defaults. Consequently, fitting the GLM on one row per loan and fitting it on one row per covariate cell, with the cell’s default rate as response and its loan count as weight, are the same likelihood and must return the same estimate. Aggregation over identical covariate rows plays the role that aggregation over exposure plays for counts.</p>
 <p>We verify this on a purely categorical sub-model, since exact aggregation needs discrete cells.</p>
-<div id="a8907df2" class="cell" data-execution_count="9">
+<div id="5ad64800" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>SUB <span class="op">=</span> <span class="st">"default_12m ~ AgeClass + Country + C(Education)"</span></span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>glm_ind <span class="op">=</span> smf.glm(SUB, data<span class="op">=</span>learn_r, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
