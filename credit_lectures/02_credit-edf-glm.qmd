@@ -632,6 +632,137 @@ iteratively reweighted least squares (IRLS), exactly as in Nelder and
 Wedderburn (1972); `statsmodels` reports the iteration count with every
 fit.
 
+::: {.callout-note icon=false title="Maximum likelihood, ordinary least squares and iteratively reweighted least squares"}
+Three names attach to one estimation problem. **Maximum likelihood** is the
+criterion, **ordinary least squares** (OLS) is the closed form that criterion takes
+in a single special case, and **iteratively reweighted least squares** (IRLS)
+is the algorithm that reaches every other case by solving a sequence of
+least squares problems. The derivation below shows how the three connect, and it
+also supplies three results the lecture asserts elsewhere: the balance property,
+the uniqueness of the canonical-link MLE, and the numerical mechanism behind
+quasi-complete separation.
+
+**The score equations.** Write $\mu_i = \mu_{\vartheta}(\boldsymbol{X}_i)$ for
+the fitted mean of observation $i$, $\theta_i = h(\mu_i)$ for its canonical
+parameter and $Y_i$ for its response. The EDF log-likelihood of the learning
+sample is
+
+$$
+\ell(\vartheta) = \sum_{i=1}^{n} \frac{Y_i \theta_i - \kappa(\theta_i)}{\varphi / v_i}
++ \sum_{i=1}^{n} c\!\left(Y_i, \varphi / v_i\right),
+$$
+
+whose second sum carries no $\vartheta$ and therefore drops out on
+differentiation. The regression parameter reaches the likelihood through two
+links in a chain, since $\theta_i = h(\mu_i)$ and
+$\mu_i = g^{-1}\langle \vartheta, \boldsymbol{X}_i \rangle$. Because $h$
+inverts $\kappa'$, we have
+$\partial \theta_i / \partial \mu_i = 1 / \kappa''(\theta_i)$, and
+differentiating the link relation gives
+$\partial \mu_i / \partial \vartheta_j = X_{ij} / g'(\mu_i)$. Hence
+
+$$
+\frac{\partial \ell}{\partial \vartheta_j}
+= \sum_{i=1}^{n} \frac{v_i}{\varphi}\left(Y_i - \mu_i\right)
+\frac{1}{\kappa''(\theta_i)} \cdot \frac{X_{ij}}{g'(\mu_i)}
+= \sum_{i=1}^{n} \frac{Y_i - \mu_i}{\mathrm{Var}(Y_i)} \cdot \frac{X_{ij}}{g'(\mu_i)},
+\qquad j = 0, \ldots, q,
+$$
+
+using $\mathrm{Var}(Y_i) = (\varphi / v_i)\, \kappa''(\theta_i)$ from the moments
+callout. Setting all $q+1$ derivatives to zero gives the **score equations**.
+Each residual enters weighted by its own inverse variance and by the local
+slope of the link, so a precisely measured observation counts for more, as does
+one whose mean responds strongly to the linear predictor.
+
+**What the canonical link removes.** Choosing $g = h$ makes
+$g'(\mu_i) = 1 / \kappa''(\theta_i)$, and the two occurrences of $\kappa''$
+cancel. The score equations collapse to
+
+$$
+\sum_{i=1}^{n} \frac{v_i}{\varphi} \left(Y_i - \mu_i\right) X_{ij} = 0,
+\qquad j = 0, \ldots, q,
+$$
+
+so at the optimum the fitted means reproduce the observed responses along every
+covariate direction. Taking $j = 0$, whose design column is a column of ones,
+returns the balance property stated above. Furthermore, the canonical link makes
+$\theta_i = \langle \vartheta, \boldsymbol{X}_i \rangle$ linear in $\vartheta$,
+and $\kappa$ is convex, so $\ell$ is concave in $\vartheta$; strictly so wherever
+$\kappa'' > 0$ and the design matrix has full rank. That concavity is the
+precise content of "the MLE is unique when it exists".
+
+**OLS as the degenerate case.** The Gaussian member has
+$\kappa(\theta) = \theta^2 / 2$, hence $\kappa'' \equiv 1$, canonical link the
+identity, $v_i \equiv 1$ and $\varphi = \sigma^2$. The collapsed score equations
+become $\boldsymbol{X}^\top (\boldsymbol{Y} - \boldsymbol{X}\vartheta) = 0$, the
+normal equations, solved in closed form by
+$\widehat{\vartheta} = (\boldsymbol{X}^\top \boldsymbol{X})^{-1} \boldsymbol{X}^\top \boldsymbol{Y}$.
+Two separate facts sit behind that formula and are routinely conflated. Maximum
+likelihood coincides with least squares here because the Gaussian
+log-likelihood equals $-\lVert \boldsymbol{Y} - \boldsymbol{X}\vartheta \rVert^2 / (2\sigma^2)$
+up to an additive constant, so maximising the one minimises the other. The
+solution is available in closed form for a different reason, namely that
+$\kappa''$ is constant, which makes the score linear in $\vartheta$. Every other
+EDF member has genuine curvature in $\kappa$, so its score is nonlinear and no
+closed form exists.
+
+**IRLS as the general case.** Newton-Raphson would iterate
+$\vartheta^{(t+1)} = \vartheta^{(t)} - \left(\nabla^2 \ell\right)^{-1} \nabla \ell$.
+Fisher's scoring method replaces the observed Hessian by its expectation, the
+**expected information** $\mathcal{I}(\vartheta) = \boldsymbol{X}^\top W \boldsymbol{X}$
+with $W = \mathrm{diag}(w_1, \ldots, w_n)$ and
+
+$$
+w_i = \frac{1}{\mathrm{Var}(Y_i)\, g'(\mu_i)^2}.
+$$
+
+Define the **working response**
+$z_i = \langle \vartheta^{(t)}, \boldsymbol{X}_i \rangle + g'(\mu_i)\left(Y_i - \mu_i\right)$,
+a first-order expansion of the link around the current fit. Then
+$\left(\boldsymbol{X}^\top W \boldsymbol{z}\right)_j
+= \sum_i w_i g'(\mu_i)(Y_i - \mu_i) X_{ij} + \left(\boldsymbol{X}^\top W \boldsymbol{X}\vartheta^{(t)}\right)_j$,
+and the first sum is exactly $\partial \ell / \partial \vartheta_j$ derived
+above. Consequently the scoring update rearranges into
+
+$$
+\vartheta^{(t+1)}
+= \left(\boldsymbol{X}^\top W \boldsymbol{X}\right)^{-1} \boldsymbol{X}^\top W \boldsymbol{z},
+$$
+
+which is a weighted least squares fit of the working response on the design.
+Each iteration therefore has the shape of an OLS solve, with $W$ and
+$\boldsymbol{z}$ recomputed from the current fit, and the algorithm takes its
+name from that. Under the canonical link the observed Hessian is
+$-\sum_i (v_i / \varphi)\, \kappa''(\theta_i)\, \boldsymbol{X}_i \boldsymbol{X}_i^\top$,
+which involves no $Y_i$ and so equals its own expectation, and Fisher scoring
+and Newton-Raphson coincide. Away from the canonical link they differ, and the
+Fisher version is preferred for keeping $\mathcal{I}$ positive definite.
+
+**The Bernoulli case.** Here $\varphi = 1$, $v_i \equiv 1$,
+$\kappa''(\theta_i) = \mu_i (1 - \mu_i)$ and the logit link satisfies
+$g'(\mu_i) = 1 / (\mu_i (1 - \mu_i))$, so the pieces above become
+
+$$
+\sum_{i=1}^{n} \left(D_i^{(k)} - \mu_i\right) X_{ij} = 0,
+\qquad
+w_i = \mu_i (1 - \mu_i),
+\qquad
+z_i = \langle \vartheta^{(t)}, \boldsymbol{X}_i \rangle
++ \frac{D_i^{(k)} - \mu_i}{\mu_i (1 - \mu_i)}.
+$$
+
+The weight $\mu_i(1-\mu_i)$ peaks at a fitted PD of one half and falls away
+towards either extreme, which has two credit consequences. In a low-default
+portfolio every fitted PD sits near zero, so the weights are small, the
+information matrix is correspondingly thin, and standard errors are wider than
+the row count alone would suggest. More sharply, where a covariate class
+contains no defaults at all, its fitted PD is driven towards zero at every
+iteration, its weight follows, and $\boldsymbol{X}^\top W \boldsymbol{X}$
+approaches singularity. That is the numerical mechanism behind the
+quasi-complete separation encountered in the Bondora fit below.
+:::
+
 ## Relationship to deviance losses
 
 Maximising this log-likelihood is the same problem as minimising the
