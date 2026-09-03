@@ -742,8 +742,10 @@ of the portfolio rather than of credit risk, and promised that imbalance would r
 force once the credit card portfolio took the stage. Lecture 3 put that portfolio on the stage
 and named its 1.42 per cent bad rate without treating it. Here is the debt.
 
-One guard before starting. The card file carries no origination date, so everything in this
-section is a statement about imbalance alone. Consequently the vintage argument of sections 6
+The card portfolio is public, published on Kaggle as
+[Credit Card Behaviour Score](https://www.kaggle.com/datasets/suvroo/credit-card-behaviour-score),
+and lecture 3 describes its structure. One guard before starting. The card file carries no
+origination date, so everything in this section is a statement about imbalance alone. Consequently the vintage argument of sections 6
 and 7 does not transfer, and neither does the out-of-time reasoning that rests on it.
 
 ```{python}

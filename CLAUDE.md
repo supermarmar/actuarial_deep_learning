@@ -93,7 +93,7 @@ history and the file is one `curl` away. Redownload it from
   response **is** the exit time.
 - `Dev_data_to_be_shared.csv` and `validation_data_to_be_shared.csv` (420 MB): an
   anonymised credit card portfolio distributed as a dev/validation pair; the validation
-  file carries no `bad_flag`. Local files only; source to be confirmed.
+  file carries no `bad_flag`. The source is the public Kaggle dataset **Credit Card Behaviour Score** (`https://www.kaggle.com/datasets/suvroo/credit-card-behaviour-score`), confirmed by Mario on 3 September 2026; the two CSVs carry the uploader's own file names. The earlier note that the source was unconfirmed is withdrawn, which matters because the repository is public and lecture 3 and lecture R3 both publish statistics from this file.
 - `amex-default-prediction/train_data.csv` and `train_labels.csv` (15 GB, 29 MB): the
   Kaggle "American Express Default Prediction" competition data
   (`https://www.kaggle.com/competitions/amex-default-prediction`), a genuine

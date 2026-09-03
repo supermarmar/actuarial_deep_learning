@@ -70,9 +70,12 @@ output. The full list sits in the conversion script's docstring.
 ## Credit card behavioural pair (`Dev_data_to_be_shared.csv`, `validation_data_to_be_shared.csv`, 420 MB)
 
 An anonymised credit card portfolio distributed as a development/validation
-pair, by its naming and structure a data-science competition release; the
-original source should be confirmed before anything derived from it is
-shared. The development file holds 96,806 accounts with a `bad_flag` at 1.42
+pair, by its naming and structure a data-science competition release. The
+source was confirmed on 3 September 2026 as the public Kaggle dataset
+**Credit Card Behaviour Score**,
+`https://www.kaggle.com/datasets/suvroo/credit-card-behaviour-score`, whose
+uploader supplied the two file names unchanged. Consequently the earlier
+caution against sharing anything derived from it is lifted. The development file holds 96,806 accounts with a `bad_flag` at 1.42
 per cent; the validation file holds 41,792 accounts and **no** `bad_flag`,
 so honest evaluation requires splitting the development file. Both carry
 1,214 anonymised features in four blocks: `onus_attribute` (48),
