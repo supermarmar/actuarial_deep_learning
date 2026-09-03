@@ -1,0 +1,478 @@
+---
+title: "Credit Lecture D1: The Definition of Default, Cure and Write-off"
+subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
+author: "Mario Ervedosa"
+date: "2026-09-03"
+abstract: >
+  Credit lecture 1 named default three times and finished the job none of them.
+  It cited Article 178, quoted a three-dial formalism from the impairment
+  literature, and coined the worst-ever window flag, yet it never separated the
+  competing response variables those dials produce, mentioned cure once in a
+  subordinate clause, and never mentioned write-off at all. This lecture pays
+  that debt and then argues something stronger. A default definition is a claim
+  about a sequence of monthly delinquency states, so which definitions a
+  modeller can implement is settled by the shape of the data rather than by the
+  regulation. Three response variables are separated and measured against each
+  other, where 90 per cent of the flags under one of them mark loans already in
+  default earlier in the window. Cure, probation and write-off are defined and
+  then swept, where lengthening probation from three months to twenty-four
+  suppresses re-default from 9.8 per cent to 1.4 and destroys two fifths of the
+  cures doing it. The lecture closes on what a snapshot extract cannot answer,
+  and hands the sampling question to lecture R3.
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    # Render with scripts/render_lecture.sh, not bare `quarto render`.
+    css: ../lectures/lecture.css
+    embed-resources: false
+    fig-width: 9
+    fig-height: 4
+    fig-dpi: 150
+execute:
+  echo: true
+  warning: false
+jupyter: python3
+---
+
+# Where lecture 1 stopped
+
+Lecture 1 treated the definition of default as settled background and moved on to the modelling.
+It was right to move on and wrong to call it settled. Three times it reached for the definition
+and three times it stopped short. It cited Article 178 of the Capital Requirements Regulation for
+the ninety-day backstop, then noted that Bondora records its own flag instead. It quoted a
+formalism with three dials from the impairment literature, tabulated what Bondora's choice of each
+one was, and never turned any of the dials. And it coined the phrase worst-ever aggregation for the
+window maximum, observing in passing that a loan which breaches and then cures still scores a one,
+without ever asking what curing is or how often it happens.
+
+This lecture turns the dials. Along the way it corrects one number lecture 1 asserted, separates
+three response variables that practice routinely calls by one name, and gives cure, probation and
+write-off the definitions the earlier lectures assumed they already had.
+
+It also argues something the series has not yet said. Every dial below is a statement about a
+sequence of monthly delinquency states. A cross-sectional loan extract records dates and a
+terminal status, so it carries no such sequence, and consequently a modeller holding one cannot
+implement most of the definitions on offer whatever the regulation permits. The definition and the
+data shape are one question rather than two, which is why the second half of this lecture is about
+data engineering and belongs here rather than in an appendix.
+
+::: {.callout-note icon=false title="Where this sits in the series"}
+Lecture 1 fixes the outcome window and coins the worst-ever aggregation. This lecture owns the
+**response variable**, meaning what the target column is and how a definitional choice changes it.
+
+Four neighbours own the rest. Lecture `R1` owns estimation, and it already derives the marginal PD
+this lecture merely names. Lecture `R2` owns the capital formula and, importantly for the
+vocabulary below, the **worst-case default rate**, which is a stressed quantile and has nothing to
+do with this lecture's worst-ever window flag. The `S` track owns the hazard machinery that
+estimates any of the three targets defined here. Lecture `R3` owns sampling and
+representativeness: this lecture builds the outcome variable and `R3` picks the rows that carry it.
+:::
+
+## The one number lecture 1 got wrong
+
+Lecture 1's dials table recorded Bondora's delinquency threshold as "roughly two payments, since
+the platform flags at 60 days past due", and its outcome-window section reasoned from the same
+sixty days. Neither figure was measured. Measuring it turns out to matter, and not only because
+the number moves.
+
+Bondora publishes two fields that between them settle the question. `DebtOccuredOn` records a date
+associated with the onset of arrears and `CurrentDebtDaysPrimary` a running count of days past
+due. What is not documented is whether `DebtOccuredOn` marks the first day past due or some later
+operational milestone, and the whole exercise turns on which. The identity below settles it.
+
+```{python}
+import numpy as np
+import polars as pl
+import matplotlib.pyplot as plt
+
+OX, GREY, RULE = "#8C2F1E", "#B0B0B0", "#444444"
+
+raw = pl.read_parquet("../data/bondora_raw.parquet")
+
+late = (
+    raw.filter(
+        (pl.col("Status") == "Late")
+        & pl.col("DebtOccuredOn").is_not_null()
+        & pl.col("CurrentDebtDaysPrimary").is_not_null()
+    )
+    .with_columns(
+        ((pl.col("ReportAsOfEOD") - pl.col("DebtOccuredOn")).dt.total_days()
+         - pl.col("CurrentDebtDaysPrimary")).alias("residual")
+    )
+)
+
+pl.DataFrame({
+    "quantile": ["10th", "25th", "50th", "75th", "90th"],
+    "residual": [late["residual"].quantile(q) for q in (0.1, 0.25, 0.5, 0.75, 0.9)],
+}).with_columns(pl.lit(late.height).alias("loans"))
+```
+
+The residual is exactly one day across the middle eight deciles of the 68,480 late loans. So
+`CurrentDebtDaysPrimary` counts forward from `DebtOccuredOn` with a one-day offset, which means
+`DebtOccuredOn` is the day the days-past-due counter starts. Consequently the gap between it and
+`DefaultDate` is days past due at the moment default was declared, and that is a quantity we can
+put a distribution on.
+
+```{python}
+lag = (
+    raw.filter(pl.col("DebtOccuredOn").is_not_null() & pl.col("DefaultDate").is_not_null())
+       .with_columns(
+           (pl.col("DefaultDate") - pl.col("DebtOccuredOn")).dt.total_days().alias("dpd")
+       )
+)
+pos = lag.filter(pl.col("dpd") > 0)
+
+print(f"loans carrying both dates      {lag.height:>7,}")
+print(f"  lag exactly zero             {lag.filter(pl.col('dpd') == 0).height:>7,}")
+print(f"  lag negative                 {lag.filter(pl.col('dpd') < 0).height:>7,}")
+print(f"  lag strictly positive        {pos.height:>7,}")
+print()
+qs = [0.01, 0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.99]
+print("days past due at declaration, percentiles of the positive-lag loans")
+print("  " + "  ".join(f"p{int(100*q):02d}={int(pos['dpd'].quantile(q)):>4d}" for q in qs))
+print()
+for lo, hi, label in [(None, 60, "under 60 days"), (60, 90, "60 to 90 days"), (90, None, "90 days or more")]:
+    if lo is None:
+        n = pos.filter(pl.col("dpd") < hi).height
+    elif hi is None:
+        n = pos.filter(pl.col("dpd") >= lo).height
+    else:
+        n = pos.filter(pl.col("dpd").is_between(lo, hi)).height
+    print(f"  declared {label:<16} {n:>7,}  ({100 * n / pos.height:4.1f} per cent)")
+```
+
+Two anomalies travel with that table and are named rather than dropped. 7,917 loans carry a
+declaration on the very day arrears began, and 101 carry a `DefaultDate` before their
+`DebtOccuredOn`. Both are operational artefacts of a platform reconstructing its own history, and
+a bank's data quality assessment would raise an exception on each. They are excluded from the
+percentiles above and they are not excluded from the count of defaults anywhere in this series,
+which is the honest treatment: the event happened, and only its dating is unreliable.
+
+The correction, then, is that the median declaration sits at 79 days rather than 60. The more
+useful finding is the dispersion around it. The lag runs from a single day to 126, some 15.4 per
+cent of declarations land under sixty days past due, and 28 per cent reach ninety or beyond.
+
+```{python}
+#| fig-cap: "Days past due at the moment Bondora declared default, on the 59,694 loans whose arrears-onset date precedes their default date. The histogram is truncated at 200 days for legibility, which drops 24 loans. Dashed rules mark the two thresholds the literature and the regulation reach for, at 60 and 90 days; the platform's own median, the solid rule at 79 days, sits between them and its mass straddles both. A definition that fires on a fixed threshold would put every loan on one side of a single rule, so the spread here is the evidence that this flag is an operational decision rather than a rule."
+fig, ax = plt.subplots(figsize=(9, 3.4))
+vals = pos["dpd"].to_numpy()
+ax.hist(vals[vals <= 200], bins=np.arange(0, 205, 5), color=OX, alpha=0.85)
+for x, lab in [(60, "60"), (90, "90")]:
+    ax.axvline(x, color=RULE, ls="--", lw=1)
+    ax.annotate(lab, (x, ax.get_ylim()[1] * 0.94), color=RULE, ha="center",
+                fontsize=9, backgroundcolor="white")
+ax.axvline(79, color=RULE, lw=1.6)
+ax.annotate("median 79", (79, ax.get_ylim()[1] * 0.78), color=RULE,
+            ha="center", fontsize=9, backgroundcolor="white")
+ax.set_xlabel("days past due at declaration")
+ax.set_ylabel("loans")
+for s in ("top", "right"):
+    ax.spines[s].set_visible(False)
+plt.tight_layout()
+```
+
+Lecture 1's outcome-window argument survives the correction and strengthens on it. That lecture
+observed that a three-month window returns a default rate of 0.16 per cent, which measures
+nothing, because a first instalment falling due a month after drawdown cannot accumulate enough
+arrears before the window closes. At 79 days rather than 60 the earliest possible declaration
+moves out to roughly 110 days after origination, past the close of a three-month window. The book
+agrees.
+
+```{python}
+mob = (
+    raw.filter(pl.col("DefaultDate").is_not_null())
+       .with_columns(
+           ((pl.col("DefaultDate") - pl.col("LoanDate")).dt.total_days() / 30.44).alias("mob")
+       )
+)
+print(f"defaults in the book              {mob.height:>7,}")
+print(f"  earliest, months on book        {mob['mob'].min():>7.2f}")
+for cut in (1, 2, 3, 4):
+    print(f"  declared before month {cut}         {mob.filter(pl.col('mob') < cut).height:>7,}")
+```
+
+No default precedes the first month on book, exactly one precedes the second, and 259 of 71,416
+precede the third. Lecture `S1` built an argument on the same structural fact when it explained why
+the estimated hazard is genuinely zero in month one. Both lectures were right about the mechanism
+and wrong about the threshold driving it, and both now quote the measured figure.
+
+# Terminology
+
+This lecture is the one the rest of the credit series points back to for vocabulary, so the terms
+come before the formulae. Each definition below is used to build the next, which is why they run
+in this order rather than alphabetically.
+
+**Performing.** A loan meeting its contractual obligations. The state every other state is defined
+against.
+
+**Arrears, or delinquency.** A missed or partial payment, measured either in days past due or in
+whole missed payments. The two measures are not interchangeable, and the difference matters more
+than it looks. Days past due is a property of a calendar; payments in arrears is a property of a
+schedule. On a monthly instalment loan with equal payments they track each other, so thirty days
+is roughly one payment. On a revolving card with a minimum payment that moves with the balance,
+they come apart.
+
+**Default.** An event declared when delinquency crosses a threshold, or when the lender judges the
+borrower unlikely to pay. Regulation fixes a floor for capital purposes. Nothing fixes it for a
+behavioural or impairment model, where the modeller chooses, and the choices are the dials of the
+next section.
+
+**Cure.** The transition from default back to performing. Distinct from **settlement**, where the
+contract closes because the balance was repaid, since a cured loan is still on the book and still
+capable of defaulting again.
+
+**Probation.** A period a loan must spend clear of every default trigger before it is allowed to
+count as cured. Without one, a borrower who makes a single payment leaves default immediately and
+re-enters it the following month, and the default series turns into noise.
+
+**Re-default.** A second default after a cure. Whether two episodes are one event or two is a
+definitional choice in the same family as the others.
+
+**Write-off.** The accounting decision to derecognise a balance the lender has no reasonable
+expectation of recovering. Absorbing, and distinct from default: a loan can sit in default for
+years without being written off, and the two decisions answer to different rulebooks.
+
+**SICR**, a significant increase in credit risk. The trigger that moves a loan from a twelve-month
+to a lifetime expected-loss measurement under IFRS 9. Upstream of default, and bounded above by
+it, since a defaulted loan has already gone past the point SICR is trying to anticipate.
+
+**Staging.** The consequence of SICR. Stage 1 carries twelve-month expected loss, Stage 2 lifetime,
+and Stage 3 is the defaulted or credit-impaired bucket.
+
+**Worst-ever.** Lecture 1's name for the window-maximum aggregation, where a loan scores a one if
+it defaulted at any point inside the window even if it recovered before the window closed.
+
+**Point-at-horizon.** The status at exactly the end of the window, which is a different flag and
+is measured against worst-ever in section 4.
+
+**Marginal PD.** The probability of a first default dated to a particular period, conditional on
+having survived to it. Lecture `R1` derives it; this lecture only needs to keep it apart from the
+other two.
+
+::: {.callout-warning icon=false title="Worst-ever is not the worst-case default rate"}
+Lecture `R2` uses **worst-case default rate** for the stressed default rate at the 99.9th
+percentile of the systematic factor, which is the quantity the regulatory capital formula
+evaluates. It has nothing to do with the window maximum defined here beyond an unfortunate
+overlap in English. This lecture says **worst-ever** throughout and never abbreviates it.
+:::
+
+## Notation
+
+Lecture 1's symbols are canon and none of them is redefined here. Two errata surfaced while
+checking that claim, both recorded in `notes/default-definition-lecture-structure.md`, and one of
+them frees a letter this lecture needs.
+
+| Symbol | Meaning | Provenance |
+|---|---|---|
+| $t$ | months on book | lecture 1 |
+| $g_i$ | origination month of loan $i$ | lecture 1 |
+| $\tau$ | the snapshot date, never subscripted | lecture 1 |
+| $y_{i,t}$ | monthly default flag | lecture 1 |
+| $D_i^{(k)}$ | window default indicator over $k$ months | lecture 1 |
+| $q_{i,t}$ | discrete hazard | `R1`, `S1` |
+| $a_{i,t}$ | arrears in payments at month $t$ | **new here** |
+| $d$ | delinquency threshold, in payments | **new here** |
+| $s$ | consecutive months the threshold must hold | **new here** |
+| $k$ | outcome period, in months | lecture 1 |
+| $p$ | probation period, in months | **new here** |
+
+Four rules keep those apart from what the series already spends. A bare $d$ is the delinquency
+threshold and a superscripted $d^{\rm def}_t$ is a life-table decrement count, which is lecture 1's
+existing convention extended rather than changed. A bare, unsubscripted $p$ is the probation
+period, and every probability in the series carries a subscript, so ${}_k p_{i,t}$ and $p_{ml}$ are
+untouched. $D$ appears as an indicator only with a sub- or superscript, leaving `R1`'s bare Markov
+state labels alone. And $\tau$ stays unsubscripted, unlike in the source literature, where entry
+and resolution times are written as subscripted variants of it.
+
+The arrears measure earns a note of its own. Lecture 1 introduced a delinquency counter in its own
+callout and never reused it, and the guides define an arrears measure as days past due divided by
+thirty. This lecture writes $a_{i,t}$ for arrears in payments and converts explicitly wherever the
+data supplies days instead. The two agree only where instalments are monthly and equal, which
+holds for Bondora and fails for the revolving card portfolio of section 10, so they are never
+silently swapped.
+
+# The four dials
+
+A default definition is a function of the delinquency history, and it has four parameters.
+Practice writes down at most one of them.
+
+Let $a_{i,t}$ be the arrears on loan $i$ at month $t$, counted in payments. Fix a threshold $d$ and
+a persistence requirement $s$. A preliminary event is declared at $t$ when the arrears have held at
+or above the threshold for $s$ consecutive months,
+
+$$
+\mathcal{G}_{i,t}(d, s) = \left[ \sum_{v = t - (s - 1)}^{t} \left[ a_{i,v} \ge d \right] = s \right],
+$$
+
+writing $[\,\cdot\,]$ for Iverson brackets, so that the inner bracket is one where the month's
+arrears reach the threshold and the outer bracket is one where every month in the window did.
+Lecture 1 stated this and could go no further, because Bondora records no monthly arrears series to
+evaluate it on. Section 10 evaluates it.
+
+The third dial is the one lecture 1 did spend. The response variable at $t$ reads the state $k$
+months ahead, and section 4 shows that "reads the state" hides a choice of its own.
+
+The fourth dial governs the way back. Once a loan is in default, a single clear month should not
+release it, so a probation period $p$ requires the loan to be clear of every trigger for $p$
+consecutive months before it counts as cured. Formally, the loan is in probation at $t$ if it
+triggered at any point in the preceding $p$ months,
+
+$$
+\mathcal{H}_{i,t}(p) = \left[ \sum_{v = t - p}^{t - 1} \mathcal{G}_{i,v}(d, s) > 0 \right],
+$$
+
+and it is cured at $t$ when it is neither triggering now nor in probation,
+
+$$
+\mathcal{C}_{i,t}(d, s, p) = \left[ \mathcal{G}_{i,t}(d, s) = 0 \right] \cdot \left[ \mathcal{H}_{i,t}(p) = 0 \right] .
+$$
+
+The default state that a model actually predicts is the complement of cure rather than the
+preliminary trigger itself, so write $D_{i,t}(d, s, p) = 1 - \mathcal{C}_{i,t}(d, s, p)$. That
+distinction between the trigger and the state is where cure lives, and dropping it collapses the
+whole return path.
+
+```{python}
+#| fig-cap: "The state machine the four dials parameterise. A loan leaves performing when arrears reach the threshold $d$, and the transition to default fires only once that has held for $s$ consecutive months, which is why the trigger and the state are drawn separately. The return path is gated by $p$ clear months, and a loan that re-enters arrears during probation never reaches cure. Write-off is absorbing and sits outside the default-to-cure loop entirely, because it answers to an accounting test rather than to a delinquency counter. The outcome period $k$ does not appear: it is not a transition but the horizon over which the diagram is read, which is the subject of the next section."
+HW, HH = 0.80, 0.26          # box half-width, half-height in data units
+NODES = {
+    "performing":  (1.2, 2.55), "arrears": (3.6, 2.55),
+    "default":     (6.0, 2.55), "written off": (8.6, 2.55),
+    "probation":   (6.0, 1.05), "cured":   (3.6, 1.05),
+}
+FILL = {"default": OX, "written off": RULE}
+
+fig, ax = plt.subplots(figsize=(9, 3.0))
+ax.set_xlim(0.1, 9.7); ax.set_ylim(0.30, 3.25); ax.axis("off")
+
+for name, (x, y) in NODES.items():
+    fc = FILL.get(name, "white")
+    ax.add_patch(plt.Rectangle((x - HW, y - HH), 2 * HW, 2 * HH,
+                               facecolor=fc, edgecolor=RULE, lw=1.1, zorder=3))
+    ax.text(x, y, name, ha="center", va="center", fontsize=9, zorder=4,
+            color="white" if name in FILL else RULE)
+
+
+def edge(p, q):
+    """Point where the segment p->q leaves p's box."""
+    (x0, y0), (x1, y1) = p, q
+    dx, dy = x1 - x0, y1 - y0
+    scale = min(HW / abs(dx) if dx else np.inf, HH / abs(dy) if dy else np.inf)
+    return x0 + dx * scale, y0 + dy * scale
+
+
+def link(a, b, label, colour=RULE, rad=0.0, xoff=0.0, lab_at=0.5,
+         lab_dx=0.0, lab_dy=0.18, ls="-"):
+    pa = (NODES[a][0] + xoff, NODES[a][1])
+    pb = (NODES[b][0] + xoff, NODES[b][1])
+    ax.annotate("", xy=edge(pb, pa), xytext=edge(pa, pb), zorder=2,
+                arrowprops=dict(arrowstyle="-|>", color=colour, lw=1.1, ls=ls,
+                                connectionstyle=f"arc3,rad={rad}"))
+    lx = pa[0] + (pb[0] - pa[0]) * lab_at + lab_dx
+    ly = pa[1] + (pb[1] - pa[1]) * lab_at + lab_dy
+    ax.text(lx, ly, label, ha="center", va="center", fontsize=8.5,
+            color=colour, style="italic", zorder=5,
+            bbox=dict(boxstyle="round,pad=0.14", fc="white", ec="none"))
+
+
+link("performing", "arrears", "$a_{i,t} \\geq d$")
+link("arrears", "default", "held $s$ months", lab_dy=0.36)
+link("default", "written off", "no recovery\nexpected", lab_dy=0.40)
+link("default", "probation", "triggers clear", xoff=-0.26, lab_dx=-0.52, lab_dy=0)
+link("probation", "default", "re-triggers", colour=OX, xoff=0.30,
+     lab_dx=0.50, lab_dy=0)
+link("probation", "cured", "$p$ clear months", lab_dy=-0.38)
+link("cured", "performing", "and may default again", rad=0.30,
+     lab_at=0.45, lab_dx=-0.30, lab_dy=-0.34, ls=":")
+plt.tight_layout()
+```
+
+Two of these dials are visible in the regulation and two are not. Article 178 of the Capital
+Requirements Regulation fixes a threshold, in days rather than payments, and pairs it with a
+judgement-based limb that fires regardless of arrears. It also requires a period clear of triggers
+before a defaulted exposure returns to performing, which is $p$ under another name. What it does
+not fix is $s$, and what no regulation fixes is the modeller's freedom over $k$. Consequently a
+behavioural or impairment model has at least two dials that are pure choices, and a reported
+default rate is uninterpretable until both are stated.
+
+# Three targets wearing one name
+
+Fix all four dials and one question remains, and it is the question this lecture exists to
+separate. Having decided what default means at a month, what does the response variable say about
+a horizon $k$ months away?
+
+There are three answers in circulation. They are commonly all called the twelve-month PD, two of
+them are routinely conflated, and they are different quantities that answer different questions.
+
+Write $y_{i,t} = D_{i,t}(d, s, p)$ for the monthly default state under the dials of the previous
+section, and condition throughout on the loan performing at $t$.
+
+**The worst-ever flag** takes the maximum over the window,
+
+$$
+D_i^{(k)} = \max\left( y_{i,t+1},\, \ldots,\, y_{i,t+k} \right) .
+$$
+
+A loan that defaults in month three and cures by month eight still scores a one, because the
+maximum remembers the breach. This is lecture 1's aggregation and it is what a regulatory
+twelve-month PD targets, since the capital question is whether the exposure went bad inside the
+year at all.
+
+**The point-at-horizon flag** reads the state at the end and nothing else,
+
+$$
+y_{i,t+k} .
+$$
+
+The same loan scores a zero here, having cured before the horizon arrived. This is the quantity
+that the notation in Mario's own A-IRB and IFRS 9 guides literally defines, writing the default
+outcome as the default state evaluated at $t+k$, while the surrounding prose in the same documents
+describes the target as worst-ever. Both cannot be right, and section 10 measures how far apart
+they are.
+
+**The marginal PD** asks for a first default dated to the horizon,
+
+$$
+f_{i,t+k} = \mathbb{P}\left( y_{i,t+k} = 1,\ y_{i,t+1} = \cdots = y_{i,t+k-1} = 0 \right) ,
+$$
+
+which lecture `R1` derives properly as a survival probability multiplied by a hazard. This is what
+an expected-credit-loss sum consumes, because a loss has to be dated before it can be discounted,
+and `R1` states the consequence: a cumulative probability cannot appear in that sum at all.
+
+::: {.callout-important icon=false title="The distinction in one row of data"}
+Three illustrative loans over a six-month window, at $k = 6$. These are constructed cases rather
+than portfolio data, in the manner of lecture 1's censoring figure.
+
+| Loan | Monthly states $y_{t+1} \ldots y_{t+6}$ | Worst-ever | Point-at-horizon | Marginal at 6 |
+|---|---|---|---|---|
+| A | 0 1 1 0 0 0 | 1 | 0 | 0 |
+| B | 0 0 0 0 0 1 | 1 | 1 | 1 |
+| C | 0 1 1 1 1 1 | 1 | 1 | 0 |
+| D | 0 0 0 0 0 0 | 0 | 0 | 0 |
+
+Loan A defaulted and cured, so the three targets disagree completely. Loan B is the only one whose
+default is both live at the horizon and dated there, and it is the only one the marginal
+probability is about. Loan C is the case that does the damage: it is counted by the point-at-horizon
+flag exactly as loan B is, although its default is five months old. A model trained on the
+point-at-horizon flag therefore learns to predict a **stock** of defaulted loans, while the
+expected-loss calculation it feeds needs a **flow** of new ones.
+:::
+
+Loan C is not a curiosity. Section 10 shows that on a real revolving book, nine out of ten
+point-at-horizon flags are loans of type C rather than type B, which makes the point-at-horizon
+target roughly twelve times the marginal quantity it is sometimes mistaken for.
+
+Which target belongs to which question is then straightforward, and stating it is most of the value
+of the distinction.
+
+| Question | Target | Why |
+|---|---|---|
+| Regulatory twelve-month PD | worst-ever | The capital rules ask whether default occurred within the year |
+| Expected credit loss at month $k$ | marginal | A loss must be dated to be discounted |
+| Portfolio delinquency reporting | point-at-horizon | A stock measure is what a balance-sheet snapshot wants |
+| Behavioural scorecard | worst-ever, usually | The decision being supported is whether to act before anything happens |
+
+The point-at-horizon flag has a legitimate use, and building a PD model on it is not that use.
