@@ -182,7 +182,7 @@ v_i = \min(T_i,\, k) \text{ months},
 <p>and here the frequency does not collapse. A loan defaulting in month two and a loan defaulting in month eleven both score <span class="math inline">\(D_i^{(k)} = 1\)</span>, yet they carry intensities differing by a factor of five, and the second convention keeps the difference the first discards.</p>
 <p>This lecture takes the second convention seriously. The quantity <span class="math inline">\(\min(T_i, k)\)</span> is the exposure of a <strong>discrete hazard</strong> model, and the machinery built on it answers questions the fixed-horizon PD cannot reach: when default arrives rather than whether it arrives inside one window, and what the PD is over any horizon rather than over the single horizon the flag was cut for. IFRS 9 needs exactly that, because an expected credit loss over the lifetime of an instrument needs a PD for every month of that lifetime.</p>
 <p>The reader is assumed to hold lecture 1 and nothing else. Every symbol it fixed carries over unchanged, and the three time axes in particular: <span class="math inline">\(g_i\)</span> for the vintage or origination month of loan <span class="math inline">\(i\)</span>, <span class="math inline">\(t\)</span> for months on book, which is the attained age of the loan, <span class="math inline">\(u = g + t\)</span> for calendar month, <span class="math inline">\(k\)</span> for the horizon being asked about, and <span class="math inline">\(\tau\)</span> for the snapshot date, a single date across this extract, 20 July 2021. Borrower age is a covariate here and is written <span class="math inline">\(x_i\)</span>, deliberately not standing in for the actuarial <span class="math inline">\(x\)</span>, whose role <span class="math inline">\(t\)</span> plays.</p>
-<div id="1d8593c5" class="cell" data-execution_count="1">
+<div id="3d8fba03" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
@@ -219,7 +219,7 @@ v_i = \min(T_i,\, k) \text{ months},
 <p>A survival likelihood asks a different question of every loan, namely how long it contributed to the risk set, and it needs the actual exit for that. In this extract the two answers diverge sharply. Of the 179,235 loans, 42,144 were repaid without ever defaulting, and those left the risk set at repayment, typically years before <span class="math inline">\(\tau - g_i\)</span> ran out.</p>
 </div>
 </div>
-<div id="9d4d029e" class="cell" data-execution_count="2">
+<div id="7c47b39c" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>gap <span class="op">=</span> surv.<span class="bu">filter</span>(pl.col(<span class="st">"exit_kind"</span>) <span class="op">==</span> <span class="st">"settled"</span>).select(</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    median_exit<span class="op">=</span>pl.col(<span class="st">"t_obs"</span>).median(),</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    median_available<span class="op">=</span>pl.col(<span class="st">"A"</span>).median(),</span>
@@ -271,7 +271,7 @@ R_{ij} = \begin{cases}
 <p>Two approximations in the settlement timings are worth stating, since neither is visible in the counts. 855 settled loans carry a recorded end date falling after the snapshot, i.e.&nbsp;a scheduled date standing in for an unobserved early repayment, and the converter caps those at <span class="math inline">\(\tau\)</span>, which is the longest exposure consistent with the loan having ended by then. A further three carry an end date equal to their origination date, and the whole-month floor gives each of them one month of exposure it did not have. Both groups are small enough to leave every figure in this lecture unchanged, and both are the kind of thing that should be said out loud rather than absorbed silently.</p>
 </div>
 </div>
-<div id="1589d8f1" class="cell" data-execution_count="3">
+<div id="47c89f3b" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(surv.group_by(<span class="st">"exit_kind"</span>).agg(</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    loans<span class="op">=</span>pl.<span class="bu">len</span>(),</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    median_months<span class="op">=</span>pl.col(<span class="st">"t_obs"</span>).median().<span class="bu">round</span>(<span class="dv">1</span>),</span>
@@ -332,7 +332,7 @@ q_{i,t} = \mathbb{P}\left( T_i = t \,\middle|\, T_i \ge t, \boldsymbol{X}_i \rig
 <section id="the-life-table-and-the-kaplan-meier-estimator" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> The life table and the Kaplan-Meier estimator</h1>
 <p>Estimating the hazards needs only two counts per month: the size <span class="math inline">\(n_k\)</span> of the risk set at the start of month <span class="math inline">\(k\)</span>, and the number <span class="math inline">\(d_k\)</span> of defaults during it. Botha and Verster (2025, Eq. 11) note that setting <span class="math inline">\(\hat q_t = d_t / n_t\)</span> leads directly to the Kaplan-Meier estimator of Kaplan and Meier (1958). Both are computed here directly from the risk-set counts, with no survival package involved, which keeps the repository’s <code>requirements.txt</code> untouched and makes the arithmetic visible.</p>
-<div id="90a5f2ca" class="cell" data-execution_count="4">
+<div id="9ea26897" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="op">=</span> <span class="dv">60</span>  <span class="co"># months; the modal contractual term in this book is 60</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> life_table(df, horizon<span class="op">=</span>HORIZON):</span>
@@ -383,8 +383,8 @@ q_{i,t} = \mathbb{P}\left( T_i = t \,\middle|\, T_i \ge t, \boldsymbol{X}_i \rig
 └───────┴─────────┴──────────┴─────────────┴─────────┴─────────┴─────────┘</code></pre>
 </div>
 </div>
-<p>The first two rows carry a structural feature of the default definition rather than a quirk of the data. Bondora marks a loan defaulted at 60 days past due, so no loan can reach that threshold in its first month, and exactly one does in its second. The hazard is therefore genuinely zero at <span class="math inline">\(t = 1\)</span>, which will matter when the model of the next section tries to estimate a parameter for it.</p>
-<div id="988ca01a" class="cell" data-execution_count="5">
+<p>The first two rows carry a structural feature of the default definition rather than a quirk of the data. Bondora declares default at a median 79 days past due, so no loan accumulates enough arrears to be flagged in its first month, and exactly one does in its second. The hazard is therefore genuinely zero at <span class="math inline">\(t = 1\)</span>, which will matter when the model of the next section tries to estimate a parameter for it.</p>
+<div id="1f0014f1" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> axs[<span class="dv">0</span>]</span>
@@ -419,7 +419,7 @@ q_{i,t} = \mathbb{P}\left( T_i = t \,\middle|\, T_i \ge t, \boldsymbol{X}_i \rig
 <section id="the-sum-against-the-product" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="the-sum-against-the-product"><span class="header-section-number">5.1</span> The sum against the product</h2>
 <p>With the hazards in hand the arithmetic error named above can be priced.</p>
-<div id="4937136e" class="cell" data-execution_count="6">
+<div id="3513772a" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> (<span class="dv">12</span>, <span class="dv">24</span>, <span class="dv">60</span>):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    product <span class="op">=</span> <span class="dv">1</span> <span class="op">-</span> np.prod(<span class="dv">1</span> <span class="op">-</span> q_t[:k])</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    naive <span class="op">=</span> q_t[:k].<span class="bu">sum</span>()</span>
@@ -436,7 +436,7 @@ k = 60 months   survival product  71.68%   sum of hazards 124.46%   overstatemen
 <section id="stratifying-the-curve" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="stratifying-the-curve"><span class="header-section-number">5.2</span> Stratifying the curve</h2>
 <p>A survival curve becomes a modelling tool once it is cut by a covariate. Bondora assigns each loan a <code>Rating</code> at listing time, which lecture 1 kept precisely so that modelling on top of another model’s output could be discussed.</p>
-<div id="321678bf" class="cell" data-execution_count="7">
+<div id="43eaa27a" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> stats</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>RATINGS <span class="op">=</span> [<span class="st">"AA"</span>, <span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span>, <span class="st">"D"</span>, <span class="st">"E"</span>, <span class="st">"F"</span>, <span class="st">"HR"</span>]</span>
@@ -471,7 +471,7 @@ k = 60 months   survival product  71.68%   sum of hazards 124.46%   overstatemen
 └────────┴───────┴────────┴────────┘</code></pre>
 </div>
 </div>
-<div id="7e4ef320" class="cell" data-execution_count="8">
+<div id="efa3919f" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.5</span>, <span class="dv">4</span>))</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> RATINGS:</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    S <span class="op">=</span> curves[r][<span class="dv">1</span>]</span>
@@ -493,7 +493,7 @@ k = 60 months   survival product  71.68%   sum of hazards 124.46%   overstatemen
 </div>
 </div>
 </div>
-<div id="bfad9870" class="cell" data-execution_count="9">
+<div id="ae3b1baa" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>observed <span class="op">=</span> np.zeros(<span class="bu">len</span>(RATINGS))<span class="op">;</span> expected <span class="op">=</span> np.zeros(<span class="bu">len</span>(RATINGS))</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>t_by <span class="op">=</span> [rated.<span class="bu">filter</span>(pl.col(<span class="st">"Rating"</span>) <span class="op">==</span> r)[<span class="st">"t_obs_m"</span>].to_numpy().clip(<span class="bu">max</span><span class="op">=</span>HORIZON <span class="op">+</span> <span class="dv">1</span>)</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> r <span class="kw">in</span> RATINGS]</span>
@@ -520,7 +520,7 @@ k = 60 months   survival product  71.68%   sum of hazards 124.46%   overstatemen
 <h1 data-number="6"><span class="header-section-number">6</span> A discrete-time hazard model is a logistic regression</h1>
 <p>Here is the result that makes survival analysis immediately available to a lender. Stratifying by one grade at a time does not scale, so the hazard needs covariates, and the way to get them requires no new estimation machinery at all.</p>
 <p>Restructure the data so that each loan contributes <strong>one row per month it was at risk</strong>, carrying a binary response equal to one in the month it defaulted and zero otherwise. Botha and Verster (2025) call the resulting response an event history indicator <span class="math inline">\(e_{it}\)</span>, following Singer and Willett (1993), and note that it produces the vector <span class="math inline">\((0, 0, \ldots, 1)\)</span> for a defaulted loan and <span class="math inline">\((0, 0, \ldots, 0)\)</span> for a censored one. This layout is the <strong>person-period expansion</strong>, and on it the conditional default probability <span class="math inline">\(q_{i,t}\)</span> is simply the mean of a binary response. Any method that maximises a binomial likelihood therefore fits it.</p>
-<div id="4ab8a3ec" class="cell" data-execution_count="10">
+<div id="5323580b" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> person_period(df, horizon<span class="op">=</span>HORIZON):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One row per loan-month at risk, with the event history indicator."""</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
@@ -564,7 +564,7 @@ h\left(t \mid \boldsymbol{E}_{i}, \boldsymbol{x}_{i}, \boldsymbol{x}_{i}(t), \bo
 <section id="the-baseline-hazard-alone" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="the-baseline-hazard-alone"><span class="header-section-number">6.1</span> The baseline hazard alone</h2>
 <p>Before adding covariates, fit the baseline on its own. A model carrying one indicator per month is saturated in <span class="math inline">\(t\)</span>, so it must return the life-table hazards and nothing else. Grouping the expansion to one row per month first makes the fit instant, and lecture 2 established that the grouped binomial and individual Bernoulli likelihoods agree.</p>
-<div id="17f9a721" class="cell" data-execution_count="11">
+<div id="e66e60d0" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -590,7 +590,7 @@ PD_60 from Kaplan-Meier       : 0.716798</code></pre>
 <section id="adding-covariates" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="adding-covariates"><span class="header-section-number">6.2</span> Adding covariates</h2>
 <p>The covariates are those of lecture 1’s model GLM3, namely age class, log-income and country, so the comparison that follows is like for like. The baseline is banded into nine intervals, which removes the separation and keeps the shape.</p>
-<div id="4450df61" class="cell" data-execution_count="12">
+<div id="77f62b7a" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>BANDS <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">9</span>, <span class="dv">12</span>, <span class="dv">18</span>, <span class="dv">24</span>, <span class="dv">36</span>, <span class="dv">48</span>, <span class="dv">60</span>]</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>BAND_LABELS <span class="op">=</span> [<span class="ss">f"</span><span class="sc">{</span>a <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>b<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(BANDS[:<span class="op">-</span><span class="dv">1</span>], BANDS[<span class="dv">1</span>:])]</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>AGE_CUTS <span class="op">=</span> [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">70</span>, <span class="dv">101</span>]</span>
@@ -640,7 +640,7 @@ logIncome coefficient: -0.0669</code></pre>
 <section id="the-term-structure" class="level2" data-number="6.3">
 <h2 data-number="6.3" class="anchored" data-anchor-id="the-term-structure"><span class="header-section-number">6.3</span> The term structure</h2>
 <p>The payoff is that one fitted model now delivers a PD at every horizon. Chaining the predicted hazards per loan and averaging over the portfolio gives the term structure of default risk.</p>
-<div id="1e61b9fe" class="cell" data-execution_count="13">
+<div id="64600268" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>loans <span class="op">=</span> add_design(base.select([<span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>]).to_pandas())</span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>S_i <span class="op">=</span> np.ones(<span class="bu">len</span>(loans))</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>pd_curve <span class="op">=</span> np.empty(HORIZON)</span>
@@ -657,7 +657,7 @@ logIncome coefficient: -0.0669</code></pre>
 model PD_60 0.7120   Kaplan-Meier PD_60 0.7168</code></pre>
 </div>
 </div>
-<div id="8e2831a3" class="cell" data-execution_count="14">
+<div id="6ec2690e" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>band_mid <span class="op">=</span> [(a <span class="op">+</span> b) <span class="op">/</span> <span class="dv">2</span> <span class="cf">for</span> a, b <span class="kw">in</span> <span class="bu">zip</span>(BANDS[:<span class="op">-</span><span class="dv">1</span>], BANDS[<span class="dv">1</span>:])]</span>
 <span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>band_haz <span class="op">=</span> [<span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>dth.params[<span class="ss">f"C(period)[</span><span class="sc">{</span>lab<span class="sc">}</span><span class="ss">]"</span>]</span>
 <span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                            <span class="op">-</span> dth.params[<span class="st">"logIncome"</span>] <span class="op">*</span> loans[<span class="st">"logIncome"</span>].mean()))</span>
@@ -705,7 +705,7 @@ model PD_60 0.7120   Kaplan-Meier PD_60 0.7168</code></pre>
 \widehat{S}_{\text{any}}(t) = \prod_{s = 1}^{t}
 \left( 1 - \hat q_{\text{def}, s} - \hat q_{\text{set}, s} \right) .
 \]</span></p>
-<div id="569f4960" class="cell" data-execution_count="15">
+<div id="c95c2067" class="cell" data-execution_count="15">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cumulative_incidence(df, horizon<span class="op">=</span>HORIZON):</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Aalen-Johansen CIFs for default and settlement, plus overall survival."""</span></span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> df[<span class="st">"t_obs_m"</span>].to_numpy().clip(<span class="bu">max</span><span class="op">=</span>horizon <span class="op">+</span> <span class="dv">1</span>)</span>
@@ -739,7 +739,7 @@ k = 60   Kaplan-Meier  71.68%   cumulative incidence  54.69%   overstatement +16
 <section id="lecture-1-as-the-test-case" class="level2" data-number="7.1">
 <h2 data-number="7.1" class="anchored" data-anchor-id="lecture-1-as-the-test-case"><span class="header-section-number">7.1</span> Lecture 1 as the test case</h2>
 <p>The size of the error can be asserted, or it can be tested against a sample where the truth is directly observable, and lecture 1 supplies one. On its seasoned sample every loan has a complete twelve-month window by construction, so no loan is administratively censored inside the horizon, and the fraction defaulting within twelve months is simply counted, with nothing left to estimate. That fraction was 28.95 per cent.</p>
-<div id="0b2b4b87" class="cell" data-execution_count="16">
+<div id="aba257a2" class="cell" data-execution_count="16">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>pd_table <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>).select([<span class="st">"LoanId"</span>, <span class="st">"default_12m"</span>])</span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>seasoned <span class="op">=</span> surv.join(pd_table, on<span class="op">=</span><span class="st">"LoanId"</span>, how<span class="op">=</span><span class="st">"inner"</span>)</span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a></span>

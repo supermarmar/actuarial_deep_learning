@@ -132,13 +132,17 @@ treats three payments in arrears, $g_0(t) \ge 3$, as default itself. Read agains
 
 | Dial | Meaning | Bondora's choice |
 |---|---|---|
-| $d$ | delinquency threshold | roughly two payments, since the platform flags at 60 days past due |
+| $d$ | delinquency threshold | no single value, since the flag is declared at a median 79 days past due, with quartiles at 74 and 92 |
 | $s$ | consecutive months tested | $s = 1$, since one `DefaultDate` fires the flag with no persistence test |
 | $k$ | outcome period | twelve months here, and free to vary from the next section on |
 
 The severity dial is where the two traditions meet. Three payments in arrears sits at roughly
 ninety days, which is where Article 178 sits, so the regulatory definition and the academic one
-agree on $d$ and differ over whether the modeller may touch $s$ and $k$ at all.
+agree on $d$ and differ over whether the modeller may touch $s$ and $k$ at all. Bondora agrees
+with neither exactly. Its declaration lag runs from one day to 126, and 15 per cent of loans are
+flagged at fewer than sixty days past due, so the platform has no fixed $d$ to report and the
+median is the most that can honestly be quoted. Lecture D1 measures that distribution and takes
+the consequences.
 :::
 
 ## Deriving the twelve-month flag
@@ -330,9 +334,11 @@ pl.DataFrame(
 
 Three features of that table matter, and they arise from two different mechanisms.
 
-At $k = 3$ the rate is 0.16 per cent, which measures nothing at all. Bondora flags default at 60
-days past due, and a first instalment cannot be 60 days late until roughly ninety days after
-origination, so the window closes before the definition can fire. The outcome window and the
+At $k = 3$ the rate is 0.16 per cent, which measures nothing at all. Bondora declares default at
+a median 79 days past due, and a first instalment falling due a month after drawdown cannot be
+79 days late until roughly 110 days after origination, so the window closes before the definition
+can fire. The book agrees: of the 71,416 defaults, 259 occur before the third month on book and
+the earliest of them lands at 1.6. The outcome window and the
 default definition interact, which is why the two cannot be chosen independently.
 
 Between $k = 12$ and $k = 24$ the rate climbs from 28.95 to 45.46 per cent, then flattens. That
