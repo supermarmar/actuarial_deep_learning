@@ -103,9 +103,11 @@ text reads:
 > another default would be deemed to have occurred.
 
 No "three months" in the EU CRR text. The three-month minimum originates in the supervisory
-guidance rather than the primary regulation. EBA/GL/2016/07 contains the equivalent
-minimum observation-period requirement (see item 4 below for the relationship between the
-GL and the minimum period).
+guidance rather than the primary regulation. EBA/GL/2016/07 is the primary EU instrument
+for the minimum observation period (confirmed by reference in the EBA/GL/2026/05 amending
+guidelines, which describe the GL/2016/07 requirement and the option to shorten it). A direct
+paragraph-level quote from GL/2016/07 itself was not obtained; see item 5 in "Do not state"
+below for the acquisition path.
 
 **UK CRR Article 178(5)(a)** (PS9/24 near-final) does state a three-month minimum explicitly:
 
@@ -158,12 +160,13 @@ provision quoted in item 3 above.
 > (v) the institution does not consider it otherwise unlikely that the obligor will pay [...]
 
 **Source of the 12-month figure in the EU context:** EBA/GL/2016/07 (Guidelines on the
-application of the definition of default under Article 178 CRR), which contains the equivalent
+application of the definition of default under Article 178 CRR) contains the equivalent
 one-year probation period requirement for exposures defaulted through distressed
-restructuring. The EBA/GL/2026/05 amending guidelines (7 May 2026) confirm this by
-reference, noting that "the possibility to shorten the probation period from 1 year to e.g. 3
-months for certain forborne exposures has been considered" but was not adopted (the
-amending guidelines did shorten it to 3–6 months for limited categories only).
+restructuring. This is confirmed by reference in the EBA/GL/2026/05 amending guidelines
+(7 May 2026), which note that "the possibility to shorten the probation period from 1 year
+to e.g. 3 months for certain forborne exposures has been considered" but was not adopted
+for the general population (a partial shortening to 3–6 months for limited categories was
+adopted). The GL/2016/07 PDF itself was not directly read (see item 5 in "Do not state").
 
 **If asked in a lecture:** 178(5A) as a numbered provision exists in the UK CRR only. The 12-month
 probation for distressed restructuring is real and EU-applicable; its primary instrument in the EU
@@ -203,9 +206,11 @@ Article 180(1)(a).
 Primary source read: IASB, *IFRS 9 Financial Instruments* (2014 as amended to 2021 edition),
 `vault/raw/ifrs/iasb-ifrs9-financial-instruments-2021.pdf`, extracted via pdftotext.
 
-All four paragraphs below were found and read directly from that PDF. The paragraph numbering
-is identical in the IASB edition and the EU-adopted version (Commission Regulation (EU)
-2016/2067, OJ L 323, 29.11.2016).
+All four paragraphs below were found and read directly from that PDF. The IASB edition is the
+primary source for all quotes below. The EU-adopted version (Commission Regulation (EU)
+2016/2067, OJ L 323, 29.11.2016) is expected to reproduce the same paragraph numbering, but
+EUR-Lex was WAF-blocked during this session and that version was not read directly; do not
+assert equivalence without independent verification.
 
 ---
 
@@ -229,9 +234,7 @@ is identical in the IASB edition and the EU-adopted version (Commission Regulati
 > have been significant increases in credit risk before contractual payments are more than 30
 > days past due, the rebuttable presumption does not apply.
 
-**Citation:** IFRS 9 Financial Instruments, paragraph 5.5.11. IASB, 2014 (as amended). Also:
-Commission Regulation (EU) 2016/2067, OJ L 323, 29.11.2016 (EU adoption), which reproduces
-the same text.
+**Citation:** IFRS 9 Financial Instruments, paragraph 5.5.11. IASB, 2014 (as amended).
 
 ---
 
@@ -295,8 +298,9 @@ practice.
 
 ### 10. Botha, Oberholzer, Larney and de Jongh (2023): full reference and G(d,s,t) definition
 
-**Status: VERIFIED** from arXiv preprint 2303.03080v3 (HTML version, accessed 2026-09-03).
-Journal publication details confirmed from arXiv abstract metadata.
+**Status: VERIFIED** from arXiv preprint 2303.03080v4 PDF, downloaded and read directly
+2026-09-03 (3.7 MB; %PDF header confirmed). Journal publication details confirmed from
+arXiv abstract metadata on the same preprint.
 
 **Full reference:**
 
@@ -313,43 +317,59 @@ formal reference list.
 
 **Author list confirmed:** Arno Botha, Esmerelda Oberholzer, Janette Larney, Riaan de Jongh.
 
-**G(d,s,t) definition as printed (from arXiv v3 HTML):**
+**G(d,s,t) definition, from Section 3 of the v4 PDF (Equation 1):**
 
-> 𝒢(d,s,t) = [(∑_{v=t−(s−1)}^t [g₀(v) ≥ d]) = s]  for t ≥ s
+> G(d, s, t) = [(∑_{v=t−(s−1)}^t [g₀(v) ≥ d]) = s]  for t ≥ s
 
-where [·] denotes the Iverson bracket (returns 1 if the condition holds, 0 otherwise), d is a
-delinquency threshold, s is the stickiness parameter (number of consecutive months the
-threshold must be met), and g₀(v) is the base delinquency measure at month v.
+where [·] denotes Iverson brackets (returns 1 if the enclosed statement is true, 0 otherwise),
+d is the delinquency threshold, s is the stickiness parameter (number of consecutive months
+over which delinquency is tested), and g₀(v) is the base delinquency measure at month v.
 
-**Sweep grid confirmed:**
+Verbatim from the paper: "G(d, s, t) ... is formalised within the Boolean-valued decision
+function G(d, s, t) that yields a binary-valued SICR-status in defining a SICR-event at an
+end-point t."
 
-> "Parameter space includes: 1) the threshold d ∈ {1,2}; 2) the level of stickiness
-> s ∈ {1,2,3}; and 3) the choice of outcome period k ∈ {3,6,9,12}."
+**Sweep grid, confirmed from Section 3 of the v4 PDF:**
 
-Additional exploration in the paper extends k to {3,6,9,12,18,24,36}. The abstract states 27
-unique SICR-definitions are examined. The precise count in v3 may differ from the published
-text; the sweep grid d ∈ {1,2}, s ∈ {1,2,3}, k ∈ {3,6,9,12} is confirmed from the preprint.
+> "the parameter space includes: 1) the threshold d ∈ {1, 2} of g₀-measured delinquency
+> beyond which SICR is triggered; 2) the level of stickiness s ∈ {1, 2, 3} within the
+> delinquency test; and 3) the choice of outcome period k ∈ {3, 6, 9, 12} when modelling
+> SICR-outcomes."
 
-**Note on the g₀ measure:** The g₀ function (the base delinquency indicator entering the sum)
-is from the companion Botha, Beyers and De Villiers (2021) paper (*Expert Systems with
-Applications*, volume 177), not the present paper. Do not conflate the two: the 2021 paper
-defines g₀, the 2023/2025 paper builds 𝒢(d,s,t) on top of it.
+This yields 2 × 3 × 4 = **24** combinations. Table 2 of the paper confirms this explicitly:
+"Numbered SICR-definitions, indexed by j = 1,...,24." The abstract of the paper states "27
+unique SICR-definitions", which appears to be an artefact of an earlier version of the
+manuscript; the table count of 24 is the authoritative figure and should be used in the lecture.
+
+**Note on the g₀ measure:** The g₀ function is from the companion Botha, Beyers and
+De Villiers (2021) paper (*Expert Systems with Applications*, volume 177), not the present
+paper. Do not conflate the two: the 2021 paper defines g₀; the 2023/2025 paper builds G(d,s,t)
+on top of it.
 
 ---
 
 ### 11. Does the paper (or a companion Botha paper) treat three payments in arrears as default itself?
 
-**Status: VERIFIED — the paper does NOT treat three payments in arrears as equivalent to SICR.**
+**Status: VERIFIED — YES, the paper uses g₀(t) ≥ 3 (three payments in arrears) as the
+default indicator, explicitly labelled "Default" in Table 1 of the v4 PDF.**
 
-From arXiv v3:
+Table 1 of the paper illustrates the G function with a column headed "Default: g₀(t) ≥ 3",
+showing account-level default status alongside the SICR-status columns G(1,1,t) and
+G(1,2,t). At time t = 9, when g₀(t) = 3, the "Default" column records 1; all earlier
+periods with g₀(t) < 3 record 0.
 
-> "The paper does not treat three payments in arrears as equivalent to default. Rather, it uses
-> g₀(t) ≥ 3 as a *separate* default threshold, distinct from SICR definitions which employ
-> d ∈ {1,2}."
+From Section 4.2 of the v4 PDF (p. 14): "Since g₀(t+k) ≥ 3 > d from Eq. 1 will hold for
+both default..." — confirming that g₀ ≥ 3 is treated as the default event, which is strictly
+above the SICR thresholds d ∈ {1, 2}.
 
-The base delinquency threshold d takes values in {1,2} for SICR; a threshold of d = 3 (three
-missed payments) is used as a comparison default benchmark, not as a SICR trigger. The paper
-explicitly distinguishes SICR from default throughout.
+The paper therefore distinguishes three zones:
+- g₀(t) ∈ {1, 2}: possible SICR territory, depending on d and s;
+- g₀(t) ≥ 3: default territory (three or more payments in arrears);
+- g₀(t) = 0: performing, no SICR.
+
+The paper does NOT define d = 3 as a SICR threshold (the sweep only covers d ∈ {1, 2}).
+Three payments in arrears is used as the boundary between SICR and default, not as a SICR
+trigger.
 
 ---
 
@@ -396,7 +416,7 @@ The following claims cannot be stated without qualification or must be re-attrib
 | EBA/GL/2026/05 amending guidelines (JSON) | `vault/raw/eba_publications/20260507_Report_amending_the_Guidelines_on_the_application_of_the_definition_of_default.json` | Direct read |
 | EBA/GL/2016/07 peer review (JSON) | `vault/raw/eba_publications/20240722_Peer_Review_report_on_the_EBA_Guidelines_on_the_application_of_the_definition_of_default.json` | Direct read |
 | IFRS 9 IASB 2021 edition (PDF) | `vault/raw/ifrs/iasb-ifrs9-financial-instruments-2021.pdf` | Direct read |
-| Botha et al. arXiv preprint v3 | https://arxiv.org/abs/2303.03080 | Fetched |
+| Botha et al. arXiv v4 PDF | https://arxiv.org/pdf/2303.03080v4 | Direct read (downloaded) |
 | Vault wiki: irb-definition-of-default.md | `vault/wiki/regulation/irb-definition-of-default.md` | Pointer only |
 | Vault wiki: eu-crr-2013-credit-risk.md | `vault/wiki/regulation/eu-crr-2013-credit-risk.md` | Pointer only |
 
@@ -405,5 +425,6 @@ manually from eba.europa.eu for paragraph-level citation.*
 
 ---
 
-*Verification completed 2026-09-03 by validation-researcher (claude-sonnet-4-6).*
+*Verification completed 2026-09-03; corrections and Botha PDF re-read 2026-09-03,
+validation-researcher (claude-sonnet-4-6).*
 *All VERIFIED items trace to a primary document read directly in this session.*

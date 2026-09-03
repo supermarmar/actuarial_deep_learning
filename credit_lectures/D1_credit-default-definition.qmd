@@ -47,11 +47,11 @@ one was, and never turned any of the dials. And it coined the phrase worst-ever 
 window maximum, observing in passing that a loan which breaches and then cures still scores a one,
 without ever asking what curing is or how often it happens.
 
-This lecture turns the dials. Along the way it corrects one number lecture 1 asserted, separates
+This lecture, by contrast, turns the dials. Along the way it corrects one number lecture 1 asserted, separates
 three response variables that practice routinely calls by one name, and gives cure, probation and
 write-off the definitions the earlier lectures assumed they already had.
 
-It also argues something the series has not yet said. Every dial below is a statement about a
+Furthermore, it argues something the series has not yet said. Every dial below is a statement about a
 sequence of monthly delinquency states. A cross-sectional loan extract records dates and a
 terminal status, so it carries no such sequence, and consequently a modeller holding one cannot
 implement most of the definitions on offer whatever the regulation permits. The definition and the
@@ -74,12 +74,11 @@ representativeness: this lecture builds the outcome variable and `R3` picks the 
 
 Lecture 1's dials table recorded Bondora's delinquency threshold as "roughly two payments, since
 the platform flags at 60 days past due", and its outcome-window section reasoned from the same
-sixty days. Neither figure was measured. Measuring it turns out to matter, and not only because
-the number moves.
+sixty days. Neither figure was measured. Measuring it turns out to matter, and for a reason beyond the number itself.
 
 Bondora publishes two fields that between them settle the question. `DebtOccuredOn` records a date
 associated with the onset of arrears and `CurrentDebtDaysPrimary` a running count of days past
-due. What is not documented is whether `DebtOccuredOn` marks the first day past due or some later
+due. However, what is not documented is whether `DebtOccuredOn` marks the first day past due or some later
 operational milestone, and the whole exercise turns on which. The identity below settles it.
 
 ```{python}
@@ -109,7 +108,7 @@ pl.DataFrame({
 }).with_columns(pl.lit(late.height).alias("loans"))
 ```
 
-The residual is exactly one day across the middle eight deciles of the 68,480 late loans. So
+The residual is exactly one day across the middle eight deciles of the 68,480 late loans. Hence
 `CurrentDebtDaysPrimary` counts forward from `DebtOccuredOn` with a one-day offset, which means
 `DebtOccuredOn` is the day the days-past-due counter starts. Consequently the gap between it and
 `DefaultDate` is days past due at the moment default was declared, and that is a quantity we can
@@ -145,13 +144,12 @@ for lo, hi, label in [(None, 60, "under 60 days"), (60, 90, "60 to 90 days"), (9
 
 Two anomalies travel with that table and are named rather than dropped. 7,917 loans carry a
 declaration on the very day arrears began, and 101 carry a `DefaultDate` before their
-`DebtOccuredOn`. Both are operational artefacts of a platform reconstructing its own history, and
+`DebtOccuredOn`. Both are, in all likelihood, operational artefacts of a platform reconstructing its own history, and
 a bank's data quality assessment would raise an exception on each. They are excluded from the
 percentiles above and they are not excluded from the count of defaults anywhere in this series,
 which is the honest treatment: the event happened, and only its dating is unreliable.
 
-The correction, then, is that the median declaration sits at 79 days rather than 60. The more
-useful finding is the dispersion around it. The lag runs from a single day to 126, some 15.4 per
+The correction, then, is that the median declaration sits at 79 days rather than 60. More useful, however, is the dispersion around it. The lag runs from a single day to 126, some 15.4 per
 cent of declarations land under sixty days past due, and 28 per cent reach ninety or beyond.
 
 ```{python}
@@ -194,7 +192,7 @@ for cut in (1, 2, 3, 4):
 ```
 
 No default precedes the first month on book, exactly one precedes the second, and 259 of 71,416
-precede the third. Lecture `S1` built an argument on the same structural fact when it explained why
+precede the third. Indeed, lecture `S1` built an argument on the same structural fact when it explained why
 the estimated hazard is genuinely zero in month one. Both lectures were right about the mechanism
 and wrong about the threshold driving it, and both now quote the measured figure.
 
@@ -209,25 +207,25 @@ against.
 
 **Arrears, or delinquency.** A missed or partial payment, measured either in days past due or in
 whole missed payments. The two measures are not interchangeable, and the difference matters more
-than it looks. Days past due is a property of a calendar; payments in arrears is a property of a
+than it looks. Days past due is a property of a calendar, whereas payments in arrears is a property of a
 schedule. On a monthly instalment loan with equal payments they track each other, so thirty days
-is roughly one payment. On a revolving card with a minimum payment that moves with the balance,
+is roughly one payment. However, on a revolving card they part company. On a revolving card with a minimum payment that moves with the balance,
 they come apart.
 
 **Default.** An event declared when delinquency crosses a threshold, or when the lender judges the
-borrower unlikely to pay. Regulation fixes a floor for capital purposes. Nothing fixes it for a
+borrower unlikely to pay. Regulation fixes a floor for capital purposes. Nothing fixes it, however, for a
 behavioural or impairment model, where the modeller chooses, and the choices are the dials of the
 next section.
 
-**Cure.** The transition from default back to performing. Distinct from **settlement**, where the
+**Cure.** The transition from default back to performing. It is distinct from **settlement**, however, where the
 contract closes because the balance was repaid, since a cured loan is still on the book and still
 capable of defaulting again.
 
 **Probation.** A period a loan must spend clear of every default trigger before it is allowed to
-count as cured. Without one, a borrower who makes a single payment leaves default immediately and
+count as cured. Without one, however, a borrower who makes a single payment leaves default immediately and
 re-enters it the following month, and the default series turns into noise.
 
-**Re-default.** A second default after a cure. Whether two episodes are one event or two is a
+**Re-default.** A second default after a cure. Whether it counts as one event or two is, again, a choice. Whether two episodes are one event or two is a
 definitional choice in the same family as the others.
 
 **Write-off.** The accounting decision to derecognise a balance the lender has no reasonable
@@ -235,7 +233,7 @@ expectation of recovering. Absorbing, and distinct from default: a loan can sit 
 years without being written off, and the two decisions answer to different rulebooks.
 
 **SICR**, a significant increase in credit risk. The trigger that moves a loan from a twelve-month
-to a lifetime expected-loss measurement under IFRS 9. Upstream of default, and bounded above by
+to a lifetime expected-loss measurement under IFRS 9. It sits, in other words, upstream. Upstream of default, and bounded above by
 it, since a defaulted loan has already gone past the point SICR is trying to anticipate.
 
 **Staging.** The consequence of SICR. Stage 1 carries twelve-month expected loss, Stage 2 lifetime,
@@ -280,7 +278,7 @@ them frees a letter this lecture needs.
 
 Four rules keep those apart from what the series already spends. A bare $d$ is the delinquency
 threshold and a superscripted $d^{\rm def}_t$ is a life-table decrement count, which is lecture 1's
-existing convention extended rather than changed. A bare, unsubscripted $p$ is the probation
+existing convention extended rather than changed. Similarly, a bare, unsubscripted $p$ is the probation
 period, and every probability in the series carries a subscript, so ${}_k p_{i,t}$ and $p_{ml}$ are
 untouched. $D$ appears as an indicator only with a sub- or superscript, leaving `R1`'s bare Markov
 state labels alone. And $\tau$ stays unsubscripted, unlike in the source literature, where entry
@@ -311,10 +309,19 @@ arrears reach the threshold and the outer bracket is one where every month in th
 Lecture 1 stated this and could go no further, because Bondora records no monthly arrears series to
 evaluate it on. Section 10 evaluates it.
 
+The provenance deserves a line, because the formalism is borrowed slightly out of its original
+setting. Botha, Oberholzer, Larney and de Jongh write $\mathcal{G}$ as a **SICR**-decision function
+and sweep it at $d \in \{1, 2\}$, one or two payments in arrears, which is the shallow end where a
+significant increase in credit risk is detected. Their own default column is the same delinquency
+measure at a deeper threshold, $g_0(t) \ge 3$. The machinery is therefore identical and only the
+threshold moves, which is exactly this lecture's point, so $\mathcal{G}$ is used here for the
+default trigger with the threshold pushed out to where default lives. The $s$-parameter, in their
+words, "smooths away rapid 0/1-fluctuations" in the status over time.
+
 The third dial is the one lecture 1 did spend. The response variable at $t$ reads the state $k$
 months ahead, and section 4 shows that "reads the state" hides a choice of its own.
 
-The fourth dial governs the way back. Once a loan is in default, a single clear month should not
+The fourth dial, by contrast, governs the way back. Once a loan is in default, a single clear month should not
 release it, so a probation period $p$ requires the loan to be clear of every trigger for $p$
 consecutive months before it counts as cured. Formally, the loan is in probation at $t$ if it
 triggered at any point in the preceding $p$ months,
@@ -330,7 +337,7 @@ $$
 $$
 
 The default state that a model actually predicts is the complement of cure rather than the
-preliminary trigger itself, so write $D_{i,t}(d, s, p) = 1 - \mathcal{C}_{i,t}(d, s, p)$. That
+preliminary trigger itself, so write $D_{i,t}(d, s, p) = 1 - \mathcal{C}_{i,t}(d, s, p)$. Hence that
 distinction between the trigger and the state is where cure lives, and dropping it collapses the
 whole return path.
 
@@ -400,8 +407,8 @@ outright that the definition is the firm's own. IFRS 9 paragraph B5.5.37 require
 
 So the accounting standard sets a backstop and otherwise defers to whatever the bank already does,
 which makes the dials of this section the bank's to choose and its own consistency the binding
-constraint. A firm running one default definition for capital and another for impairment is not
-breaching the standard by having two, and it is breaching it if either one drifts from what its
+constraint. Nonetheless a firm running one default definition for capital and another for impairment is
+not breaching the standard by having two, and it is breaching it if either one drifts from what its
 credit risk management actually uses.
 
 Two of these dials are visible in the regulation and two are not. Article 178 of the Capital
@@ -418,7 +425,7 @@ Fix all four dials and one question remains, and it is the question this lecture
 separate. Having decided what default means at a month, what does the response variable say about
 a horizon $k$ months away?
 
-There are three answers in circulation. They are commonly all called the twelve-month PD, two of
+There are, in practice, three answers in circulation. They are commonly all called the twelve-month PD, two of
 them are routinely conflated, and they are different quantities that answer different questions.
 
 Write $y_{i,t} = D_{i,t}(d, s, p)$ for the monthly default state under the dials of the previous
@@ -430,8 +437,8 @@ $$
 D_i^{(k)} = \max\left( y_{i,t+1},\, \ldots,\, y_{i,t+k} \right) .
 $$
 
-A loan that defaults in month three and cures by month eight still scores a one, because the
-maximum remembers the breach. This is lecture 1's aggregation and it is what a regulatory
+A loan that defaults in month three and cures by month eight nevertheless scores a one, because
+the maximum remembers the breach. This is lecture 1's aggregation and it is what a regulatory
 twelve-month PD targets, since the capital question is whether the exposure went bad inside the
 year at all.
 
@@ -441,10 +448,10 @@ $$
 y_{i,t+k} .
 $$
 
-The same loan scores a zero here, having cured before the horizon arrived. This is the quantity
+By contrast, the same loan scores a zero here, having cured before the horizon arrived. This is the quantity
 that the notation in Mario's own A-IRB and IFRS 9 guides literally defines, writing the default
 outcome as the default state evaluated at $t+k$, while the surrounding prose in the same documents
-describes the target as worst-ever. Both cannot be right, and section 10 measures how far apart
+describes the target as worst-ever. Both cannot be right, and section 10 therefore measures how far apart
 they are.
 
 **The marginal PD** asks for a first default dated to the horizon,
@@ -476,11 +483,11 @@ point-at-horizon flag therefore learns to predict a **stock** of defaulted loans
 expected-loss calculation it feeds needs a **flow** of new ones.
 :::
 
-Loan C is not a curiosity. Section 10 shows that on a real revolving book, nine out of ten
+Loan C is not a curiosity. Indeed, section 10 shows that on a real revolving book nine out of ten
 point-at-horizon flags are loans of type C rather than type B, which makes the point-at-horizon
 target roughly twelve times the marginal quantity it is sometimes mistaken for.
 
-Which target belongs to which question is then straightforward, and stating it is most of the value
+Which target belongs to which question is, thereafter, straightforward, and stating it is most of the value
 of the distinction.
 
 | Question | Target | Why |
@@ -508,7 +515,7 @@ come from. Article 178(5) of the EU Capital Requirements Regulation says only th
 > default would be deemed to have occurred.
 
 Note what is absent. The EU CRR states no minimum period at all, so on the primary text a loan
-returns to performing the moment its triggers clear, which is $p = 0$. The familiar three-month
+returns to performing the moment its triggers clear, which is $p = 0$. Instead, the familiar three-month
 minimum lives in supervisory guidance, namely the EBA guidelines on the application of the
 definition of default, and in the United Kingdom it was written into the rulebook itself. UK CRR
 Article 178(5)(a) requires an institution to
@@ -532,7 +539,7 @@ Two things get called cure and they are worth separating before any measurement.
 **Cure after default** is the regulatory sense: a default was declared, the triggers cleared, the
 probation period elapsed, and the exposure returned to performing. **Cure before default** is
 recovery from arrears that never crossed the threshold at all. The second is not cure in any
-regulatory sense, since nothing was ever declared, and it matters anyway, because it is precisely
+regulatory sense, since nothing was ever declared. Nonetheless it matters, because it is precisely
 the population that a loosening of the delinquency threshold $d$ would reclassify as defaulted.
 
 Bondora records both, and it records them in a shape that limits what can be said.
@@ -555,13 +562,13 @@ print(f"never late at all                         "
 print(f"loans in the book                         {raw.height:>7,}")
 ```
 
-19,287 loans reached arrears, were never declared in default, and repaid in full. 460 of them
+19,287 loans reached arrears, were never declared in default, and repaid in full. Moreover, 460 of them
 reached the deepest bucket the platform records, more than 180 days late, and still repaid without
 ever being flagged. Separately, 10,743 loans were declared in default and repaid afterwards.
 
 The limitation is the shape of the extract rather than the size of the numbers. Bondora publishes
 one row per loan, so both figures are read off a **terminal disposition** rather than off an
-observed return to performing. We know these loans ended repaid; we cannot see the month they
+observed return to performing. We know these loans ended repaid. However, we cannot see the month they
 stopped being delinquent, we cannot apply a probation period to them, and we cannot tell a loan
 that cured once from one that cured, re-defaulted, and cured again. Consequently the cure rate is a
 lower bound on the phenomenon and it is not a measurement of the definition. Section 10 does that
@@ -605,12 +612,12 @@ sweep
 ```
 
 ```{python}
-#| fig-cap: "The share of Bondora loans that reached a given arrears depth and were never declared in default, as the delinquency threshold moves across the platform's own reporting buckets. Read it as the quantity a modeller would report as a cure rate under each choice of threshold. The fall is steep and it is not a property of borrower behaviour: the same loans are in the book at every point on the curve, and only the definition of who counts as having been at risk has changed. The count of loans at or above each threshold, on the right axis, is what makes the far end unstable."
+#| fig-cap: "The share of Bondora loans that reached a given arrears depth and were never declared in default, as the delinquency threshold moves across the platform's own reporting buckets. Read it as the quantity a modeller would report as a cure rate under each choice of threshold. The fall is steep, and yet it is not a property of borrower behaviour: the same loans are in the book at every point on the curve, and only the definition of who counts as having been at risk has changed. The count of loans at or above each threshold, on the right axis, is what makes the far end unstable."
 fig, ax = plt.subplots(figsize=(9, 3.4))
 x = np.arange(len(BUCKETS))
 ax.plot(x, sweep["avoided default %"], "o-", color=OX, lw=1.6, ms=5)
 ax.set_xticks(x)
-ax.set_xticklabels([b.replace("-", "–") for b in BUCKETS], fontsize=8.5)
+ax.set_xticklabels(BUCKETS, fontsize=8.5)
 ax.set_xlabel("delinquency threshold $d$, worst arrears bucket reached (days)")
 ax.set_ylabel("never declared in default (%)", color=OX)
 ax.tick_params(axis="y", labelcolor=OX)
@@ -644,9 +651,11 @@ expected-loss provision was raised, so the write-off itself moves the gross asse
 allowance together and leaves the net carrying amount where it was.
 
 For this lecture the accounting is background and the state machine is the point. Write-off is
-absorbing, it is downstream of default, and it answers to a different test. Default asks whether
+absorbing, it is downstream of default, and it answers to a different test. In particular,
+default and write-off ask different questions. Default asks whether
 the borrower has breached; write-off asks whether the lender still expects money. A loan can sit in
-default for years and never be written off, and Bondora shows exactly that.
+default for years and never be written off, and Bondora shows exactly that. Thus the two are
+separate transitions rather than one.
 
 ```{python}
 wo   = pl.col("PrincipalWriteOffs") > 0
@@ -670,7 +679,7 @@ interest while treating it as a settlement discards a total loss as though it we
 One caution about third-party data belongs here, because it is a trap rather than a detail. Bureau
 feeds routinely publish a delinquency status whose worst bucket bundles deep arrears together with
 sale and write-off. The Home Credit archive's own bureau table does exactly this, documenting its
-top status code as "DPD 120+ or sold or written off". A modeller reading that field cannot separate
+top status code as "DPD 120+ or sold or written off". Consequently a modeller reading that field cannot separate
 the three events at all, so a definition that distinguishes them cannot be implemented on it,
 whatever the regulation says. That is the argument of section 8 arriving early.
 
@@ -680,7 +689,7 @@ Significant increase in credit risk is the trigger that moves an exposure from t
 lifetime expected-loss measurement under IFRS 9. It belongs in this lecture for one reason: it is
 defined by reference to default, and it is bounded above by it.
 
-The bound is structural. A defaulted exposure is already credit-impaired and sits in Stage 3, so
+The bound is structural. Because a defaulted exposure is already credit-impaired and sits in Stage 3,
 SICR is trying to detect deterioration strictly before the point this lecture's dials fire. Where
 the default definition moves, the SICR event moves with it, and a bank that loosens $d$ has
 narrowed the window SICR was supposed to occupy without touching its SICR model at all.
@@ -715,15 +724,15 @@ questions, is a lecture in its own right and this is deliberately not it.
 Every dial of section 3 is a statement about a sequence. The threshold $d$ asks what the arrears
 were in a given month, the persistence requirement $s$ asks whether that held across several
 consecutive months, the probation period $p$ asks for a run of clear months after an episode, and
-the outcome period $k$ asks what the state became some months later. A table with one row per loan
+the outcome period $k$ asks what the state became some months later. A table with one row per loan, however,
 carries no sequence, so it can answer the first of those questions only at the single date it was
 extracted, and none of the other three at all. That is why the definitional question and the
 data-engineering question are one question, and the rest of this lecture works both ends of it.
 
 # What a snapshot extract cannot answer
 
-Bondora is a good dataset and a fair example of the shape most published loan books arrive in. The
-constraint is not missing columns; it is the granularity of the rows.
+Bondora is a good dataset and a fair example of the shape most published loan books arrive in.
+Its constraint lies in the granularity of the rows rather than in any missing column.
 
 ```{python}
 per_loan = raw.select(pl.col("LoanId").n_unique()).item()
@@ -737,10 +746,10 @@ for c in ["ActiveLateCategory", "WorseLateCategory", "CurrentDebtDaysPrimary",
     print(f"  {c:<24} one value per loan, populated on {nn:>7,}")
 ```
 
-One row per loan, and every delinquency field is a scalar on that row. Two of them are dated
+One row per loan, and every delinquency field is a scalar on that row. Of those, two are dated
 (`DebtOccuredOn`, `DefaultDate`), one is the state at the extract date (`ActiveLateCategory`), and
 one is an all-time aggregate (`WorseLateCategory`). That is four numbers where the definition wants
-a monthly series, and it is enough for exactly one of the four dials.
+a monthly series, and consequently it is enough for exactly one of the four dials.
 
 | Dial | Observable on Bondora? | Why |
 |---|---|---|
@@ -750,11 +759,11 @@ a monthly series, and it is enough for exactly one of the four dials.
 | $k$, outcome period | Yes | $k$ is the modeller's own choice of horizon, measured against `DefaultDate`, and lecture 1 already swept it |
 
 The last row is the one to notice. Lecture 1 swept the only dial the data let it sweep, and having
-swept it, treated the definition as settled. That is a very easy mistake to make, and it is worth
+swept it, treated the definition as settled. That is a very easy mistake to make, and it is therefore worth
 naming the general form: the dials a dataset exposes feel like the dials that exist.
 
-`WorseLateCategory` deserves one further remark, because it is a worst-ever aggregate and this
-lecture has a name for that. The field applies the worst-ever operator of section 4 over the whole
+Finally, `WorseLateCategory` deserves a remark of its own, because it is a worst-ever aggregate and
+this lecture has a name for that. The field applies the worst-ever operator of section 4 over the whole
 life of the loan rather than over a fixed window, which makes it an unusable target (a modeller
 cannot condition on a covariate measured after the outcome) and a useful diagnostic. It is how
 section 5 could see cure at all.
@@ -763,7 +772,7 @@ section 5 could see cure at all.
 
 To turn the dials we need a dataset whose rows are loan-months. This section uses the revolving
 card panel from the public Home Credit competition data, which carries a days-past-due figure
-stamped to each month. It is a different portfolio from Bondora and a different product, and the
+stamped to each month. It is a different portfolio from Bondora and a different product. Nevertheless the
 point is the shape rather than the book.
 
 ```{python}
@@ -781,7 +790,7 @@ shape
 
 3.8 million monthly statements over 104,307 card facilities. `MONTHS_BALANCE` counts backwards
 from the application date, so it runs from $-96$ to $-1$ and ordering it ascending gives
-chronological order. Getting that direction wrong reverses every sequence in the file while leaving
+chronological order. Getting that direction wrong, moreover, reverses every sequence in the file while leaving
 every marginal distribution intact, which is the kind of error that survives a review of summary
 statistics.
 
@@ -822,7 +831,7 @@ out of 104,307 have a hole in their monthly series, and that last figure is the 
 precisely because it is small enough to be tempting to ignore.
 
 Each check earns its place by the error it prevents. A duplicated key would double-count a month
-inside the persistence window and inflate every trigger. A gap lets a rolling window silently span
+inside the persistence window and thus inflate every trigger. A gap lets a rolling window silently span
 a period it never observed, so a facility absent for three months reads as three clear months, and
 under a probation rule that absence reads as recovery. A null days-past-due value would be treated
 as zero by a naive comparison and would read as performing.
@@ -848,11 +857,11 @@ nulls.transpose(include_header=True, header_name="column", column_names=["null %
 ```
 
 The drawings and payment columns are missing on roughly a fifth of statements while the balance and
-the limit are always present. On a revolving product that pattern is informative rather than random:
+the limit are always present. On a revolving product, however, that pattern is informative rather than random:
 a month with no recorded ATM drawing is most likely a month with no ATM drawing. Consequently the
 guides' own pipeline fills these with zero rather than imputing them, and that is the right call for
 a count of transactions and the wrong call for a payment amount, where a missing value may mean no
-payment or may mean no record of one. This lecture needs none of these columns, and it names the
+payment or may mean no record of one. This lecture needs none of these columns. Even so, it names the
 distinction because a payment column filled with zeros is exactly how an arrears series gets
 manufactured out of a reporting gap.
 
@@ -861,7 +870,7 @@ manufactured out of a reporting gap.
 The panel carries the days-past-due figure twice. The competition's own dictionary documents
 `SK_DPD` as days past due during the month, and `SK_DPD_DEF` as the same figure "with tolerance
 (debts with low loan amounts are ignored)". That tolerance is a materiality threshold, and Article
-178 of the Capital Requirements Regulation requires one: an obligation counts as past due only once
+178 of the Capital Requirements Regulation requires one in turn: an obligation counts as past due only once
 the amount outstanding is material, and the threshold is set by the competent authority rather than
 by the modeller.
 
@@ -884,12 +893,12 @@ for d in (1, 30, 60, 90, 120):
 ```
 
 At ninety days the raw count is 48,377 statements and the material count is 1,078, a factor of 45.
-Same portfolio, same ninety-day rule, and a defaulted population that differs by more than an
+Same portfolio, same ninety-day rule, and yet a defaulted population differing by more than an
 order of magnitude depending on a threshold that most model documentation mentions in a footnote.
 
 The direction is worth dwelling on. A materiality threshold makes the default count **smaller**, so
 a bank that sets it generously reports fewer defaults, a lower observed default rate and, all else
-equal, less capital. That is precisely why the threshold is not the bank's to choose, and it is
+equal, less capital. Accordingly the threshold is not the bank's to choose, and that is also
 why the supervisory expectations lecture 1 cited concern themselves with how the threshold is
 applied rather than merely with whether one exists.
 
@@ -910,8 +919,8 @@ for d in (30, 60, 90):
 ```
 
 At a ninety-day threshold the material figure leaves 39 facilities in the whole portfolio that
-ever breach. A sweep across four probation periods, each needing a cure count and a re-default
-count, cannot be run on 39 facilities and would produce percentages built on single-digit
+ever breach. Consequently a sweep across four probation periods, each needing a cure count and a
+re-default count, cannot be run on 39 facilities and would produce percentages built on single-digit
 numerators.
 
 This is the lecture's own thesis arriving from an unexpected direction, so it is worth stating
@@ -1002,7 +1011,7 @@ exact only because the comparison is against a monthly statement date rather tha
 instalment calendar.
 
 The same portfolio yields 3,160 defaulted facilities under the loosest pair and 1,534 under the
-tightest, a factor of 2.06. Neither dial is exotic. A month of arrears held for one month against
+tightest, a factor of 2.06. Neither dial, moreover, is exotic. A month of arrears held for one month against
 three months of arrears held for three is the ordinary range of what a behavioural definition might
 reasonably pick, and the resulting default population differs twofold before a single covariate has
 been looked at.
@@ -1074,7 +1083,7 @@ plt.tight_layout()
 ```
 
 This is the trade-off every probation choice makes, and it is the reason the choice cannot be made
-on either quantity alone. A three-month probation calls 61.8 per cent of defaulted facilities cured
+on either quantity alone. In particular, a three-month probation calls 61.8 per cent of defaulted facilities cured
 and then watches nearly one in ten of them default again, which is a cure population contaminated
 with borrowers who had simply made a payment. A twenty-four-month probation reduces re-default to
 1.4 per cent and refuses to call two thirds of the book cured, which discards genuine recoveries
@@ -1146,7 +1155,7 @@ targets
 Three things fall out of that table, and the third is the one worth carrying away.
 
 The **marginal** count barely moves, sitting near 1,600 at every probation length. That is what it
-should do. A first default dated to month twelve is a fresh event, and rules governing how long an
+should do, because a first default dated to month twelve is a fresh event, and rules governing how long an
 old default lingers have almost nothing to say about it.
 
 The **point-at-horizon** count climbs steadily with the probation period, from 16,070 to 19,691,
@@ -1155,7 +1164,7 @@ times the marginal count throughout, so the gap section 4 warned about is real a
 gets worse as probation lengthens.
 
 And the gap between **worst-ever and point-at-horizon closes to exactly nothing at $p = 12$.** The
-reason is structural rather than empirical. With a probation period as long as the outcome window,
+reason, however, is structural rather than empirical. With a probation period as long as the outcome window,
 no facility that defaults inside the window can complete probation before the window closes, so
 every worst-ever positive is still in default at the horizon and the two flags are the same column
 of data. At $p = 0$ they differ on 20.8 per cent of positives, and the difference shrinks
