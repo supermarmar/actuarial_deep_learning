@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich">
+<meta name="dcterms.date" content="2026-09-03">
+
+<title>Credit Lecture 9: LocalGLMnet</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
+  <li><a href="#local-interpretable-model-agnostic-explanations" id="toc-local-interpretable-model-agnostic-explanations" class="nav-link" data-scroll-target="#local-interpretable-model-agnostic-explanations"><span class="header-section-number">1</span> Local interpretable model-agnostic explanations</a></li>
+  <li><a href="#the-localglmnet-architecture" id="toc-the-localglmnet-architecture" class="nav-link" data-scroll-target="#the-localglmnet-architecture"><span class="header-section-number">2</span> The LocalGLMnet architecture</a>
+  <ul class="collapse">
+  <li><a href="#the-logistic-glm-revisited" id="toc-the-logistic-glm-revisited" class="nav-link" data-scroll-target="#the-logistic-glm-revisited"><span class="header-section-number">2.1</span> The logistic GLM, revisited</a></li>
+  <li><a href="#attention-weights-in-place-of-the-coefficient-vector" id="toc-attention-weights-in-place-of-the-coefficient-vector" class="nav-link" data-scroll-target="#attention-weights-in-place-of-the-coefficient-vector"><span class="header-section-number">2.2</span> Attention weights in place of the coefficient vector</a></li>
+  <li><a href="#reading-an-attention-weight" id="toc-reading-an-attention-weight" class="nav-link" data-scroll-target="#reading-an-attention-weight"><span class="header-section-number">2.3</span> Reading an attention weight</a></li>
+  <li><a href="#identifiability-and-why-we-drop-terms-rather-than-covariates" id="toc-identifiability-and-why-we-drop-terms-rather-than-covariates" class="nav-link" data-scroll-target="#identifiability-and-why-we-drop-terms-rather-than-covariates"><span class="header-section-number">2.4</span> Identifiability, and why we drop terms rather than covariates</a></li>
+  </ul></li>
+  <li><a href="#the-bondora-design-for-a-localglmnet" id="toc-the-bondora-design-for-a-localglmnet" class="nav-link" data-scroll-target="#the-bondora-design-for-a-localglmnet"><span class="header-section-number">3</span> The Bondora design for a LocalGLMnet</a>
+  <ul class="collapse">
+  <li><a href="#why-the-categoricals-arrive-as-embeddings" id="toc-why-the-categoricals-arrive-as-embeddings" class="nav-link" data-scroll-target="#why-the-categoricals-arrive-as-embeddings"><span class="header-section-number">3.1</span> Why the categoricals arrive as embeddings</a></li>
+  <li><a href="#entity-embeddings-and-their-rotation" id="toc-entity-embeddings-and-their-rotation" class="nav-link" data-scroll-target="#entity-embeddings-and-their-rotation"><span class="header-section-number">3.2</span> Entity embeddings and their rotation</a></li>
+  <li><a href="#the-noise-covariate" id="toc-the-noise-covariate" class="nav-link" data-scroll-target="#the-noise-covariate"><span class="header-section-number">3.3</span> The noise covariate</a></li>
+  <li><a href="#the-benchmark-glm" id="toc-the-benchmark-glm" class="nav-link" data-scroll-target="#the-benchmark-glm"><span class="header-section-number">3.4</span> The benchmark GLM</a></li>
+  </ul></li>
+  <li><a href="#fitting-the-localglmnet" id="toc-fitting-the-localglmnet" class="nav-link" data-scroll-target="#fitting-the-localglmnet"><span class="header-section-number">4</span> Fitting the LocalGLMnet</a>
+  <ul class="collapse">
+  <li><a href="#the-architecture-in-pytorch" id="toc-the-architecture-in-pytorch" class="nav-link" data-scroll-target="#the-architecture-in-pytorch"><span class="header-section-number">4.1</span> The architecture in PyTorch</a></li>
+  <li><a href="#initialising-at-the-fitted-glm" id="toc-initialising-at-the-fitted-glm" class="nav-link" data-scroll-target="#initialising-at-the-fitted-glm"><span class="header-section-number">4.2</span> Initialising at the fitted GLM</a></li>
+  <li><a href="#training" id="toc-training" class="nav-link" data-scroll-target="#training"><span class="header-section-number">4.3</span> Training</a></li>
+  </ul></li>
+  <li><a href="#variable-importance-and-the-noise-calibrated-test" id="toc-variable-importance-and-the-noise-calibrated-test" class="nav-link" data-scroll-target="#variable-importance-and-the-noise-calibrated-test"><span class="header-section-number">5</span> Variable importance and the noise-calibrated test</a>
+  <ul class="collapse">
+  <li><a href="#what-the-noise-covariate-measures" id="toc-what-the-noise-covariate-measures" class="nav-link" data-scroll-target="#what-the-noise-covariate-measures"><span class="header-section-number">5.1</span> What the noise covariate measures</a></li>
+  <li><a href="#the-importance-measure" id="toc-the-importance-measure" class="nav-link" data-scroll-target="#the-importance-measure"><span class="header-section-number">5.2</span> The importance measure</a></li>
+  <li><a href="#three-orderings-of-the-same-book" id="toc-three-orderings-of-the-same-book" class="nav-link" data-scroll-target="#three-orderings-of-the-same-book"><span class="header-section-number">5.3</span> Three orderings of the same book</a></li>
+  </ul></li>
+  <li><a href="#the-income-term-and-lecture-1s-paradox" id="toc-the-income-term-and-lecture-1s-paradox" class="nav-link" data-scroll-target="#the-income-term-and-lecture-1s-paradox"><span class="header-section-number">6</span> The income term and lecture 1’s paradox</a>
+  <ul class="collapse">
+  <li><a href="#one-fits-answer" id="toc-one-fits-answer" class="nav-link" data-scroll-target="#one-fits-answer"><span class="header-section-number">6.1</span> One fit’s answer</a></li>
+  <li><a href="#the-same-question-over-ten-fits" id="toc-the-same-question-over-ten-fits" class="nav-link" data-scroll-target="#the-same-question-over-ten-fits"><span class="header-section-number">6.2</span> The same question over ten fits</a></li>
+  <li><a href="#verdict" id="toc-verdict" class="nav-link" data-scroll-target="#verdict"><span class="header-section-number">6.3</span> Verdict</a></li>
+  </ul></li>
+  <li><a href="#interactions-from-the-attention-gradient" id="toc-interactions-from-the-attention-gradient" class="nav-link" data-scroll-target="#interactions-from-the-attention-gradient"><span class="header-section-number">7</span> Interactions from the attention gradient</a></li>
+  <li><a href="#reason-codes" id="toc-reason-codes" class="nav-link" data-scroll-target="#reason-codes"><span class="header-section-number">8</span> Reason codes</a>
+  <ul class="collapse">
+  <li><a href="#the-decomposition-exactly" id="toc-the-decomposition-exactly" class="nav-link" data-scroll-target="#the-decomposition-exactly"><span class="header-section-number">8.1</span> The decomposition, exactly</a></li>
+  <li><a href="#what-a-lender-must-actually-say" id="toc-what-a-lender-must-actually-say" class="nav-link" data-scroll-target="#what-a-lender-must-actually-say"><span class="header-section-number">8.2</span> What a lender must actually say</a></li>
+  <li><a href="#one-declined-applicant" id="toc-one-declined-applicant" class="nav-link" data-scroll-target="#one-declined-applicant"><span class="header-section-number">8.3</span> One declined applicant</a></li>
+  <li><a href="#are-the-codes-reproducible" id="toc-are-the-codes-reproducible" class="nav-link" data-scroll-target="#are-the-codes-reproducible"><span class="header-section-number">8.4</span> Are the codes reproducible?</a></li>
+  <li><a href="#why-the-first-code-is-stable-and-the-others-are-not" id="toc-why-the-first-code-is-stable-and-the-others-are-not" class="nav-link" data-scroll-target="#why-the-first-code-is-stable-and-the-others-are-not"><span class="header-section-number">8.5</span> Why the first code is stable and the others are not</a></li>
+  <li><a href="#what-this-means-for-a-reason-code-policy" id="toc-what-this-means-for-a-reason-code-policy" class="nav-link" data-scroll-target="#what-this-means-for-a-reason-code-policy"><span class="header-section-number">8.6</span> What this means for a reason-code policy</a></li>
+  </ul></li>
+  <li><a href="#the-final-model" id="toc-the-final-model" class="nav-link" data-scroll-target="#the-final-model"><span class="header-section-number">9</span> The final model</a></li>
+  <li><a href="#takeaways-and-outlook" id="toc-takeaways-and-outlook" class="nav-link" data-scroll-target="#takeaways-and-outlook">Takeaways and outlook</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture 9: LocalGLMnet</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa, adapting Scognamiglio, Maggi and Wüthrich </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 3, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>The LocalGLMnet of Richman and Wüthrich (2023b) replaces a GLM’s fixed coefficient vector by network outputs that vary with the covariates, so the model is locally a GLM everywhere and every individual prediction decomposes into per-covariate contributions. Credit lecture 3 called that decomposition arguably the most important idea in the course for credit work, on the ground that a lender declining an application needs one. This lecture builds it on the Bondora book and then measures whether it holds up. The architecture behaves: initialised at the fitted GLM it reproduces that GLM’s deviance exactly, and trained it reaches a test deviance of 107.360 against the feed-forward network’s 107.621, with nagging over ten fits taking it to 107.132. A purely random covariate calibrates the fluctuation attributable to noise, and no term’s importance falls to that level, although the three weakest embedding coordinates come within a factor of two to three of it and their middle half of borrowers sits inside the band. The findings, however, sit in what the attention weights do next. Income’s weight is negative for 62.6 per cent of borrowers and positive for the rest, which looks like lecture 1’s Simpson paradox surfacing inside a fitted structure, and yet one seed’s country ordering reverses under another, leaving a between-country spread of 0.045 against between-fit standard deviations of 0.032 to 0.055 across the three populated countries. The reason codes are where this bites hardest. Among the highest-PD decile, where a decline notice is actually issued, the strongest adverse characteristic is the same across all ten fits for 92.0 per cent of applicants, whereas the second-ranked one agrees for 1.6 per cent and the third for 0.1. The mechanism is a gap structure: the leading contribution exceeds the second by 1.043 on the log-odds scale while the second exceeds the third by 0.118. A lender issuing three reasons from one fit is therefore issuing one that reproduces and two that do not.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="introduction" class="level1 unnumbered">
+<h1 class="unnumbered">Introduction</h1>
+<p>Three earlier lectures in this series point here. Lecture 3 surveyed the architectures a credit modeller might want and singled out LocalGLMnet as “arguably the most important idea in the course” for credit, because a lender that declines an application has to say something about why, and a decomposition falling out of the fitted structure is a stronger position in front of a supervisor than one bolted on afterwards. Lecture 6 deferred the question of what a network has actually learned to “the interpretability tools the ninth lecture introduces, which work on the fitted regression function rather than on internal weights”. Lecture 8 named this lecture as where the architecture arrives.</p>
+<p>The idea is compact. A GLM’s coefficient vector <span class="math inline">\(\vartheta\)</span> is a single fixed vector for the whole book, whereas the LocalGLMnet lets each coefficient be a function of the covariates, learned by a network. Locally the fitted model still looks like a GLM, so it still explains itself the way a GLM does, and globally it can bend wherever the data asks it to. Richman and Wüthrich (2023b) introduce it; Zhou and Hooker (2022) and Zakrisson and Lindholm (2025) reach the same object from the varying-coefficient literature.</p>
+<p>This companion keeps the course’s arc and adds three things the credit setting demands. First, the reason codes lecture 3 promised are built and then tested for reproducibility, which turns out to be where the lecture’s sharpest result sits. Second, the variable importance the architecture produces is set beside two orderings the series already has, namely <code>F1</code>’s information values and lecture 8’s group LASSO elimination order. Third, the income term is interrogated against lecture 1’s Simpson paradox, and the answer is more careful than the one hoped for.</p>
+<p>One boundary is deliberate. Lecture <code>C1</code> reserved the question of whether an attribution may be read <em>causally</em> for <code>C2</code>, and named LocalGLMnet explicitly when it did. This lecture therefore says what an attention weight <strong>is</strong> and stops there, citing <code>C2</code> forward wherever the temptation to read it as an effect arises.</p>
+<p>Two conventions carry over unchanged. There is no exposure offset, since <code>default_12m</code> is a zero-one flag over a fixed twelve-month window, so every case weight is one. Deviance is quoted on the series’ scale throughout, meaning <span class="math inline">\(100 \times 2 \times\)</span> the mean Bernoulli deviance contribution, so the numbers below sit beside those of lectures 2, 4, 5, 6, 7, and 8 without rescaling.</p>
+<div id="796a22e9" class="cell" data-execution_count="1">
+<details class="code-fold">
+<summary>Imports and shared settings</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> statsmodels.nonparametric.smoothers_lowess <span class="im">import</span> lowess</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>BLUE, RED, GREY <span class="op">=</span> <span class="st">"#3B4A75"</span>, <span class="st">"#8C2F1E"</span>, <span class="st">"#8A8377"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({<span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>})</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>torch.set_num_threads(<span class="dv">4</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="local-interpretable-model-agnostic-explanations" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Local interpretable model-agnostic explanations</h1>
+<div class="callout callout-style-default callout-note callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>LIME fits a simple, readable model in a small neighbourhood of one observation, so the explanation is local and the global model can stay as complicated as it likes. The LocalGLMnet turns that idea inside out. Rather than approximating a fitted model afterwards, it builds a model whose local approximations are its own parameters.</p>
+</div>
+</div>
+<p>Ribeiro, Singh and Guestrin (2016) proposed LIME for a general predictor <span class="math inline">\(\boldsymbol{X} \mapsto \widehat{\mu}(\boldsymbol{X})\)</span>. Around a chosen instance the surface is sampled, a weighted linear model is fitted to those samples, and its coefficients are reported as the explanation for that one prediction. The construction has an obvious geometric reading, since a smooth surface looks linear in a small enough neighbourhood, and the linear model is the tangent plane.</p>
+<p>Two weaknesses follow from the construction, and both matter in credit. The neighbourhood is chosen by the analyst, so two defensible choices give two different explanations of the same decision. Furthermore, the approximation is fitted after the fact, so nothing forces the local models at neighbouring instances to agree with each other or with the predictions they claim to explain.</p>
+<p>The LocalGLMnet answers both by making the local model the object that is fitted. Paste the LIMEs together, require them to be the model, and the neighbourhood question disappears along with the consistency question.</p>
+</section>
+<section id="the-localglmnet-architecture" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> The LocalGLMnet architecture</h1>
+<section id="the-logistic-glm-revisited" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="the-logistic-glm-revisited"><span class="header-section-number">2.1</span> The logistic GLM, revisited</h2>
+<p>Take the covariates <span class="math inline">\(\boldsymbol{X} \in \mathbb{R}^q\)</span> to be real-valued and standardised. The credit series’ GLM has the form <span class="math display">\[
+\boldsymbol{X} ~\mapsto~ \mu_{\vartheta}(\boldsymbol{X})
+= g^{-1}\left\langle \vartheta, \boldsymbol{X} \right\rangle
+= g^{-1}\left(\vartheta_0 + \sum_{j=1}^{q} \vartheta_j X_j\right),
+\]</span> with <span class="math inline">\(g\)</span> the logit link, so <span class="math inline">\(g^{-1}\)</span> is the logistic function and <span class="math inline">\(\mu_\vartheta(\boldsymbol{X})\)</span> is the probability of default within twelve months. The regression parameter <span class="math inline">\(\vartheta \in \mathbb{R}^{q+1}\)</span> takes one fixed value for the entire portfolio, and maximum likelihood estimation finds it.</p>
+<p>That single fixed value is the whole of the interpretability the scorecard tradition rests on, and it is also the whole of the restriction. Every borrower’s log-odds moves by <span class="math inline">\(\vartheta_j\)</span> for a unit move in <span class="math inline">\(X_j\)</span>, whatever else is true of them.</p>
+</section>
+<section id="attention-weights-in-place-of-the-coefficient-vector" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="attention-weights-in-place-of-the-coefficient-vector"><span class="header-section-number">2.2</span> Attention weights in place of the coefficient vector</h2>
+<p>Choose a multi-output feed-forward network of depth <span class="math inline">\(d \ge 1\)</span> whose input and output dimensions are both <span class="math inline">\(q\)</span>, <span class="math display">\[
+\boldsymbol{z}^{(d:1)} : \mathbb{R}^q \to \mathbb{R}^q, \qquad
+\boldsymbol{X} ~\mapsto~ \left(z_1^{(d:1)}(\boldsymbol{X}), \ldots,
+z_q^{(d:1)}(\boldsymbol{X})\right).
+\]</span> The LocalGLMnet is then <span class="math display">\[
+\mu_{\vartheta}(\boldsymbol{X}) = g^{-1}\left(\vartheta_0 +
+\sum_{j=1}^{q} z_j^{(d:1)}(\boldsymbol{X}) \, X_j\right),
+\]</span> with a real-valued intercept <span class="math inline">\(\vartheta_0 \in \mathbb{R}\)</span>. The network outputs <span class="math inline">\(z_j^{(d:1)}(\boldsymbol{X})\)</span> are called <em>attention weights</em>, and they occupy exactly the slot the GLM’s <span class="math inline">\(\vartheta_j\)</span> occupied.</p>
+<p>Locally the attention weights barely move, provided the network is Lipschitz, so in a neighbourhood the model is a GLM with those weights as its coefficients. Hence the model supplies its own LIME at every point, and the local explanations are consistent with each other by construction because they are the model.</p>
+<div class="callout callout-style-default callout-warning callout-titled" title="A symbol clash worth flagging">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A symbol clash worth flagging
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The attention weight is written <span class="math inline">\(z_j\)</span>, and every <code>statsmodels</code> GLM summary this series prints carries a column headed <code>z</code> for the Wald statistic. The two are unrelated. Where the summary appears below, the column is named explicitly.</p>
+</div>
+</div>
+<p>One structural difference from the GLM survives all of this. Maximum likelihood estimated <span class="math inline">\(\vartheta\)</span>, whereas stochastic gradient descent learns the attention weights, so the weights inherit the noise in the learning data. Some of what the fitted <span class="math inline">\(z_j(\boldsymbol{X}_i)\)</span> do across borrowers is therefore signal and some is fluctuation, and separating the two is the subject of section 6.</p>
+</section>
+<section id="reading-an-attention-weight" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="reading-an-attention-weight"><span class="header-section-number">2.3</span> Reading an attention weight</h2>
+<p>Consider the terms under the sum one at a time. Four readings exhaust the useful cases.</p>
+<ul>
+<li><span class="math inline">\(z_j^{(d:1)}(\boldsymbol{X}) \equiv \vartheta_j \neq 0\)</span> constant. The term is a GLM term, and the covariate enters linearly.</li>
+<li><span class="math inline">\(z_j^{(d:1)}(\boldsymbol{X}) \equiv 0\)</span>. The term contributes nothing and may be dropped, which requires a test analogous to the likelihood ratio test for nested GLMs.</li>
+<li><span class="math inline">\(z_j^{(d:1)}(\boldsymbol{X}) = z_j^{(d:1)}(X_j)\)</span>, depending on its own covariate alone. The term carries a non-linearity in <span class="math inline">\(X_j\)</span> and no interaction.</li>
+<li><span class="math inline">\(\nabla z_j^{(d:1)}(\boldsymbol{X})\)</span> has non-zero components elsewhere. Those components are interactions, that is, cross-sensitivities of the <span class="math inline">\(j\)</span>th coefficient to other covariates.</li>
+</ul>
+<p>The fourth case is where the architecture earns its place against a GLM, because the gradient localises an interaction to a pair of covariates without anyone having had to guess the pair in advance.</p>
+</section>
+<section id="identifiability-and-why-we-drop-terms-rather-than-covariates" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="identifiability-and-why-we-drop-terms-rather-than-covariates"><span class="header-section-number">2.4</span> Identifiability, and why we drop terms rather than covariates</h2>
+<p>The construction has a flaw, and the course is direct about it. A sufficiently flexible network can learn <span class="math display">\[
+z_j^{(d:1)}(\boldsymbol{X}) \, X_j = X_{j'} \quad \text{for } j' \neq j,
+\qquad \text{that is} \qquad
+z_j^{(d:1)}(\boldsymbol{X}) = X_{j'} / X_j ,
+\]</span> so the <span class="math inline">\(j\)</span>th term can silently carry the <span class="math inline">\(j'\)</span>th covariate’s contribution. Consequently the four readings above are statements about <em>terms</em> and never about covariate components, and the lecture is careful with that wording throughout.</p>
+<p>In practice the guard is the initialisation. Starting stochastic gradient descent precisely at the maximum likelihood GLM fixes each term’s role before the optimiser has any freedom to permute them, and the fits below show no sign of the pathology. Section 5.2 sets that initialisation up and checks it.</p>
+</section>
+</section>
+<section id="the-bondora-design-for-a-localglmnet" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The Bondora design for a LocalGLMnet</h1>
+<div class="callout callout-style-default callout-note callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The variable importance measure compares the magnitudes of <span class="math inline">\(z_j\)</span> across components, which requires every component to be continuous and standardised. The course reaches that by feeding in the previous lecture’s entity embeddings; this lecture does the same on the five Bondora categoricals, which also puts lecture 6’s negative embedding finding to a use it can bear.</p>
+</div>
+</div>
+<section id="why-the-categoricals-arrive-as-embeddings" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="why-the-categoricals-arrive-as-embeddings"><span class="header-section-number">3.1</span> Why the categoricals arrive as embeddings</h2>
+<p>The design matrix this series has carried since lecture 4 has 38 columns, of which 35 are one-hot indicators. That design is unusable here for a plain reason. An indicator column is zero for most borrowers, so its attention weight is multiplied by zero for most borrowers, and the mean absolute attention weight therefore stops being comparable with a continuous covariate’s. The course states the same conclusion and adds that testing becomes difficult under one-hot encoding, pointing at group LASSO as the alternative route.</p>
+<p>The course’s own solution is to feed in two-dimensional entity embeddings of each categorical, taken from the previous lecture’s network, and to orthogonalise them by a principal component rotation. That is what follows. Lecture 6 built the embedding machinery in full and this lecture reuses it rather than restating the case.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="What lecture 6 found, and why it matters here">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>What lecture 6 found, and why it matters here
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture 6 checked whether proximity in the embedding plane tracked risk on this portfolio and concluded that it did not, with the arrangement failing to survive a refit. That finding constrains what may be claimed for the embeddings and it does not disqualify them, since the job here is to supply an orthogonal continuous encoding of a categorical and no reading of the plane is required. The consequence is recorded in section 9.5, because the embedding below is fitted once and held fixed across every refit.</p>
+</div>
+</div>
+<div id="74ee98b4" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"Education"</span>) <span class="op">!=</span> <span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> model_dat.select(</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"default_12m"</span>, <span class="st">"Age"</span>, <span class="st">"logIncome"</span>, <span class="st">"Country"</span>, <span class="st">"Education"</span>,</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>     <span class="st">"HomeOwnershipType"</span>, <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>     <span class="st">"EmploymentDurationCurrentEmployer"</span>, <span class="st">"LoanDate"</span>]).to_pandas()</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>ho <span class="op">=</span> g[<span class="st">"HomeOwnershipType"</span>]</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"HomeOwnership"</span>] <span class="op">=</span> np.where(ho.isna() <span class="op">|</span> (ho <span class="op">==</span> <span class="op">-</span><span class="dv">1</span>), <span class="st">"missing"</span>,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>                              ho.fillna(<span class="op">-</span><span class="dv">1</span>).astype(<span class="bu">int</span>).astype(<span class="bu">str</span>))</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"EmploymentDuration"</span>] <span class="op">=</span> g[<span class="st">"EmploymentDurationCurrentEmployer"</span>].fillna(<span class="st">"missing"</span>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"Education"</span>] <span class="op">=</span> g[<span class="st">"Education"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"VerificationType"</span>] <span class="op">=</span> g[<span class="st">"VerificationType"</span>].astype(<span class="bu">int</span>).astype(<span class="bu">str</span>)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeCens"</span>] <span class="op">=</span> g[<span class="st">"Age"</span>].clip(upper<span class="op">=</span><span class="dv">70</span>)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>CATS <span class="op">=</span> [<span class="st">"Country"</span>, <span class="st">"Education"</span>, <span class="st">"HomeOwnership"</span>, <span class="st">"VerificationType"</span>,</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"EmploymentDuration"</span>]</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>CONT <span class="op">=</span> [<span class="st">"AgeCens"</span>, <span class="st">"logIncome"</span>, <span class="st">"NewCreditCustomer"</span>]</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>y_all <span class="op">=</span> g[<span class="st">"default_12m"</span>].astype(<span class="bu">float</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>perm <span class="op">=</span> rng.permutation(<span class="bu">len</span>(g))</span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>n_learn <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> <span class="bu">len</span>(g))</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>idx_learn, idx_test <span class="op">=</span> perm[:n_learn], perm[n_learn:]</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>yl <span class="op">=</span> y_all.iloc[idx_learn].to_numpy()</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>yt <span class="op">=</span> y_all.iloc[idx_test].to_numpy()</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"n = </span><span class="sc">{</span><span class="bu">len</span>(g)<span class="sc">:,}</span><span class="ss">,  learn </span><span class="sc">{</span><span class="bu">len</span>(idx_learn)<span class="sc">:,}</span><span class="ss"> / test </span><span class="sc">{</span><span class="bu">len</span>(idx_test)<span class="sc">:,}</span><span class="ss">,  "</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"learning-sample default rate </span><span class="sc">{</span>yl<span class="sc">.</span>mean()<span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>n = 148,667,  learn 118,933 / test 29,734,  learning-sample default rate 0.28878</code></pre>
+</div>
+</div>
+<p>The modelling frame, the filters, and the 80/20 random split are those of lectures 4 to 8, with the same seed, so the losses below chain to theirs.</p>
+</section>
+<section id="entity-embeddings-and-their-rotation" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="entity-embeddings-and-their-rotation"><span class="header-section-number">3.2</span> Entity embeddings and their rotation</h2>
+<div id="905072d6" class="cell" data-execution_count="3">
+<details class="code-fold">
+<summary>Embedding network and its training routine, from lecture 6</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>levmaps <span class="op">=</span> {c: {lv: i <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> i, lv <span class="kw">in</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>               <span class="bu">enumerate</span>(<span class="bu">sorted</span>(g[c].iloc[idx_learn].unique()))} <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>cards <span class="op">=</span> {c: <span class="bu">len</span>(levmaps[c]) <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> c <span class="kw">in</span> CATS}</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>codes <span class="op">=</span> np.column_stack([g[c].<span class="bu">map</span>(levmaps[c]).fillna(<span class="dv">0</span>).astype(<span class="bu">int</span>).to_numpy()</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                         <span class="cf">for</span> c <span class="kw">in</span> CATS])</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>Xc <span class="op">=</span> g[CONT].astype(<span class="bu">float</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> EmbedFNN(torch.nn.Module):</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, n_cont, cards, b<span class="op">=</span><span class="dv">2</span>, widths<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">10</span>), seed<span class="op">=</span><span class="dv">7</span>):</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>        torch.manual_seed(seed)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.emb <span class="op">=</span> torch.nn.ModuleList([torch.nn.Embedding(k, b) <span class="cf">for</span> k <span class="kw">in</span> cards])</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        layers, prev <span class="op">=</span> [], n_cont <span class="op">+</span> b <span class="op">*</span> <span class="bu">len</span>(cards)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> w <span class="kw">in</span> widths:</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>            layers <span class="op">+=</span> [torch.nn.Linear(prev, w), torch.nn.Tanh()]</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>            prev <span class="op">=</span> w</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>        layers <span class="op">+=</span> [torch.nn.Linear(prev, <span class="dv">1</span>), torch.nn.Sigmoid()]</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.head <span class="op">=</span> torch.nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x_cont, x_cat):</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        parts <span class="op">=</span> [x_cont] <span class="op">+</span> [m(x_cat[:, j]) <span class="cf">for</span> j, m <span class="kw">in</span> <span class="bu">enumerate</span>(<span class="va">self</span>.emb)]</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.head(torch.cat(parts, dim<span class="op">=</span><span class="dv">1</span>))</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_embed(idx, seed<span class="op">=</span><span class="dv">100</span>, b<span class="op">=</span><span class="dv">2</span>, epochs<span class="op">=</span><span class="dv">500</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">50</span>):</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> np.random.default_rng(seed).permutation(<span class="bu">len</span>(idx))</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    tr, va <span class="op">=</span> idx[q[:<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(q))]], idx[q[<span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(q)):]]</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    m_hat <span class="op">=</span> Xc.iloc[tr].mean()</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>    s_hat <span class="op">=</span> Xc.iloc[tr].std().replace(<span class="dv">0</span>, <span class="fl">1.0</span>)</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    pc <span class="op">=</span> <span class="kw">lambda</span> i: torch.tensor(((Xc.iloc[i] <span class="op">-</span> m_hat) <span class="op">/</span> s_hat)</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>                                .to_numpy(dtype<span class="op">=</span>np.float32))</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    pk <span class="op">=</span> <span class="kw">lambda</span> i: torch.tensor(codes[i], dtype<span class="op">=</span>torch.<span class="bu">long</span>)</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    Ctr, Ktr, Cva, Kva <span class="op">=</span> pc(tr), pk(tr), pc(va), pk(va)</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    ytr <span class="op">=</span> torch.tensor(y_all.iloc[tr].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    yva <span class="op">=</span> torch.tensor(y_all.iloc[va].to_numpy(dtype<span class="op">=</span>np.float32)).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> EmbedFNN(<span class="bu">len</span>(CONT), [cards[c] <span class="cf">for</span> c <span class="kw">in</span> CATS], b<span class="op">=</span>b, seed<span class="op">=</span>seed)</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.NAdam(model.parameters())</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> torch.nn.BCELoss()</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    gen <span class="op">=</span> torch.Generator().manual_seed(seed)</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>    best, best_epoch, best_state <span class="op">=</span> np.inf, <span class="dv">0</span>, <span class="va">None</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, epochs <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>        model.train()</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> chunk <span class="kw">in</span> torch.randperm(<span class="bu">len</span>(Ctr), generator<span class="op">=</span>gen).split(batch):</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>            bce(model(Ctr[chunk], Ktr[chunk]), ytr[chunk]).backward()</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">eval</span>()</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>            v <span class="op">=</span> <span class="dv">200</span> <span class="op">*</span> bce(model(Cva, Kva), yva).item()</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="op">&lt;</span> best:</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>            best, best_epoch <span class="op">=</span> v, epoch</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>            best_state <span class="op">=</span> {k: t.clone() <span class="cf">for</span> k, t <span class="kw">in</span> model.state_dict().items()}</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">-</span> best_epoch <span class="op">&gt;=</span> patience:</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>    model.load_state_dict(best_state)</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, best_epoch</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div id="d87aad73" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>emb_model, emb_stop <span class="op">=</span> train_embed(idx_learn, seed<span class="op">=</span><span class="dv">100</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"embedding cardinalities, including the reserved unseen index:"</span>, cards)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"embedding network early stop at epoch </span><span class="sc">{</span>emb_stop<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>embedding cardinalities, including the reserved unseen index: {'Country': 5, 'Education': 6, 'HomeOwnership': 13, 'VerificationType': 5, 'EmploymentDuration': 11}
+embedding network early stop at epoch 161</code></pre>
+</div>
+</div>
+<p>Each categorical now has a two-dimensional coordinate per level. Those two coordinates are correlated in general, so a principal component rotation is applied within each characteristic, which changes the coordinate system to an uncorrelated one and leaves the information untouched. The rotation is estimated on the learning sample alone, for the reason every scaler in this series is.</p>
+<div id="1be49095" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>emb_cols <span class="op">=</span> {}</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> j, c <span class="kw">in</span> <span class="bu">enumerate</span>(CATS):</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> emb_model.emb[j].weight.detach().numpy()      <span class="co"># (K + 1, 2)</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    E <span class="op">=</span> W[codes[:, j]]                                <span class="co"># one row per loan</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    Ecen <span class="op">=</span> E <span class="op">-</span> E[idx_learn].mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    _, _, Vt <span class="op">=</span> np.linalg.svd(Ecen[idx_learn], full_matrices<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    P <span class="op">=</span> Ecen <span class="op">@</span> Vt.T</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    emb_cols[<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">Emb1"</span>], emb_cols[<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">}</span><span class="ss">Emb2"</span>] <span class="op">=</span> P[:, <span class="dv">0</span>], P[:, <span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-noise-covariate" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="the-noise-covariate"><span class="header-section-number">3.3</span> The noise covariate</h2>
+<p>The course adds one purely random, independent, standardised covariate to the design. It carries no information about default by construction, so whatever fluctuation its attention weight shows is the fluctuation attributable to noise alone, and that calibrates the test for dropping a term. The covariate is called <code>RandN</code> here as it is there.</p>
+<div id="2923418b" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>X_all <span class="op">=</span> pd.DataFrame({</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AgeCens"</span>: g[<span class="st">"AgeCens"</span>].astype(<span class="bu">float</span>).to_numpy(),</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"logIncome"</span>: g[<span class="st">"logIncome"</span>].astype(<span class="bu">float</span>).to_numpy(),</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"NewCredit"</span>: g[<span class="st">"NewCreditCustomer"</span>].astype(<span class="bu">float</span>).to_numpy(),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">**</span>emb_cols,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"RandN"</span>: np.random.default_rng(<span class="dv">100</span>).normal(size<span class="op">=</span><span class="bu">len</span>(g)),</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>NAMES <span class="op">=</span> <span class="bu">list</span>(X_all.columns)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>q <span class="op">=</span> <span class="bu">len</span>(NAMES)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>m_hat <span class="op">=</span> X_all.iloc[idx_learn].mean()</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>s_hat <span class="op">=</span> X_all.iloc[idx_learn].std().replace(<span class="dv">0</span>, <span class="fl">1.0</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>Z <span class="op">=</span> ((X_all <span class="op">-</span> m_hat) <span class="op">/</span> s_hat).astype(np.float32)</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>Zl, Zt <span class="op">=</span> Z.iloc[idx_learn].to_numpy(), Z.iloc[idx_test].to_numpy()</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"design: q = </span><span class="sc">{</span>q<span class="sc">}</span><span class="ss"> continuous standardised covariates"</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">", "</span>.join(NAMES))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>design: q = 14 continuous standardised covariates
+AgeCens, logIncome, NewCredit, CountryEmb1, CountryEmb2, EducationEmb1, EducationEmb2, HomeOwnershipEmb1, HomeOwnershipEmb2, VerificationTypeEmb1, VerificationTypeEmb2, EmploymentDurationEmb1, EmploymentDurationEmb2, RandN</code></pre>
+</div>
+</div>
+<p>Fourteen columns, against the 38 of the one-hot design lectures 4 to 8 used. The two designs are therefore not interchangeable, and the deviances below are comparable to the earlier lectures’ only because the response, the sample, and the split are identical.</p>
+</section>
+<section id="the-benchmark-glm" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="the-benchmark-glm"><span class="header-section-number">3.4</span> The benchmark GLM</h2>
+<div id="0ac3c14e" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dev(pred, obs):</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.clip(np.asarray(pred, <span class="bu">float</span>), <span class="fl">1e-12</span>, <span class="dv">1</span> <span class="op">-</span> <span class="fl">1e-12</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.asarray(obs, <span class="bu">float</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">*</span> np.mean(<span class="op">-</span>y <span class="op">*</span> np.log(p) <span class="op">-</span> (<span class="dv">1</span> <span class="op">-</span> y) <span class="op">*</span> np.log(<span class="dv">1</span> <span class="op">-</span> p))</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>glm <span class="op">=</span> sm.GLM(yl, sm.add_constant(Zl), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>p_glm_l <span class="op">=</span> glm.predict(sm.add_constant(Zl))</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>p_glm_t <span class="op">=</span> glm.predict(sm.add_constant(Zt))</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GLM  in-sample </span><span class="sc">{</span>dev(p_glm_l, yl)<span class="sc">:.3f}</span><span class="ss">   out-of-sample </span><span class="sc">{</span>dev(p_glm_t, yt)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"estimate"</span>: glm.params[<span class="dv">1</span>:], <span class="st">"Wald z"</span>: glm.tvalues[<span class="dv">1</span>:],</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"p"</span>: glm.pvalues[<span class="dv">1</span>:]}, index<span class="op">=</span>NAMES).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>GLM  in-sample 106.945   out-of-sample 108.522
+                        estimate    Wald z       p
+AgeCens                  -0.1202  -16.1189  0.0000
+logIncome                -0.0324   -4.1226  0.0000
+NewCredit                 0.1564   21.2425  0.0000
+CountryEmb1              -0.7619 -100.6072  0.0000
+CountryEmb2               0.2129   27.5836  0.0000
+EducationEmb1            -0.1034  -14.7021  0.0000
+EducationEmb2             0.1176   16.7753  0.0000
+HomeOwnershipEmb1         0.0567    8.2270  0.0000
+HomeOwnershipEmb2         0.1236   16.9324  0.0000
+VerificationTypeEmb1     -0.0678   -9.7792  0.0000
+VerificationTypeEmb2     -0.0821  -11.2113  0.0000
+EmploymentDurationEmb1   -0.0832  -11.7414  0.0000
+EmploymentDurationEmb2   -0.0590   -8.5426  0.0000
+RandN                    -0.0053   -0.7703  0.4411</code></pre>
+</div>
+</div>
+<p>Read that table the way a drop-one analysis is read. <code>RandN</code> is the only term whose Wald test fails, at <span class="math inline">\(p = 0.44\)</span>, which is what a covariate carrying no information should do and is a first sanity check on the design. <code>CountryEmb1</code> reaches a Wald statistic near <span class="math inline">\(-100\)</span>, dwarfing everything else, and the series has met that dominance before under three other methods. Every remaining term clears the conventional threshold.</p>
+<p>One comparison deserves stating rather than burying. This GLM’s out-of-sample deviance of 108.522 is <em>worse</em> than the 108.20 that lecture 2’s hand-banded GLM achieved on the same sample. Consequently the embedded linear design is a slightly poorer linear model than the banded one, which is unsurprising, since banding buys a step function in age and income where this design has straight lines. The comparison that matters is what the LocalGLMnet does with the same fourteen columns.</p>
+</section>
+</section>
+<section id="fitting-the-localglmnet" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Fitting the LocalGLMnet</h1>
+<section id="the-architecture-in-pytorch" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="the-architecture-in-pytorch"><span class="header-section-number">4.1</span> The architecture in PyTorch</h2>
+<p>The attention module is a three-hidden-layer network of widths 20, 15, and 10 with <code>tanh</code> activations, matching the course and matching every feed-forward network in this series since lecture 4. Its output layer is linear and has width <span class="math inline">\(q\)</span>, so it emits one attention weight per covariate. The dot product with the input then feeds a single-unit readout carrying the intercept, and the logistic link closes the model.</p>
+<div id="79efbad9" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LocalGLMnet(torch.nn.Module):</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Bernoulli LocalGLMnet: sigmoid(b0 + w * &lt;z(x), x&gt;)."""</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, q, widths<span class="op">=</span>(<span class="dv">20</span>, <span class="dv">15</span>, <span class="dv">10</span>), seed<span class="op">=</span><span class="dv">100</span>):</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        torch.manual_seed(seed)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        layers, prev <span class="op">=</span> [], q</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> width <span class="kw">in</span> widths:</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>            layers <span class="op">+=</span> [torch.nn.Linear(prev, width), torch.nn.Tanh()]</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>            prev <span class="op">=</span> width</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        layers <span class="op">+=</span> [torch.nn.Linear(prev, q)]</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.attention <span class="op">=</span> torch.nn.Sequential(<span class="op">*</span>layers)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.readout <span class="op">=</span> torch.nn.Linear(<span class="dv">1</span>, <span class="dv">1</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> forward(<span class="va">self</span>, x):</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>        z <span class="op">=</span> <span class="va">self</span>.attention(x)</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> torch.sigmoid(<span class="va">self</span>.readout((z <span class="op">*</span> x).<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The readout’s weight <span class="math inline">\(w\)</span> scales every attention weight at once, so the quantity to interpret is <span class="math inline">\(w \, z_j(\boldsymbol{X})\)</span> rather than <span class="math inline">\(z_j(\boldsymbol{X})\)</span> alone. The helper below returns the scaled weights, and every attention weight quoted in this lecture is scaled.</p>
+<div id="74a83f5e" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention_weights(model, X):</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> pd.DataFrame(model.attention(torch.tensor(X)).numpy() <span class="op">*</span> w,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                            columns<span class="op">=</span>NAMES)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>There is no volume input, unlike the course’s Poisson architecture, since the credit response carries no exposure offset. One consequence is convenient later. The course needed a second, volume-free copy of the model to take gradients, whereas here one architecture serves both purposes.</p>
+</section>
+<section id="initialising-at-the-fitted-glm" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="initialising-at-the-fitted-glm"><span class="header-section-number">4.2</span> Initialising at the fitted GLM</h2>
+<p>The course recommends initialising stochastic gradient descent precisely at the maximum likelihood GLM, which fixes the role of every term before the optimiser can permute them and thereby defuses the identifiability problem of section 3.4. The construction is exact. Zero the attention output layer’s weight matrix, set its bias vector to the GLM’s slope estimates, set the readout weight to one, and set the readout bias to the GLM intercept. The attention module then returns the constant vector <span class="math inline">\(\vartheta_{1:q}\)</span> for every borrower, and the model is the GLM.</p>
+<div id="f47a701b" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> glm_init(model, beta):</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Set the network's weights so that it evaluates the fitted GLM exactly."""</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        last <span class="op">=</span> model.attention[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        last.weight.zero_()</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        last.bias.copy_(torch.tensor(beta[<span class="dv">1</span>:], dtype<span class="op">=</span>torch.float32))</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        model.readout.weight.fill_(<span class="fl">1.0</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        model.readout.bias.fill_(<span class="bu">float</span>(beta[<span class="dv">0</span>]))</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>m0 <span class="op">=</span> glm_init(LocalGLMnet(q, seed<span class="op">=</span><span class="dv">100</span>), glm.params).<span class="bu">eval</span>()</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    p0l <span class="op">=</span> m0(torch.tensor(Zl)).numpy().ravel()</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    p0t <span class="op">=</span> m0(torch.tensor(Zt)).numpy().ravel()</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"GLM-initialised network   in-sample </span><span class="sc">{</span>dev(p0l, yl)<span class="sc">:.3f}</span><span class="ss">   "</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"out-of-sample </span><span class="sc">{</span>dev(p0t, yt)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"fitted GLM                in-sample </span><span class="sc">{</span>dev(p_glm_l, yl)<span class="sc">:.3f}</span><span class="ss">   "</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"out-of-sample </span><span class="sc">{</span>dev(p_glm_t, yt)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>GLM-initialised network   in-sample 106.945   out-of-sample 108.522
+fitted GLM                in-sample 106.945   out-of-sample 108.522</code></pre>
+</div>
+</div>
+<p>The two lines agree to three decimals on both samples, which is the check worth running before any training happens. A mismatch here would mean the weight indexing is wrong, and the symptom would otherwise appear much later as attention weights that refuse to make sense.</p>
+</section>
+<section id="training" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="training"><span class="header-section-number">4.3</span> Training</h2>
+<div id="40ebad97" class="cell" data-execution_count="11">
+<details class="code-fold">
+<summary>Training routine</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_lgn(Zlearn, y_lrn, beta, seed<span class="op">=</span><span class="dv">100</span>, epochs<span class="op">=</span><span class="dv">200</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">30</span>):</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.random.default_rng(seed).permutation(<span class="bu">len</span>(Zlearn))</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    cut <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.9</span> <span class="op">*</span> <span class="bu">len</span>(p))</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    tr, va <span class="op">=</span> p[:cut], p[cut:]</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    Xtr, Xva <span class="op">=</span> torch.tensor(Zlearn[tr]), torch.tensor(Zlearn[va])</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    ytr <span class="op">=</span> torch.tensor(y_lrn[tr], dtype<span class="op">=</span>torch.float32).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    yva <span class="op">=</span> torch.tensor(y_lrn[va], dtype<span class="op">=</span>torch.float32).unsqueeze(<span class="dv">1</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    model <span class="op">=</span> glm_init(LocalGLMnet(Zlearn.shape[<span class="dv">1</span>], seed<span class="op">=</span>seed), beta)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    opt <span class="op">=</span> torch.optim.NAdam(model.parameters())</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    bce <span class="op">=</span> torch.nn.BCELoss()</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>    gen <span class="op">=</span> torch.Generator().manual_seed(seed)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    best, best_epoch, best_state <span class="op">=</span> np.inf, <span class="dv">0</span>, <span class="va">None</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, epochs <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>        model.train()</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> chunk <span class="kw">in</span> torch.randperm(<span class="bu">len</span>(Xtr), generator<span class="op">=</span>gen).split(batch):</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>            opt.zero_grad()</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>            bce(model(Xtr[chunk]), ytr[chunk]).backward()</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>            opt.step()</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>        model.<span class="bu">eval</span>()</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>            v <span class="op">=</span> <span class="dv">200</span> <span class="op">*</span> bce(model(Xva), yva).item()</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> v <span class="op">&lt;</span> best:</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>            best, best_epoch <span class="op">=</span> v, epoch</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>            best_state <span class="op">=</span> {k: t.clone() <span class="cf">for</span> k, t <span class="kw">in</span> model.state_dict().items()}</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> epoch <span class="op">-</span> best_epoch <span class="op">&gt;=</span> patience:</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">break</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    model.load_state_dict(best_state)</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>    model.<span class="bu">eval</span>()</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, best_epoch</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>The routine is lecture 4’s, with the GLM initialisation inserted and the early-stopping split, the weight initialisation, and the mini-batch order all drawn from one seed, exactly as lecture 6 required for its nagging argument.</p>
+<div id="09af3d02" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>M <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>models, stops, preds <span class="op">=</span> [], [], []</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> s <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>, <span class="dv">100</span> <span class="op">+</span> M):</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    model, stop <span class="op">=</span> train_lgn(Zl, yl, glm.params, seed<span class="op">=</span>s)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>        preds.append(model(torch.tensor(Zt)).numpy().ravel())</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    models.append(model)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    stops.append(stop)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> models[<span class="dv">0</span>]                       <span class="co"># the primary fit, seed 100</span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>    p_lgn_l <span class="op">=</span> model(torch.tensor(Zl)).numpy().ravel()</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>p_lgn_t <span class="op">=</span> preds[<span class="dv">0</span>]</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>p_bar <span class="op">=</span> np.mean(preds, axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>devs <span class="op">=</span> np.array([dev(p, yt) <span class="cf">for</span> p <span class="kw">in</span> preds])</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"seed 100          early stop </span><span class="sc">{</span>stops[<span class="dv">0</span>]<span class="sc">:&gt;3}</span><span class="ss">   in-sample "</span></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>dev(p_lgn_l, yl)<span class="sc">:.3f}</span><span class="ss">   out-of-sample </span><span class="sc">{</span>devs[<span class="dv">0</span>]<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"over </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> seeds                        out-of-sample mean "</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>devs<span class="sc">.</span>mean()<span class="sc">:.3f}</span><span class="ss">, sd </span><span class="sc">{</span>devs<span class="sc">.</span>std(ddof<span class="op">=</span><span class="dv">1</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"nagged over </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits                  out-of-sample </span><span class="sc">{</span>dev(p_bar, yt)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>seed 100          early stop  67   in-sample 104.874   out-of-sample 107.360
+over 10 seeds                        out-of-sample mean 107.434, sd 0.086
+nagged over 10 fits                  out-of-sample 107.132</code></pre>
+</div>
+</div>
+<p>Set the result beside the series. Lecture 2’s GLM reached 108.20 out of sample, lecture 4’s feed-forward network 107.621 at an AUC of 0.7241, and lecture 8’s ICEnet at <span class="math inline">\(\lambda = 0.1\)</span> reached 107.583. The LocalGLMnet therefore beats the plain network on this book, and nagging over ten fits beats everything the series has produced.</p>
+<p>That ordering is worth pausing on, because the course found the opposite. On the French motor data the LocalGLMnet came out slightly behind the feed-forward network, and the course attributed the gap partly to the noise covariate’s extra over-fitting potential. Here the constrained functional form appears to help rather than hurt, which is consistent with a book whose signal is concentrated in a handful of terms. Section 10 refits without the noise covariate and confirms that it costs almost nothing either way.</p>
+</section>
+</section>
+<section id="variable-importance-and-the-noise-calibrated-test" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Variable importance and the noise-calibrated test</h1>
+<div class="callout callout-style-default callout-note callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>With every covariate standardised, the attention weights are directly comparable across components, so their mean absolute value ranks the terms. The purely random covariate supplies the yardstick that turns the ranking into a test.</p>
+</div>
+</div>
+<section id="what-the-noise-covariate-measures" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="what-the-noise-covariate-measures"><span class="header-section-number">5.1</span> What the noise covariate measures</h2>
+<div id="2039cc94" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>A <span class="op">=</span> attention_weights(model, Zt)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>sd_noise, mean_noise <span class="op">=</span> A[<span class="st">"RandN"</span>].std(), A[<span class="st">"RandN"</span>].mean()</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>band <span class="op">=</span> <span class="fl">2.576</span> <span class="op">*</span> sd_noise</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"z_RandN over the test sample: mean </span><span class="sc">{</span>mean_noise<span class="sc">:+.5f}</span><span class="ss">, sd </span><span class="sc">{</span>sd_noise<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"zero-centred 99 per cent band: +/- </span><span class="sc">{</span>band<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>z_RandN over the test sample: mean +0.01241, sd 0.04805
+zero-centred 99 per cent band: +/- 0.1238</code></pre>
+</div>
+</div>
+<p>The band is centred on zero, because the null hypothesis under test is <span class="math inline">\(z_j \equiv 0\)</span>. The noise term’s own fitted mean is reported separately above and is the bias the band ignores, which the course flags for its own interquartile shading and this lecture states as a convention rather than leaving implicit.</p>
+<div id="8c0de1b3" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> A.<span class="bu">abs</span>().mean().sort_values().index</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">4.4</span>))</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>bp <span class="op">=</span> ax.boxplot([A[c] <span class="cf">for</span> c <span class="kw">in</span> order], vert<span class="op">=</span><span class="va">False</span>, widths<span class="op">=</span><span class="fl">0.6</span>, showfliers<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                patch_artist<span class="op">=</span><span class="va">True</span>, medianprops<span class="op">=</span><span class="bu">dict</span>(color<span class="op">=</span><span class="st">"white"</span>, lw<span class="op">=</span><span class="fl">1.1</span>))</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k, c <span class="kw">in</span> <span class="bu">enumerate</span>(order):</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    bp[<span class="st">"boxes"</span>][k].<span class="bu">set</span>(facecolor<span class="op">=</span>RED <span class="cf">if</span> c <span class="op">==</span> <span class="st">"RandN"</span> <span class="cf">else</span> GREY, edgecolor<span class="op">=</span><span class="st">"none"</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> v <span class="kw">in</span> (<span class="op">-</span>band, band):</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    ax.axvline(v, color<span class="op">=</span>RED, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="fl">0.9</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels(order, fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"attention weight </span><span class="dv">$</span><span class="vs">w</span><span class="ch">\,</span><span class="vs">z_j</span><span class="kw">(</span><span class="dv">\b</span><span class="vs">oldsymbol{X}</span><span class="kw">)</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/09_credit-localglmnet/cell-15-output-1.png" width="1069" height="645" class="figure-img"></p>
+<figcaption>Attention weights <span class="math inline">\(w\,z_j(\boldsymbol{X}_t)\)</span> over the 29,734 test loans, one box per term, ordered by mean absolute value. The dashed lines are the zero-centred 99 per cent band read off the purely random covariate <code>RandN</code>, whose own box is drawn in bronze-red at the foot. A term whose weights sat wholly inside that band would be a candidate for dropping.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Three things are visible. <code>CountryEmb1</code> sits far to the left of everything else and never approaches zero, so country is doing most of the work in this model as it has in every other the series has fitted. <code>RandN</code> has by some way the tightest box, which is what a covariate carrying no information should produce. Several terms, however, straddle zero with substantial spread, and <code>logIncome</code> is among them, which section 7 takes up.</p>
+<p>The picture and the importance measure of the next section do not quite agree, and the disagreement is worth naming rather than leaving for a reader to notice.</p>
+<div id="a45e2108" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>iqr <span class="op">=</span> A.quantile([<span class="fl">0.25</span>, <span class="fl">0.75</span>])</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>inside <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> NAMES</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>          <span class="cf">if</span> c <span class="op">!=</span> <span class="st">"RandN"</span> <span class="kw">and</span> <span class="bu">abs</span>(iqr.loc[<span class="fl">0.25</span>, c]) <span class="op">&lt;</span> band <span class="kw">and</span> <span class="bu">abs</span>(iqr.loc[<span class="fl">0.75</span>, c]) <span class="op">&lt;</span> band]</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"interquartile range wholly inside the noise band:"</span>, <span class="st">", "</span>.join(inside))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"VI"</span>: A.<span class="bu">abs</span>().mean()[inside],</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"multiple of VI(RandN)"</span>: A.<span class="bu">abs</span>().mean()[inside] <span class="op">/</span> A.<span class="bu">abs</span>().mean()[<span class="st">"RandN"</span>]})</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>      .<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>interquartile range wholly inside the noise band: HomeOwnershipEmb1, VerificationTypeEmb2, EmploymentDurationEmb1
+                            VI  multiple of VI(RandN)
+HomeOwnershipEmb1       0.1102                 2.7013
+VerificationTypeEmb2    0.0721                 1.7659
+EmploymentDurationEmb1  0.0671                 1.6449</code></pre>
+</div>
+</div>
+<p>Three embedding coordinates have their middle half inside the band while their mean absolute weight sits above the noise term’s, so the two readings point different ways. The reason is that the box describes the typical borrower and the importance measure integrates the tails, and a term can be inert for most of the book and active for some of it. Consequently neither statistic settles the question on its own, and these three are simply the weakest terms in the model. Deciding their fate properly wants lecture 8’s group LASSO applied to the embedding coordinates as groups, which is the instrument built for exactly this and is why the course points at it for categorical covariates.</p>
+</section>
+<section id="the-importance-measure" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="the-importance-measure"><span class="header-section-number">5.2</span> The importance measure</h2>
+<p>With every component standardised, the magnitudes of <span class="math inline">\(z_j\)</span> are directly comparable, which motivates <span class="math display">\[
+\operatorname{VI}_j = \frac{1}{n}\sum_{i=1}^{n}
+\left| z_j^{(d:1)}(\boldsymbol{X}_i)\right| .
+\]</span> A value close to the noise covariate’s supports dropping the term, and a large value says the term moves the regression function a great deal. The reasoning parallels the likelihood ratio test for nested GLMs, and Richman and Wüthrich (2023a) give the empirical test.</p>
+<div id="cc4c7e32" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>VI <span class="op">=</span> A.<span class="bu">abs</span>().mean().sort_values()</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">3.8</span>))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>ax.barh(<span class="bu">range</span>(<span class="bu">len</span>(VI)), VI.to_numpy(),</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>[RED <span class="cf">if</span> c <span class="op">==</span> <span class="st">"CountryEmb1"</span> <span class="cf">else</span> GREY <span class="cf">for</span> c <span class="kw">in</span> VI.index], height<span class="op">=</span><span class="fl">0.68</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(VI[<span class="st">"RandN"</span>], color<span class="op">=</span>BLUE, lw<span class="op">=</span><span class="fl">1.2</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(VI)))</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels(VI.index, fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">operatorname{VI}_j</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/09_credit-localglmnet/cell-17-output-1.png" width="1069" height="556" class="figure-img"></p>
+<figcaption>Variable importance <span class="math inline">\(\operatorname{VI}_j\)</span> over the test sample, seed 100. The vertical line is the purely random covariate’s own importance, which is the level a term carrying no information produces. <code>Country</code>’s first rotated coordinate is drawn in bronze-red.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<div id="09122d5c" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>VIm <span class="op">=</span> pd.DataFrame([attention_weights(m, Zt).<span class="bu">abs</span>().mean() <span class="cf">for</span> m <span class="kw">in</span> models])</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"VI (seed 100)"</span>: VI,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f"mean over </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits"</span>: VIm.mean(),</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"sd"</span>: VIm.std()}).sort_values(<span class="st">"VI (seed 100)"</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                        VI (seed 100)  mean over 10 fits      sd
+RandN                          0.0408             0.0314  0.0064
+EmploymentDurationEmb1         0.0671             0.0650  0.0087
+VerificationTypeEmb2           0.0721             0.0959  0.0259
+EmploymentDurationEmb2         0.0834             0.0642  0.0152
+HomeOwnershipEmb1              0.1102             0.1543  0.0411
+VerificationTypeEmb1           0.1455             0.1368  0.0273
+logIncome                      0.1585             0.1057  0.0261
+EducationEmb2                  0.1591             0.1430  0.0092
+NewCredit                      0.1653             0.1738  0.0206
+AgeCens                        0.1717             0.1880  0.0166
+EducationEmb1                  0.1738             0.1233  0.0244
+CountryEmb2                    0.2416             0.2151  0.0253
+HomeOwnershipEmb2              0.2637             0.1660  0.0437
+CountryEmb1                    0.8005             0.7789  0.0301</code></pre>
+</div>
+</div>
+<p>Read the third column before the first. Four terms carry a standard deviation across fits reaching a quarter of their mean, and <code>logIncome</code> sits just under that at 25 per cent, so the single-fit ranking is not something to carry into a variable-reduction decision on its own. Income’s own case makes the point. Seed 100 puts its importance at 0.1585 while the ten-fit mean is 0.1057, so the primary fit happens to sit at the top of that term’s range. <code>CountryEmb1</code>, by contrast, is stable to within 4 per cent of its mean.</p>
+</section>
+<section id="three-orderings-of-the-same-book" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="three-orderings-of-the-same-book"><span class="header-section-number">5.3</span> Three orderings of the same book</h2>
+<p>The series can now rank these characteristics three independent ways. Lecture <code>F1</code> computed information values on classed characteristics, lecture 8 recorded the order in which group LASSO eliminated whole risk drivers, and this lecture has attention weights. To compare them, the attention weights are aggregated to characteristic level, since a rotated embedding coordinate is not a characteristic and cannot be ranked as one. The natural aggregate is the mean absolute contribution to the log-odds, <span class="math inline">\(\frac1n \sum_i \left| \sum_{j \in k} z_j(\boldsymbol{X}_i) X_{ij} \right|\)</span> summed over the coordinates belonging to characteristic <span class="math inline">\(k\)</span>.</p>
+<div id="96025e8a" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>GROUPS <span class="op">=</span> {<span class="st">"Country"</span>: [<span class="st">"CountryEmb1"</span>, <span class="st">"CountryEmb2"</span>], <span class="st">"Age"</span>: [<span class="st">"AgeCens"</span>],</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>          <span class="st">"logIncome"</span>: [<span class="st">"logIncome"</span>], <span class="st">"NewCreditCustomer"</span>: [<span class="st">"NewCredit"</span>],</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>          <span class="st">"HomeOwnership"</span>: [<span class="st">"HomeOwnershipEmb1"</span>, <span class="st">"HomeOwnershipEmb2"</span>],</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"Education"</span>: [<span class="st">"EducationEmb1"</span>, <span class="st">"EducationEmb2"</span>],</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"VerificationType"</span>: [<span class="st">"VerificationTypeEmb1"</span>, <span class="st">"VerificationTypeEmb2"</span>],</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"EmploymentDuration"</span>: [<span class="st">"EmploymentDurationEmb1"</span>, <span class="st">"EmploymentDurationEmb2"</span>],</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>          <span class="st">"RandN"</span>: [<span class="st">"RandN"</span>]}</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>GN <span class="op">=</span> <span class="bu">list</span>(GROUPS)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> grouped_contributions(model, X):</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Contribution of each characteristic to the log-odds, per borrower."""</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>        xt <span class="op">=</span> torch.tensor(X)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>        C <span class="op">=</span> (model.attention(xt) <span class="op">*</span> w <span class="op">*</span> xt).numpy()</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.stack([C[:, [NAMES.index(c) <span class="cf">for</span> c <span class="kw">in</span> cs]].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">for</span> cs <span class="kw">in</span> GROUPS.values()], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>Cg <span class="op">=</span> np.mean([grouped_contributions(m, Zt) <span class="cf">for</span> m <span class="kw">in</span> models], axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Information values from F1 (classed characteristics) and the group LASSO</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a><span class="co"># survival order from lecture 8, where 1 leaves first and 4 survives longest.</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>F1_IV <span class="op">=</span> {<span class="st">"Country"</span>: <span class="fl">0.5404</span>, <span class="st">"NewCreditCustomer"</span>: <span class="fl">0.1199</span>, <span class="st">"HomeOwnership"</span>: <span class="fl">0.0909</span>,</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>         <span class="st">"logIncome"</span>: <span class="fl">0.0579</span>, <span class="st">"Education"</span>: <span class="fl">0.0256</span>, <span class="st">"VerificationType"</span>: <span class="fl">0.0250</span>,</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>         <span class="st">"EmploymentDuration"</span>: <span class="fl">0.0137</span>, <span class="st">"Age"</span>: <span class="fl">0.0067</span>}</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>L8_ORDER <span class="op">=</span> {<span class="st">"logIncome"</span>: <span class="dv">1</span>, <span class="st">"VerificationType"</span>: <span class="dv">2</span>, <span class="st">"EmploymentDuration"</span>: <span class="dv">2</span>,</span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Age"</span>: <span class="dv">2</span>, <span class="st">"Education"</span>: <span class="dv">3</span>, <span class="st">"HomeOwnership"</span>: <span class="dv">3</span>, <span class="st">"Country"</span>: <span class="dv">4</span>,</span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>            <span class="st">"NewCreditCustomer"</span>: <span class="dv">4</span>}</span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> pd.DataFrame({<span class="st">"grouped importance"</span>: pd.Series(np.<span class="bu">abs</span>(Cg).mean(axis<span class="op">=</span><span class="dv">0</span>), index<span class="op">=</span>GN),</span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"F1 information value"</span>: pd.Series(F1_IV),</span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"08 group LASSO survival"</span>: pd.Series(L8_ORDER)})</span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> T.sort_values(<span class="st">"grouped importance"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(T.<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>sub <span class="op">=</span> T.dropna(subset<span class="op">=</span>[<span class="st">"F1 information value"</span>])</span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Spearman correlation of the first two columns over the eight "</span></span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"characteristics: "</span></span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>sub[<span class="st">'grouped importance'</span>]<span class="sc">.</span>corr(sub[<span class="st">'F1 information value'</span>], method<span class="op">=</span><span class="st">'spearman'</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                    grouped importance  F1 information value  08 group LASSO survival
+Country                         0.7349                0.5404                      4.0
+NewCreditCustomer               0.1513                0.1199                      4.0
+HomeOwnership                   0.1478                0.0909                      3.0
+Age                             0.1358                0.0067                      2.0
+Education                       0.1307                0.0256                      3.0
+VerificationType                0.1150                0.0250                      2.0
+EmploymentDuration              0.0746                0.0137                      2.0
+logIncome                       0.0451                0.0579                      1.0
+RandN                           0.0105                   NaN                      NaN
+
+Spearman correlation of the first two columns over the eight characteristics: 0.619</code></pre>
+</div>
+</div>
+<p>The two statistics measure different things on different designs, so the agreement is corroborative and it is not confirmatory. <code>F1</code>’s information value is computed on classed characteristics with a monotonicity requirement imposed, whereas the grouped importance above is computed on a standardised embedded design with no shape constraint at all. Bearing that in mind, a Spearman correlation of 0.619 over eight characteristics is a reasonable level of agreement, and all three orderings put <code>Country</code> first by a distance.</p>
+<p>The two disagreements are the interesting part, and the series already explains both.</p>
+<p><code>Age</code> ranks fourth on attention weight and last on information value. <code>F1</code> measured age’s information value at 0.0066 and diagnosed why. Forcing a monotone classing reports lecture 1’s hump-shaped age profile as noise, since a monotone step function cannot express a hump, and a two-arm classing at age 41 recovered only 1.64 times that and still missed the 0.02 floor. The LocalGLMnet imposes no shape constraint, so it sees the hump and ranks age accordingly. An independent method has therefore reproduced <code>F1</code>’s own diagnosis from the other side.</p>
+<p><code>logIncome</code> ranks last on attention weight and fourth on information value, and here the attention weight has company. Lecture 8’s group LASSO eliminated <code>logIncome</code> first of the eight drivers, at <span class="math inline">\(\lambda = 1{,}000\)</span>, and lecture <code>C1</code> standardised lecture 2’s GLM over the observed country and age distribution to find the marginal income curve falling only from 30.4 to 27.8 per cent across the entire income range. Three methods therefore agree that income is weak on this book once country is in the model, and it is the classed information value, computed characteristic by characteristic without conditioning, that stands apart.</p>
+</section>
+</section>
+<section id="the-income-term-and-lecture-1s-paradox" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> The income term and lecture 1’s paradox</h1>
+<div class="callout callout-style-default callout-note callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture 1 found income’s apparent effect reversing once country was held fixed, which is a textbook Simpson’s paradox. A varying coefficient can in principle show that reversal borrower by borrower, where a GLM coefficient must average over it. This section asks whether it does, and the answer needs more than one fit to reach.</p>
+</div>
+</div>
+<section id="one-fits-answer" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="one-fits-answer"><span class="header-section-number">6.1</span> One fit’s answer</h2>
+<div id="220ee8cd" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ctry <span class="op">=</span> g[<span class="st">"Country"</span>].to_numpy().astype(<span class="bu">str</span>)[idx_test]</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>z_inc <span class="op">=</span> A[<span class="st">"logIncome"</span>].to_numpy()</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"z_logIncome, seed 100: </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (z_inc <span class="op">&gt;</span> <span class="dv">0</span>)<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss"> per cent positive, "</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"range </span><span class="sc">{</span>z_inc<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:+.3f}</span><span class="ss"> to </span><span class="sc">{</span>z_inc<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:+.3f}</span><span class="ss">"</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"country"</span>: ctry, <span class="st">"z"</span>: z_inc, <span class="st">"default"</span>: yt})</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>      .groupby(<span class="st">"country"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>      .agg(n<span class="op">=</span>(<span class="st">"z"</span>, <span class="st">"size"</span>), mean_z<span class="op">=</span>(<span class="st">"z"</span>, <span class="st">"mean"</span>),</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>           pct_positive<span class="op">=</span>(<span class="st">"z"</span>, <span class="kw">lambda</span> s: <span class="dv">100</span> <span class="op">*</span> (s <span class="op">&gt;</span> <span class="dv">0</span>).mean()),</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>           default_rate<span class="op">=</span>(<span class="st">"default"</span>, <span class="st">"mean"</span>)).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>z_logIncome, seed 100: 37.4 per cent positive, range -0.554 to +0.742
+             n  mean_z  pct_positive  default_rate
+country                                           
+EE       17262  0.0400     51.436699        0.1755
+ES        5191 -0.1235     19.437500        0.5496
+FI        7216 -0.1618     16.906900        0.3826
+SK          65 -0.2667      0.000000        0.6462</code></pre>
+</div>
+</div>
+<p>Taken alone, that table tells the story the series predicted. Income’s attention weight is positive for a substantial minority of borrowers and negative for the rest, so the sign of income’s contribution genuinely depends on who the borrower is, which a single GLM coefficient of <span class="math inline">\(-0.032\)</span> cannot express. Furthermore the country means order themselves the way lecture 1’s paradox says they should, with Estonia, the low-default and low-income country, sitting furthest to the positive side.</p>
+</section>
+<section id="the-same-question-over-ten-fits" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="the-same-question-over-ten-fits"><span class="header-section-number">6.2</span> The same question over ten fits</h2>
+<p>The importance table in section 6.2 has already warned against trusting this term’s single-fit reading, so the honest next step is to ask the ten fits the same question.</p>
+<div id="d2654fb5" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>by_seed <span class="op">=</span> pd.DataFrame([</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    {c: attention_weights(m, Zt)[<span class="st">"logIncome"</span>].to_numpy()[ctry <span class="op">==</span> c].mean()</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>     <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>]} <span class="cf">for</span> m <span class="kw">in</span> models],</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="ss">f"seed </span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> s <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>, <span class="dv">100</span> <span class="op">+</span> M)])</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(by_seed.<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> pd.DataFrame({<span class="st">"mean"</span>: by_seed.mean(), <span class="st">"sd"</span>: by_seed.std(),</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"min"</span>: by_seed.<span class="bu">min</span>(), <span class="st">"max"</span>: by_seed.<span class="bu">max</span>()})</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>      .<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>              EE      FI      ES      SK
+seed 100  0.0400 -0.1618 -0.1235 -0.2667
+seed 101 -0.0205  0.0012 -0.0332 -0.0457
+seed 102  0.0400 -0.0455 -0.0823 -0.1257
+seed 103 -0.0528 -0.0041 -0.0374 -0.0998
+seed 104 -0.0466  0.0130  0.0022  0.0335
+seed 105 -0.0059 -0.0570 -0.0453 -0.0918
+seed 106 -0.0198  0.0182 -0.0183  0.1108
+seed 107 -0.0403 -0.0284 -0.1044  0.0654
+seed 108 -0.0036 -0.0878 -0.0355 -0.2363
+seed 109 -0.0104 -0.0425 -0.0947  0.0265
+
+      mean      sd     min     max
+EE -0.0120  0.0322 -0.0528  0.0400
+FI -0.0395  0.0545 -0.1618  0.0182
+ES -0.0573  0.0412 -0.1235  0.0022
+SK -0.0630  0.1256 -0.2667  0.1108</code></pre>
+</div>
+</div>
+<div id="13155200" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.6</span>, <span class="fl">3.2</span>))</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k, c <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>]):</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    ax.plot(by_seed[c], [k] <span class="op">*</span> M, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">4</span>, color<span class="op">=</span>GREY, alpha<span class="op">=</span><span class="fl">0.65</span>)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    ax.plot(by_seed[c].mean(), k, <span class="st">"D"</span>, ms<span class="op">=</span><span class="fl">6.5</span>, color<span class="op">=</span>RED)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="dv">4</span>))</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels([<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>])</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"mean </span><span class="dv">$</span><span class="vs">w</span><span class="ch">\,</span><span class="vs">z_{</span><span class="dv">\m</span><span class="vs">athrm{logIncome}}</span><span class="kw">(</span><span class="dv">\b</span><span class="vs">oldsymbol{X}</span><span class="kw">)</span><span class="dv">$</span><span class="vs"> over the country's test loans"</span>)</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/09_credit-localglmnet/cell-22-output-1.png" width="980" height="465" class="figure-img"></p>
+<figcaption>Mean income attention weight by country of residence, one marker per fit, over ten fits differing only in seed. The bronze-red markers are the ten-fit means. The between-country spread is of the same order as the between-fit spread, which is the finding.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The single-fit reading does not survive. Seed 100 gives Estonia a positive mean and Finland a strongly negative one, whereas other seeds reverse that ordering outright. Averaging over the ten fits does restore a consistent ranking, with Estonia least negative and Spain and Slovakia most negative, and yet the spread between Estonia and Spain is about 0.045 while the between-fit standard deviations run from 0.032 to 0.055 for the three populated countries. The signal and the seed noise are therefore of comparable size. Slovakia is worse still at 0.126, which is what 65 test loans buy and is the reason the three-country range is the one quoted.</p>
+</section>
+<section id="verdict" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="verdict"><span class="header-section-number">6.3</span> Verdict</h2>
+<p>The varying coefficient is directionally consistent with lecture 1’s paradox and it cannot establish the paradox on its own. Stating it any more strongly would mean promoting one seed’s fit to a finding, which is precisely what the noise covariate exists to prevent.</p>
+<p>Two things follow. First, where a term’s importance sits within a small multiple of the noise level, and income’s is 3.4 times it on the attention scale and 4.3 times it on the grouped scale, its per-borrower pattern should be read from an ensemble rather than from a fit, and reported with the between-fit spread attached. Second, the paradox itself is not in doubt, since lectures 1, C1, 8, and F1 established it by four other routes; what is in doubt is whether this particular instrument can see it, and on this book it can barely do so.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Where the causal reading stops">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Where the causal reading stops
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Everything above concerns what the fitted attention weight <em>is</em>, meaning a number the network multiplies income by for this borrower. Whether it may be read as the effect of income on that borrower’s default probability is a different question, requiring an adjustment set and an argument about unmeasured confounding. Lecture <code>C1</code> built that apparatus and deferred the attribution case, meaning SHAP, LocalGLMnet, and ICE marginal effects against the Table 2 fallacy, to <code>C2</code>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="interactions-from-the-attention-gradient" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Interactions from the attention gradient</h1>
+<p>An interaction shows up as a non-zero component of <span class="math display">\[
+\nabla z_j^{(d:1)}(\boldsymbol{X}) = \left(
+\frac{\partial}{\partial X_1} z_j^{(d:1)}(\boldsymbol{X}), \ldots,
+\frac{\partial}{\partial X_q} z_j^{(d:1)}(\boldsymbol{X})\right)
+\in \mathbb{R}^q ,
+\]</span> so the <span class="math inline">\(j\)</span>th coefficient is sensitive to the <span class="math inline">\(k\)</span>th covariate exactly where the <span class="math inline">\(k\)</span>th component is non-zero. Automatic differentiation gives the whole gradient in one backward pass, and the noise covariate again supplies the threshold, since the largest gradient component of <span class="math inline">\(z_{\rm RandN}\)</span> is the largest cross-sensitivity attributable to nothing.</p>
+<div id="b6bd70e2" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention_gradient(model, X, j):</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Gradient of the jth scaled attention weight with respect to every input."""</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> torch.tensor(X, requires_grad<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight.detach())</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    grad, <span class="op">=</span> torch.autograd.grad((model.attention(x)[:, j] <span class="op">*</span> w).<span class="bu">sum</span>(), x)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grad.numpy()</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>G <span class="op">=</span> pd.DataFrame({n: pd.Series(np.<span class="bu">abs</span>(attention_gradient(model, Zt,</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>                                                         NAMES.index(n))).mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>                               index<span class="op">=</span>NAMES) <span class="cf">for</span> n <span class="kw">in</span> NAMES}).T</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>ceiling <span class="op">=</span> G.loc[<span class="st">"RandN"</span>].<span class="bu">max</span>()</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"noise ceiling: largest mean |gradient| of z_RandN is </span><span class="sc">{</span>ceiling<span class="sc">:.4f}</span><span class="ss">, "</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"with respect to </span><span class="sc">{</span>G<span class="sc">.</span>loc[<span class="st">'RandN'</span>]<span class="sc">.</span>idxmax()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>pairs <span class="op">=</span> [(r, c, G.loc[r, c]) <span class="cf">for</span> r <span class="kw">in</span> NAMES <span class="cf">for</span> c <span class="kw">in</span> NAMES</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>         <span class="cf">if</span> r <span class="op">!=</span> c <span class="kw">and</span> G.loc[r, c] <span class="op">&gt;</span> ceiling]</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(pairs, columns<span class="op">=</span>[<span class="st">"attention weight"</span>, <span class="st">"sensitive to"</span>, <span class="st">"mean |gradient|"</span>])</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>      .sort_values(<span class="st">"mean |gradient|"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">8</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>noise ceiling: largest mean |gradient| of z_RandN is 0.0331, with respect to HomeOwnershipEmb2
+ attention weight      sensitive to  mean |gradient|
+HomeOwnershipEmb2     EducationEmb1           0.1354
+HomeOwnershipEmb2       CountryEmb2           0.1316
+HomeOwnershipEmb2 HomeOwnershipEmb1           0.1280
+      CountryEmb2 HomeOwnershipEmb2           0.1125
+    EducationEmb1         NewCredit           0.1051
+      CountryEmb2         logIncome           0.0992
+        logIncome         NewCredit           0.0958
+      CountryEmb2         NewCredit           0.0948</code></pre>
+</div>
+</div>
+<p>Two of those pairs are worth naming. The country term’s second coordinate is sensitive to log-income and log-income’s own weight is sensitive to <code>NewCredit</code>, so the network has found the income and country entanglement that lecture 1 diagnosed and section 7 could only report weakly. The gradient sees it because it asks a different question, namely whether the coefficient moves with the other covariate, rather than whether the coefficient’s country averages separate.</p>
+<p>The diagonal is a separate reading. A non-zero <span class="math inline">\(\partial z_j / \partial
+X_j\)</span> says the <span class="math inline">\(j\)</span>th term is non-linear in its own covariate, so a GLM term is inadequate there.</p>
+<div id="e9ae4619" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>j_age <span class="op">=</span> NAMES.index(<span class="st">"AgeCens"</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>Gage <span class="op">=</span> attention_gradient(model, Zt, j_age)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>xa <span class="op">=</span> Zt[:, j_age]</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.8</span>, <span class="fl">3.4</span>))</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, colour, lw <span class="kw">in</span> [(<span class="st">"AgeCens"</span>, RED, <span class="fl">2.0</span>), (<span class="st">"logIncome"</span>, GREY, <span class="fl">1.2</span>),</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>                         (<span class="st">"CountryEmb1"</span>, BLUE, <span class="fl">1.2</span>), (<span class="st">"RandN"</span>, GREY, <span class="fl">0.9</span>)]:</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    sm_ <span class="op">=</span> lowess(Gage[:, NAMES.index(name)], xa, frac<span class="op">=</span><span class="fl">0.3</span>, return_sorted<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    ax.plot(sm_[:, <span class="dv">0</span>], sm_[:, <span class="dv">1</span>], color<span class="op">=</span>colour, lw<span class="op">=</span>lw,</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>            ls<span class="op">=</span><span class="st">":"</span> <span class="cf">if</span> name <span class="op">==</span> <span class="st">"RandN"</span> <span class="cf">else</span> <span class="st">"-"</span>, label<span class="op">=</span>name)</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"standardised age"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">partial z_{</span><span class="dv">\m</span><span class="vs">athrm{Age}} / </span><span class="er">\</span><span class="vs">partial x_k</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/09_credit-localglmnet/cell-24-output-1.png" width="1007" height="497" class="figure-img"></p>
+<figcaption>Smoothed sensitivities of the age attention weight to four covariates, against standardised age. Lowess with a 0.3 span, on the test sample. The own-component curve in bronze-red is non-flat, which says age cannot enter this model as a GLM term. <code>RandN</code>’s curve is the noise reference.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="reason-codes" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Reason codes</h1>
+<div class="callout callout-style-default callout-note callout-titled" title="Overview">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Overview
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The LocalGLMnet’s prediction is a sum of per-covariate contributions, so a declined applicant’s log-odds decomposes exactly and the largest adverse contributions are the reasons. This section builds that, checks the arithmetic, and then asks the question a validation team would ask, which is whether the answer is the same tomorrow.</p>
+</div>
+</div>
+<section id="the-decomposition-exactly" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="the-decomposition-exactly"><span class="header-section-number">8.1</span> The decomposition, exactly</h2>
+<p>For borrower <span class="math inline">\(i\)</span> the fitted log-odds is <span class="math display">\[
+\operatorname{logit} \widehat{\mu}(\boldsymbol{X}_i) = \vartheta_0 +
+\sum_{j=1}^{q} w \, z_j^{(d:1)}(\boldsymbol{X}_i) \, X_{ij} ,
+\]</span> so the <span class="math inline">\(j\)</span>th contribution is the product <span class="math inline">\(w \, z_j(\boldsymbol{X}_i) X_{ij}\)</span> and the contributions sum to the prediction with nothing left over. That exactness is the property lecture 3 was pointing at, and it distinguishes the decomposition from a post hoc attribution, which approximates.</p>
+<p>Contributions are aggregated to characteristic level before anything is read off them. <code>CountryEmb1</code> is the first principal coordinate of a two-dimensional embedding of country and no applicant could be told anything about it, whereas the sum of the two coordinates’ contributions is country’s contribution and is meaningful.</p>
+<div id="3543d52e" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>b0 <span class="op">=</span> <span class="bu">float</span>(model.readout.bias.detach())</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>C_one <span class="op">=</span> grouped_contributions(model, Zt)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>recon <span class="op">=</span> b0 <span class="op">+</span> C_one.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"max |reconstructed logit - fitted logit| = </span><span class="sc">%.2e</span><span class="st">"</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>      <span class="op">%</span> np.<span class="bu">abs</span>(recon <span class="op">-</span> np.log(p_lgn_t <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p_lgn_t))).<span class="bu">max</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>max |reconstructed logit - fitted logit| = 1.19e-06</code></pre>
+</div>
+</div>
+<p>The reconstruction matches to floating-point tolerance, which confirms that the grouping has lost nothing.</p>
+</section>
+<section id="what-a-lender-must-actually-say" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="what-a-lender-must-actually-say"><span class="header-section-number">8.2</span> What a lender must actually say</h2>
+<p>A word on the duty being discharged, since the statistical question below only matters if somebody has to answer it.</p>
+<p>In the United Kingdom, section 157(A1) of the Consumer Credit Act 1974 requires a creditor who declines a prospective regulated agreement on the basis of credit reference information to inform the debtor that the decision was reached on that basis and to give the agency’s name, address, and telephone number. Separately, where the decision is a significant one taken with no meaningful human involvement, Article 22C of the UK GDPR requires the controller to secure safeguards that provide the data subject with information about the decision and enable them to make representations, obtain human intervention, and contest it. Article 22C was substituted for the former Article 22 by section 80 of the Data (Use and Access) Act 2025 and has been fully in force since 5 February 2026, so the much-quoted older wording no longer states the law.</p>
+<p>Neither provision prescribes a ranked list of reasons. Reason codes are industry practice discharging a duty framed more generally, which is why their content is a modelling choice and why their stability is a validation question rather than a compliance one. Note also that the Bondora book is Estonian, so the regime actually applying to it is the recast Consumer Credit Directive rather than the UK provisions above; the UK duty is used here as the worked example because it is the one this series’ readers operate under.</p>
+</section>
+<section id="one-declined-applicant" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="one-declined-applicant"><span class="header-section-number">8.3</span> One declined applicant</h2>
+<div id="f7635e8e" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>decline_cut <span class="op">=</span> np.quantile(p_bar, <span class="fl">0.90</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>declined <span class="op">=</span> p_bar <span class="op">&gt;=</span> decline_cut</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"decline region: the highest-PD decile, </span><span class="sc">{</span>declined<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> of "</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(p_bar)<span class="sc">:,}</span><span class="ss"> test loans, fitted PD at or above </span><span class="sc">{</span>decline_cut<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>pop_mean <span class="op">=</span> C_one.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>i <span class="op">=</span> <span class="bu">int</span>(np.flatnonzero(declined)[np.argsort(<span class="op">-</span>p_bar[declined])[<span class="bu">len</span>(np.flatnonzero(declined)) <span class="op">//</span> <span class="dv">2</span>]])</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>row <span class="op">=</span> pd.DataFrame({<span class="st">"contribution"</span>: C_one[i], <span class="st">"population mean"</span>: pop_mean,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"adverse deviation"</span>: C_one[i] <span class="op">-</span> pop_mean}, index<span class="op">=</span>GN)</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">median applicant of the decline region: fitted PD </span><span class="sc">{</span>p_bar[i]<span class="sc">:.4f}</span><span class="ss">, "</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"country </span><span class="sc">{</span>ctry[i]<span class="sc">}</span><span class="ss">, age </span><span class="sc">{</span>g[<span class="st">'Age'</span>]<span class="sc">.</span>to_numpy()[idx_test][i]<span class="sc">:.0f}</span><span class="ss">, "</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"income </span><span class="sc">{</span>np<span class="sc">.</span>exp(g[<span class="st">'logIncome'</span>].to_numpy()[idx_test][i])<span class="sc">:,.0f}</span><span class="ss">"</span>)</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(row.sort_values(<span class="st">"adverse deviation"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>decline region: the highest-PD decile, 2,974 of 29,734 test loans, fitted PD at or above 0.5553
+
+median applicant of the decline region: fitted PD 0.6237, country ES, age 27, income 710
+                    contribution  population mean  adverse deviation
+Country                   1.1837           0.0209             1.1628
+Age                       0.6178           0.0980             0.5198
+NewCreditCustomer         0.2105          -0.0397             0.2502
+Education                 0.0106          -0.0016             0.0122
+RandN                    -0.0002           0.0023            -0.0025
+logIncome                -0.0718          -0.0401            -0.0317
+EmploymentDuration       -0.0560           0.0006            -0.0566
+HomeOwnership            -0.1308          -0.0264            -0.1044
+VerificationType         -0.1878          -0.0038            -0.1841</code></pre>
+</div>
+</div>
+<p>The reason codes are the characteristics whose contribution most exceeds the population mean contribution, since a reason for declining is a respect in which this applicant is worse than the book. The ranking above is what a notice would be built from.</p>
+<div id="3a1fbfb9" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>dvn <span class="op">=</span> (C_one[i] <span class="op">-</span> pop_mean)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> np.argsort(dvn)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.8</span>, <span class="fl">3.4</span>))</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>ax.barh(<span class="bu">range</span>(<span class="bu">len</span>(o)), dvn[o],</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>[RED <span class="cf">if</span> k <span class="op">==</span> o[<span class="op">-</span><span class="dv">1</span>] <span class="cf">else</span> GREY <span class="cf">for</span> k <span class="kw">in</span> o], height<span class="op">=</span><span class="fl">0.68</span>)</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(o)))</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels([GN[k] <span class="cf">for</span> k <span class="kw">in</span> o], fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"adverse deviation from the mean contribution (log-odds)"</span>)</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/09_credit-localglmnet/cell-27-output-1.png" width="1009" height="497" class="figure-img"></p>
+<figcaption>Adverse deviation from the mean contribution, in log-odds, for the median applicant of the decline region. Bars to the right push the applicant towards default relative to the book, and the bar in bronze-red is the leading reason code. The decomposition is exact, so these bars and the intercept reconstruct the fitted log-odds.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="are-the-codes-reproducible" class="level2" data-number="8.4">
+<h2 data-number="8.4" class="anchored" data-anchor-id="are-the-codes-reproducible"><span class="header-section-number">8.4</span> Are the codes reproducible?</h2>
+<p>Everything so far came from one fit. The ten fits differ only in a seed, they share the learning sample, the split, and the architecture, and any of them would have been reported had it been run first. Consequently a reason code that changes across them is a reason code the lender cannot defend.</p>
+<div id="9b7cc3aa" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>Cg_all <span class="op">=</span> np.stack([grouped_contributions(m, Zt) <span class="cf">for</span> m <span class="kw">in</span> models])   <span class="co"># (M, n, K)</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>R <span class="op">=</span> Cg_all <span class="op">-</span> Cg_all.mean(axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)                     <span class="co"># adverse deviation</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>Rd <span class="op">=</span> R[:, declined, :]</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>rank <span class="op">=</span> np.argsort(<span class="op">-</span>Rd, axis<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    same <span class="op">=</span> (rank[:, :, r] <span class="op">==</span> rank[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>    distinct <span class="op">=</span> np.array([<span class="bu">len</span>(<span class="bu">set</span>(rank[:, t, r])) <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(Rd.shape[<span class="dv">1</span>])])</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"rank"</span>: r <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>                 <span class="ss">f"identical across all </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits (%)"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> same.mean(), <span class="dv">1</span>),</span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"mean distinct codes"</span>: <span class="bu">round</span>(distinct.mean(), <span class="dv">2</span>)})</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(rows).to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> rank  identical across all 10 fits (%)  mean distinct codes
+    1                              92.0                 1.15
+    2                               1.6                 3.06
+    3                               0.1                 4.13</code></pre>
+</div>
+</div>
+<p>The first reason code is reproducible and the second and third are not. A lender issuing the single strongest reason would issue the same one to 92 per cent of these applicants whichever fit happened to be in production, whereas a lender issuing three reasons would find the second changing for essentially every applicant, with an average of three different characteristics competing for the slot across ten fits.</p>
+</section>
+<section id="why-the-first-code-is-stable-and-the-others-are-not" class="level2" data-number="8.5">
+<h2 data-number="8.5" class="anchored" data-anchor-id="why-the-first-code-is-stable-and-the-others-are-not"><span class="header-section-number">8.5</span> Why the first code is stable and the others are not</h2>
+<p>The mechanism is a gap structure, and it is worth measuring rather than asserting.</p>
+<div id="9ff78437" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>S <span class="op">=</span> np.sort(Rd[<span class="dv">0</span>], axis<span class="op">=</span><span class="dv">1</span>)[:, ::<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mean adverse deviation"</span>: S[:, :<span class="dv">4</span>].mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"gap to the next rank"</span>: np.r_[(S[:, :<span class="dv">3</span>] <span class="op">-</span> S[:, <span class="dv">1</span>:<span class="dv">4</span>]).mean(axis<span class="op">=</span><span class="dv">0</span>), np.nan]},</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"rank 1"</span>, <span class="st">"rank 2"</span>, <span class="st">"rank 3"</span>, <span class="st">"rank 4"</span>]).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>lead <span class="op">=</span> pd.Series([GN[k] <span class="cf">for</span> k <span class="kw">in</span> rank[<span class="dv">0</span>, :, <span class="dv">0</span>]]).value_counts()</span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>second <span class="op">=</span> pd.Series([GN[k] <span class="cf">for</span> k <span class="kw">in</span> rank[<span class="dv">0</span>, :, <span class="dv">1</span>]]).value_counts()</span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">rank 1 code, seed 100: </span><span class="sc">{</span><span class="bu">dict</span>(lead.head(<span class="dv">3</span>))<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rank 2 code, seed 100: </span><span class="sc">{</span><span class="bu">dict</span>(second.head(<span class="dv">4</span>))<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        mean adverse deviation  gap to the next rank
+rank 1                  1.3305                1.0432
+rank 2                  0.2873                0.1181
+rank 3                  0.1692                0.0677
+rank 4                  0.1015                   NaN
+
+rank 1 code, seed 100: {'Country': np.int64(2770), 'HomeOwnership': np.int64(90), 'Age': np.int64(88)}
+rank 2 code, seed 100: {'HomeOwnership': np.int64(772), 'NewCreditCustomer': np.int64(727), 'Age': np.int64(601), 'Education': np.int64(313)}</code></pre>
+</div>
+</div>
+<p>The leading contribution exceeds the second by more than 1.0 on the log-odds scale, whereas the second exceeds the third by roughly a tenth of that. Rank 1 therefore has a chasm beneath it that seed noise cannot bridge, and ranks 2 onwards are separated by margins smaller than the fluctuation measured in section 6. The leading code is <code>Country</code> for the overwhelming majority of the decline region, which is the same dominance the boxplot, the importance measure, and lecture 8’s group LASSO all reported, arriving here as an operational consequence.</p>
+<div id="a62fd64b" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.4</span>, <span class="fl">3.0</span>))</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">5</span>), S[:, :<span class="dv">4</span>].mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>[RED, GREY, GREY, GREY], width<span class="op">=</span><span class="fl">0.62</span>)</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticks(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">5</span>))<span class="op">;</span> axes[<span class="dv">0</span>].set_xlabel(<span class="st">"rank"</span>)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"mean adverse deviation (log-odds)"</span>)</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>agree <span class="op">=</span> [<span class="dv">100</span> <span class="op">*</span> (rank[:, :, r] <span class="op">==</span> rank[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>).mean() <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>)]</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].bar(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">4</span>), agree, color<span class="op">=</span>[RED, GREY, GREY], width<span class="op">=</span><span class="fl">0.62</span>)</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xticks(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">4</span>))<span class="op">;</span> axes[<span class="dv">1</span>].set_xlabel(<span class="st">"rank"</span>)</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="ss">f"identical across all </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits (%)"</span>)</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylim(<span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="figures/09_credit-localglmnet/cell-30-output-1.png" width="1099" height="437" class="figure-img"></p>
+<figcaption>The gap structure behind the stability result. Left, the mean adverse deviation by rank over the decline region, with the rank-1 bar in bronze-red. Right, the share of applicants whose code at each rank is identical across all ten fits. The collapse from rank 1 to rank 2 mirrors the collapse in the gaps.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Two robustness checks close the section. Tightening the decline region and widening it both preserve the shape, and the level moves with the cut-off.</p>
+<div id="0dbb4a32" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cut, label <span class="kw">in</span> [(<span class="fl">0.95</span>, <span class="st">"highest-PD 5 per cent"</span>), (<span class="fl">0.80</span>, <span class="st">"highest-PD quintile"</span>)]:</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    sel <span class="op">=</span> p_bar <span class="op">&gt;=</span> np.quantile(p_bar, cut)</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    rk <span class="op">=</span> np.argsort(<span class="op">-</span>R[:, sel, :], axis<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> [<span class="dv">100</span> <span class="op">*</span> (rk[:, :, r] <span class="op">==</span> rk[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>).mean() <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>)]</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:&lt;26}</span><span class="ss"> (</span><span class="sc">{</span>sel<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss"> loans): "</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"rank 1 </span><span class="sc">{</span>a[<span class="dv">0</span>]<span class="sc">:5.1f}</span><span class="ss">%, rank 2 </span><span class="sc">{</span>a[<span class="dv">1</span>]<span class="sc">:4.1f}</span><span class="ss">%, rank 3 </span><span class="sc">{</span>a[<span class="dv">2</span>]<span class="sc">:4.1f}</span><span class="ss">%"</span>)</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>approved <span class="op">=</span> <span class="op">~</span>declined</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>rk <span class="op">=</span> np.argsort(<span class="op">-</span>R[:, approved, :], axis<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'outside the decline region'</span><span class="sc">:&lt;26}</span><span class="ss"> (</span><span class="sc">{</span>approved<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss"> loans): "</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"rank 1 </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (rk[:, :, <span class="dv">0</span>] <span class="op">==</span> rk[<span class="dv">0</span>, :, <span class="dv">0</span>])<span class="sc">.</span><span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>)<span class="sc">.</span>mean()<span class="sc">:5.1f}</span><span class="ss">%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>highest-PD 5 per cent      ( 1,487 loans): rank 1  96.3%, rank 2  0.7%, rank 3  0.1%
+highest-PD quintile        ( 5,947 loans): rank 1  72.8%, rank 2  2.1%, rank 3  0.1%
+outside the decline region (26,760 loans): rank 1  21.1%</code></pre>
+</div>
+</div>
+<p>Tightening to the highest-PD 5 per cent raises rank 1 to 96.3 per cent, while widening to the top quintile lowers it to 72.8, and ranks 2 and 3 stay near zero throughout. How stable the leading code is therefore depends on how deep into the decline region the applicant sits, which a reason-code policy should state rather than assume.</p>
+<p>The last line is reported for contrast and it should not be read as a reason-code statistic, since no notice is issued to those applicants and nobody computes their codes. It does show where the stability comes from. Outside the decline region the country contribution no longer dominates, so the leading code becomes as unstable as the second one is everywhere.</p>
+</section>
+<section id="what-this-means-for-a-reason-code-policy" class="level2" data-number="8.6">
+<h2 data-number="8.6" class="anchored" data-anchor-id="what-this-means-for-a-reason-code-policy"><span class="header-section-number">8.6</span> What this means for a reason-code policy</h2>
+<p>Three consequences follow, and none of them argues against the architecture.</p>
+<p>A reason-code policy should state how many codes it issues and should justify that number by measurement rather than by convention. On this book one code is defensible and three are not, and the test that establishes as much costs ten refits and the gap table above.</p>
+<p>Where more than one code is wanted, the ranking should come from an ensemble rather than from a fit, in the same way lecture 6 argued the prediction should. The ensemble does not make ranks 2 and 3 meaningful here, since the contributions genuinely are within a tenth of each other, and it does remove the arbitrariness of which fit was in production the day the notice was printed.</p>
+<p>Finally, the instability measured above is a lower bound. The entity embedding was fitted once, at seed 100, and held fixed across all ten LocalGLMnet fits, so the variance from re-estimating the embedding is excluded by construction. Lecture 6 found that this portfolio’s embedding arrangement did not survive a refit, which suggests that variance is not small. Measuring it would mean nesting the embedding fit inside the loop, and it would raise the numbers above rather than lower them.</p>
+</section>
+</section>
+<section id="the-final-model" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> The final model</h1>
+<p>The noise covariate exists to calibrate the test and it has no business in a model that goes into production, since it adds a term with over-fitting potential and no information. The course says as much, so the final fit drops it.</p>
+<div id="f034aac1" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>keep <span class="op">=</span> [k <span class="cf">for</span> k, n <span class="kw">in</span> <span class="bu">enumerate</span>(NAMES) <span class="cf">if</span> n <span class="op">!=</span> <span class="st">"RandN"</span>]</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>glm2 <span class="op">=</span> sm.GLM(yl, sm.add_constant(Zl[:, keep]), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>final, final_stop <span class="op">=</span> train_lgn(Zl[:, keep], yl, glm2.params, seed<span class="op">=</span><span class="dv">100</span>)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    pf_l <span class="op">=</span> final(torch.tensor(Zl[:, keep])).numpy().ravel()</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    pf_t <span class="op">=</span> final(torch.tensor(Zt[:, keep])).numpy().ravel()</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"in-sample"</span>: [dev(p_glm_l, yl), dev(p_lgn_l, yl), dev(pf_l, yl)],</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"out-of-sample"</span>: [dev(p_glm_t, yt), devs[<span class="dv">0</span>], dev(pf_t, yt)],</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AUC (test)"</span>: [roc_auc_score(yt, p_glm_t), roc_auc_score(yt, p_lgn_t),</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>                   roc_auc_score(yt, pf_t)],</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"balance (%)"</span>: [<span class="dv">100</span> <span class="op">*</span> (p.mean() <span class="op">/</span> yt.mean() <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> p <span class="kw">in</span> (p_glm_t, p_lgn_t, pf_t)]},</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"GLM, embedded design"</span>, <span class="st">"LocalGLMnet with RandN"</span>,</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>           <span class="st">"LocalGLMnet, final"</span>]).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                        in-sample  out-of-sample  AUC (test)  balance (%)
+GLM, embedded design     106.9447       108.5221      0.7154      -1.0832
+LocalGLMnet with RandN   104.8736       107.3602      0.7251      -0.9607
+LocalGLMnet, final       105.2035       107.3581      0.7254      -1.3962</code></pre>
+</div>
+</div>
+<p>Dropping the noise covariate changes the out-of-sample deviance by essentially nothing, which is the reassuring outcome and confirms that the term was never doing work. The balance figure repeats what lecture 7 established and lecture 8 repaired, namely that a non-canonical fit misses the portfolio level by a small margin, and the frozen-feature readout of lecture 8 would restore it here in the same way.</p>
+</section>
+<section id="takeaways-and-outlook" class="level1 unnumbered">
+<h1 class="unnumbered">Takeaways and outlook</h1>
+<p>The architecture behaves on this book. Initialised at the fitted GLM it reproduces that GLM exactly, which is the check to run before reading any attention weight, and trained it reaches a test deviance of 107.360 against the feed-forward network’s 107.621, with nagging over ten fits taking it to 107.132. That ordering reverses the course’s own result on the French motor data, where the LocalGLMnet came out slightly behind, and the likely reason is that this book’s signal concentrates in one characteristic that a varying-coefficient form captures cheaply.</p>
+<p>The importance ranking is the second thing to carry forward. Aggregated to characteristic level it agrees with <code>F1</code>’s information values at a Spearman correlation of 0.619, and its two disagreements are both explained by material the series already holds. Age ranks fourth here and last there because a monotone classing cannot express lecture 1’s hump, which corroborates <code>F1</code>’s own diagnosis from an independent direction. Income ranks last here, first to leave under lecture 8’s group LASSO, and fourth on information value, so three conditioning methods agree that income is weak on this book once country is in the model.</p>
+<p>The income term also supplies the lecture’s cautionary result. Its attention weight is negative for 62.6 per cent of borrowers and positive for the rest, which reads as lecture 1’s Simpson paradox surfacing inside a fitted structure, and yet the country ordering that supports that reading reverses between seeds. Over ten fits the between-country spread is about 0.045 against between-fit standard deviations of 0.032 to 0.055 for the three populated countries. The verdict is that the varying coefficient is directionally consistent with the paradox and cannot establish it alone, and the general rule is that any term whose importance sits within a small multiple of the noise level, as income’s 3.4 times does, should be read from an ensemble with its between-fit spread attached.</p>
+<p>The reason codes are where the lecture ends up mattering most, and they discharge the promise lecture 3 made. The decomposition is exact to floating-point tolerance and it aggregates to characteristic level without loss. Among the highest-PD decile, where a decline notice is actually issued, the leading adverse characteristic is identical across all ten fits for 92.0 per cent of applicants, whereas the second-ranked one is identical for 1.6 per cent and the third for 0.1. The mechanism is measurable, since the leading contribution exceeds the second by 1.043 on the log-odds scale while the second exceeds the third by 0.118. Hence a lender issuing three reasons from one fit issues one that reproduces and two that do not, and the honest policy on this book is to issue one code, to rank any further codes off an ensemble, and to record that the figure is a lower bound because the entity embedding was held fixed across the refits.</p>
+<p>Two threads leave the lecture. The attention gradient found the country and income entanglement that section 7 could only report weakly, which is an instrument <code>C2</code> will want when it asks whether any of these attributions may be read causally. Separately, the course now moves to attention in its other sense, meaning the transformer of lectures 10 and 11, where the weights are computed between observations rather than between covariates and the Amex panel is the dataset in this series built for it.</p>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+<p>This document adapts the storyline, structure, and notation of <em>Lecture 9: LocalGLMnet</em> from the summer school <strong>Deep Learning for Actuarial Modeling</strong> (Scognamiglio, Maggi and Wüthrich, Università Cattolica del Sacro Cuore, Milano, 2026), part of the project <em>AI Tools for Actuaries</em>, used under CC BY-NC 4.0. Changes made: the Poisson claim-frequency thread is recast as the Bernoulli default thread on the public Bondora loan book, with no exposure offset and consequently no volume input or second gradient model; the code is Python with PyTorch, statsmodels, and scikit-learn rather than R and Keras; <code>locfit</code> is replaced by the <code>statsmodels</code> lowess smoother; and the following are new: the entity-embedded fourteen-column credit design with its within-characteristic principal component rotation, the zero-centred convention for the noise band together with the separate reporting of the noise term’s bias, the aggregation of attention weights to characteristic level and the three-way comparison against <code>F1</code>’s information values and lecture 8’s group LASSO elimination order, the interrogation of the income term against lecture 1’s Simpson paradox together with the ten-fit finding that its single-fit country ordering does not reproduce, the noise-calibrated ceiling for the interaction gradients, and the entire reason-code section, meaning the characteristic-level decomposition, the two verified UK duties it discharges, the rank-by-rank stability measurement over the decline region, the gap structure that explains it, and the policy consequences drawn from it. The numerical results concern the credit data throughout. The original lecture notes are available at <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a>.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<ul>
+<li>Consumer Credit Act 1974, section 157(A1), as inserted by the Consumer Credit (EU Directive) Regulations 2010 (SI 2010/1010). <a href="https://www.legislation.gov.uk/ukpga/1974/39/section/157" class="uri">https://www.legislation.gov.uk/ukpga/1974/39/section/157</a></li>
+<li>Data (Use and Access) Act 2025, section 80, substituting Articles 22A to 22D of the UK GDPR for the former Article 22. <a href="https://www.legislation.gov.uk/ukpga/2025/18/section/80" class="uri">https://www.legislation.gov.uk/ukpga/2025/18/section/80</a></li>
+<li>Ribeiro, M.T., Singh, S. and Guestrin, C. (2016). “Why should I trust you?”: explaining the predictions of any classifier. <em>Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining</em>, 1135-1144. <a href="https://arxiv.org/abs/1602.04938" class="uri">https://arxiv.org/abs/1602.04938</a></li>
+<li>Richman, R. and Wüthrich, M.V. (2023a). LASSO regularization within the LocalGLMnet architecture. <em>Advances in Data Analysis and Classification</em>, 17(4), 951-981. <a href="https://doi.org/10.1007/s11634-022-00529-z" class="uri">https://doi.org/10.1007/s11634-022-00529-z</a></li>
+<li>Richman, R. and Wüthrich, M.V. (2023b). LocalGLMnet: interpretable deep learning for tabular data. <em>Scandinavian Actuarial Journal</em>, 2023(1), 71-95. <a href="https://doi.org/10.1080/03461238.2022.2081816" class="uri">https://doi.org/10.1080/03461238.2022.2081816</a></li>
+<li>Wüthrich, M.V. et al.&nbsp;(2025). AI Tools for Actuaries. SSRN manuscript. <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304" class="uri">https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304</a></li>
+<li>Wüthrich, M.V. and Merz, M. (2023). <em>Statistical Foundations of Actuarial Learning and its Applications</em>. Springer. <a href="https://doi.org/10.1007/978-3-031-12409-9" class="uri">https://doi.org/10.1007/978-3-031-12409-9</a></li>
+<li>Zakrisson, H. and Lindholm, M. (2025). A tree-based varying coefficient model. <em>Computational Statistics</em>. <a href="https://doi.org/10.1007/s00180-025-01603-8" class="uri">https://doi.org/10.1007/s00180-025-01603-8</a></li>
+<li>Zhou, Y. and Hooker, G. (2022). Decision tree boosted varying coefficient models. <em>Data Mining and Knowledge Discovery</em>, 36(6), 2237-2271.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>
