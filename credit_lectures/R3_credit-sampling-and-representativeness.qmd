@@ -850,7 +850,11 @@ $$
 \cdot \frac{\bar y}{1 - \bar y}\right),
 $$
 
-which is the standard prior correction for choice-based sampling.
+which is equation (7) of King and Zeng (2001), where $\tau$ is the population fraction of
+events and $\bar y$ the fraction in the sample. They note that the result is older than their
+paper: epidemiologists attribute it to Prentice and Pyke (1979) and econometricians to Manski
+and Lerman (1977). Because the correction moves the intercept alone, the slope estimates are
+already consistent and only $\hat\beta_0$ needs repair.
 
 ```{python}
 tau, ybar = yt.mean(), 0.5
@@ -949,6 +953,15 @@ population stability testing in credit risk scorecards*. arXiv:2206.11344.
 
 European Parliament and Council (2013). *Regulation (EU) No 575/2013 on prudential requirements
 for credit institutions and investment firms*, Articles 174, 175 and 180.
+
+King, G., and Zeng, L. (2001). Logistic regression in rare events data. *Political Analysis*,
+9(2), 137-163. Prior correction is equation (7), section 4.1.
+
+Manski, C. F., and Lerman, S. R. (1977). The estimation of choice probabilities from choice
+based samples. *Econometrica*, 45(8), 1977-1988.
+
+Prentice, R. L., and Pyke, R. (1979). Logistic disease incidence models and case-control
+studies. *Biometrika*, 66(3), 403-411.
 
 Prudential Regulation Authority (2026). *SS4/24: Credit risk: internal ratings based approach*,
 January 2026 consolidation, sections 8 and 11.
