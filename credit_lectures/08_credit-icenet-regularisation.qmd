@@ -1422,10 +1422,10 @@ Two threads leave this lecture. First, the smooth monotone PD curve built
 here is the input the R2 capital lecture wants, because risk grades cut
 from a non-monotone curve produce a grade ordering that reverses
 somewhere, so the long-run average default rate per grade then fails its
-own back-test. Separately, the ninth and tenth lectures take up
+own back-test. Separately, the ninth lecture takes up
 LocalGLMnet, which attacks the same interpretability problem from the
 other end by reading covariate effects off an attention-weighted linear
-form. C2 is then where the credit series asks whether those effects may be
+form, and the tenth and eleventh turn to transformers instead. C2 is then where the credit series asks whether those effects may be
 read causally.
 
 # Copyright and attribution {.unnumbered}

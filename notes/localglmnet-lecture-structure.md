@@ -140,7 +140,13 @@ standard deviation falls to 0.01394 and the band to $\pm 0.0359$.
 **Variable importance, seed 100.** Smallest `RandN` 0.0408, largest `CountryEmb1` 0.8005. Over
 the ten fits `RandN` is 0.0314 (sd 0.0064) and `logIncome` 0.1057 (sd 0.0261), so seed 100 sits
 at the top of income's range. No term's importance reaches the noise level, and the two
-`EmploymentDuration` coordinates come closest at about twice it. `CountryEmb1` is stable to
+`EmploymentDuration` coordinates come closest at about twice it over the ten fits. On seed 100
+the boxplot and the importance measure disagree about three coordinates, namely
+`HomeOwnershipEmb1`, `VerificationTypeEmb2` and `EmploymentDurationEmb1`, whose interquartile
+ranges lie wholly inside the zero-centred band while their importance runs at 2.70, 1.77 and
+1.64 times the noise term's. Section 6.1 reconciles the two by noting that the box describes the
+typical borrower and the importance measure integrates the tails, and defers the decision to
+lecture 8's group LASSO on the embedding coordinates as groups. `CountryEmb1` is stable to
 within 4 per cent of its mean; the largest relative spread is `VerificationTypeEmb2`'s at 27
 per cent.
 

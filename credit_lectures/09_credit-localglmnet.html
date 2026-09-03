@@ -191,7 +191,7 @@ window.Quarto = {
 <div>
   <div class="abstract">
     <div class="block-title">Abstract</div>
-    <p>The LocalGLMnet of Richman and Wüthrich (2023b) replaces a GLM’s fixed coefficient vector by network outputs that vary with the covariates, so the model is locally a GLM everywhere and every individual prediction decomposes into per-covariate contributions. Credit lecture 3 called that decomposition arguably the most important idea in the course for credit work, on the ground that a lender declining an application needs one. This lecture builds it on the Bondora book and then measures whether it holds up. The architecture behaves: initialised at the fitted GLM it reproduces that GLM’s deviance exactly, and trained it reaches a test deviance of 107.360 against the feed-forward network’s 107.621, with nagging over ten fits taking it to 107.132. A purely random covariate calibrates the fluctuation attributable to noise, and no term falls to that level, although two employment-duration coordinates sit at only about twice it. The findings, however, sit in what the attention weights do next. Income’s weight is negative for 62.6 per cent of borrowers and positive for the rest, which looks like lecture 1’s Simpson paradox surfacing inside a fitted structure, and yet one seed’s country ordering reverses under another, leaving a between-country spread of 0.045 against between-fit standard deviations of 0.032 to 0.055 across the three populated countries. The reason codes are where this bites hardest. Among the highest-PD decile, where a decline notice is actually issued, the strongest adverse characteristic is the same across all ten fits for 92.0 per cent of applicants, whereas the second-ranked one agrees for 1.6 per cent and the third for 0.1. The mechanism is a gap structure: the leading contribution exceeds the second by 1.043 on the log-odds scale while the second exceeds the third by 0.118. A lender issuing three reasons from one fit is therefore issuing one that reproduces and two that do not.</p>
+    <p>The LocalGLMnet of Richman and Wüthrich (2023b) replaces a GLM’s fixed coefficient vector by network outputs that vary with the covariates, so the model is locally a GLM everywhere and every individual prediction decomposes into per-covariate contributions. Credit lecture 3 called that decomposition arguably the most important idea in the course for credit work, on the ground that a lender declining an application needs one. This lecture builds it on the Bondora book and then measures whether it holds up. The architecture behaves: initialised at the fitted GLM it reproduces that GLM’s deviance exactly, and trained it reaches a test deviance of 107.360 against the feed-forward network’s 107.621, with nagging over ten fits taking it to 107.132. A purely random covariate calibrates the fluctuation attributable to noise, and no term’s importance falls to that level, although the three weakest embedding coordinates come within a factor of two to three of it and their middle half of borrowers sits inside the band. The findings, however, sit in what the attention weights do next. Income’s weight is negative for 62.6 per cent of borrowers and positive for the rest, which looks like lecture 1’s Simpson paradox surfacing inside a fitted structure, and yet one seed’s country ordering reverses under another, leaving a between-country spread of 0.045 against between-fit standard deviations of 0.032 to 0.055 across the three populated countries. The reason codes are where this bites hardest. Among the highest-PD decile, where a decline notice is actually issued, the strongest adverse characteristic is the same across all ten fits for 92.0 per cent of applicants, whereas the second-ranked one agrees for 1.6 per cent and the third for 0.1. The mechanism is a gap structure: the leading contribution exceeds the second by 1.043 on the log-odds scale while the second exceeds the third by 0.118. A lender issuing three reasons from one fit is therefore issuing one that reproduces and two that do not.</p>
   </div>
 </div>
 
@@ -206,7 +206,7 @@ window.Quarto = {
 <p>This companion keeps the course’s arc and adds three things the credit setting demands. First, the reason codes lecture 3 promised are built and then tested for reproducibility, which turns out to be where the lecture’s sharpest result sits. Second, the variable importance the architecture produces is set beside two orderings the series already has, namely <code>F1</code>’s information values and lecture 8’s group LASSO elimination order. Third, the income term is interrogated against lecture 1’s Simpson paradox, and the answer is more careful than the one hoped for.</p>
 <p>One boundary is deliberate. Lecture <code>C1</code> reserved the question of whether an attribution may be read <em>causally</em> for <code>C2</code>, and named LocalGLMnet explicitly when it did. This lecture therefore says what an attention weight <strong>is</strong> and stops there, citing <code>C2</code> forward wherever the temptation to read it as an effect arises.</p>
 <p>Two conventions carry over unchanged. There is no exposure offset, since <code>default_12m</code> is a zero-one flag over a fixed twelve-month window, so every case weight is one. Deviance is quoted on the series’ scale throughout, meaning <span class="math inline">\(100 \times 2 \times\)</span> the mean Bernoulli deviance contribution, so the numbers below sit beside those of lectures 2, 4, 5, 6, 7, and 8 without rescaling.</p>
-<div id="e70c6a7c" class="cell" data-execution_count="1">
+<div id="796a22e9" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Imports and shared settings</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -334,7 +334,7 @@ z_j^{(d:1)}(\boldsymbol{X}) = X_{j'} / X_j ,
 <p>Lecture 6 checked whether proximity in the embedding plane tracked risk on this portfolio and concluded that it did not, with the arrangement failing to survive a refit. That finding constrains what may be claimed for the embeddings and it does not disqualify them, since the job here is to supply an orthogonal continuous encoding of a categorical and no reading of the plane is required. The consequence is recorded in section 9.5, because the embedding below is fitted once and held fixed across every refit.</p>
 </div>
 </div>
-<div id="c3703418" class="cell" data-execution_count="2">
+<div id="74ee98b4" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
@@ -374,7 +374,7 @@ z_j^{(d:1)}(\boldsymbol{X}) = X_{j'} / X_j ,
 </section>
 <section id="entity-embeddings-and-their-rotation" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="entity-embeddings-and-their-rotation"><span class="header-section-number">3.2</span> Entity embeddings and their rotation</h2>
-<div id="47f50bc3" class="cell" data-execution_count="3">
+<div id="905072d6" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Embedding network and its training routine, from lecture 6</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>levmaps <span class="op">=</span> {c: {lv: i <span class="op">+</span> <span class="dv">1</span> <span class="cf">for</span> i, lv <span class="kw">in</span></span>
@@ -437,7 +437,7 @@ z_j^{(d:1)}(\boldsymbol{X}) = X_{j'} / X_j ,
 <span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> model, best_epoch</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="c27825b8" class="cell" data-execution_count="4">
+<div id="d87aad73" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>emb_model, emb_stop <span class="op">=</span> train_embed(idx_learn, seed<span class="op">=</span><span class="dv">100</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"embedding cardinalities, including the reserved unseen index:"</span>, cards)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"embedding network early stop at epoch </span><span class="sc">{</span>emb_stop<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -447,7 +447,7 @@ embedding network early stop at epoch 161</code></pre>
 </div>
 </div>
 <p>Each categorical now has a two-dimensional coordinate per level. Those two coordinates are correlated in general, so a principal component rotation is applied within each characteristic, which changes the coordinate system to an uncorrelated one and leaves the information untouched. The rotation is estimated on the learning sample alone, for the reason every scaler in this series is.</p>
-<div id="3aff4dec" class="cell" data-execution_count="5">
+<div id="1be49095" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>emb_cols <span class="op">=</span> {}</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> j, c <span class="kw">in</span> <span class="bu">enumerate</span>(CATS):</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    W <span class="op">=</span> emb_model.emb[j].weight.detach().numpy()      <span class="co"># (K + 1, 2)</span></span>
@@ -461,7 +461,7 @@ embedding network early stop at epoch 161</code></pre>
 <section id="the-noise-covariate" class="level2" data-number="3.3">
 <h2 data-number="3.3" class="anchored" data-anchor-id="the-noise-covariate"><span class="header-section-number">3.3</span> The noise covariate</h2>
 <p>The course adds one purely random, independent, standardised covariate to the design. It carries no information about default by construction, so whatever fluctuation its attention weight shows is the fluctuation attributable to noise alone, and that calibrates the test for dropping a term. The covariate is called <code>RandN</code> here as it is there.</p>
-<div id="e4c693e2" class="cell" data-execution_count="6">
+<div id="2923418b" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>X_all <span class="op">=</span> pd.DataFrame({</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AgeCens"</span>: g[<span class="st">"AgeCens"</span>].astype(<span class="bu">float</span>).to_numpy(),</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"logIncome"</span>: g[<span class="st">"logIncome"</span>].astype(<span class="bu">float</span>).to_numpy(),</span>
@@ -487,7 +487,7 @@ AgeCens, logIncome, NewCredit, CountryEmb1, CountryEmb2, EducationEmb1, Educatio
 </section>
 <section id="the-benchmark-glm" class="level2" data-number="3.4">
 <h2 data-number="3.4" class="anchored" data-anchor-id="the-benchmark-glm"><span class="header-section-number">3.4</span> The benchmark GLM</h2>
-<div id="dd5d7fc9" class="cell" data-execution_count="7">
+<div id="0ac3c14e" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dev(pred, obs):</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.clip(np.asarray(pred, <span class="bu">float</span>), <span class="fl">1e-12</span>, <span class="dv">1</span> <span class="op">-</span> <span class="fl">1e-12</span>)</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    y <span class="op">=</span> np.asarray(obs, <span class="bu">float</span>)</span>
@@ -528,7 +528,7 @@ RandN                    -0.0053   -0.7703  0.4411</code></pre>
 <section id="the-architecture-in-pytorch" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="the-architecture-in-pytorch"><span class="header-section-number">4.1</span> The architecture in PyTorch</h2>
 <p>The attention module is a three-hidden-layer network of widths 20, 15, and 10 with <code>tanh</code> activations, matching the course and matching every feed-forward network in this series since lecture 4. Its output layer is linear and has width <span class="math inline">\(q\)</span>, so it emits one attention weight per covariate. The dot product with the input then feeds a single-unit readout carrying the intercept, and the logistic link closes the model.</p>
-<div id="ea865cbd" class="cell" data-execution_count="8">
+<div id="79efbad9" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LocalGLMnet(torch.nn.Module):</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Bernoulli LocalGLMnet: sigmoid(b0 + w * &lt;z(x), x&gt;)."""</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -548,7 +548,7 @@ RandN                    -0.0053   -0.7703  0.4411</code></pre>
 <span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> torch.sigmoid(<span class="va">self</span>.readout((z <span class="op">*</span> x).<span class="bu">sum</span>(dim<span class="op">=</span><span class="dv">1</span>, keepdim<span class="op">=</span><span class="va">True</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The readout’s weight <span class="math inline">\(w\)</span> scales every attention weight at once, so the quantity to interpret is <span class="math inline">\(w \, z_j(\boldsymbol{X})\)</span> rather than <span class="math inline">\(z_j(\boldsymbol{X})\)</span> alone. The helper below returns the scaled weights, and every attention weight quoted in this lecture is scaled.</p>
-<div id="e3a2a9ee" class="cell" data-execution_count="9">
+<div id="74a83f5e" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention_weights(model, X):</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight)</span>
@@ -560,7 +560,7 @@ RandN                    -0.0053   -0.7703  0.4411</code></pre>
 <section id="initialising-at-the-fitted-glm" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="initialising-at-the-fitted-glm"><span class="header-section-number">4.2</span> Initialising at the fitted GLM</h2>
 <p>The course recommends initialising stochastic gradient descent precisely at the maximum likelihood GLM, which fixes the role of every term before the optimiser can permute them and thereby defuses the identifiability problem of section 3.4. The construction is exact. Zero the attention output layer’s weight matrix, set its bias vector to the GLM’s slope estimates, set the readout weight to one, and set the readout bias to the GLM intercept. The attention module then returns the constant vector <span class="math inline">\(\vartheta_{1:q}\)</span> for every borrower, and the model is the GLM.</p>
-<div id="1ad2c49a" class="cell" data-execution_count="10">
+<div id="f47a701b" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> glm_init(model, beta):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Set the network's weights so that it evaluates the fitted GLM exactly."""</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
@@ -589,7 +589,7 @@ fitted GLM                in-sample 106.945   out-of-sample 108.522</code></pre>
 </section>
 <section id="training" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="training"><span class="header-section-number">4.3</span> Training</h2>
-<div id="4e0d062b" class="cell" data-execution_count="11">
+<div id="40ebad97" class="cell" data-execution_count="11">
 <details class="code-fold">
 <summary>Training routine</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_lgn(Zlearn, y_lrn, beta, seed<span class="op">=</span><span class="dv">100</span>, epochs<span class="op">=</span><span class="dv">200</span>, batch<span class="op">=</span><span class="dv">5000</span>, patience<span class="op">=</span><span class="dv">30</span>):</span>
@@ -625,7 +625,7 @@ fitted GLM                in-sample 106.945   out-of-sample 108.522</code></pre>
 </details>
 </div>
 <p>The routine is lecture 4’s, with the GLM initialisation inserted and the early-stopping split, the weight initialisation, and the mini-batch order all drawn from one seed, exactly as lecture 6 required for its nagging argument.</p>
-<div id="fd40b963" class="cell" data-execution_count="12">
+<div id="09af3d02" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>M <span class="op">=</span> <span class="dv">10</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>models, stops, preds <span class="op">=</span> [], [], []</span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> s <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>, <span class="dv">100</span> <span class="op">+</span> M):</span>
@@ -673,7 +673,7 @@ nagged over 10 fits                  out-of-sample 107.132</code></pre>
 </div>
 <section id="what-the-noise-covariate-measures" class="level2" data-number="5.1">
 <h2 data-number="5.1" class="anchored" data-anchor-id="what-the-noise-covariate-measures"><span class="header-section-number">5.1</span> What the noise covariate measures</h2>
-<div id="6f958e3b" class="cell" data-execution_count="13">
+<div id="2039cc94" class="cell" data-execution_count="13">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>A <span class="op">=</span> attention_weights(model, Zt)</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>sd_noise, mean_noise <span class="op">=</span> A[<span class="st">"RandN"</span>].std(), A[<span class="st">"RandN"</span>].mean()</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>band <span class="op">=</span> <span class="fl">2.576</span> <span class="op">*</span> sd_noise</span>
@@ -685,7 +685,7 @@ zero-centred 99 per cent band: +/- 0.1238</code></pre>
 </div>
 </div>
 <p>The band is centred on zero, because the null hypothesis under test is <span class="math inline">\(z_j \equiv 0\)</span>. The noise term’s own fitted mean is reported separately above and is the bias the band ignores, which the course flags for its own interquartile shading and this lecture states as a convention rather than leaving implicit.</p>
-<div id="9e589fad" class="cell" data-execution_count="14">
+<div id="8c0de1b3" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>order <span class="op">=</span> A.<span class="bu">abs</span>().mean().sort_values().index</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">4.4</span>))</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>bp <span class="op">=</span> ax.boxplot([A[c] <span class="cf">for</span> c <span class="kw">in</span> order], vert<span class="op">=</span><span class="va">False</span>, widths<span class="op">=</span><span class="fl">0.6</span>, showfliers<span class="op">=</span><span class="va">False</span>,</span>
@@ -709,6 +709,24 @@ zero-centred 99 per cent band: +/- 0.1238</code></pre>
 </div>
 </div>
 <p>Three things are visible. <code>CountryEmb1</code> sits far to the left of everything else and never approaches zero, so country is doing most of the work in this model as it has in every other the series has fitted. <code>RandN</code> has by some way the tightest box, which is what a covariate carrying no information should produce. Several terms, however, straddle zero with substantial spread, and <code>logIncome</code> is among them, which section 7 takes up.</p>
+<p>The picture and the importance measure of the next section do not quite agree, and the disagreement is worth naming rather than leaving for a reader to notice.</p>
+<div id="a45e2108" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>iqr <span class="op">=</span> A.quantile([<span class="fl">0.25</span>, <span class="fl">0.75</span>])</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>inside <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> NAMES</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>          <span class="cf">if</span> c <span class="op">!=</span> <span class="st">"RandN"</span> <span class="kw">and</span> <span class="bu">abs</span>(iqr.loc[<span class="fl">0.25</span>, c]) <span class="op">&lt;</span> band <span class="kw">and</span> <span class="bu">abs</span>(iqr.loc[<span class="fl">0.75</span>, c]) <span class="op">&lt;</span> band]</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"interquartile range wholly inside the noise band:"</span>, <span class="st">", "</span>.join(inside))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"VI"</span>: A.<span class="bu">abs</span>().mean()[inside],</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"multiple of VI(RandN)"</span>: A.<span class="bu">abs</span>().mean()[inside] <span class="op">/</span> A.<span class="bu">abs</span>().mean()[<span class="st">"RandN"</span>]})</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>      .<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>interquartile range wholly inside the noise band: HomeOwnershipEmb1, VerificationTypeEmb2, EmploymentDurationEmb1
+                            VI  multiple of VI(RandN)
+HomeOwnershipEmb1       0.1102                 2.7013
+VerificationTypeEmb2    0.0721                 1.7659
+EmploymentDurationEmb1  0.0671                 1.6449</code></pre>
+</div>
+</div>
+<p>Three embedding coordinates have their middle half inside the band while their mean absolute weight sits above the noise term’s, so the two readings point different ways. The reason is that the box describes the typical borrower and the importance measure integrates the tails, and a term can be inert for most of the book and active for some of it. Consequently neither statistic settles the question on its own, and these three are simply the weakest terms in the model. Deciding their fate properly wants lecture 8’s group LASSO applied to the embedding coordinates as groups, which is the instrument built for exactly this and is why the course points at it for categorical covariates.</p>
 </section>
 <section id="the-importance-measure" class="level2" data-number="5.2">
 <h2 data-number="5.2" class="anchored" data-anchor-id="the-importance-measure"><span class="header-section-number">5.2</span> The importance measure</h2>
@@ -716,31 +734,31 @@ zero-centred 99 per cent band: +/- 0.1238</code></pre>
 \operatorname{VI}_j = \frac{1}{n}\sum_{i=1}^{n}
 \left| z_j^{(d:1)}(\boldsymbol{X}_i)\right| .
 \]</span> A value close to the noise covariate’s supports dropping the term, and a large value says the term moves the regression function a great deal. The reasoning parallels the likelihood ratio test for nested GLMs, and Richman and Wüthrich (2023a) give the empirical test.</p>
-<div id="50d50e2a" class="cell" data-execution_count="15">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>VI <span class="op">=</span> A.<span class="bu">abs</span>().mean().sort_values()</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">3.8</span>))</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>ax.barh(<span class="bu">range</span>(<span class="bu">len</span>(VI)), VI.to_numpy(),</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>[RED <span class="cf">if</span> c <span class="op">==</span> <span class="st">"CountryEmb1"</span> <span class="cf">else</span> GREY <span class="cf">for</span> c <span class="kw">in</span> VI.index], height<span class="op">=</span><span class="fl">0.68</span>)</span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(VI[<span class="st">"RandN"</span>], color<span class="op">=</span>BLUE, lw<span class="op">=</span><span class="fl">1.2</span>)</span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(VI)))</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels(VI.index, fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">operatorname{VI}_j</span><span class="dv">$</span><span class="vs">"</span>)</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="cc4c7e32" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>VI <span class="op">=</span> A.<span class="bu">abs</span>().mean().sort_values()</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">7.2</span>, <span class="fl">3.8</span>))</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>ax.barh(<span class="bu">range</span>(<span class="bu">len</span>(VI)), VI.to_numpy(),</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>[RED <span class="cf">if</span> c <span class="op">==</span> <span class="st">"CountryEmb1"</span> <span class="cf">else</span> GREY <span class="cf">for</span> c <span class="kw">in</span> VI.index], height<span class="op">=</span><span class="fl">0.68</span>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(VI[<span class="st">"RandN"</span>], color<span class="op">=</span>BLUE, lw<span class="op">=</span><span class="fl">1.2</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(VI)))</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels(VI.index, fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">operatorname{VI}_j</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="figures/09_credit-localglmnet/cell-16-output-1.png" width="1069" height="556" class="figure-img"></p>
+<p><img src="figures/09_credit-localglmnet/cell-17-output-1.png" width="1069" height="556" class="figure-img"></p>
 <figcaption>Variable importance <span class="math inline">\(\operatorname{VI}_j\)</span> over the test sample, seed 100. The vertical line is the purely random covariate’s own importance, which is the level a term carrying no information produces. <code>Country</code>’s first rotated coordinate is drawn in bronze-red.</figcaption>
 </figure>
 </div>
 </div>
 </div>
-<div id="061c34af" class="cell" data-execution_count="16">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>VIm <span class="op">=</span> pd.DataFrame([attention_weights(m, Zt).<span class="bu">abs</span>().mean() <span class="cf">for</span> m <span class="kw">in</span> models])</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"VI (seed 100)"</span>: VI,</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f"mean over </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits"</span>: VIm.mean(),</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"sd"</span>: VIm.std()}).sort_values(<span class="st">"VI (seed 100)"</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="09122d5c" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>VIm <span class="op">=</span> pd.DataFrame([attention_weights(m, Zt).<span class="bu">abs</span>().mean() <span class="cf">for</span> m <span class="kw">in</span> models])</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"VI (seed 100)"</span>: VI,</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f"mean over </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits"</span>: VIm.mean(),</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"sd"</span>: VIm.std()}).sort_values(<span class="st">"VI (seed 100)"</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                        VI (seed 100)  mean over 10 fits      sd
 RandN                          0.0408             0.0314  0.0064
@@ -764,45 +782,45 @@ CountryEmb1                    0.8005             0.7789  0.0301</code></pre>
 <section id="three-orderings-of-the-same-book" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="three-orderings-of-the-same-book"><span class="header-section-number">5.3</span> Three orderings of the same book</h2>
 <p>The series can now rank these characteristics three independent ways. Lecture <code>F1</code> computed information values on classed characteristics, lecture 8 recorded the order in which group LASSO eliminated whole risk drivers, and this lecture has attention weights. To compare them, the attention weights are aggregated to characteristic level, since a rotated embedding coordinate is not a characteristic and cannot be ranked as one. The natural aggregate is the mean absolute contribution to the log-odds, <span class="math inline">\(\frac1n \sum_i \left| \sum_{j \in k} z_j(\boldsymbol{X}_i) X_{ij} \right|\)</span> summed over the coordinates belonging to characteristic <span class="math inline">\(k\)</span>.</p>
-<div id="5d8e16fa" class="cell" data-execution_count="17">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>GROUPS <span class="op">=</span> {<span class="st">"Country"</span>: [<span class="st">"CountryEmb1"</span>, <span class="st">"CountryEmb2"</span>], <span class="st">"Age"</span>: [<span class="st">"AgeCens"</span>],</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>          <span class="st">"logIncome"</span>: [<span class="st">"logIncome"</span>], <span class="st">"NewCreditCustomer"</span>: [<span class="st">"NewCredit"</span>],</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>          <span class="st">"HomeOwnership"</span>: [<span class="st">"HomeOwnershipEmb1"</span>, <span class="st">"HomeOwnershipEmb2"</span>],</span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"Education"</span>: [<span class="st">"EducationEmb1"</span>, <span class="st">"EducationEmb2"</span>],</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"VerificationType"</span>: [<span class="st">"VerificationTypeEmb1"</span>, <span class="st">"VerificationTypeEmb2"</span>],</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"EmploymentDuration"</span>: [<span class="st">"EmploymentDurationEmb1"</span>, <span class="st">"EmploymentDurationEmb2"</span>],</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>          <span class="st">"RandN"</span>: [<span class="st">"RandN"</span>]}</span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>GN <span class="op">=</span> <span class="bu">list</span>(GROUPS)</span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> grouped_contributions(model, X):</span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Contribution of each characteristic to the log-odds, per borrower."""</span></span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>        xt <span class="op">=</span> torch.tensor(X)</span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight)</span>
-<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>        C <span class="op">=</span> (model.attention(xt) <span class="op">*</span> w <span class="op">*</span> xt).numpy()</span>
-<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.stack([C[:, [NAMES.index(c) <span class="cf">for</span> c <span class="kw">in</span> cs]].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">for</span> cs <span class="kw">in</span> GROUPS.values()], axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>Cg <span class="op">=</span> np.mean([grouped_contributions(m, Zt) <span class="cf">for</span> m <span class="kw">in</span> models], axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Information values from F1 (classed characteristics) and the group LASSO</span></span>
-<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a><span class="co"># survival order from lecture 8, where 1 leaves first and 4 survives longest.</span></span>
-<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>F1_IV <span class="op">=</span> {<span class="st">"Country"</span>: <span class="fl">0.5404</span>, <span class="st">"NewCreditCustomer"</span>: <span class="fl">0.1199</span>, <span class="st">"HomeOwnership"</span>: <span class="fl">0.0909</span>,</span>
-<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>         <span class="st">"logIncome"</span>: <span class="fl">0.0579</span>, <span class="st">"Education"</span>: <span class="fl">0.0256</span>, <span class="st">"VerificationType"</span>: <span class="fl">0.0250</span>,</span>
-<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a>         <span class="st">"EmploymentDuration"</span>: <span class="fl">0.0137</span>, <span class="st">"Age"</span>: <span class="fl">0.0067</span>}</span>
-<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a>L8_ORDER <span class="op">=</span> {<span class="st">"logIncome"</span>: <span class="dv">1</span>, <span class="st">"VerificationType"</span>: <span class="dv">2</span>, <span class="st">"EmploymentDuration"</span>: <span class="dv">2</span>,</span>
-<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Age"</span>: <span class="dv">2</span>, <span class="st">"Education"</span>: <span class="dv">3</span>, <span class="st">"HomeOwnership"</span>: <span class="dv">3</span>, <span class="st">"Country"</span>: <span class="dv">4</span>,</span>
-<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a>            <span class="st">"NewCreditCustomer"</span>: <span class="dv">4</span>}</span>
-<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> pd.DataFrame({<span class="st">"grouped importance"</span>: pd.Series(np.<span class="bu">abs</span>(Cg).mean(axis<span class="op">=</span><span class="dv">0</span>), index<span class="op">=</span>GN),</span>
-<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"F1 information value"</span>: pd.Series(F1_IV),</span>
-<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"08 group LASSO survival"</span>: pd.Series(L8_ORDER)})</span>
-<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> T.sort_values(<span class="st">"grouped importance"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
-<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(T.<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
-<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a>sub <span class="op">=</span> T.dropna(subset<span class="op">=</span>[<span class="st">"F1 information value"</span>])</span>
-<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Spearman correlation of the first two columns over the eight "</span></span>
-<span id="cb25-37"><a href="#cb25-37" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"characteristics: "</span></span>
-<span id="cb25-38"><a href="#cb25-38" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>sub[<span class="st">'grouped importance'</span>]<span class="sc">.</span>corr(sub[<span class="st">'F1 information value'</span>], method<span class="op">=</span><span class="st">'spearman'</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="96025e8a" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>GROUPS <span class="op">=</span> {<span class="st">"Country"</span>: [<span class="st">"CountryEmb1"</span>, <span class="st">"CountryEmb2"</span>], <span class="st">"Age"</span>: [<span class="st">"AgeCens"</span>],</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>          <span class="st">"logIncome"</span>: [<span class="st">"logIncome"</span>], <span class="st">"NewCreditCustomer"</span>: [<span class="st">"NewCredit"</span>],</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>          <span class="st">"HomeOwnership"</span>: [<span class="st">"HomeOwnershipEmb1"</span>, <span class="st">"HomeOwnershipEmb2"</span>],</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"Education"</span>: [<span class="st">"EducationEmb1"</span>, <span class="st">"EducationEmb2"</span>],</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>          <span class="st">"VerificationType"</span>: [<span class="st">"VerificationTypeEmb1"</span>, <span class="st">"VerificationTypeEmb2"</span>],</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>          <span class="st">"EmploymentDuration"</span>: [<span class="st">"EmploymentDurationEmb1"</span>, <span class="st">"EmploymentDurationEmb2"</span>],</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>          <span class="st">"RandN"</span>: [<span class="st">"RandN"</span>]}</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>GN <span class="op">=</span> <span class="bu">list</span>(GROUPS)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> grouped_contributions(model, X):</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Contribution of each characteristic to the log-odds, per borrower."""</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> torch.no_grad():</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>        xt <span class="op">=</span> torch.tensor(X)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>        w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>        C <span class="op">=</span> (model.attention(xt) <span class="op">*</span> w <span class="op">*</span> xt).numpy()</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.stack([C[:, [NAMES.index(c) <span class="cf">for</span> c <span class="kw">in</span> cs]].<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>                     <span class="cf">for</span> cs <span class="kw">in</span> GROUPS.values()], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>Cg <span class="op">=</span> np.mean([grouped_contributions(m, Zt) <span class="cf">for</span> m <span class="kw">in</span> models], axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Information values from F1 (classed characteristics) and the group LASSO</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a><span class="co"># survival order from lecture 8, where 1 leaves first and 4 survives longest.</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>F1_IV <span class="op">=</span> {<span class="st">"Country"</span>: <span class="fl">0.5404</span>, <span class="st">"NewCreditCustomer"</span>: <span class="fl">0.1199</span>, <span class="st">"HomeOwnership"</span>: <span class="fl">0.0909</span>,</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>         <span class="st">"logIncome"</span>: <span class="fl">0.0579</span>, <span class="st">"Education"</span>: <span class="fl">0.0256</span>, <span class="st">"VerificationType"</span>: <span class="fl">0.0250</span>,</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>         <span class="st">"EmploymentDuration"</span>: <span class="fl">0.0137</span>, <span class="st">"Age"</span>: <span class="fl">0.0067</span>}</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>L8_ORDER <span class="op">=</span> {<span class="st">"logIncome"</span>: <span class="dv">1</span>, <span class="st">"VerificationType"</span>: <span class="dv">2</span>, <span class="st">"EmploymentDuration"</span>: <span class="dv">2</span>,</span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>            <span class="st">"Age"</span>: <span class="dv">2</span>, <span class="st">"Education"</span>: <span class="dv">3</span>, <span class="st">"HomeOwnership"</span>: <span class="dv">3</span>, <span class="st">"Country"</span>: <span class="dv">4</span>,</span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>            <span class="st">"NewCreditCustomer"</span>: <span class="dv">4</span>}</span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> pd.DataFrame({<span class="st">"grouped importance"</span>: pd.Series(np.<span class="bu">abs</span>(Cg).mean(axis<span class="op">=</span><span class="dv">0</span>), index<span class="op">=</span>GN),</span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"F1 information value"</span>: pd.Series(F1_IV),</span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"08 group LASSO survival"</span>: pd.Series(L8_ORDER)})</span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>T <span class="op">=</span> T.sort_values(<span class="st">"grouped importance"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(T.<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>sub <span class="op">=</span> T.dropna(subset<span class="op">=</span>[<span class="st">"F1 information value"</span>])</span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">Spearman correlation of the first two columns over the eight "</span></span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"characteristics: "</span></span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>sub[<span class="st">'grouped importance'</span>]<span class="sc">.</span>corr(sub[<span class="st">'F1 information value'</span>], method<span class="op">=</span><span class="st">'spearman'</span>)<span class="sc">:.3f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                    grouped importance  F1 information value  08 group LASSO survival
 Country                         0.7349                0.5404                      4.0
@@ -841,16 +859,16 @@ Spearman correlation of the first two columns over the eight characteristics: 0.
 </div>
 <section id="one-fits-answer" class="level2" data-number="6.1">
 <h2 data-number="6.1" class="anchored" data-anchor-id="one-fits-answer"><span class="header-section-number">6.1</span> One fit’s answer</h2>
-<div id="8168232e" class="cell" data-execution_count="18">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>ctry <span class="op">=</span> g[<span class="st">"Country"</span>].to_numpy().astype(<span class="bu">str</span>)[idx_test]</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>z_inc <span class="op">=</span> A[<span class="st">"logIncome"</span>].to_numpy()</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"z_logIncome, seed 100: </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (z_inc <span class="op">&gt;</span> <span class="dv">0</span>)<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss"> per cent positive, "</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"range </span><span class="sc">{</span>z_inc<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:+.3f}</span><span class="ss"> to </span><span class="sc">{</span>z_inc<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:+.3f}</span><span class="ss">"</span>)</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"country"</span>: ctry, <span class="st">"z"</span>: z_inc, <span class="st">"default"</span>: yt})</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>      .groupby(<span class="st">"country"</span>)</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>      .agg(n<span class="op">=</span>(<span class="st">"z"</span>, <span class="st">"size"</span>), mean_z<span class="op">=</span>(<span class="st">"z"</span>, <span class="st">"mean"</span>),</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>           pct_positive<span class="op">=</span>(<span class="st">"z"</span>, <span class="kw">lambda</span> s: <span class="dv">100</span> <span class="op">*</span> (s <span class="op">&gt;</span> <span class="dv">0</span>).mean()),</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>           default_rate<span class="op">=</span>(<span class="st">"default"</span>, <span class="st">"mean"</span>)).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="220ee8cd" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ctry <span class="op">=</span> g[<span class="st">"Country"</span>].to_numpy().astype(<span class="bu">str</span>)[idx_test]</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>z_inc <span class="op">=</span> A[<span class="st">"logIncome"</span>].to_numpy()</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"z_logIncome, seed 100: </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (z_inc <span class="op">&gt;</span> <span class="dv">0</span>)<span class="sc">.</span>mean()<span class="sc">:.1f}</span><span class="ss"> per cent positive, "</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"range </span><span class="sc">{</span>z_inc<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:+.3f}</span><span class="ss"> to </span><span class="sc">{</span>z_inc<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:+.3f}</span><span class="ss">"</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({<span class="st">"country"</span>: ctry, <span class="st">"z"</span>: z_inc, <span class="st">"default"</span>: yt})</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>      .groupby(<span class="st">"country"</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>      .agg(n<span class="op">=</span>(<span class="st">"z"</span>, <span class="st">"size"</span>), mean_z<span class="op">=</span>(<span class="st">"z"</span>, <span class="st">"mean"</span>),</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>           pct_positive<span class="op">=</span>(<span class="st">"z"</span>, <span class="kw">lambda</span> s: <span class="dv">100</span> <span class="op">*</span> (s <span class="op">&gt;</span> <span class="dv">0</span>).mean()),</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>           default_rate<span class="op">=</span>(<span class="st">"default"</span>, <span class="st">"mean"</span>)).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>z_logIncome, seed 100: 37.4 per cent positive, range -0.554 to +0.742
              n  mean_z  pct_positive  default_rate
@@ -866,15 +884,15 @@ SK          65 -0.2667      0.000000        0.6462</code></pre>
 <section id="the-same-question-over-ten-fits" class="level2" data-number="6.2">
 <h2 data-number="6.2" class="anchored" data-anchor-id="the-same-question-over-ten-fits"><span class="header-section-number">6.2</span> The same question over ten fits</h2>
 <p>The importance table in section 6.2 has already warned against trusting this term’s single-fit reading, so the honest next step is to ask the ten fits the same question.</p>
-<div id="2c4dbbda" class="cell" data-execution_count="19">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>by_seed <span class="op">=</span> pd.DataFrame([</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>    {c: attention_weights(m, Zt)[<span class="st">"logIncome"</span>].to_numpy()[ctry <span class="op">==</span> c].mean()</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>     <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>]} <span class="cf">for</span> m <span class="kw">in</span> models],</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="ss">f"seed </span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> s <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>, <span class="dv">100</span> <span class="op">+</span> M)])</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(by_seed.<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> pd.DataFrame({<span class="st">"mean"</span>: by_seed.mean(), <span class="st">"sd"</span>: by_seed.std(),</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"min"</span>: by_seed.<span class="bu">min</span>(), <span class="st">"max"</span>: by_seed.<span class="bu">max</span>()})</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>      .<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="d2654fb5" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>by_seed <span class="op">=</span> pd.DataFrame([</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    {c: attention_weights(m, Zt)[<span class="st">"logIncome"</span>].to_numpy()[ctry <span class="op">==</span> c].mean()</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>     <span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>]} <span class="cf">for</span> m <span class="kw">in</span> models],</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="ss">f"seed </span><span class="sc">{</span>s<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> s <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>, <span class="dv">100</span> <span class="op">+</span> M)])</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(by_seed.<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">"</span> <span class="op">+</span> pd.DataFrame({<span class="st">"mean"</span>: by_seed.mean(), <span class="st">"sd"</span>: by_seed.std(),</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>                           <span class="st">"min"</span>: by_seed.<span class="bu">min</span>(), <span class="st">"max"</span>: by_seed.<span class="bu">max</span>()})</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>      .<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>              EE      FI      ES      SK
 seed 100  0.0400 -0.1618 -0.1235 -0.2667
@@ -895,22 +913,22 @@ ES -0.0573  0.0412 -0.1235  0.0022
 SK -0.0630  0.1256 -0.2667  0.1108</code></pre>
 </div>
 </div>
-<div id="915cd595" class="cell" data-execution_count="20">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.6</span>, <span class="fl">3.2</span>))</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k, c <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>]):</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    ax.plot(by_seed[c], [k] <span class="op">*</span> M, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">4</span>, color<span class="op">=</span>GREY, alpha<span class="op">=</span><span class="fl">0.65</span>)</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    ax.plot(by_seed[c].mean(), k, <span class="st">"D"</span>, ms<span class="op">=</span><span class="fl">6.5</span>, color<span class="op">=</span>RED)</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="dv">4</span>))</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels([<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>])</span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"mean </span><span class="dv">$</span><span class="vs">w</span><span class="ch">\,</span><span class="vs">z_{</span><span class="dv">\m</span><span class="vs">athrm{logIncome}}</span><span class="kw">(</span><span class="dv">\b</span><span class="vs">oldsymbol{X}</span><span class="kw">)</span><span class="dv">$</span><span class="vs"> over the country's test loans"</span>)</span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="13155200" class="cell" data-execution_count="21">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.6</span>, <span class="fl">3.2</span>))</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k, c <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>]):</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    ax.plot(by_seed[c], [k] <span class="op">*</span> M, <span class="st">"o"</span>, ms<span class="op">=</span><span class="dv">4</span>, color<span class="op">=</span>GREY, alpha<span class="op">=</span><span class="fl">0.65</span>)</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    ax.plot(by_seed[c].mean(), k, <span class="st">"D"</span>, ms<span class="op">=</span><span class="fl">6.5</span>, color<span class="op">=</span>RED)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="dv">4</span>))</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels([<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>, <span class="st">"SK"</span>])</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r"mean </span><span class="dv">$</span><span class="vs">w</span><span class="ch">\,</span><span class="vs">z_{</span><span class="dv">\m</span><span class="vs">athrm{logIncome}}</span><span class="kw">(</span><span class="dv">\b</span><span class="vs">oldsymbol{X}</span><span class="kw">)</span><span class="dv">$</span><span class="vs"> over the country's test loans"</span>)</span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>ax.invert_yaxis()</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="figures/09_credit-localglmnet/cell-21-output-1.png" width="980" height="465" class="figure-img"></p>
+<p><img src="figures/09_credit-localglmnet/cell-22-output-1.png" width="980" height="465" class="figure-img"></p>
 <figcaption>Mean income attention weight by country of residence, one marker per fit, over ten fits differing only in seed. The bronze-red markers are the ten-fit means. The between-country spread is of the same order as the between-fit spread, which is the finding.</figcaption>
 </figure>
 </div>
@@ -945,25 +963,25 @@ SK -0.0630  0.1256 -0.2667  0.1108</code></pre>
 \frac{\partial}{\partial X_q} z_j^{(d:1)}(\boldsymbol{X})\right)
 \in \mathbb{R}^q ,
 \]</span> so the <span class="math inline">\(j\)</span>th coefficient is sensitive to the <span class="math inline">\(k\)</span>th covariate exactly where the <span class="math inline">\(k\)</span>th component is non-zero. Automatic differentiation gives the whole gradient in one backward pass, and the noise covariate again supplies the threshold, since the largest gradient component of <span class="math inline">\(z_{\rm RandN}\)</span> is the largest cross-sensitivity attributable to nothing.</p>
-<div id="2ecdce81" class="cell" data-execution_count="21">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention_gradient(model, X, j):</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Gradient of the jth scaled attention weight with respect to every input."""</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> torch.tensor(X, requires_grad<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight.detach())</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    grad, <span class="op">=</span> torch.autograd.grad((model.attention(x)[:, j] <span class="op">*</span> w).<span class="bu">sum</span>(), x)</span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grad.numpy()</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>G <span class="op">=</span> pd.DataFrame({n: pd.Series(np.<span class="bu">abs</span>(attention_gradient(model, Zt,</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>                                                         NAMES.index(n))).mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>                               index<span class="op">=</span>NAMES) <span class="cf">for</span> n <span class="kw">in</span> NAMES}).T</span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>ceiling <span class="op">=</span> G.loc[<span class="st">"RandN"</span>].<span class="bu">max</span>()</span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"noise ceiling: largest mean |gradient| of z_RandN is </span><span class="sc">{</span>ceiling<span class="sc">:.4f}</span><span class="ss">, "</span></span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"with respect to </span><span class="sc">{</span>G<span class="sc">.</span>loc[<span class="st">'RandN'</span>]<span class="sc">.</span>idxmax()<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>pairs <span class="op">=</span> [(r, c, G.loc[r, c]) <span class="cf">for</span> r <span class="kw">in</span> NAMES <span class="cf">for</span> c <span class="kw">in</span> NAMES</span>
-<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>         <span class="cf">if</span> r <span class="op">!=</span> c <span class="kw">and</span> G.loc[r, c] <span class="op">&gt;</span> ceiling]</span>
-<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(pairs, columns<span class="op">=</span>[<span class="st">"attention weight"</span>, <span class="st">"sensitive to"</span>, <span class="st">"mean |gradient|"</span>])</span>
-<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>      .sort_values(<span class="st">"mean |gradient|"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">8</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="b6bd70e2" class="cell" data-execution_count="22">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention_gradient(model, X, j):</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Gradient of the jth scaled attention weight with respect to every input."""</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> torch.tensor(X, requires_grad<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    w <span class="op">=</span> <span class="bu">float</span>(model.readout.weight.detach())</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    grad, <span class="op">=</span> torch.autograd.grad((model.attention(x)[:, j] <span class="op">*</span> w).<span class="bu">sum</span>(), x)</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grad.numpy()</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>G <span class="op">=</span> pd.DataFrame({n: pd.Series(np.<span class="bu">abs</span>(attention_gradient(model, Zt,</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>                                                         NAMES.index(n))).mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>                               index<span class="op">=</span>NAMES) <span class="cf">for</span> n <span class="kw">in</span> NAMES}).T</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>ceiling <span class="op">=</span> G.loc[<span class="st">"RandN"</span>].<span class="bu">max</span>()</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"noise ceiling: largest mean |gradient| of z_RandN is </span><span class="sc">{</span>ceiling<span class="sc">:.4f}</span><span class="ss">, "</span></span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"with respect to </span><span class="sc">{</span>G<span class="sc">.</span>loc[<span class="st">'RandN'</span>]<span class="sc">.</span>idxmax()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>pairs <span class="op">=</span> [(r, c, G.loc[r, c]) <span class="cf">for</span> r <span class="kw">in</span> NAMES <span class="cf">for</span> c <span class="kw">in</span> NAMES</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>         <span class="cf">if</span> r <span class="op">!=</span> c <span class="kw">and</span> G.loc[r, c] <span class="op">&gt;</span> ceiling]</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(pairs, columns<span class="op">=</span>[<span class="st">"attention weight"</span>, <span class="st">"sensitive to"</span>, <span class="st">"mean |gradient|"</span>])</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>      .sort_values(<span class="st">"mean |gradient|"</span>, ascending<span class="op">=</span><span class="va">False</span>).head(<span class="dv">8</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>noise ceiling: largest mean |gradient| of z_RandN is 0.0331, with respect to HomeOwnershipEmb2
  attention weight      sensitive to  mean |gradient|
@@ -980,25 +998,25 @@ HomeOwnershipEmb2 HomeOwnershipEmb1           0.1280
 <p>Two of those pairs are worth naming. The country term’s second coordinate is sensitive to log-income and log-income’s own weight is sensitive to <code>NewCredit</code>, so the network has found the income and country entanglement that lecture 1 diagnosed and section 7 could only report weakly. The gradient sees it because it asks a different question, namely whether the coefficient moves with the other covariate, rather than whether the coefficient’s country averages separate.</p>
 <p>The diagonal is a separate reading. A non-zero <span class="math inline">\(\partial z_j / \partial
 X_j\)</span> says the <span class="math inline">\(j\)</span>th term is non-linear in its own covariate, so a GLM term is inadequate there.</p>
-<div id="afb9f6cf" class="cell" data-execution_count="22">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>j_age <span class="op">=</span> NAMES.index(<span class="st">"AgeCens"</span>)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>Gage <span class="op">=</span> attention_gradient(model, Zt, j_age)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>xa <span class="op">=</span> Zt[:, j_age]</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.8</span>, <span class="fl">3.4</span>))</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, colour, lw <span class="kw">in</span> [(<span class="st">"AgeCens"</span>, RED, <span class="fl">2.0</span>), (<span class="st">"logIncome"</span>, GREY, <span class="fl">1.2</span>),</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>                         (<span class="st">"CountryEmb1"</span>, BLUE, <span class="fl">1.2</span>), (<span class="st">"RandN"</span>, GREY, <span class="fl">0.9</span>)]:</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    sm_ <span class="op">=</span> lowess(Gage[:, NAMES.index(name)], xa, frac<span class="op">=</span><span class="fl">0.3</span>, return_sorted<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    ax.plot(sm_[:, <span class="dv">0</span>], sm_[:, <span class="dv">1</span>], color<span class="op">=</span>colour, lw<span class="op">=</span>lw,</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>            ls<span class="op">=</span><span class="st">":"</span> <span class="cf">if</span> name <span class="op">==</span> <span class="st">"RandN"</span> <span class="cf">else</span> <span class="st">"-"</span>, label<span class="op">=</span>name)</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"standardised age"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">partial z_{</span><span class="dv">\m</span><span class="vs">athrm{Age}} / </span><span class="er">\</span><span class="vs">partial x_k</span><span class="dv">$</span><span class="vs">"</span>)</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="e9ae4619" class="cell" data-execution_count="23">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>j_age <span class="op">=</span> NAMES.index(<span class="st">"AgeCens"</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>Gage <span class="op">=</span> attention_gradient(model, Zt, j_age)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>xa <span class="op">=</span> Zt[:, j_age]</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.8</span>, <span class="fl">3.4</span>))</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, colour, lw <span class="kw">in</span> [(<span class="st">"AgeCens"</span>, RED, <span class="fl">2.0</span>), (<span class="st">"logIncome"</span>, GREY, <span class="fl">1.2</span>),</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>                         (<span class="st">"CountryEmb1"</span>, BLUE, <span class="fl">1.2</span>), (<span class="st">"RandN"</span>, GREY, <span class="fl">0.9</span>)]:</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    sm_ <span class="op">=</span> lowess(Gage[:, NAMES.index(name)], xa, frac<span class="op">=</span><span class="fl">0.3</span>, return_sorted<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    ax.plot(sm_[:, <span class="dv">0</span>], sm_[:, <span class="dv">1</span>], color<span class="op">=</span>colour, lw<span class="op">=</span>lw,</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>            ls<span class="op">=</span><span class="st">":"</span> <span class="cf">if</span> name <span class="op">==</span> <span class="st">"RandN"</span> <span class="cf">else</span> <span class="st">"-"</span>, label<span class="op">=</span>name)</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>ax.axhline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"standardised age"</span>)<span class="op">;</span> ax.set_ylabel(<span class="vs">r"</span><span class="dv">$</span><span class="er">\</span><span class="vs">partial z_{</span><span class="dv">\m</span><span class="vs">athrm{Age}} / </span><span class="er">\</span><span class="vs">partial x_k</span><span class="dv">$</span><span class="vs">"</span>)</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="figures/09_credit-localglmnet/cell-23-output-1.png" width="1007" height="497" class="figure-img"></p>
+<p><img src="figures/09_credit-localglmnet/cell-24-output-1.png" width="1007" height="497" class="figure-img"></p>
 <figcaption>Smoothed sensitivities of the age attention weight to four covariates, against standardised age. Lowess with a 0.3 span, on the test sample. The own-component curve in bronze-red is non-flat, which says age cannot enter this model as a GLM term. <code>RandN</code>’s curve is the noise reference.</figcaption>
 </figure>
 </div>
@@ -1027,12 +1045,12 @@ X_j\)</span> says the <span class="math inline">\(j\)</span>th term is non-linea
 \sum_{j=1}^{q} w \, z_j^{(d:1)}(\boldsymbol{X}_i) \, X_{ij} ,
 \]</span> so the <span class="math inline">\(j\)</span>th contribution is the product <span class="math inline">\(w \, z_j(\boldsymbol{X}_i) X_{ij}\)</span> and the contributions sum to the prediction with nothing left over. That exactness is the property lecture 3 was pointing at, and it distinguishes the decomposition from a post hoc attribution, which approximates.</p>
 <p>Contributions are aggregated to characteristic level before anything is read off them. <code>CountryEmb1</code> is the first principal coordinate of a two-dimensional embedding of country and no applicant could be told anything about it, whereas the sum of the two coordinates’ contributions is country’s contribution and is meaningful.</p>
-<div id="80e89ee5" class="cell" data-execution_count="23">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>b0 <span class="op">=</span> <span class="bu">float</span>(model.readout.bias.detach())</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>C_one <span class="op">=</span> grouped_contributions(model, Zt)</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>recon <span class="op">=</span> b0 <span class="op">+</span> C_one.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"max |reconstructed logit - fitted logit| = </span><span class="sc">%.2e</span><span class="st">"</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>      <span class="op">%</span> np.<span class="bu">abs</span>(recon <span class="op">-</span> np.log(p_lgn_t <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p_lgn_t))).<span class="bu">max</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="3543d52e" class="cell" data-execution_count="24">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>b0 <span class="op">=</span> <span class="bu">float</span>(model.readout.bias.detach())</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>C_one <span class="op">=</span> grouped_contributions(model, Zt)</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>recon <span class="op">=</span> b0 <span class="op">+</span> C_one.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"max |reconstructed logit - fitted logit| = </span><span class="sc">%.2e</span><span class="st">"</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>      <span class="op">%</span> np.<span class="bu">abs</span>(recon <span class="op">-</span> np.log(p_lgn_t <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> p_lgn_t))).<span class="bu">max</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>max |reconstructed logit - fitted logit| = 1.19e-06</code></pre>
 </div>
@@ -1047,20 +1065,20 @@ X_j\)</span> says the <span class="math inline">\(j\)</span>th term is non-linea
 </section>
 <section id="one-declined-applicant" class="level2" data-number="8.3">
 <h2 data-number="8.3" class="anchored" data-anchor-id="one-declined-applicant"><span class="header-section-number">8.3</span> One declined applicant</h2>
-<div id="100a0fcf" class="cell" data-execution_count="24">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>decline_cut <span class="op">=</span> np.quantile(p_bar, <span class="fl">0.90</span>)</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>declined <span class="op">=</span> p_bar <span class="op">&gt;=</span> decline_cut</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"decline region: the highest-PD decile, </span><span class="sc">{</span>declined<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> of "</span></span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(p_bar)<span class="sc">:,}</span><span class="ss"> test loans, fitted PD at or above </span><span class="sc">{</span>decline_cut<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>pop_mean <span class="op">=</span> C_one.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>i <span class="op">=</span> <span class="bu">int</span>(np.flatnonzero(declined)[np.argsort(<span class="op">-</span>p_bar[declined])[<span class="bu">len</span>(np.flatnonzero(declined)) <span class="op">//</span> <span class="dv">2</span>]])</span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>row <span class="op">=</span> pd.DataFrame({<span class="st">"contribution"</span>: C_one[i], <span class="st">"population mean"</span>: pop_mean,</span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"adverse deviation"</span>: C_one[i] <span class="op">-</span> pop_mean}, index<span class="op">=</span>GN)</span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">median applicant of the decline region: fitted PD </span><span class="sc">{</span>p_bar[i]<span class="sc">:.4f}</span><span class="ss">, "</span></span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"country </span><span class="sc">{</span>ctry[i]<span class="sc">}</span><span class="ss">, age </span><span class="sc">{</span>g[<span class="st">'Age'</span>]<span class="sc">.</span>to_numpy()[idx_test][i]<span class="sc">:.0f}</span><span class="ss">, "</span></span>
-<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"income </span><span class="sc">{</span>np<span class="sc">.</span>exp(g[<span class="st">'logIncome'</span>].to_numpy()[idx_test][i])<span class="sc">:,.0f}</span><span class="ss">"</span>)</span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(row.sort_values(<span class="st">"adverse deviation"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f7635e8e" class="cell" data-execution_count="25">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>decline_cut <span class="op">=</span> np.quantile(p_bar, <span class="fl">0.90</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>declined <span class="op">=</span> p_bar <span class="op">&gt;=</span> decline_cut</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"decline region: the highest-PD decile, </span><span class="sc">{</span>declined<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> of "</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(p_bar)<span class="sc">:,}</span><span class="ss"> test loans, fitted PD at or above </span><span class="sc">{</span>decline_cut<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>pop_mean <span class="op">=</span> C_one.mean(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>i <span class="op">=</span> <span class="bu">int</span>(np.flatnonzero(declined)[np.argsort(<span class="op">-</span>p_bar[declined])[<span class="bu">len</span>(np.flatnonzero(declined)) <span class="op">//</span> <span class="dv">2</span>]])</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>row <span class="op">=</span> pd.DataFrame({<span class="st">"contribution"</span>: C_one[i], <span class="st">"population mean"</span>: pop_mean,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"adverse deviation"</span>: C_one[i] <span class="op">-</span> pop_mean}, index<span class="op">=</span>GN)</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">median applicant of the decline region: fitted PD </span><span class="sc">{</span>p_bar[i]<span class="sc">:.4f}</span><span class="ss">, "</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"country </span><span class="sc">{</span>ctry[i]<span class="sc">}</span><span class="ss">, age </span><span class="sc">{</span>g[<span class="st">'Age'</span>]<span class="sc">.</span>to_numpy()[idx_test][i]<span class="sc">:.0f}</span><span class="ss">, "</span></span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"income </span><span class="sc">{</span>np<span class="sc">.</span>exp(g[<span class="st">'logIncome'</span>].to_numpy()[idx_test][i])<span class="sc">:,.0f}</span><span class="ss">"</span>)</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(row.sort_values(<span class="st">"adverse deviation"</span>, ascending<span class="op">=</span><span class="va">False</span>).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>decline region: the highest-PD decile, 2,974 of 29,734 test loans, fitted PD at or above 0.5553
 
@@ -1078,22 +1096,22 @@ VerificationType         -0.1878          -0.0038            -0.1841</code></pre
 </div>
 </div>
 <p>The reason codes are the characteristics whose contribution most exceeds the population mean contribution, since a reason for declining is a respect in which this applicant is worse than the book. The ranking above is what a notice would be built from.</p>
-<div id="6ea4d6d8" class="cell" data-execution_count="25">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>dvn <span class="op">=</span> (C_one[i] <span class="op">-</span> pop_mean)</span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> np.argsort(dvn)</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.8</span>, <span class="fl">3.4</span>))</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>ax.barh(<span class="bu">range</span>(<span class="bu">len</span>(o)), dvn[o],</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>[RED <span class="cf">if</span> k <span class="op">==</span> o[<span class="op">-</span><span class="dv">1</span>] <span class="cf">else</span> GREY <span class="cf">for</span> k <span class="kw">in</span> o], height<span class="op">=</span><span class="fl">0.68</span>)</span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(o)))</span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels([GN[k] <span class="cf">for</span> k <span class="kw">in</span> o], fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"adverse deviation from the mean contribution (log-odds)"</span>)</span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="3a1fbfb9" class="cell" data-execution_count="26">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>dvn <span class="op">=</span> (C_one[i] <span class="op">-</span> pop_mean)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>o <span class="op">=</span> np.argsort(dvn)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="fl">6.8</span>, <span class="fl">3.4</span>))</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>ax.barh(<span class="bu">range</span>(<span class="bu">len</span>(o)), dvn[o],</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>        color<span class="op">=</span>[RED <span class="cf">if</span> k <span class="op">==</span> o[<span class="op">-</span><span class="dv">1</span>] <span class="cf">else</span> GREY <span class="cf">for</span> k <span class="kw">in</span> o], height<span class="op">=</span><span class="fl">0.68</span>)</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">0</span>, color<span class="op">=</span><span class="st">"black"</span>, lw<span class="op">=</span><span class="fl">0.6</span>)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>ax.set_yticks(<span class="bu">range</span>(<span class="bu">len</span>(o)))</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>ax.set_yticklabels([GN[k] <span class="cf">for</span> k <span class="kw">in</span> o], fontsize<span class="op">=</span><span class="fl">7.5</span>)</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"adverse deviation from the mean contribution (log-odds)"</span>)</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="figures/09_credit-localglmnet/cell-26-output-1.png" width="1009" height="497" class="figure-img"></p>
+<p><img src="figures/09_credit-localglmnet/cell-27-output-1.png" width="1009" height="497" class="figure-img"></p>
 <figcaption>Adverse deviation from the mean contribution, in log-odds, for the median applicant of the decline region. Bars to the right push the applicant towards default relative to the book, and the bar in bronze-red is the leading reason code. The decomposition is exact, so these bars and the intercept reconstruct the fitted log-odds.</figcaption>
 </figure>
 </div>
@@ -1103,19 +1121,19 @@ VerificationType         -0.1878          -0.0038            -0.1841</code></pre
 <section id="are-the-codes-reproducible" class="level2" data-number="8.4">
 <h2 data-number="8.4" class="anchored" data-anchor-id="are-the-codes-reproducible"><span class="header-section-number">8.4</span> Are the codes reproducible?</h2>
 <p>Everything so far came from one fit. The ten fits differ only in a seed, they share the learning sample, the split, and the architecture, and any of them would have been reported had it been run first. Consequently a reason code that changes across them is a reason code the lender cannot defend.</p>
-<div id="36ac4904" class="cell" data-execution_count="26">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb40"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>Cg_all <span class="op">=</span> np.stack([grouped_contributions(m, Zt) <span class="cf">for</span> m <span class="kw">in</span> models])   <span class="co"># (M, n, K)</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>R <span class="op">=</span> Cg_all <span class="op">-</span> Cg_all.mean(axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)                     <span class="co"># adverse deviation</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>Rd <span class="op">=</span> R[:, declined, :]</span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>rank <span class="op">=</span> np.argsort(<span class="op">-</span>Rd, axis<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    same <span class="op">=</span> (rank[:, :, r] <span class="op">==</span> rank[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>    distinct <span class="op">=</span> np.array([<span class="bu">len</span>(<span class="bu">set</span>(rank[:, t, r])) <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(Rd.shape[<span class="dv">1</span>])])</span>
-<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"rank"</span>: r <span class="op">+</span> <span class="dv">1</span>,</span>
-<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>                 <span class="ss">f"identical across all </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits (%)"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> same.mean(), <span class="dv">1</span>),</span>
-<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"mean distinct codes"</span>: <span class="bu">round</span>(distinct.mean(), <span class="dv">2</span>)})</span>
-<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(rows).to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9b7cc3aa" class="cell" data-execution_count="27">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>Cg_all <span class="op">=</span> np.stack([grouped_contributions(m, Zt) <span class="cf">for</span> m <span class="kw">in</span> models])   <span class="co"># (M, n, K)</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>R <span class="op">=</span> Cg_all <span class="op">-</span> Cg_all.mean(axis<span class="op">=</span><span class="dv">1</span>, keepdims<span class="op">=</span><span class="va">True</span>)                     <span class="co"># adverse deviation</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>Rd <span class="op">=</span> R[:, declined, :]</span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>rank <span class="op">=</span> np.argsort(<span class="op">-</span>Rd, axis<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>    same <span class="op">=</span> (rank[:, :, r] <span class="op">==</span> rank[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a>    distinct <span class="op">=</span> np.array([<span class="bu">len</span>(<span class="bu">set</span>(rank[:, t, r])) <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(Rd.shape[<span class="dv">1</span>])])</span>
+<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a>    rows.append({<span class="st">"rank"</span>: r <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb42-10"><a href="#cb42-10" aria-hidden="true" tabindex="-1"></a>                 <span class="ss">f"identical across all </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits (%)"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> same.mean(), <span class="dv">1</span>),</span>
+<span id="cb42-11"><a href="#cb42-11" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"mean distinct codes"</span>: <span class="bu">round</span>(distinct.mean(), <span class="dv">2</span>)})</span>
+<span id="cb42-12"><a href="#cb42-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(rows).to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> rank  identical across all 10 fits (%)  mean distinct codes
     1                              92.0                 1.15
@@ -1128,16 +1146,16 @@ VerificationType         -0.1878          -0.0038            -0.1841</code></pre
 <section id="why-the-first-code-is-stable-and-the-others-are-not" class="level2" data-number="8.5">
 <h2 data-number="8.5" class="anchored" data-anchor-id="why-the-first-code-is-stable-and-the-others-are-not"><span class="header-section-number">8.5</span> Why the first code is stable and the others are not</h2>
 <p>The mechanism is a gap structure, and it is worth measuring rather than asserting.</p>
-<div id="2be9938f" class="cell" data-execution_count="27">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>S <span class="op">=</span> np.sort(Rd[<span class="dv">0</span>], axis<span class="op">=</span><span class="dv">1</span>)[:, ::<span class="op">-</span><span class="dv">1</span>]</span>
-<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({</span>
-<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mean adverse deviation"</span>: S[:, :<span class="dv">4</span>].mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"gap to the next rank"</span>: np.r_[(S[:, :<span class="dv">3</span>] <span class="op">-</span> S[:, <span class="dv">1</span>:<span class="dv">4</span>]).mean(axis<span class="op">=</span><span class="dv">0</span>), np.nan]},</span>
-<span id="cb42-5"><a href="#cb42-5" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"rank 1"</span>, <span class="st">"rank 2"</span>, <span class="st">"rank 3"</span>, <span class="st">"rank 4"</span>]).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
-<span id="cb42-6"><a href="#cb42-6" aria-hidden="true" tabindex="-1"></a>lead <span class="op">=</span> pd.Series([GN[k] <span class="cf">for</span> k <span class="kw">in</span> rank[<span class="dv">0</span>, :, <span class="dv">0</span>]]).value_counts()</span>
-<span id="cb42-7"><a href="#cb42-7" aria-hidden="true" tabindex="-1"></a>second <span class="op">=</span> pd.Series([GN[k] <span class="cf">for</span> k <span class="kw">in</span> rank[<span class="dv">0</span>, :, <span class="dv">1</span>]]).value_counts()</span>
-<span id="cb42-8"><a href="#cb42-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">rank 1 code, seed 100: </span><span class="sc">{</span><span class="bu">dict</span>(lead.head(<span class="dv">3</span>))<span class="sc">}</span><span class="ss">"</span>)</span>
-<span id="cb42-9"><a href="#cb42-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rank 2 code, seed 100: </span><span class="sc">{</span><span class="bu">dict</span>(second.head(<span class="dv">4</span>))<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="9ff78437" class="cell" data-execution_count="28">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>S <span class="op">=</span> np.sort(Rd[<span class="dv">0</span>], axis<span class="op">=</span><span class="dv">1</span>)[:, ::<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({</span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mean adverse deviation"</span>: S[:, :<span class="dv">4</span>].mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"gap to the next rank"</span>: np.r_[(S[:, :<span class="dv">3</span>] <span class="op">-</span> S[:, <span class="dv">1</span>:<span class="dv">4</span>]).mean(axis<span class="op">=</span><span class="dv">0</span>), np.nan]},</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"rank 1"</span>, <span class="st">"rank 2"</span>, <span class="st">"rank 3"</span>, <span class="st">"rank 4"</span>]).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>lead <span class="op">=</span> pd.Series([GN[k] <span class="cf">for</span> k <span class="kw">in</span> rank[<span class="dv">0</span>, :, <span class="dv">0</span>]]).value_counts()</span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>second <span class="op">=</span> pd.Series([GN[k] <span class="cf">for</span> k <span class="kw">in</span> rank[<span class="dv">0</span>, :, <span class="dv">1</span>]]).value_counts()</span>
+<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">rank 1 code, seed 100: </span><span class="sc">{</span><span class="bu">dict</span>(lead.head(<span class="dv">3</span>))<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rank 2 code, seed 100: </span><span class="sc">{</span><span class="bu">dict</span>(second.head(<span class="dv">4</span>))<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>        mean adverse deviation  gap to the next rank
 rank 1                  1.3305                1.0432
@@ -1150,40 +1168,40 @@ rank 2 code, seed 100: {'HomeOwnership': np.int64(772), 'NewCreditCustomer': np.
 </div>
 </div>
 <p>The leading contribution exceeds the second by more than 1.0 on the log-odds scale, whereas the second exceeds the third by roughly a tenth of that. Rank 1 therefore has a chasm beneath it that seed noise cannot bridge, and ranks 2 onwards are separated by margins smaller than the fluctuation measured in section 6. The leading code is <code>Country</code> for the overwhelming majority of the decline region, which is the same dominance the boxplot, the importance measure, and lecture 8’s group LASSO all reported, arriving here as an operational consequence.</p>
-<div id="ec5f9621" class="cell" data-execution_count="28">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.4</span>, <span class="fl">3.0</span>))</span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">5</span>), S[:, :<span class="dv">4</span>].mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>[RED, GREY, GREY, GREY], width<span class="op">=</span><span class="fl">0.62</span>)</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticks(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">5</span>))<span class="op">;</span> axes[<span class="dv">0</span>].set_xlabel(<span class="st">"rank"</span>)</span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"mean adverse deviation (log-odds)"</span>)</span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>agree <span class="op">=</span> [<span class="dv">100</span> <span class="op">*</span> (rank[:, :, r] <span class="op">==</span> rank[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>).mean() <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>)]</span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].bar(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">4</span>), agree, color<span class="op">=</span>[RED, GREY, GREY], width<span class="op">=</span><span class="fl">0.62</span>)</span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xticks(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">4</span>))<span class="op">;</span> axes[<span class="dv">1</span>].set_xlabel(<span class="st">"rank"</span>)</span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="ss">f"identical across all </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits (%)"</span>)</span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylim(<span class="dv">0</span>, <span class="dv">100</span>)</span>
-<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
-<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="a62fd64b" class="cell" data-execution_count="29">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>fig, axes <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">2</span>, figsize<span class="op">=</span>(<span class="fl">7.4</span>, <span class="fl">3.0</span>))</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].bar(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">5</span>), S[:, :<span class="dv">4</span>].mean(axis<span class="op">=</span><span class="dv">0</span>),</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>[RED, GREY, GREY, GREY], width<span class="op">=</span><span class="fl">0.62</span>)</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_xticks(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">5</span>))<span class="op">;</span> axes[<span class="dv">0</span>].set_xlabel(<span class="st">"rank"</span>)</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">0</span>].set_ylabel(<span class="st">"mean adverse deviation (log-odds)"</span>)</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>agree <span class="op">=</span> [<span class="dv">100</span> <span class="op">*</span> (rank[:, :, r] <span class="op">==</span> rank[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>).mean() <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>)]</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].bar(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">4</span>), agree, color<span class="op">=</span>[RED, GREY, GREY], width<span class="op">=</span><span class="fl">0.62</span>)</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_xticks(<span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">4</span>))<span class="op">;</span> axes[<span class="dv">1</span>].set_xlabel(<span class="st">"rank"</span>)</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylabel(<span class="ss">f"identical across all </span><span class="sc">{</span>M<span class="sc">}</span><span class="ss"> fits (%)"</span>)</span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>axes[<span class="dv">1</span>].set_ylim(<span class="dv">0</span>, <span class="dv">100</span>)</span>
+<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="figures/09_credit-localglmnet/cell-29-output-1.png" width="1099" height="437" class="figure-img"></p>
+<p><img src="figures/09_credit-localglmnet/cell-30-output-1.png" width="1099" height="437" class="figure-img"></p>
 <figcaption>The gap structure behind the stability result. Left, the mean adverse deviation by rank over the decline region, with the rank-1 bar in bronze-red. Right, the share of applicants whose code at each rank is identical across all ten fits. The collapse from rank 1 to rank 2 mirrors the collapse in the gaps.</figcaption>
 </figure>
 </div>
 </div>
 </div>
 <p>Two robustness checks close the section. Tightening the decline region and widening it both preserve the shape, and the level moves with the cut-off.</p>
-<div id="631be1c8" class="cell" data-execution_count="29">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cut, label <span class="kw">in</span> [(<span class="fl">0.95</span>, <span class="st">"highest-PD 5 per cent"</span>), (<span class="fl">0.80</span>, <span class="st">"highest-PD quintile"</span>)]:</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>    sel <span class="op">=</span> p_bar <span class="op">&gt;=</span> np.quantile(p_bar, cut)</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>    rk <span class="op">=</span> np.argsort(<span class="op">-</span>R[:, sel, :], axis<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> [<span class="dv">100</span> <span class="op">*</span> (rk[:, :, r] <span class="op">==</span> rk[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>).mean() <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>)]</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:&lt;26}</span><span class="ss"> (</span><span class="sc">{</span>sel<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss"> loans): "</span></span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"rank 1 </span><span class="sc">{</span>a[<span class="dv">0</span>]<span class="sc">:5.1f}</span><span class="ss">%, rank 2 </span><span class="sc">{</span>a[<span class="dv">1</span>]<span class="sc">:4.1f}</span><span class="ss">%, rank 3 </span><span class="sc">{</span>a[<span class="dv">2</span>]<span class="sc">:4.1f}</span><span class="ss">%"</span>)</span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>approved <span class="op">=</span> <span class="op">~</span>declined</span>
-<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>rk <span class="op">=</span> np.argsort(<span class="op">-</span>R[:, approved, :], axis<span class="op">=</span><span class="dv">2</span>)</span>
-<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'outside the decline region'</span><span class="sc">:&lt;26}</span><span class="ss"> (</span><span class="sc">{</span>approved<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss"> loans): "</span></span>
-<span id="cb45-10"><a href="#cb45-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"rank 1 </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (rk[:, :, <span class="dv">0</span>] <span class="op">==</span> rk[<span class="dv">0</span>, :, <span class="dv">0</span>])<span class="sc">.</span><span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>)<span class="sc">.</span>mean()<span class="sc">:5.1f}</span><span class="ss">%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="0dbb4a32" class="cell" data-execution_count="30">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cut, label <span class="kw">in</span> [(<span class="fl">0.95</span>, <span class="st">"highest-PD 5 per cent"</span>), (<span class="fl">0.80</span>, <span class="st">"highest-PD quintile"</span>)]:</span>
+<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>    sel <span class="op">=</span> p_bar <span class="op">&gt;=</span> np.quantile(p_bar, cut)</span>
+<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    rk <span class="op">=</span> np.argsort(<span class="op">-</span>R[:, sel, :], axis<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> [<span class="dv">100</span> <span class="op">*</span> (rk[:, :, r] <span class="op">==</span> rk[<span class="dv">0</span>, :, r]).<span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>).mean() <span class="cf">for</span> r <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>)]</span>
+<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>label<span class="sc">:&lt;26}</span><span class="ss"> (</span><span class="sc">{</span>sel<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss"> loans): "</span></span>
+<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"rank 1 </span><span class="sc">{</span>a[<span class="dv">0</span>]<span class="sc">:5.1f}</span><span class="ss">%, rank 2 </span><span class="sc">{</span>a[<span class="dv">1</span>]<span class="sc">:4.1f}</span><span class="ss">%, rank 3 </span><span class="sc">{</span>a[<span class="dv">2</span>]<span class="sc">:4.1f}</span><span class="ss">%"</span>)</span>
+<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>approved <span class="op">=</span> <span class="op">~</span>declined</span>
+<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>rk <span class="op">=</span> np.argsort(<span class="op">-</span>R[:, approved, :], axis<span class="op">=</span><span class="dv">2</span>)</span>
+<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'outside the decline region'</span><span class="sc">:&lt;26}</span><span class="ss"> (</span><span class="sc">{</span>approved<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss"> loans): "</span></span>
+<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"rank 1 </span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> (rk[:, :, <span class="dv">0</span>] <span class="op">==</span> rk[<span class="dv">0</span>, :, <span class="dv">0</span>])<span class="sc">.</span><span class="bu">all</span>(axis<span class="op">=</span><span class="dv">0</span>)<span class="sc">.</span>mean()<span class="sc">:5.1f}</span><span class="ss">%"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>highest-PD 5 per cent      ( 1,487 loans): rank 1  96.3%, rank 2  0.7%, rank 3  0.1%
 highest-PD quintile        ( 5,947 loans): rank 1  72.8%, rank 2  2.1%, rank 3  0.1%
@@ -1204,22 +1222,22 @@ outside the decline region (26,760 loans): rank 1  21.1%</code></pre>
 <section id="the-final-model" class="level1" data-number="9">
 <h1 data-number="9"><span class="header-section-number">9</span> The final model</h1>
 <p>The noise covariate exists to calibrate the test and it has no business in a model that goes into production, since it adds a term with over-fitting potential and no information. The course says as much, so the final fit drops it.</p>
-<div id="999172c8" class="cell" data-execution_count="30">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb47"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>keep <span class="op">=</span> [k <span class="cf">for</span> k, n <span class="kw">in</span> <span class="bu">enumerate</span>(NAMES) <span class="cf">if</span> n <span class="op">!=</span> <span class="st">"RandN"</span>]</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>glm2 <span class="op">=</span> sm.GLM(yl, sm.add_constant(Zl[:, keep]), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>final, final_stop <span class="op">=</span> train_lgn(Zl[:, keep], yl, glm2.params, seed<span class="op">=</span><span class="dv">100</span>)</span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>    pf_l <span class="op">=</span> final(torch.tensor(Zl[:, keep])).numpy().ravel()</span>
-<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>    pf_t <span class="op">=</span> final(torch.tensor(Zt[:, keep])).numpy().ravel()</span>
-<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({</span>
-<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"in-sample"</span>: [dev(p_glm_l, yl), dev(p_lgn_l, yl), dev(pf_l, yl)],</span>
-<span id="cb47-9"><a href="#cb47-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"out-of-sample"</span>: [dev(p_glm_t, yt), devs[<span class="dv">0</span>], dev(pf_t, yt)],</span>
-<span id="cb47-10"><a href="#cb47-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AUC (test)"</span>: [roc_auc_score(yt, p_glm_t), roc_auc_score(yt, p_lgn_t),</span>
-<span id="cb47-11"><a href="#cb47-11" aria-hidden="true" tabindex="-1"></a>                   roc_auc_score(yt, pf_t)],</span>
-<span id="cb47-12"><a href="#cb47-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"balance (%)"</span>: [<span class="dv">100</span> <span class="op">*</span> (p.mean() <span class="op">/</span> yt.mean() <span class="op">-</span> <span class="dv">1</span>)</span>
-<span id="cb47-13"><a href="#cb47-13" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> p <span class="kw">in</span> (p_glm_t, p_lgn_t, pf_t)]},</span>
-<span id="cb47-14"><a href="#cb47-14" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"GLM, embedded design"</span>, <span class="st">"LocalGLMnet with RandN"</span>,</span>
-<span id="cb47-15"><a href="#cb47-15" aria-hidden="true" tabindex="-1"></a>           <span class="st">"LocalGLMnet, final"</span>]).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div id="f034aac1" class="cell" data-execution_count="31">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>keep <span class="op">=</span> [k <span class="cf">for</span> k, n <span class="kw">in</span> <span class="bu">enumerate</span>(NAMES) <span class="cf">if</span> n <span class="op">!=</span> <span class="st">"RandN"</span>]</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>glm2 <span class="op">=</span> sm.GLM(yl, sm.add_constant(Zl[:, keep]), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>final, final_stop <span class="op">=</span> train_lgn(Zl[:, keep], yl, glm2.params, seed<span class="op">=</span><span class="dv">100</span>)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>    pf_l <span class="op">=</span> final(torch.tensor(Zl[:, keep])).numpy().ravel()</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>    pf_t <span class="op">=</span> final(torch.tensor(Zt[:, keep])).numpy().ravel()</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame({</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"in-sample"</span>: [dev(p_glm_l, yl), dev(p_lgn_l, yl), dev(pf_l, yl)],</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"out-of-sample"</span>: [dev(p_glm_t, yt), devs[<span class="dv">0</span>], dev(pf_t, yt)],</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"AUC (test)"</span>: [roc_auc_score(yt, p_glm_t), roc_auc_score(yt, p_lgn_t),</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>                   roc_auc_score(yt, pf_t)],</span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">"balance (%)"</span>: [<span class="dv">100</span> <span class="op">*</span> (p.mean() <span class="op">/</span> yt.mean() <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">for</span> p <span class="kw">in</span> (p_glm_t, p_lgn_t, pf_t)]},</span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a>    index<span class="op">=</span>[<span class="st">"GLM, embedded design"</span>, <span class="st">"LocalGLMnet with RandN"</span>,</span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>           <span class="st">"LocalGLMnet, final"</span>]).<span class="bu">round</span>(<span class="dv">4</span>).to_string())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>                        in-sample  out-of-sample  AUC (test)  balance (%)
 GLM, embedded design     106.9447       108.5221      0.7154      -1.0832

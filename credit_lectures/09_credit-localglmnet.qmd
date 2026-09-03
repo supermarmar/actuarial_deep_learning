@@ -15,10 +15,11 @@ abstract: >
   reproduces that GLM's deviance exactly, and trained it reaches a test
   deviance of 107.360 against the feed-forward network's 107.621, with
   nagging over ten fits taking it to 107.132. A purely random covariate
-  calibrates the fluctuation attributable to noise, and no term falls to
-  that level, although two employment-duration coordinates sit at only about
-  twice it. The findings, however, sit in what the attention weights do
-  next.
+  calibrates the fluctuation attributable to noise, and no term's importance
+  falls to that level, although the three weakest embedding coordinates come
+  within a factor of two to three of it and their middle half of borrowers
+  sits inside the band. The findings, however, sit in what the attention
+  weights do next.
   Income's weight is negative for 62.6 per cent of borrowers and positive
   for the rest, which looks like lecture 1's Simpson paradox surfacing
   inside a fitted structure, and yet one seed's country ordering reverses
@@ -679,9 +680,33 @@ Three things are visible. `CountryEmb1` sits far to the left of everything
 else and never approaches zero, so country is doing most of the work in
 this model as it has in every other the series has fitted. `RandN` has by
 some way the tightest box, which is what a covariate carrying no
-information should produce. Several terms, however, straddle zero with
-substantial spread, and `logIncome` is among them, which section 7
-takes up.
+information should produce. Several terms, however, straddle zero with substantial spread, and
+`logIncome` is among them, which section 7 takes up.
+
+The picture and the importance measure of the next section do not quite
+agree, and the disagreement is worth naming rather than leaving for a reader
+to notice.
+
+```{python}
+iqr = A.quantile([0.25, 0.75])
+inside = [c for c in NAMES
+          if c != "RandN" and abs(iqr.loc[0.25, c]) < band and abs(iqr.loc[0.75, c]) < band]
+print("interquartile range wholly inside the noise band:", ", ".join(inside))
+print(pd.DataFrame({"VI": A.abs().mean()[inside],
+                    "multiple of VI(RandN)": A.abs().mean()[inside] / A.abs().mean()["RandN"]})
+      .round(4).to_string())
+```
+
+Three embedding coordinates have their middle half inside the band while
+their mean absolute weight sits above the noise term's, so the two readings
+point different ways. The reason is that the box describes the typical
+borrower and the importance measure integrates the tails, and a term can be
+inert for most of the book and active for some of it. Consequently neither
+statistic settles the question on its own, and these three are simply the
+weakest terms in the model. Deciding their fate properly wants lecture 8's
+group LASSO applied to the embedding coordinates as groups, which is the
+instrument built for exactly this and is why the course points at it for
+categorical covariates.
 
 ## The importance measure
 
