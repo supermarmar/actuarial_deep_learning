@@ -374,7 +374,7 @@ difference                                : +0.008857</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S2_survival-insurance-to-credit_files/figure-html/cell-5-output-1.png" width="1339" height="588" class="figure-img"></p>
+<p><img src="figures/S2_survival-insurance-to-credit/cell-5-output-1.png" width="1339" height="588" class="figure-img"></p>
 <figcaption>The two exposure conventions on the Bondora book, over sixty months on book. (lhs): the actuarial central exposed to risk against the person-period row count, per month. The expansion sits above the exposure everywhere, because a loan exiting mid-month contributes a whole row and only part of a month. (rhs): the resulting one-period rates, with the central rate converted to a probability under a constant force. The gap is widest where the hazard is highest, which is the early peak.</figcaption>
 </figure>
 </div>
@@ -412,7 +412,7 @@ difference                                : +0.008857</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S2_survival-insurance-to-credit_files/figure-html/cell-6-output-1.png" width="963" height="617" class="figure-img"></p>
+<p><img src="figures/S2_survival-insurance-to-credit/cell-6-output-1.png" width="963" height="617" class="figure-img"></p>
 <figcaption>A Lexis diagram for a loan book. Each diagonal is one loan, entering at its origination month <span class="math inline">\(g\)</span> on the horizontal axis and rising at 45 degrees as months on book <span class="math inline">\(t\)</span> accumulate, so a point on a diagonal sits at calendar month <span class="math inline">\(u = g + t\)</span>. The vertical dashed line is the snapshot <span class="math inline">\(\tau\)</span>: the Bondora extract observes the book along that single line. Bronze marks one vintage, whose loans run parallel; the horizontal band marks a fixed twelve-month outcome window, which cuts every vintage at the same <span class="math inline">\(t\)</span> but at a different <span class="math inline">\(u\)</span>.</figcaption>
 </figure>
 </div>
@@ -572,7 +572,7 @@ HR          2.1881           2.0074     -0.1807</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S2_survival-insurance-to-credit_files/figure-html/cell-10-output-1.png" width="1350" height="587" class="figure-img"></p>
+<p><img src="figures/S2_survival-insurance-to-credit/cell-10-output-1.png" width="1350" height="587" class="figure-img"></p>
 <figcaption>The competing-risks correction on the Bondora book. (lhs): three estimates of the cumulative default probability. Kaplan-Meier treats settlement as censoring and runs highest; Aalen-Johansen and the chained Fine-Gray subdistribution hazard agree with each other and sit 17.0 percentage points below it at sixty months. The gap is the correction, and it widens with the horizon. (rhs): the two sets of grade coefficients, on the logit scale relative to grade AA, showing the attenuation at the risky end.</figcaption>
 </figure>
 </div>

@@ -51,12 +51,14 @@ jobs:
           cp index.html site/
           cp lectures/lecture.css site/lectures/
           cp credit_lectures/*.html credit_lectures/*.pdf site/credit_lectures/
-          cp -R credit_lectures/*_files site/credit_lectures/
+          cp -R credit_lectures/figures site/credit_lectures/
 
-          # Quarto writes its figures into `<lecture>_files/`, and Jekyll drops
-          # every directory whose name starts with an underscore. This artefact
-          # route runs no Jekyll, so the file is insurance against a later
-          # switch to branch-based publishing rather than a live requirement.
+          # Jekyll drops every directory whose name starts with an underscore,
+          # which used to matter because Quarto writes its figures into
+          # `<lecture>_files/`. `scripts/render_lecture.sh` now collapses those
+          # into `credit_lectures/figures/<lecture>/`, so no published path
+          # begins with an underscore any more. The file stays as insurance
+          # against a later switch to branch-based publishing.
           touch site/.nojekyll
 
           echo "Published files:"

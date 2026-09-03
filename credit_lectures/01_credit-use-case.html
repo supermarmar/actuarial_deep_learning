@@ -540,7 +540,7 @@ window.Quarto = {
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-3-output-1.png" width="1335" height="586" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-3-output-1.png" width="1335" height="586" class="figure-img"></p>
 <figcaption>Right-censoring in two settings, drawn on illustrative cases rather than portfolio data. (lhs): six loans between origination and the snapshot <span class="math inline">\(\tau\)</span> = 20 July 2021, dashed. The grey tick on each bar marks <span class="math inline">\(g_i + 12\)</span> months, the close of the outcome window; grey bars are loans the fixed-horizon filter drops for insufficient seasoning. (rhs): five lives inside one rate year <span class="math inline">\([x, x+1)\)</span>, on which the central exposed to risk for <span class="math inline">\(q_x\)</span> is computed. Circles mark the event of interest (default, death), crosses a competing exit (repayment, withdrawal) and arrowheads an observation still open at the boundary.</figcaption>
 </figure>
 </div>
@@ -1062,7 +1062,7 @@ n_u = \# {\cal P}_u .
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-8-output-1.png" width="1333" height="587" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-8-output-1.png" width="1333" height="587" class="figure-img"></p>
 <figcaption>(lhs): Loans originated per vintage year. (rhs): Empirical twelve-month default rate per vintage year. The portfolio is strongly non-stationary in both volume and risk.</figcaption>
 </figure>
 </div>
@@ -1102,7 +1102,7 @@ n_u = \# {\cal P}_u .
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-10-output-1.png" width="1336" height="587" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-10-output-1.png" width="1336" height="587" class="figure-img"></p>
 <figcaption>(lhs): Number of loans per borrower age. (rhs): Empirical default rate per borrower age; the bounds correspond to 2 standard deviations in a Bernoulli model. Ages with fewer than 200 loans are pooled into their neighbours by the eye; the bounds widen accordingly.</figcaption>
 </figure>
 </div>
@@ -1126,7 +1126,7 @@ n_u = \# {\cal P}_u .
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-11-output-1.png" width="1336" height="587" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-11-output-1.png" width="1336" height="587" class="figure-img"></p>
 <figcaption>(lhs): Number of loans per log-income band. (rhs): Empirical default rate per log-income band; the bounds correspond to 2 standard deviations in a Bernoulli model.</figcaption>
 </figure>
 </div>
@@ -1147,7 +1147,7 @@ n_u = \# {\cal P}_u .
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-12-output-1.png" width="886" height="467" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-12-output-1.png" width="886" height="467" class="figure-img"></p>
 <figcaption>Empirical default rate per contractual interest band. Interest is the platform’s price of risk, so its gradient is the platform’s own PD model echoed back.</figcaption>
 </figure>
 </div>
@@ -1180,7 +1180,7 @@ n_u = \# {\cal P}_u .
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-13-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Empirical default rate per within-country income quintile (Q1 low to Q5 high), by country and marginally. Within every country the rate falls with income; marginally it rises. The marginal curve is composition, i.e., Simpson’s paradox in the raw data.</figcaption>
 </figure>
 </div>
@@ -1242,7 +1242,7 @@ n_u = \# {\cal P}_u .
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-14-output-1.png" width="1589" height="677" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-14-output-1.png" width="1589" height="677" class="figure-img"></p>
 <figcaption>Kernel-smoothed empirical default rate as a function of borrower age and log-income, shown twice off one smoothed array. Both panels share the colour scale 0.10 to 0.50 and the single colourbar, so a colour means the same default rate in each, and on the surface the height encodes that same rate as well as the colour. White space in the heatmap, and the gaps in the surface, mark covariate combinations too thin in the portfolio to estimate (fewer than eight effective loans after smoothing). The heatmap is the better panel for reading a value off a pair of covariates; the surface is the better panel for seeing that the joint shape is not additive, since the age profile changes its form as log-income moves rather than merely shifting up or down. Read the surface with age increasing to the right along the front edge and log-income increasing away from the viewer to the left, so its income axis runs in the opposite visual sense to the heatmap’s vertical one.</figcaption>
 </figure>
 </div>
@@ -1359,7 +1359,7 @@ logIncome             0.2754      0.009     30.461      0.000       0.258       
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-17-output-1.png" width="961" height="527" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-17-output-1.png" width="961" height="527" class="figure-img"></p>
 <figcaption>Empirical default rate per age (dots) against the GLM1 and GLM2 age profiles, both evaluated at the median log-income. GLM1 forces monotonicity; GLM2 recovers the hump at young ages and the rise after 65.</figcaption>
 </figure>
 </div>
@@ -1463,7 +1463,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-20-output-1.png" width="949" height="617" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-20-output-1.png" width="949" height="617" class="figure-img"></p>
 <figcaption>Fitted default rate of GLM2 over the (age, log-income) grid, masked to the covariate combinations present in the portfolio. The multiplicative odds structure produces smooth vertical and horizontal banding and, by construction, no interaction between the two axes.</figcaption>
 </figure>
 </div>
@@ -1496,7 +1496,7 @@ logIncome            -0.0778      0.011     -7.064      0.000      -0.099      -
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="01_credit-use-case_files/figure-html/cell-21-output-1.png" width="949" height="617" class="figure-img"></p>
+<p><img src="figures/01_credit-use-case/cell-21-output-1.png" width="949" height="617" class="figure-img"></p>
 <figcaption>Fitted default rate of the GBM over the (age, log-income) grid, same masking and colour scale as before. The GBM recovers the diagonal structure of the empirical heatmap, at the price of a piecewise-constant, non-smooth surface.</figcaption>
 </figure>
 </div>

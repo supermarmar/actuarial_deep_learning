@@ -386,7 +386,7 @@ out-of-time: learn 143,375 / test 35,796 (cutoff 2020-03-17)</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S3_deep-survival-credit_files/figure-html/cell-7-output-1.png" width="963" height="528" class="figure-img"></p>
+<p><img src="figures/S3_deep-survival-credit/cell-7-output-1.png" width="963" height="528" class="figure-img"></p>
 <figcaption>Training and validation deviance per at-risk cell by epoch on the random split. The validation curve bottoms out at the epoch marked by the dashed line and the checkpoint at that epoch is the parameter retained. The shape is the one credit lecture 4 and 5 found for the twelve-month PD network, which is expected: masking changes which cells enter the loss and changes nothing about the optimisation.</figcaption>
 </figure>
 </div>
@@ -519,7 +519,7 @@ cumulative incidence: PD_12 0.2771   PD_60 0.5469</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S3_deep-survival-credit_files/figure-html/cell-10-output-1.png" width="1338" height="587" class="figure-img"></p>
+<p><img src="figures/S3_deep-survival-credit/cell-10-output-1.png" width="1338" height="587" class="figure-img"></p>
 <figcaption>(lhs): the fitted hazard by month, averaged over the loans at risk in that month, against the marginal Kaplan-Meier hazard. The logit’s baseline is banded into nine intervals and steps accordingly; the head carries one output per month and traces the lifecycle continuously. (rhs): the term structure of cumulative default risk. All three curves treat early repayment as censoring, and the cumulative incidence curve beneath them is the correction section 5 fits directly.</figcaption>
 </figure>
 </div>
@@ -695,7 +695,7 @@ largest gap between the two routes to the same offsets: 1.54e-07</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S3_deep-survival-credit_files/figure-html/cell-15-output-1.png" width="1114" height="558" class="figure-img"></p>
+<p><img src="figures/S3_deep-survival-credit/cell-15-output-1.png" width="1114" height="558" class="figure-img"></p>
 <figcaption>Predicted against observed default counts per month on the learning sample. The logit’s banded baseline forces a step function through the peak at month five, which is where its largest errors sit; the head tracks the shape without matching any month exactly; the re-fitted head matches every month by construction, so its dashed line traces the observed curve throughout.</figcaption>
 </figure>
 </div>
@@ -865,7 +865,7 @@ k = 60: latent risks reading 0.7148   cumulative incidence 0.5436   overstatemen
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S3_deep-survival-credit_files/figure-html/cell-20-output-1.png" width="1114" height="586" class="figure-img"></p>
+<p><img src="figures/S3_deep-survival-credit/cell-20-output-1.png" width="1114" height="586" class="figure-img"></p>
 <figcaption>Cumulative incidence from the cause-specific head against the non-parametric Aalen-Johansen estimator of lecture S1. The upper pair is default, the lower pair settlement, and the dotted line is the same head read as latent risks, meaning with settlement treated as censoring. The vertical distance between the dotted line and the default curve is the competing-risks correction, worth 17.1 percentage points at sixty months.</figcaption>
 </figure>
 </div>
@@ -972,7 +972,7 @@ DtH logit            : miscalibration 0.000203   discrimination 0.012172   score
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S3_deep-survival-credit_files/figure-html/cell-23-output-2.png" width="1339" height="557" class="figure-img"></p>
+<p><img src="figures/S3_deep-survival-credit/cell-23-output-2.png" width="1339" height="557" class="figure-img"></p>
 <figcaption>(lhs): bias by month on the test at-risk cells for the survival head, with the vertical bars covering one standard error either side of each binned estimate. Every bin sits within 0.52 percentage points of zero and one clears the five per cent level, which is the count a set of this many tests returns by chance, so no drift with months on book survives. (rhs): reliability diagram for the twelve-month PD on the seasoned test loans. The single-risk head runs below the diagonal from a predicted 0.25 upwards, meaning it promises more default than arrives; the cause-specific head’s cumulative incidence sits on the diagonal over the same range.</figcaption>
 </figure>
 </div>

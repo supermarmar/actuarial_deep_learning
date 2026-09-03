@@ -339,7 +339,7 @@ Z_u = -\Phi^{-1}(0.999)
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="R2_credit-irb-capital_files/figure-html/cell-3-output-1.png" width="1189" height="497" class="figure-img"></p>
+<p><img src="figures/R2_credit-irb-capital/cell-3-output-1.png" width="1189" height="497" class="figure-img"></p>
 <figcaption>The Vasicek loss rate distribution for an infinitely granular portfolio at a through-the-cycle probability of default of 3 per cent and an asset correlation of 0.15, drawn on the loss rate before any loss given default is applied. The mean is the expected loss and sits at 3 per cent by construction. The 99.9th percentile is at 22.9 per cent, so unexpected loss is 19.9 percentage points, or 6.6 times the expected loss. Provisions and pricing are expected to absorb the shaded region up to the mean; capital absorbs the distance from the mean to the percentile; everything beyond it is the stress loss that capital is deliberately not held against.</figcaption>
 </figure>
 </div>
@@ -882,7 +882,7 @@ monotonicity:   holds, 13.9% to 57.8%</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="R2_credit-irb-capital_files/figure-html/cell-9-output-1.png" width="1339" height="527" class="figure-img"></p>
+<p><img src="figures/R2_credit-irb-capital/cell-9-output-1.png" width="1339" height="527" class="figure-img"></p>
 <figcaption>Twelve-month default rate by risk grade and origination year, on the Bondora book. (lhs): each grade’s series, bronze for the riskiest grade and grey shading from light for grade 1; cells behind fewer than 30 loans are dropped, which is why grades 6 to 9 begin in 2013. (rhs): loans originated per year on a log scale, showing that the first four cohorts are a rounding error against the last three. The grades separate cleanly in every year, which is the rank ordering holding out of time, and the level moves together across grades, which is the cycle. Grades 6 to 9 have no pre-2013 history because the early book was almost entirely Estonian and almost entirely low-risk, and that gap is a data limitation the margin of conservatism has to price.</figcaption>
 </figure>
 </div>
@@ -1079,7 +1079,7 @@ correlation of the factor with the whole-book rate        -0.226</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="R2_credit-irb-capital_files/figure-html/cell-13-output-1.png" width="1336" height="497" class="figure-img"></p>
+<p><img src="figures/R2_credit-irb-capital/cell-13-output-1.png" width="1336" height="497" class="figure-img"></p>
 <figcaption>The Estonian economic factor and the Bondora default rate, 2009 to 2020. (lhs): the first principal component of unemployment, inflation and real growth, oriented so that positive is benign, with bad years shaded. (rhs): the twelve-month default rate on the Estonian book in bronze against the whole book in grey, both by origination year. The Estonian series moves against the factor at minus 0.44, which is the sign economics expects. The whole-book series is weaker at minus 0.23, because from 2014 it mixes in the Finnish and Spanish books, whose default rates are two and three times the Estonian level and whose growth had nothing to do with the European cycle.</figcaption>
 </figure>
 </div>
@@ -1631,7 +1631,7 @@ b = \left( 0.11852 - 0.05478 \ln \mathrm{PD} \right)^2 ,
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="R2_credit-irb-capital_files/figure-html/cell-22-output-1.png" width="1339" height="528" class="figure-img"></p>
+<p><img src="figures/R2_credit-irb-capital/cell-22-output-1.png" width="1339" height="528" class="figure-img"></p>
 <figcaption>Risk weight against the regulatory probability of default for the three retail exposure classes, at a loss given default of 65 per cent and no maturity adjustment. (lhs): the full range, on which every curve rises, turns over and falls back towards zero, because as the probability approaches one the worst-case rate approaches one too and the gap the capital covers closes. (rhs): the range a bank’s retail book actually occupies, up to a 5 per cent probability, where the curves are steeply concave and the dotted line marks the 0.03 per cent input floor that applied under the original Capital Requirements Regulation, since raised. Bronze marks other retail, the class an unsecured consumer loan falls in and the one used for the Bondora evaluation below. The nine Bondora grades are marked on the left panel, and four of them sit at or beyond the turning point.</figcaption>
 </figure>
 </div>

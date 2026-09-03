@@ -348,7 +348,7 @@ days past due at declaration, percentiles of the positive-lag loans
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="D1_credit-default-definition_files/figure-html/cell-4-output-1.png" width="1336" height="497" class="figure-img"></p>
+<p><img src="figures/D1_credit-default-definition/cell-4-output-1.png" width="1336" height="497" class="figure-img"></p>
 <figcaption>Days past due at the moment Bondora declared default, on the 59,694 loans whose arrears-onset date precedes their default date. The histogram is truncated at 200 days for legibility, which drops 24 loans. Dashed rules mark the two thresholds the literature and the regulation reach for, at 60 and 90 days; the platform’s own median, the solid rule at 79 days, sits between them and its mass straddles both. A definition that fires on a fixed threshold would put every loan on one side of a single rule, so the spread here is the evidence that this flag is an operational decision rather than a rule.</figcaption>
 </figure>
 </div>
@@ -553,7 +553,7 @@ days past due at declaration, percentiles of the positive-lag loans
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="D1_credit-default-definition_files/figure-html/cell-6-output-1.png" width="1335" height="435" class="figure-img"></p>
+<p><img src="figures/D1_credit-default-definition/cell-6-output-1.png" width="1335" height="435" class="figure-img"></p>
 <figcaption>The state machine the four dials parameterise. A loan leaves performing when arrears reach the threshold <span class="math inline">\(d\)</span>, and the transition to default fires only once that has held for <span class="math inline">\(s\)</span> consecutive months, which is why the trigger and the state are drawn separately. The return path is gated by <span class="math inline">\(p\)</span> clear months, and a loan that re-enters arrears during probation never reaches cure. Write-off is absorbing and sits outside the default-to-cure loop entirely, because it answers to an accounting test rather than to a delinquency counter. The outcome period <span class="math inline">\(k\)</span> does not appear: it is not a transition but the horizon over which the diagram is read, which is the subject of the next section.</figcaption>
 </figure>
 </div>
@@ -862,7 +862,7 @@ loans in the book                         179,235</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="D1_credit-default-definition_files/figure-html/cell-9-output-1.png" width="1337" height="493" class="figure-img"></p>
+<p><img src="figures/D1_credit-default-definition/cell-9-output-1.png" width="1337" height="493" class="figure-img"></p>
 <figcaption>The share of Bondora loans that reached a given arrears depth and were never declared in default, as the delinquency threshold moves across the platform’s own reporting buckets. Read it as the quantity a modeller would report as a cure rate under each choice of threshold. The fall is steep, and yet it is not a property of borrower behaviour: the same loans are in the book at every point on the curve, and only the definition of who counts as having been at risk has changed. The count of loans at or above each threshold, on the right axis, is what makes the far end unstable.</figcaption>
 </figure>
 </div>
@@ -1443,7 +1443,7 @@ statements retained 3,839,303</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="D1_credit-default-definition_files/figure-html/cell-20-output-1.png" width="1336" height="525" class="figure-img"></p>
+<p><img src="figures/D1_credit-default-definition/cell-20-output-1.png" width="1336" height="525" class="figure-img"></p>
 <figcaption>The probation trade-off on the retained card panel, at a ninety-day trigger held for one month. As the probation period lengthens the re-default rate among cured facilities falls from 9.8 per cent to 1.4, and the cure rate falls with it from 61.8 per cent to 37.8. The two curves are the same decision seen from opposite sides: a longer probation buys a cleaner cure population by refusing to call anything cured. The re-default curve flattens between eighteen and twenty-four months, so the last six months of probation purchase almost no additional cleanliness and cost a further six percentage points of cures. Risk-set sizes are printed above the cure points, since they shrink as the observation requirement grows.</figcaption>
 </figure>
 </div>

@@ -442,7 +442,7 @@ lasso 3000       nonzero  11/38   learn 107.876   test 109.191   AUC 0.7112   ba
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="08_credit-icenet-regularisation_files/figure-html/cell-9-output-1.png" width="1336" height="554" class="figure-img"></p>
+<p><img src="figures/08_credit-icenet-regularisation/cell-9-output-1.png" width="1336" height="554" class="figure-img"></p>
 <figcaption>Coefficient paths on the standardised Bondora design matrix, ridge on the left and LASSO on the right, plotted against the regularisation parameter on a log scale. Ridge shrinks every coefficient towards zero together and none of them arrives; LASSO sends them to exactly zero one at a time, and the count of survivors is printed above each path. The four <code>Country</code> coefficients are drawn in bronze-red and the remaining 34 in grey, which is why one family stays visibly larger than the rest under both penalties.</figcaption>
 </figure>
 </div>
@@ -571,7 +571,7 @@ lambda  10000   2/8 drivers   test 112.151   AUC 0.6952   kept: NewCreditCustome
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="08_credit-icenet-regularisation_files/figure-html/cell-14-output-1.png" width="977" height="555" class="figure-img"></p>
+<p><img src="figures/08_credit-icenet-regularisation/cell-14-output-1.png" width="977" height="555" class="figure-img"></p>
 <figcaption>Group LASSO on the Bondora design matrix: the group norm <span class="math inline">\(\|\vartheta^{(k)}\|_2\)</span> for each of the eight risk drivers against the regularisation parameter. A driver leaves the model when its curve reaches zero, and the order in which the eight curves arrive is the variable-reduction ordering. <code>Country</code> is drawn in bronze-red as the one driver that survives to the end of the path; markers distinguish the series so the panel survives a greyscale print.</figcaption>
 </figure>
 </div>
@@ -696,7 +696,7 @@ every one-year step                52 cuts   learn 106.525   test 108.189   AUC 
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="08_credit-icenet-regularisation_files/figure-html/cell-19-output-1.png" width="1069" height="588" class="figure-img"></p>
+<p><img src="figures/08_credit-icenet-regularisation/cell-19-output-1.png" width="1069" height="588" class="figure-img"></p>
 <figcaption>Fitted age effect on the log-odds scale, in the cumulative-step basis, as the fused penalty is tightened. The saturated fit (<span class="math inline">\(\lambda = 0\)</span>, grey) keeps all 52 one-year boundaries and is visibly noisy above age 50 where the book thins. At <span class="math inline">\(\lambda = 300\)</span> (bronze-red) nine boundaries survive, all of them below 47. The hand-chosen banding of lectures 4 and 5 is the dashed blue step function, and the vertical marks beneath the axis show where each scheme places a boundary. All curves are shifted to zero at age 18 so the shapes can be compared.</figcaption>
 </figure>
 </div>
@@ -1024,7 +1024,7 @@ individual age ICE curves with at least one rising step: 78.8% of loans; largest
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="08_credit-icenet-regularisation_files/figure-html/cell-25-output-1.png" width="1039" height="587" class="figure-img"></p>
+<p><img src="figures/08_credit-icenet-regularisation/cell-25-output-1.png" width="1039" height="587" class="figure-img"></p>
 <figcaption>Individual conditional expectation curves for log-income under the unconstrained network, for the 60 loans whose curves are least monotone, with the partial dependence plot over them as the heavy bronze-red line. Grey curves rise somewhere over the income range while the average of all 118,933 curves descends without a single rising step. The horizontal axis is monthly declared income on a log scale.</figcaption>
 </figure>
 </div>
@@ -1082,7 +1082,7 @@ ICEnet 100     learn 105.163  test 107.944  AUC 0.7202  balance  +0.99%
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="08_credit-icenet-regularisation_files/figure-html/cell-27-output-1.png" width="1369" height="572" class="figure-img"></p>
+<p><img src="figures/08_credit-icenet-regularisation/cell-27-output-1.png" width="1369" height="572" class="figure-img"></p>
 <figcaption>Partial dependence plots for age (left) and log-income (right) under increasing constraint strength. The unconstrained network is the grey circled line; the bronze-red line is the ICEnet at <span class="math inline">\(\lambda = 1\)</span>, the setting that removes all but 0.1 per cent of the individual monotonicity violations; the two dashed lines are <span class="math inline">\(\lambda = 10\)</span> and <span class="math inline">\(\lambda = 100\)</span>. The age panel keeps its non-monotone trough, which is intended, since age carries a smoothness constraint alone. The income panel is pulled straight as <span class="math inline">\(\lambda\)</span> rises.</figcaption>
 </figure>
 </div>
@@ -1104,7 +1104,7 @@ ICEnet 100     learn 105.163  test 107.944  AUC 0.7202  balance  +0.99%
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="08_credit-icenet-regularisation_files/figure-html/cell-28-output-1.png" width="1039" height="587" class="figure-img"></p>
+<p><img src="figures/08_credit-icenet-regularisation/cell-28-output-1.png" width="1039" height="587" class="figure-img"></p>
 <figcaption>The same 60 least-monotone loans of the previous figure, redrawn under the ICEnet at <span class="math inline">\(\lambda = 1\)</span> on the identical vertical scale. Every curve now descends across the income range, and the partial dependence plot in bronze-red sits inside a band rather than on top of a spray. The constraint acts on each borrower’s own curve, which is what the partial dependence plot could not see.</figcaption>
 </figure>
 </div>

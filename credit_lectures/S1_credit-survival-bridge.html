@@ -409,7 +409,7 @@ q_{i,t} = \mathbb{P}\left( T_i = t \,\middle|\, T_i \ge t, \boldsymbol{X}_i \rig
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S1_credit-survival-bridge_files/figure-html/cell-6-output-1.png" width="1337" height="588" class="figure-img"></p>
+<p><img src="figures/S1_credit-survival-bridge/cell-6-output-1.png" width="1337" height="588" class="figure-img"></p>
 <figcaption>The Bondora loan book in discrete time, all 179,235 loans, with early repayment treated as censoring (the latent risks approach). (lhs): the estimated monthly default hazard <span class="math inline">\(\hat q_t\)</span>, which peaks at 5.70 per cent in month five and then declines as the book seasons. (rhs): the Kaplan-Meier survival curve with a Greenwood 95 per cent interval, shown as a band; the interval is narrow enough over the first three years to be hard to separate from the curve. The dashed vertical marks the twelve-month horizon lecture 1 modelled.</figcaption>
 </figure>
 </div>
@@ -487,7 +487,7 @@ k = 60 months   survival product  71.68%   sum of hazards 124.46%   overstatemen
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S1_credit-survival-bridge_files/figure-html/cell-9-output-1.png" width="964" height="587" class="figure-img"></p>
+<p><img src="figures/S1_credit-survival-bridge/cell-9-output-1.png" width="964" height="587" class="figure-img"></p>
 <figcaption>Kaplan-Meier default curves by Bondora listing grade, on the 176,502 loans carrying a grade. The eight curves are strictly ordered at every month over the full sixty and never cross, so the grade separates risk over the whole horizon rather than only at the twelve-month point a scorecard would be cut for. Bronze marks the two extreme grades.</figcaption>
 </figure>
 </div>
@@ -685,7 +685,7 @@ model PD_60 0.7120   Kaplan-Meier PD_60 0.7168</code></pre>
 <div class="cell-output cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="S1_credit-survival-bridge_files/figure-html/cell-15-output-1.png" width="1338" height="587" class="figure-img"></p>
+<p><img src="figures/S1_credit-survival-bridge/cell-15-output-1.png" width="1338" height="587" class="figure-img"></p>
 <figcaption>The term structure of default risk from the fitted discrete-time hazard model, averaged over the 179,171 loans in the design. (lhs): the fitted baseline hazard by band, as a hazard at the reference profile, against the unconditional Kaplan-Meier hazard. (rhs): the model’s cumulative PD by horizon against the marginal Kaplan-Meier curve, which it tracks closely at the short end (30.77 against 30.76 per cent at twelve months) and slightly below at the long end (71.20 against 71.68 at sixty). Both panels treat early repayment as censoring, which the next section shows overstates the level.</figcaption>
 </figure>
 </div>
