@@ -231,14 +231,50 @@ window.Quarto = {
 \qquad p \ll q,
 \]</span></p>
 <p>such that simple predictors acting on <span class="math inline">\(\boldsymbol{Z}\)</span> perform well (Bengio, Courville and Vincent, 2013). The classical members of this family are principal component analysis and partial least squares, both linear. Deep learning is the version in which <span class="math inline">\(\phi\)</span> is a composition of many non-linear layers, so the features of one layer are built from the features of the layer below, and the hierarchy is what lets a modest parameter count express an intricate transformation.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Principal components, partial least squares and the rest of the linear family">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Principal components, partial least squares and the rest of the linear family
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Both classical mappings fix <span class="math inline">\(\phi\)</span> to a linear one, <span class="math inline">\(\boldsymbol{Z}_m = \boldsymbol{X}\alpha_m\)</span>, and they differ only in the criterion that selects the directions <span class="math inline">\(\alpha_m\)</span>. Since the demonstration later in this lecture turns on exactly that choice of criterion, it is worth setting the two out properly. Throughout this callout <span class="math inline">\(\boldsymbol{X}\)</span> denotes the <span class="math inline">\(n \times q\)</span> design matrix and <span class="math inline">\(S\)</span> its sample covariance matrix, in place of the single covariate vector the surrounding text uses. The number of retained directions is written <span class="math inline">\(M\)</span>, playing the part that <span class="math inline">\(p\)</span> plays in the definition above.</p>
+<p><strong>Principal components.</strong> PCA is unsupervised, and the response plays no part in it. On standardised covariates the <span class="math inline">\(m\)</span>th direction solves</p>
+<p><span class="math display">\[
+\begin{gathered}
+\max_{\alpha} \; \mathrm{Var}(\boldsymbol{X}\alpha) \\[2pt]
+\text{subject to} \quad \lVert \alpha \rVert = 1, \quad
+\alpha^{\top} S v_{\ell} = 0, \quad \ell = 1, \ldots, m-1,
+\end{gathered}
+\]</span></p>
+<p>so each direction claims the most variance left once its predecessors are accounted for, and the constraint <span class="math inline">\(\alpha^{\top} S v_{\ell} = 0\)</span> makes the resulting scores mutually uncorrelated (Hastie, Tibshirani and Friedman, 2009, equation 3.63). The solutions are the leading eigenvectors of <span class="math inline">\(S\)</span>, equivalently the right singular vectors of the centred design matrix. Deisenroth, Faisal and Ong (2020) derive the same subspace twice over, once as the maximiser of retained variance and once as the minimiser of squared reconstruction error, so a component admits two readings, as a direction of maximal spread and as part of the best low-rank summary of the same data. That second reading is why the linear compression is the benchmark the autoencoder below has to beat on its own terms. Note also that the criterion depends on the units, which is why the covariates are standardised first.</p>
+<p><strong>Principal components regression</strong> then regresses the response on the first <span class="math inline">\(M\)</span> scores. Because the full set of <span class="math inline">\(q\)</span> scores spans the same column space as <span class="math inline">\(\boldsymbol{X}\)</span>, taking <span class="math inline">\(M = q\)</span> returns the ordinary least squares fit exactly. Hence truncating at <span class="math inline">\(M &lt; q\)</span> acts as a shrinkage device on the same model rather than fitting a different one.</p>
+<p><strong>Partial least squares.</strong> PLS brings the response into the construction. After standardising, it sets <span class="math inline">\(\hat\varphi_{1j} = \langle x_j, y \rangle\)</span> and forms the first direction <span class="math inline">\(z_1 = \sum_j \hat\varphi_{1j} x_j\)</span>, so every covariate is weighted by the strength of its univariate effect on the outcome. The response is regressed on <span class="math inline">\(z_1\)</span>, every covariate is then orthogonalised with respect to <span class="math inline">\(z_1\)</span>, and the step repeats on the residualised covariates until <span class="math inline">\(M \le q\)</span> directions are in hand (Hastie, Tibshirani and Friedman, 2009, algorithm 3.3). The criterion behind that algorithm is</p>
+<p><span class="math display">\[
+\begin{gathered}
+\max_{\alpha} \; \mathrm{Corr}^{2}(y, \boldsymbol{X}\alpha) \, \mathrm{Var}(\boldsymbol{X}\alpha) \\[2pt]
+\text{subject to} \quad \lVert \alpha \rVert = 1, \quad
+\alpha^{\top} S \hat\varphi_{\ell} = 0, \quad \ell = 1, \ldots, m-1,
+\end{gathered}
+\]</span></p>
+<p>established by Stone and Brooks (1990) and Frank and Friedman (1993), the algorithm itself being Wold’s (1975). Whereas PCA keys on variance alone, PLS trades variance off against correlation with the response. In practice the variance factor tends to dominate the product, so PLS ends up behaving much like ridge regression and principal components regression, and <span class="math inline">\(M = q\)</span> again recovers ordinary least squares.</p>
+<p><strong>The rest of the family.</strong> Linear discriminant analysis is the supervised sibling that chooses the subspace maximising between-class scatter relative to within-class scatter, and it is the mapping behind Altman (1968), so credit has been doing supervised linear representation learning since well before the term existed. Non-linear embeddings such as t-SNE compress to two dimensions as well, and they serve as diagnostic plots, since the map is fitted to the sample in hand and offers no way to place a new applicant.</p>
+<p><strong>Why the criterion matters in credit.</strong> Consider IFRS 9 forward-looking modelling, where a decade of quarterly observations has to support a wide set of candidate macroeconomic indicators. PCA is the usual reduction there. However, the components are built without any reference to the default rate, so a component can load its dominant predictor in the direction that contradicts economic expectation, and the model built on it then carries a counter-intuitive sign (Djurovic, 2025). The practical remedy is to check the directional alignment of each raw predictor against the target after the reduction and before the component is accepted as an input. Alternatively, condition the composite on the outcome from the outset and impose the signs directly, which is what a supervised macroeconomic index does (Djurovic, 2026), and which is PLS’s argument restated in a regulatory register.</p>
+<p><strong>Where principal components do earn their place.</strong> A production scorecard build reaches for PCA away from the model input, in the variable reduction that precedes it. Correlated covariates are clustered by principal component, a cluster whose second eigenvalue exceeds one is split again, and the most predictive member of each surviving cluster is retained. The eigen-decomposition of the correlation matrix then returns as the condition index that flags severe multicollinearity among whatever survived, which is a diagnostic on the covariates rather than a transformation of them.</p>
+<p>The comparison later in this lecture puts these criteria to the test on the credit card book. Two principal components, an autoencoder of the same width, and a supervised extractor of the same width all pass through one readout, and the ranking they earn on reconstruction error reverses on discrimination.</p>
+</div>
+</div>
 <p>Depth earns its place through that hierarchy. A shallow network can approximate a complicated function, and to do so it needs to be very wide, in the way a step function approximates a diagonal line only by taking many steps. Deeper layers instead compose: early layers detect simple structure and later layers combine it into abstractions, which is visible directly in the convolutional filters that Zeiler and Fergus (2014) visualised, where layer one finds edges and layer five finds objects.</p>
 <p>The word “simple” in the definition above is doing quiet work, and the rest of this section is about it. A representation is good relative to a task, so a compression that is excellent for one purpose can be useless for another. The authors’ Fashion-MNIST example picks a case where the two purposes coincide. Credit, as we are about to see, is not so obliging.</p>
 </section>
 <section id="the-credit-card-portfolio" class="level2" data-number="2.2">
 <h2 data-number="2.2" class="anchored" data-anchor-id="the-credit-card-portfolio"><span class="header-section-number">2.2</span> The credit card portfolio</h2>
-<p>The dataset is an anonymised credit card book of 96,806 accounts, released as a development and validation pair, with a <code>bad_flag</code> on the development file at 1.42 per cent and no flag at all on the validation file. It is the opposite of Bondora in every respect that matters here. The features carry no meaning a modeller could interpret, so there is no GLM story to tell about any coefficient, and the 1.42 per cent bad rate reproduces the rare-event regime of the course’s claim counts rather than Bondora’s 29 per cent. That combination, wide and anonymous and imbalanced, is exactly the regime in which hand-crafted features are impossible and automated ones are the only option on the table.</p>
+<p>The dataset is an anonymised credit card book of 96,806 accounts, released as a development and validation pair, with a <code>bad_flag</code> on the development file at 1.42 per cent and no flag at all on the validation file. It is public, and it is published on Kaggle as <a href="https://www.kaggle.com/datasets/suvroo/credit-card-behaviour-score">Credit Card Behaviour Score</a>; the two file names this repository carries are the uploader’s own. It is the opposite of Bondora in every respect that matters here. The features carry no meaning a modeller could interpret, so there is no GLM story to tell about any coefficient, and the 1.42 per cent bad rate reproduces the rare-event regime of the course’s claim counts rather than Bondora’s 29 per cent. That combination, wide and anonymous and imbalanced, is exactly the regime in which hand-crafted features are impossible and automated ones are the only option on the table.</p>
 <p>One structural feature of the file matters for what follows. A block of 626 columns, comprising every on-us and transaction attribute, is missing together for the same 25,231 accounts, or 26.1 per cent of the book. Those accounts have no on-us record and are described by bureau data alone. The missingness is therefore a fact about the account rather than a defect in the file, and a representation of this portfolio has to accommodate two populations described by different variables.</p>
-<div id="fb8b77ea" class="cell" data-execution_count="1">
+<div id="4fed417e" class="cell" data-execution_count="1">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
@@ -265,7 +301,7 @@ window.Quarto = {
 <h2 data-number="2.3" class="anchored" data-anchor-id="pre-processing-and-one-decision-that-turned-out-to-matter"><span class="header-section-number">2.3</span> Pre-processing, and one decision that turned out to matter</h2>
 <p>The design matrix is built in four steps, all fitted on the learning sample alone. Missing values are replaced by the column median, the columns are centred and scaled, the 54 columns that are constant on the learning sample are dropped, and the standardised values are clipped to <span class="math inline">\(\pm 10\)</span> standard deviations.</p>
 <p>The clipping is the step worth stating openly, because it is the one that decided whether the supervised network below trained at all. Several of these columns are monetary aggregates with extremely heavy right tails, and after standardisation a handful of accounts sit hundreds of standard deviations from the mean. Gradient descent on such a matrix takes enormous steps on the batches containing those rows, and in a diagnostic run without the clip, not reproduced in this document, the supervised network never recovered from them and finished at a test AUC of about 0.62, below the principal components it should have beaten. Clipping at ten standard deviations left the ranking of every account intact and lifted it to the 0.82 reported below. The course’s own covariate pre-processing section says to standardise; on credit data with monetary tails, saying so is not quite enough.</p>
-<div id="a5f266d2" class="cell" data-execution_count="2">
+<div id="e24ccc41" class="cell" data-execution_count="2">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>perm <span class="op">=</span> rng.permutation(<span class="bu">len</span>(X))</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>n_learn <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> <span class="bu">len</span>(X))</span>
@@ -295,7 +331,7 @@ learn 77,444 accounts, 1,113 bad (1.4372%);  test 19,362 accounts, 259 bad (1.33
 <p>We compress 1,158 covariates to two dimensions three times over, and then judge each compression by the same standard. Two dimensions is a brutal bottleneck, chosen because it is the authors’ choice and because it can be plotted; the point of the exercise is the comparison rather than the absolute level.</p>
 <p>The three mappings differ only in what trains them. <strong>Principal components</strong> minimise linear reconstruction error and are the optimal linear compression at any given width. The <strong>autoencoder</strong> minimises non-linear reconstruction error, passing the covariates through <span class="math inline">\(1158 \to 256 \to 64 \to 2\)</span> and back out again, and it never sees the default flag. The <strong>supervised extractor</strong> is a feed-forward network with a two-neuron penultimate layer, trained on the Bernoulli deviance with dropout and early stopping, so its two features are learned against the response.</p>
 <p>Each representation is then scored the same way. A logistic GLM is fitted to the two codes on the learning sample and evaluated on the test sample, using the Bernoulli deviance in <span class="math inline">\(10^{-2}\)</span> units and the AUC, as the second lecture did. The GLM readout is the course’s own architecture read backwards, since a network is a feature extractor composed with a GLM, and holding the readout fixed isolates the quality of the features.</p>
-<div id="5a5bd5ec" class="cell" data-execution_count="3">
+<div id="9554c78a" class="cell" data-execution_count="3">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> readout(Z, label):</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    fit <span class="op">=</span> sm.GLM(y[learn], sm.add_constant(Z[learn]),</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                 family<span class="op">=</span>sm.families.Binomial()).fit()</span>
@@ -312,7 +348,7 @@ learn 77,444 accounts, 1,113 bad (1.4372%);  test 19,362 accounts, 259 bad (1.33
 <pre><code>null model               AUC   -     deviance 14.207</code></pre>
 </div>
 </div>
-<div id="9ba61a61" class="cell" data-execution_count="4">
+<div id="89ee1d87" class="cell" data-execution_count="4">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>pca <span class="op">=</span> PCA(n_components<span class="op">=</span><span class="dv">2</span>, random_state<span class="op">=</span><span class="dv">1</span>).fit(X[learn])</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>Z_pca <span class="op">=</span> pca.transform(X)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>recon <span class="op">=</span> pca.inverse_transform(Z_pca)</span>
@@ -326,7 +362,7 @@ PCA codes                AUC 0.737   deviance 13.510</code></pre>
 </div>
 </div>
 <p>The autoencoder trains on the learning sample for 60 epochs of Adam over mini-batches of 1,024 accounts, on the CPU with every seed fixed, so the numbers below reproduce on re-render.</p>
-<div id="0f105a0f" class="cell" data-execution_count="5">
+<div id="222b3e71" class="cell" data-execution_count="5">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_autoencoder(seed<span class="op">=</span><span class="dv">1</span>, epochs<span class="op">=</span><span class="dv">60</span>, batch<span class="op">=</span><span class="dv">1024</span>):</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(seed)</span>
 <span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> X.shape[<span class="dv">1</span>]</span>
@@ -359,12 +395,12 @@ PCA codes                AUC 0.737   deviance 13.510</code></pre>
 <span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="dv">1</span> <span class="op">-</span> mse_ae <span class="op">/</span> mse_pca<span class="sc">:.0%}</span><span class="ss"> below PCA  [</span><span class="sc">{</span>time<span class="sc">.</span>time() <span class="op">-</span> t0<span class="sc">:.0f}</span><span class="ss">s]"</span>)</span>
 <span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>auc_ae <span class="op">=</span> readout(Z_ae, <span class="st">"autoencoder codes"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>autoencoder: test reconstruction MSE 0.407, 22% below PCA  [115s]
+<pre><code>autoencoder: test reconstruction MSE 0.407, 22% below PCA  [91s]
 autoencoder codes        AUC 0.644   deviance 14.052</code></pre>
 </div>
 </div>
 <p>The supervised extractor uses the same machinery the next lecture develops in full: a validation slice carved out of the learning sample, checkpointing on the validation deviance, and early stopping once twenty epochs pass without improvement. Dropout at 0.3 is included because 1,113 bad accounts against 1,158 covariates is a regime in which a network memorises quickly.</p>
-<div id="ea5dc324" class="cell" data-execution_count="6">
+<div id="a07e3487" class="cell" data-execution_count="6">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fit_supervised(seed<span class="op">=</span><span class="dv">1</span>, epochs<span class="op">=</span><span class="dv">60</span>, batch<span class="op">=</span><span class="dv">1024</span>, patience<span class="op">=</span><span class="dv">20</span>):</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    torch.manual_seed(seed)</span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    encoder <span class="op">=</span> nn.Sequential(</span>
@@ -408,7 +444,7 @@ autoencoder codes        AUC 0.644   deviance 14.052</code></pre>
 <span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"correlation of the two supervised coordinates: "</span></span>
 <span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>np<span class="sc">.</span>corrcoef(Z_sup[:, <span class="dv">0</span>], Z_sup[:, <span class="dv">1</span>])[<span class="dv">0</span>, <span class="dv">1</span>]<span class="sc">:+.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>supervised extractor: validation optimum at epoch 9 of 29 run  [25s]
+<pre><code>supervised extractor: validation optimum at epoch 9 of 29 run  [21s]
 supervised features      AUC 0.820   deviance 12.328
 correlation of the two supervised coordinates: -0.97</code></pre>
 </div>
@@ -418,7 +454,7 @@ correlation of the two supervised coordinates: -0.97</code></pre>
 <h2 data-number="2.5" class="anchored" data-anchor-id="what-the-comparison-shows"><span class="header-section-number">2.5</span> What the comparison shows</h2>
 <p>The autoencoder wins the contest it was entered for and loses the one that matters. Its test reconstruction error of 0.407 is 22 per cent below the 0.524 that two principal components achieve, so the non-linear compression does capture structure the optimal linear compression of the same width cannot reach. It is a better summary of the portfolio by its own standard. Then the readout reverses the ranking. A logistic GLM on the autoencoder’s two codes scores an AUC of 0.644 against 0.737 for the principal components, and its test deviance of 14.052 sits barely below the null model’s 14.207. Two dimensions of unsupervised non-linear compression have discarded almost all of the default signal in the book.</p>
 <p>The supervised extractor, at the same two dimensions and through the same readout, reaches an AUC of 0.820 and a deviance of 12.328. The data are identical, the bottleneck width is identical, and the only thing that changed is the loss that trained the mapping.</p>
-<div id="4efd1ec0" class="cell" data-execution_count="7">
+<div id="bbf9f2e9" class="cell" data-execution_count="7">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>panels <span class="op">=</span> [(<span class="ss">f"PCA, AUC </span><span class="sc">{</span>auc_pca<span class="sc">:.3f}</span><span class="ss">"</span>, Z_pca),</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>          (<span class="ss">f"autoencoder, AUC </span><span class="sc">{</span>auc_ae<span class="sc">:.3f}</span><span class="ss">"</span>, Z_ae),</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>          (<span class="ss">f"supervised FNN, AUC </span><span class="sc">{</span>auc_sup<span class="sc">:.3f}</span><span class="ss">"</span>, Z_sup)]</span>
@@ -446,7 +482,7 @@ correlation of the two supervised coordinates: -0.97</code></pre>
 </div>
 <p>The figure says the same thing without any statistic. Under the principal components the bad accounts crowd towards one edge of the cloud while remaining thoroughly mixed with the good ones. Under the autoencoder they scatter along the spikes of a star-shaped manifold with no region that is distinctively theirs, which is what an AUC of 0.644 looks like. Under the supervised extractor the whole book collapses onto a ridge and the bad accounts occupy one end of it.</p>
 <p>That collapse is worth a remark of its own. The correlation between the supervised extractor’s two coordinates is <span class="math inline">\(-0.97\)</span>, so the network given two dimensions used approximately one. There is a single thing to predict and the deviance rewards nothing else, hence the extractor learns a scalar score and the second neuron is close to redundant. An unsupervised objective faces no such pressure and spreads itself over whatever the covariance structure offers.</p>
-<div id="267fad57" class="cell" data-execution_count="8">
+<div id="31327f7e" class="cell" data-execution_count="8">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">3</span>, figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">2.8</span>), sharey<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, (title, Z) <span class="kw">in</span> <span class="bu">zip</span>(axs, panels):</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    score <span class="op">=</span> Z[:, <span class="dv">0</span>] <span class="op">*</span> np.sign(np.corrcoef(Z[:, <span class="dv">0</span>], y)[<span class="dv">0</span>, <span class="dv">1</span>])</span>
@@ -475,7 +511,7 @@ correlation of the two supervised coordinates: -0.97</code></pre>
 <section id="why-the-autoencoder-loses-measured-rather-than-asserted" class="level2" data-number="2.6">
 <h2 data-number="2.6" class="anchored" data-anchor-id="why-the-autoencoder-loses-measured-rather-than-asserted"><span class="header-section-number">2.6</span> Why the autoencoder loses, measured rather than asserted</h2>
 <p>The mechanism is general, and here it can be checked. Reconstruction error is dominated by the directions carrying the most variance and by the blocks holding the most columns, whereas default is a rare event that need not live in either. The four column blocks let us test that directly, by measuring how much individual default signal each block carries per column against how much of the leading principal component’s loading it attracts.</p>
-<div id="c44be64a" class="cell" data-execution_count="9">
+<div id="8e46c456" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> block_of(name):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> name.startswith(<span class="st">"bureau_enquiry"</span>): <span class="cf">return</span> <span class="st">"bureau enquiry"</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> name.startswith(<span class="st">"bureau"</span>): <span class="cf">return</span> <span class="st">"bureau"</span></span>
@@ -616,8 +652,13 @@ z_{u,j}^{(1)} = \phi\left( w_{0,j}^{(1)}
 <li>Basel Committee on Banking Supervision (2006). <em>International Convergence of Capital Measurement and Capital Standards: a Revised Framework, Comprehensive Version</em>. Bank for International Settlements.</li>
 <li>Bengio, Y., Courville, A. and Vincent, P. (2013). Representation learning: a review and new perspectives. <em>IEEE Transactions on Pattern Analysis and Machine Intelligence</em> 35(8), 1798-1828.</li>
 <li>Cybenko, G. (1989). Approximation by superpositions of a sigmoidal function. <em>Mathematics of Control, Signals and Systems</em> 2(4), 303-314.</li>
+<li>Deisenroth, M.P., Faisal, A.A. and Ong, C.S. (2020). <em>Mathematics for Machine Learning</em>. Cambridge University Press.</li>
+<li>Djurovic, A. (2025). <em>Principal Component Analysis for IFRS9 Forward-Looking Modeling</em>. Model development and validation series, practitioner deck.</li>
+<li>Djurovic, A. (2026). <em>IFRS9 Forward-Looking Modeling: Supervised Macroeconomic Index</em>. Model development and validation series, practitioner deck.</li>
 <li>European Banking Authority (2021). <em>Discussion paper on machine learning for IRB models</em>. EBA/DP/2021/04, and its 2023 follow-up report.</li>
 <li>European Union (2024). Regulation (EU) 2024/1689 laying down harmonised rules on artificial intelligence, Annex III.</li>
+<li>Frank, I. and Friedman, J. (1993). A statistical view of some chemometrics regression tools (with discussion). <em>Technometrics</em> 35(2), 109-148.</li>
+<li>Hastie, T., Tibshirani, R. and Friedman, J. (2009). <em>The Elements of Statistical Learning: Data Mining, Inference, and Prediction</em>, 2nd edition. Springer.</li>
 <li>He, K., Zhang, X., Ren, S. and Sun, J. (2016). Deep residual learning for image recognition. <em>Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition</em>, 770-778.</li>
 <li>Hochreiter, S. and Schmidhuber, J. (1997). Long short-term memory. <em>Neural Computation</em> 9(8), 1735-1780.</li>
 <li>Hornik, K. (1991). Approximation capabilities of multilayer feedforward networks. <em>Neural Networks</em> 4(2), 251-257.</li>
@@ -625,8 +666,10 @@ z_{u,j}^{(1)} = \phi\left( w_{0,j}^{(1)}
 <li>Lessmann, S., Baesens, B., Seow, H.-V. and Thomas, L.C. (2015). Benchmarking state-of-the-art classification algorithms for credit scoring: an update of research. <em>European Journal of Operational Research</em> 247(1), 124-136.</li>
 <li>Richman, R. and Wüthrich, M.V. (2023). LocalGLMnet: interpretable deep learning for tabular data. <em>Scandinavian Actuarial Journal</em> 2023(1), 71-95.</li>
 <li>Richman, R. and Wüthrich, M.V. (2024). High-cardinality categorical covariates in network regressions. <em>Japanese Journal of Statistics and Data Science</em> 7(2), 921-965.</li>
+<li>Stone, M. and Brooks, R.J. (1990). Continuum regression: cross-validated sequentially constructed prediction embracing ordinary least squares, partial least squares and principal components regression. <em>Journal of the Royal Statistical Society, Series B</em> 52(2), 237-269.</li>
 <li>Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A.N., Kaiser, L. and Polosukhin, I. (2017). Attention is all you need. <em>Advances in Neural Information Processing Systems</em> 30.</li>
 <li>Wiginton, J.C. (1980). A note on the comparison of logit and discriminant models of consumer credit behavior. <em>Journal of Financial and Quantitative Analysis</em> 15(3), 757-770.</li>
+<li>Wold, H. (1975). Soft modelling by latent variables: the nonlinear iterative partial least squares (NIPALS) approach. In <em>Perspectives in Probability and Statistics, In Honor of M.S. Bartlett</em>, 117-144.</li>
 <li>Wüthrich, M.V. and Merz, M. (2019). Editorial: Yes, we CANN! <em>ASTIN Bulletin</em> 49(1), 1-3.</li>
 <li>Wüthrich, M.V. and Merz, M. (2023). <em>Statistical Foundations of Actuarial Learning and its Applications</em>. Springer.</li>
 <li>Zeiler, M.D.&nbsp;and Fergus, R. (2014). Visualizing and understanding convolutional networks. <em>Computer Vision - ECCV 2014</em>, 818-833. Springer.</li>
