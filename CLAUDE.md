@@ -203,10 +203,9 @@ description and links to its HTML and its PDF. It links `lectures/lecture.css` r
 Gini documents layer, so the index and the lectures share one register; that sheet states the
 deviation at its own head, and every value in the index comes from its token block.
 
-`.github/workflows/pages.yml` publishes it to GitHub Pages on a push to `main`. A Pages site on
-a personal account is **publicly readable even though this repository is private**, so what the
-workflow copies is a confidentiality decision rather than a convenience one. Its `Assemble the
-site` step is an allow-list, and everything it does not name stays unpublished:
+`.github/workflows/pages.yml` publishes it to GitHub Pages on a push to `main`, and the site is
+live at <https://supermarmar.github.io/actuarial_deep_learning/>. Its `Assemble the site` step
+is an allow-list, and everything it does not name stays off the site:
 
 - **Published:** `index.html`, `credit_lectures/*.html`, `credit_lectures/*.pdf`, the
   `credit_lectures/*_files/` figure directories, and `lectures/lecture.css`.
@@ -217,6 +216,17 @@ site` step is an allow-list, and everything it does not name stays unpublished:
 The site is assembled in the workflow rather than kept in a `docs/` folder, so the 30 MB of
 rendered HTML and figures lives in the repository exactly once. Adding a lecture therefore
 means adding an entry to `index.html`; the copy list itself needs no change, since it globs.
+
+Note what the allow-list does and does not buy. It keeps the authors' material off the site,
+which was its purpose while the repository was private. Since 3 September 2026 the repository
+is public, so that material is readable on github.com regardless, and the list now serves the
+narrower job of keeping the site to Mario's own work.
+
+Two operational notes. Re-running only the failed job of a run that both uploads and deploys
+produces a second artefact named `github-pages`, and `deploy-pages` then refuses to choose
+between them; dispatch a fresh run instead. And should the actions ever be bumped,
+`upload-pages-artifact@v5` excludes hidden files by default, which would silently drop
+`site/.nojekyll` unless `include-hidden-files: true` is set.
 
 ### Lecture PDFs
 
@@ -352,11 +362,16 @@ Everything else in `coding-standards.md`, `git-conventions.md` and the writing r
 - Never commit secrets, credentials or client data. Nothing from a Gini engagement enters this
   repo, and no example here borrows a client's parameters or figures.
 - Never commit `data/` or `.venv/`.
-- **This repo stays private.** `lectures/`, `exercises/` and `reference/` hold the course
-  authors' material rather than Mario's, so pushing to a public remote would republish it.
-  `origin` is `github.com/supermarmar/actuarial_deep_learning`. Confirm it is private before
-  any push, e.g. `gh repo view supermarmar/actuarial_deep_learning --json isPrivate`.
-  Decided 29 August 2026.
+- **This repo is public, and was private until 3 September 2026.** GitHub Pages on a free
+  personal account is only available for a public repository, so `supermarmar/actuarial_deep_learning`
+  was made public that day to publish the credit lecture site. The consequence was accepted
+  rather than overlooked: `lectures/`, `exercises/` and `reference/` hold the course authors'
+  material rather than Mario's, and every one of those files is now readable by anyone, as is
+  the whole git history. `lectures/figures/` is the sole exception, being gitignored.
+  Consequently the earlier rule requiring a privacy check before every push is withdrawn, and
+  the burden moves to what goes **in**: assume anything committed here is published the moment
+  it lands. Nothing from a Gini engagement, and nothing under a licence that forbids
+  redistribution.
 - Never force-push `main`.
 
 ## Instructions for Claude Code

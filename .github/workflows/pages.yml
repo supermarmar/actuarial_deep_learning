@@ -1,11 +1,12 @@
 # Publishes the credit risk companion lectures to GitHub Pages.
 #
-# A Pages site on a personal account is publicly readable even when the
-# repository is private, so what reaches the site is a confidentiality decision
-# rather than a convenience one. The `Assemble the site` step below is that
-# decision written down: it is an allow-list, and anything it does not name
-# stays unpublished. In particular the course authors' own lecture documents in
-# `lectures/` are not on it, and neither are the review grading reports.
+# The `Assemble the site` step below is an allow-list: anything it does not name
+# stays off the site. In particular the course authors' own lecture documents in
+# `lectures/` are not on it, and neither are the review grading reports. That
+# boundary was drawn while the repository was private and a Pages site was the
+# only public surface. The repository has been public since 3 September 2026, so
+# the list no longer protects the authors' material; it keeps the site to
+# Mario's own work, which is worth having for its own sake.
 #
 # The site is assembled here rather than kept in a `docs/` folder, so that the
 # 30 MB of rendered HTML and figures lives in the repository exactly once.
