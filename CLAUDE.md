@@ -32,6 +32,7 @@ models and in-context learning.
 | `data/` | Course data, unpacked from `Data.zip`. Gitignored, see below |
 | `notes/` | Notes per lecture, in markdown |
 | `dashboard/` | Builder for the self-contained portfolio explorer. Output is gitignored, see below |
+| `index.html` | Landing page for the published lecture site, linking the thirteen credit lectures. See below |
 
 ## Tech stack
 
@@ -194,6 +195,28 @@ are vector drawings that `pdfimages` never sees and every embedded raster carrie
 mask. It expects the decks in `~/Downloads`; edit `PDF_DIR` if they move. Per-figure `top`,
 `bottom`, `left` and `right` fractions trim the beamer furniture before the white margins are
 cropped, and the page counter is masked so it does not survive as a stray "10/36" beside a plot.
+
+### The published site
+
+`index.html` at the repository root lists the thirteen credit lectures, each with a one-line
+description and links to its HTML and its PDF. It links `lectures/lecture.css` rather than the
+Gini documents layer, so the index and the lectures share one register; that sheet states the
+deviation at its own head, and every value in the index comes from its token block.
+
+`.github/workflows/pages.yml` publishes it to GitHub Pages on a push to `main`. A Pages site on
+a personal account is **publicly readable even though this repository is private**, so what the
+workflow copies is a confidentiality decision rather than a convenience one. Its `Assemble the
+site` step is an allow-list, and everything it does not name stays unpublished:
+
+- **Published:** `index.html`, `credit_lectures/*.html`, `credit_lectures/*.pdf`, the
+  `credit_lectures/*_files/` figure directories, and `lectures/lecture.css`.
+- **Not published:** everything else under `lectures/`, which is the course authors' material,
+  plus the `*_grading-report.md` review artefacts, the `.qmd` sources, `notes/`, `exercises/`
+  and `reference/`.
+
+The site is assembled in the workflow rather than kept in a `docs/` folder, so the 30 MB of
+rendered HTML and figures lives in the repository exactly once. Adding a lecture therefore
+means adding an entry to `index.html`; the copy list itself needs no change, since it globs.
 
 ### Lecture PDFs
 

@@ -1,0 +1,69 @@
+# Publishes the credit risk companion lectures to GitHub Pages.
+#
+# A Pages site on a personal account is publicly readable even when the
+# repository is private, so what reaches the site is a confidentiality decision
+# rather than a convenience one. The `Assemble the site` step below is that
+# decision written down: it is an allow-list, and anything it does not name
+# stays unpublished. In particular the course authors' own lecture documents in
+# `lectures/` are not on it, and neither are the review grading reports.
+#
+# The site is assembled here rather than kept in a `docs/` folder, so that the
+# 30 MB of rendered HTML and figures lives in the repository exactly once.
+
+name: Deploy lecture site to Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - credit_lectures/**
+      - lectures/lecture.css
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deployment at a time. In-progress runs finish rather than cancel, since a
+# cancelled deploy can leave the site half-written.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble the site
+        run: |
+          set -euo pipefail
+          mkdir -p site/credit_lectures site/lectures
+
+          cp index.html site/
+          cp lectures/lecture.css site/lectures/
+          cp credit_lectures/*.html credit_lectures/*.pdf site/credit_lectures/
+          cp -R credit_lectures/*_files site/credit_lectures/
+
+          # Quarto writes its figures into `<lecture>_files/`, and Jekyll drops
+          # every directory whose name starts with an underscore. This artefact
+          # route runs no Jekyll, so the file is insurance against a later
+          # switch to branch-based publishing rather than a live requirement.
+          touch site/.nojekyll
+
+          echo "Published files:"
+          find site -type f | sort
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
