@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-03">
+
+<title>Credit Lecture F1: Classing, Characteristic Analysis and the Cost of a Step Function</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-lecture-2-did-without-naming-it" id="toc-what-lecture-2-did-without-naming-it" class="nav-link active" data-scroll-target="#what-lecture-2-did-without-naming-it"><span class="header-section-number">1</span> What lecture 2 did without naming it</a></li>
+  <li><a href="#two-traditions-one-aim" id="toc-two-traditions-one-aim" class="nav-link" data-scroll-target="#two-traditions-one-aim"><span class="header-section-number">2</span> Two traditions, one aim</a>
+  <ul class="collapse">
+  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation"><span class="header-section-number">2.1</span> Notation</a></li>
+  </ul></li>
+  <li><a href="#the-modelling-sample-unchanged" id="toc-the-modelling-sample-unchanged" class="nav-link" data-scroll-target="#the-modelling-sample-unchanged"><span class="header-section-number">3</span> The modelling sample, unchanged</a></li>
+  <li><a href="#fine-classing" id="toc-fine-classing" class="nav-link" data-scroll-target="#fine-classing"><span class="header-section-number">4</span> Fine classing</a></li>
+  <li><a href="#coarse-classing-and-three-algorithms" id="toc-coarse-classing-and-three-algorithms" class="nav-link" data-scroll-target="#coarse-classing-and-three-algorithms"><span class="header-section-number">5</span> Coarse classing, and three algorithms</a>
+  <ul class="collapse">
+  <li><a href="#monotone-adjacent-pooling" id="toc-monotone-adjacent-pooling" class="nav-link" data-scroll-target="#monotone-adjacent-pooling"><span class="header-section-number">5.1</span> Monotone adjacent pooling</a></li>
+  <li><a href="#weight-of-evidence-and-information-value" id="toc-weight-of-evidence-and-information-value" class="nav-link" data-scroll-target="#weight-of-evidence-and-information-value"><span class="header-section-number">5.2</span> Weight of evidence and information value</a></li>
+  <li><a href="#isotonic-regression-for-comparison" id="toc-isotonic-regression-for-comparison" class="nav-link" data-scroll-target="#isotonic-regression-for-comparison"><span class="header-section-number">5.3</span> Isotonic regression, for comparison</a></li>
+  </ul></li>
+  <li><a href="#information-value-and-what-it-cannot-see" id="toc-information-value-and-what-it-cannot-see" class="nav-link" data-scroll-target="#information-value-and-what-it-cannot-see"><span class="header-section-number">6</span> Information value, and what it cannot see</a>
+  <ul class="collapse">
+  <li><a href="#what-the-screen-does-to-age" id="toc-what-the-screen-does-to-age" class="nav-link" data-scroll-target="#what-the-screen-does-to-age"><span class="header-section-number">6.1</span> What the screen does to age</a></li>
+  </ul></li>
+  <li><a href="#monotonicity-which-no-regulation-requires" id="toc-monotonicity-which-no-regulation-requires" class="nav-link" data-scroll-target="#monotonicity-which-no-regulation-requires"><span class="header-section-number">7</span> Monotonicity, which no regulation requires</a></li>
+  <li><a href="#small-classes-and-the-thirteen-loans" id="toc-small-classes-and-the-thirteen-loans" class="nav-link" data-scroll-target="#small-classes-and-the-thirteen-loans"><span class="header-section-number">8</span> Small classes, and the thirteen loans</a></li>
+  <li><a href="#missing-values-and-a-zero-that-means-nothing" id="toc-missing-values-and-a-zero-that-means-nothing" class="nav-link" data-scroll-target="#missing-values-and-a-zero-that-means-nothing"><span class="header-section-number">9</span> Missing values, and a zero that means nothing</a></li>
+  <li><a href="#the-characteristic-analysis-table-and-a-scorecard" id="toc-the-characteristic-analysis-table-and-a-scorecard" class="nav-link" data-scroll-target="#the-characteristic-analysis-table-and-a-scorecard"><span class="header-section-number">10</span> The characteristic analysis table, and a scorecard</a></li>
+  <li><a href="#two-results-the-procedure-does-not-advertise" id="toc-two-results-the-procedure-does-not-advertise" class="nav-link" data-scroll-target="#two-results-the-procedure-does-not-advertise"><span class="header-section-number">11</span> Two results the procedure does not advertise</a>
+  <ul class="collapse">
+  <li><a href="#a-coefficient-is-a-diagnostic-and-lecture-1s-paradox-trips-it" id="toc-a-coefficient-is-a-diagnostic-and-lecture-1s-paradox-trips-it" class="nav-link" data-scroll-target="#a-coefficient-is-a-diagnostic-and-lecture-1s-paradox-trips-it"><span class="header-section-number">11.1</span> A coefficient is a diagnostic, and lecture 1’s paradox trips it</a></li>
+  <li><a href="#a-weight-of-evidence-model-does-not-reproduce-itself" id="toc-a-weight-of-evidence-model-does-not-reproduce-itself" class="nav-link" data-scroll-target="#a-weight-of-evidence-model-does-not-reproduce-itself"><span class="header-section-number">11.2</span> A weight-of-evidence model does not reproduce itself</a></li>
+  </ul></li>
+  <li><a href="#the-same-characteristic-undiscretised" id="toc-the-same-characteristic-undiscretised" class="nav-link" data-scroll-target="#the-same-characteristic-undiscretised"><span class="header-section-number">12</span> The same characteristic, undiscretised</a></li>
+  <li><a href="#what-a-validator-asks-and-what-this-lecture-does-not-show" id="toc-what-a-validator-asks-and-what-this-lecture-does-not-show" class="nav-link" data-scroll-target="#what-a-validator-asks-and-what-this-lecture-does-not-show"><span class="header-section-number">13</span> What a validator asks, and what this lecture does not show</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">14</span> References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture F1: Classing, Characteristic Analysis and the Cost of a Step Function</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 3, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Credit lecture 3 described the classical scorecard’s feature engineering in one paragraph and moved on, which left the activity that consumes most of a real probability-of-default build standing as a single sentence. This lecture runs the procedure instead. It fine classes, coarse classes by monotone adjacent pooling and by isotonic regression, screens on information value, treats missingness as an attribute, and assembles a characteristic analysis table into a fitted scorecard. Four findings come out of it. Borrower age, on which lectures 1 and 2 spent two exhibits and a merged band, scores an information value of 0.007 and would be screened out by any threshold in common use, because the monotonicity constraint reports a hump as noise. Holding the covariate list fixed, the classed and weight-of-evidence-encoded fit gives up about four tenths of an AUC point against lecture 2’s dummy-coded GLM, which is the price of the step function stated as a number. Lecture 1’s income paradox reappears as a sign flip on a weight-of-evidence coefficient, which turns out to be the diagnostic the procedure provides for exactly that failure. And a weight-of-evidence model retrained on its own predictions moves a fitted probability by up to 6.7 percentage points, where the dummy-coded model reproduces itself to thirteen decimal places.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="what-lecture-2-did-without-naming-it" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> What lecture 2 did without naming it</h1>
+<p>Two small engineering decisions were taken in the open in credit lecture 2, and both were named honestly at the time. The oldest age class, <code>71+</code>, carried thirteen loans and no defaults at all. In a logistic GLM a class with no defaults drives its own coefficient towards minus infinity, since the likelihood keeps improving as the fitted probability of the class falls towards zero, so iteratively reweighted least squares runs to its iteration cap and returns a coefficient and a standard error that are numerical artefacts. Lecture 2 diagnosed that as quasi-complete separation and applied the remedy it called “coarser classes”, merging the two oldest bands into <code>61+</code>. Separately, <code>HomeOwnershipType</code> was missing for 1,604 loans and <code>EmploymentDurationCurrentEmployer</code> for 820, and both were given an explicit <code>missing</code> level on the judgement that an applicant who skips a field differs from one who fills it in.</p>
+<p>Credit lecture 3 then looked back at those decisions and described what they were:</p>
+<blockquote class="blockquote">
+<p>The classical scorecard takes each candidate variable, bins it into coarse classes, replaces each class by its weight of evidence, and admits the variable only if the binning is monotone, populated at every level and stable across time. The procedure is transparent, auditable and slow, and every step of it is a decision recorded in a model development document.</p>
+</blockquote>
+<p>That paragraph is the whole of this series’ account of an activity which, on a real retail build, occupies more calendar time than the modelling does. Lecture 3’s next move was to replace it with representation learning and measure what the replacement bought. This lecture goes the other way and runs the procedure by the book, because a comparison is only worth reading when both sides have been given a fair go.</p>
+<p>Consequently the two decisions above stop being ad hoc repairs and become the first two entries in a method. Merging <code>71+</code> into <code>61+</code> is coarse classing under a minimum population constraint. Giving missingness its own level is the attribute treatment that the classical tradition has applied to bureau non-hits for forty years. Neither was invented in lecture 2, and this lecture supplies the procedure that both belong to.</p>
+</section>
+<section id="two-traditions-one-aim" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Two traditions, one aim</h1>
+<p>Lecture 3 defined representation learning as the search for a map <span class="math inline">\(\varphi: \mathcal{X} \to \mathbb{R}^{q'}\)</span> under which a simple model on <span class="math inline">\(\varphi(\boldsymbol{x})\)</span> performs well. Classical credit feature engineering is the same search conducted by hand, and the industry runs it in two incompatible ways.</p>
+<p>The first tradition discretises everything. Each candidate characteristic is cut into classes, each class is replaced by its weight of evidence, the classing is forced to be monotone in risk, and the characteristic is admitted only if its information value clears a threshold. Hence <span class="math inline">\(\varphi\)</span> is a step function, its parameters are the class boundaries, and every one of those boundaries is a decision somebody signed.</p>
+<p>The second tradition never bins at all. It treats coded exceptions and missing values first, caps the tails, and then straightens each covariate against the log-odds of default with a power transformation chosen from Tukey’s ladder, using the bulging rule to pick the direction. Redundancy is removed by clustering the correlation matrix and by dropping variables that load on a large condition index. Hence <span class="math inline">\(\varphi\)</span> is a smooth monotone map with one parameter per covariate, and the model that follows keeps far more degrees of freedom for the regression itself.</p>
+<p>Both traditions are live practice, both are documented to the standard a supervisor expects, and they disagree about the most basic question available, namely whether to throw away the ordering inside a class. This lecture runs the first tradition end to end and closes by putting one characteristic through both. Lecture F2 runs the second tradition on a portfolio wide enough to need it, and takes up selection, collinearity and the points scale.</p>
+<section id="notation" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="notation"><span class="header-section-number">2.1</span> Notation</h2>
+<p>Nothing here is renamed. Lecture 1 owns the snapshot <span class="math inline">\(\tau\)</span>, the origination month <span class="math inline">\(g_i\)</span> and the window flag <span class="math inline">\(D^{(k)}_{i,t}\)</span>. Lecture 6 owns the level label <span class="math inline">\(a_k\)</span>, the interval <span class="math inline">\(I_k\)</span>, the level mean <span class="math inline">\(\overline{y}_k\)</span>, and the credibility weight <span class="math inline">\(\alpha_k\)</span>. Lecture R3 owns the dataset family <span class="math inline">\(\mathcal{D}\)</span> and the sampling fraction <span class="math inline">\(s_f\)</span>.</p>
+<p>This lecture adds the classing apparatus and nothing else. Within a characteristic, <span class="math inline">\(k\)</span> indexes classes, <span class="math inline">\(n_k\)</span> counts the rows in class <span class="math inline">\(k\)</span>, and <span class="math inline">\(n^B_k\)</span> and <span class="math inline">\(n^G_k\)</span> count its defaults and non-defaults. The characteristic index is <span class="math inline">\(\ell\)</span>, since <span class="math inline">\(j\)</span> is spent as R3’s spell number.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="The sign convention, which is the one thing easy to get wrong">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The sign convention, which is the one thing easy to get wrong
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture 6 defines weight of evidence risk-positively, as the log of the class’s default odds relative to the portfolio’s, <span class="math display">\[
+\mathrm{WoE}_k = \log\frac{\overline{y}_k / (1 - \overline{y}_k)}
+                          {\overline{y} / (1 - \overline{y})} ,
+\]</span> and observes that the conventional industry definition uses the good-to-bad ratio and therefore carries the opposite sign. This lecture keeps lecture 6’s convention throughout, so a positive weight of evidence always means elevated risk and a positive fitted coefficient always means the characteristic behaves as its classing said it would.</p>
+<p>Information value is unaffected by the choice, because both factors in its summand change sign together. A reader comparing these tables against a vendor’s should therefore expect every weight of evidence to be negated and every information value to agree.</p>
+</div>
+</div>
+<p>Lecture 6 also writes the Bühlmann shrinkage parameter as <span class="math inline">\(\tau \ge 0\)</span>, which collides with lecture 1’s snapshot date. This lecture needs neither, so it uses <span class="math inline">\(\tau\)</span> for nothing and names lecture 6’s shrinkage parameter in words where it comes up.</p>
+</section>
+</section>
+<section id="the-modelling-sample-unchanged" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The modelling sample, unchanged</h1>
+<p>Everything below runs on lecture 2’s modelling sample, constructed with lecture 2’s code, so that the classing is the only thing that can explain a difference in any number reported below.</p>
+<div id="66a72084" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.formula.api <span class="im">as</span> smf</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.isotonic <span class="im">import</span> IsotonicRegression</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>INK, MUTED, KEY, WARN <span class="op">=</span> <span class="st">"#1A1A1A"</span>, <span class="st">"#8A8377"</span>, <span class="st">"#3B4A75"</span>, <span class="st">"#8C2F1E"</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>model_dat <span class="op">=</span> (</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    dat.<span class="bu">filter</span>(pl.col(<span class="st">"Age"</span>).is_not_null() <span class="op">&amp;</span> (pl.col(<span class="st">"IncomeTotal"</span>) <span class="op">&gt;</span> <span class="dv">0</span>))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    .with_columns(logIncome<span class="op">=</span>pl.col(<span class="st">"IncomeTotal"</span>).log())</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    .<span class="bu">filter</span>(pl.col(<span class="st">"Education"</span>) <span class="op">!=</span> <span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>g <span class="op">=</span> model_dat.to_pandas()</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> g[<span class="st">"default_12m"</span>].to_numpy()</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>BASE <span class="op">=</span> <span class="bu">float</span>(y.mean())</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"modelling sample: n = </span><span class="sc">{</span><span class="bu">len</span>(g)<span class="sc">:,}</span><span class="ss">, default rate </span><span class="sc">{</span>BASE<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>modelling sample: n = 148,667, default rate 0.2894</code></pre>
+</div>
+</div>
+<p>The book defaults at just under 29 per cent. That figure is worth holding on to, because several rules of thumb in this tradition were written for portfolios two orders of magnitude cleaner and they behave oddly here. A minimum of twenty-five defaults per class, for instance, is a real constraint on a card book defaulting at 1.4 per cent and no constraint at all on this one.</p>
+</section>
+<section id="fine-classing" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Fine classing</h1>
+<p>Fine classing cuts a numeric characteristic into many narrow classes, typically ten or twenty on equal population, and computes the observed default rate in each. It commits to nothing. Its purpose is to let the modeller see the shape of the relationship before any smoothing is imposed on it, and the plot it produces is the single most-read exhibit in a scorecard development document.</p>
+<div id="b6166daf" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fine_class(x, n_fine<span class="op">=</span><span class="dv">20</span>):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Equal-population fine classes. Returns class index and the cut points."""</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    ok <span class="op">=</span> <span class="op">~</span>pd.isna(x)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> np.unique(np.nanpercentile(x[ok], np.linspace(<span class="dv">0</span>, <span class="dv">100</span>, n_fine <span class="op">+</span> <span class="dv">1</span>)))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> np.clip(np.searchsorted(q, x, side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, <span class="bu">len</span>(q) <span class="op">-</span> <span class="dv">2</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.where(ok, idx, <span class="op">-</span><span class="dv">1</span>), q</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> class_table(idx, yy):</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One row per class: population, defaults, observed rate."""</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    idx <span class="op">=</span> np.asarray(idx)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    ks <span class="op">=</span> np.unique(idx)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pd.DataFrame({</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="st">"k"</span>: ks,</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="st">"n"</span>: [<span class="bu">int</span>((idx <span class="op">==</span> k).<span class="bu">sum</span>()) <span class="cf">for</span> k <span class="kw">in</span> ks],</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="st">"bad"</span>: [<span class="bu">int</span>(yy[idx <span class="op">==</span> k].<span class="bu">sum</span>()) <span class="cf">for</span> k <span class="kw">in</span> ks],</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        <span class="st">"rate"</span>: [<span class="bu">float</span>(yy[idx <span class="op">==</span> k].mean()) <span class="cf">for</span> k <span class="kw">in</span> ks],</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>    })</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Four characteristics carry the illustrations from here on. <code>Age</code> and <code>IncomeTotal</code> are the two lecture 1 modelled. <code>LoanDuration</code> is a contract term rather than a borrower attribute. <code>Interest</code> is the coupon Bondora itself set, and it is included deliberately as the leakage example section 6 needs.</p>
+<div id="2a85a747" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>FOUR <span class="op">=</span> [<span class="st">"Age"</span>, <span class="st">"IncomeTotal"</span>, <span class="st">"LoanDuration"</span>, <span class="st">"Interest"</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>fig, axs <span class="op">=</span> plt.subplots(<span class="dv">1</span>, <span class="dv">4</span>, figsize<span class="op">=</span>(<span class="fl">9.5</span>, <span class="fl">2.6</span>))</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> ax, c <span class="kw">in</span> <span class="bu">zip</span>(axs, FOUR):</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> g[c].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    idx, q <span class="op">=</span> fine_class(x)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> class_table(idx, y)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> t[t.k <span class="op">&gt;=</span> <span class="dv">0</span>]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    mid <span class="op">=</span> [<span class="bu">float</span>(np.median(x[idx <span class="op">==</span> k])) <span class="cf">for</span> k <span class="kw">in</span> t[<span class="st">"k"</span>]]</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    ax.plot(mid, t[<span class="st">"rate"</span>], <span class="st">"o-"</span>, ms<span class="op">=</span><span class="dv">3</span>, lw<span class="op">=</span><span class="dv">1</span>, color<span class="op">=</span>KEY)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    ax.axhline(BASE, color<span class="op">=</span>MUTED, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="fl">0.8</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    ax.set_title(c, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    ax.set_xlabel(<span class="st">"class midpoint"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> c <span class="op">==</span> <span class="st">"Age"</span>:</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        ax.set_ylabel(<span class="st">"default rate"</span>, fontsize<span class="op">=</span><span class="dv">8</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> c <span class="kw">in</span> (<span class="st">"IncomeTotal"</span>, <span class="st">"Interest"</span>):</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        ax.set_xscale(<span class="st">"log"</span>)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    ax.tick_params(labelsize<span class="op">=</span><span class="dv">7</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> (<span class="st">"top"</span>, <span class="st">"right"</span>):</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        ax.spines[s].set_visible(<span class="va">False</span>)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="F1_credit-classing-and-characteristic-analysis_files/figure-html/cell-4-output-1.png" width="1408" height="369" class="figure-img"></p>
+<figcaption>Observed twelve-month default rate by twenty equal-population fine classes, plotted against the class’s population-weighted midpoint on the characteristic’s own scale. The dashed line is the portfolio rate. Age is plainly non-monotone; interest rate is monotone and very steep; loan duration takes five distinct values only, so its fine classing collapses.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Age falls sharply from the youngest class, flattens across middle age, and turns back up towards the oldest borrowers, reproducing the hump lecture 1 recovered and lecture 2 approximated with seven bands. Income rises with default risk, giving lecture 1’s paradox, and it remains wrong-signed until country enters. Loan duration has only five distinct values on this book, so twenty requested classes collapse to five and the fine classing has nothing to do. Interest climbs from about 11 per cent default in its cheapest class to about 67 per cent in its dearest.</p>
+</section>
+<section id="coarse-classing-and-three-algorithms" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Coarse classing, and three algorithms</h1>
+<p>Coarse classing merges the fine classes into a handful that a scorecard can carry, subject to two constraints that pull against each other. Every class must hold enough rows to estimate its own default rate, and the sequence of rates must be monotone in the characteristic. The reason for the first is statistical, and section 8 makes it concrete. The reason for the second is discussed in section 7, where it turns out to rest on less than practitioners usually claim.</p>
+<section id="monotone-adjacent-pooling" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="monotone-adjacent-pooling"><span class="header-section-number">5.1</span> Monotone adjacent pooling</h2>
+<p>The standard algorithm walks the fine classes, finds a pair whose rates violate monotonicity, merges them, and repeats until no violation remains. It is short enough to read in full, and its merge order is the part that matters, since a different choice of which violation to fix first gives a different final classing on the same data.</p>
+<div id="01805297" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mapa(n_tot, n_bad, min_n, direction):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Monotone adjacent pooling. Under-populated classes are merged into their</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">    smaller neighbour first; then the least informative monotonicity violation,</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">    i.e. the adjacent pair whose rates are closest, is merged repeatedly."""</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    nt, nb <span class="op">=</span> <span class="bu">list</span>(n_tot), <span class="bu">list</span>(n_bad)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    grp <span class="op">=</span> [[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(nt))]</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">len</span>(nt) <span class="op">&gt;</span> <span class="dv">1</span>:</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>        rate <span class="op">=</span> [nb[i] <span class="op">/</span> nt[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(nt))]</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>        small <span class="op">=</span> [i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(nt)) <span class="cf">if</span> nt[i] <span class="op">&lt;</span> min_n]</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> small:</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>            i <span class="op">=</span> <span class="bu">min</span>(small, key<span class="op">=</span><span class="kw">lambda</span> i: nt[i])</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>            j <span class="op">=</span> (i <span class="op">-</span> <span class="dv">1</span> <span class="cf">if</span> i <span class="op">==</span> <span class="bu">len</span>(nt) <span class="op">-</span> <span class="dv">1</span> <span class="cf">else</span> i <span class="op">+</span> <span class="dv">1</span> <span class="cf">if</span> i <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>                 <span class="cf">else</span> i <span class="op">-</span> <span class="dv">1</span> <span class="cf">if</span> nt[i <span class="op">-</span> <span class="dv">1</span>] <span class="op">&lt;</span> nt[i <span class="op">+</span> <span class="dv">1</span>] <span class="cf">else</span> i <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>            viol <span class="op">=</span> [i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(nt) <span class="op">-</span> <span class="dv">1</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> (rate[i <span class="op">+</span> <span class="dv">1</span>] <span class="op">-</span> rate[i]) <span class="op">*</span> direction <span class="op">&lt;</span> <span class="dv">0</span>]</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="kw">not</span> viol:</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>                <span class="cf">break</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>            i <span class="op">=</span> <span class="bu">min</span>(viol, key<span class="op">=</span><span class="kw">lambda</span> i: <span class="bu">abs</span>(rate[i <span class="op">+</span> <span class="dv">1</span>] <span class="op">-</span> rate[i]))</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>            j <span class="op">=</span> i <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> <span class="bu">min</span>(i, j), <span class="bu">max</span>(i, j)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>        nt[a:b <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> [nt[a] <span class="op">+</span> nt[b]]</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>        nb[a:b <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> [nb[a] <span class="op">+</span> nb[b]]</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>        grp[a:b <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> [grp[a] <span class="op">+</span> grp[b]]</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array(nt), np.array(nb), grp</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>direction</code> argument is the sign the classing is forced into, and the choice to pass it in is deliberate. A production classing takes its direction from the risk story, so that a characteristic whose sample trend contradicts the economics is flagged instead of accommodated. Inferring the sign from the sample, as the helper below does by default, quietly accommodates it.</p>
+</section>
+<section id="weight-of-evidence-and-information-value" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="weight-of-evidence-and-information-value"><span class="header-section-number">5.2</span> Weight of evidence and information value</h2>
+<p>With the classes fixed, each receives its weight of evidence and the characteristic receives an information value, defined as the sum over classes of the difference between the default and non-default shares, weighted by the log of their ratio.</p>
+<div id="2b329f0f" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> woe_iv(n_tot, n_bad, half<span class="op">=</span><span class="fl">0.5</span>):</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Risk-positive weight of evidence per lecture 6, and information value.</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">    `half` adds half a row of each outcome to every class, which keeps the</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co">    logarithm finite when a class holds no defaults."""</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    n_good <span class="op">=</span> n_tot <span class="op">-</span> n_bad</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    p_bad <span class="op">=</span> (n_bad <span class="op">+</span> half) <span class="op">/</span> (n_bad.<span class="bu">sum</span>() <span class="op">+</span> half <span class="op">*</span> <span class="bu">len</span>(n_bad))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    p_good <span class="op">=</span> (n_good <span class="op">+</span> half) <span class="op">/</span> (n_good.<span class="bu">sum</span>() <span class="op">+</span> half <span class="op">*</span> <span class="bu">len</span>(n_good))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    woe <span class="op">=</span> np.log(p_bad <span class="op">/</span> p_good)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    iv <span class="op">=</span> <span class="bu">float</span>(((p_bad <span class="op">-</span> p_good) <span class="op">*</span> woe).<span class="bu">sum</span>())</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> woe, iv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The half-count adjustment in the denominator deserves a sentence, since it is doing real work and is easy to mistake for a rounding convenience. A class with no defaults sends the weight of evidence to minus infinity, which is the same failure lecture 2 met as quasi-complete separation, arriving one step earlier in the pipeline. Adding half a row of each outcome to every class bounds the logarithm and leaves a well-populated class essentially untouched, and it is the reason a scorecard team can run the arithmetic on a sparse level without the software falling over. It does not make the resulting estimate trustworthy, and section 8 is about what to do instead.</p>
+</section>
+<section id="isotonic-regression-for-comparison" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="isotonic-regression-for-comparison"><span class="header-section-number">5.3</span> Isotonic regression, for comparison</h2>
+<p>Monotone adjacent pooling is not the only route to a monotone profile. Isotonic regression fits the best non-decreasing step function to the fine-class rates in weighted least squares, and the number of distinct levels it settles on is its answer to how many classes the data supports. Since <code>scikit-learn</code> is already pinned, this one is a library call rather than a reimplementation.</p>
+<div id="0e3fc1fe" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> coarse(x, yy, min_frac<span class="op">=</span><span class="fl">0.05</span>, n_fine<span class="op">=</span><span class="dv">20</span>, direction<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Fine class, then coarse class by MAPA. Returns the edge vector."""</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    idx, q <span class="op">=</span> fine_class(x, n_fine)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> class_table(idx, yy)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    core <span class="op">=</span> t[t.k <span class="op">&gt;=</span> <span class="dv">0</span>].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> core[<span class="st">"rate"</span>].to_numpy()</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> direction <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        direction <span class="op">=</span> <span class="dv">1</span> <span class="cf">if</span> np.corrcoef(np.arange(<span class="bu">len</span>(r)), r)[<span class="dv">0</span>, <span class="dv">1</span>] <span class="op">&gt;</span> <span class="dv">0</span> <span class="cf">else</span> <span class="op">-</span><span class="dv">1</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    _, _, grp <span class="op">=</span> mapa(core[<span class="st">"n"</span>].to_numpy(), core[<span class="st">"bad"</span>].to_numpy(),</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                     <span class="bu">int</span>(min_frac <span class="op">*</span> <span class="bu">len</span>(x)), direction)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    ks <span class="op">=</span> core[<span class="st">"k"</span>].to_numpy()</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.array([q[ks[<span class="dv">0</span>]]] <span class="op">+</span> [q[ks[gr[<span class="op">-</span><span class="dv">1</span>]] <span class="op">+</span> <span class="dv">1</span>] <span class="cf">for</span> gr <span class="kw">in</span> grp]), direction</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> FOUR <span class="op">+</span> [<span class="st">"ExistingLiabilities"</span>, <span class="st">"MonthlyPayment"</span>,</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>                 <span class="st">"NoOfPreviousLoansBeforeLoan"</span>, <span class="st">"DebtToIncome"</span>]:</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> g[c].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    idx, q <span class="op">=</span> fine_class(x)</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> class_table(idx, y)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    core <span class="op">=</span> t[t.k <span class="op">&gt;=</span> <span class="dv">0</span>].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    _, iv_fine <span class="op">=</span> woe_iv(core[<span class="st">"n"</span>].to_numpy(), core[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    edges, direction <span class="op">=</span> coarse(x, y)</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    ci <span class="op">=</span> np.clip(np.searchsorted(edges, x, side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, <span class="bu">len</span>(edges) <span class="op">-</span> <span class="dv">2</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    tc <span class="op">=</span> class_table(ci, y)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>    _, iv_coarse <span class="op">=</span> woe_iv(tc[<span class="st">"n"</span>].to_numpy(), tc[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>    iso <span class="op">=</span> IsotonicRegression(increasing<span class="op">=</span>(direction <span class="op">&gt;</span> <span class="dv">0</span>)).fit_transform(</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>        np.arange(<span class="bu">len</span>(core)), core[<span class="st">"rate"</span>].to_numpy(),</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>        sample_weight<span class="op">=</span>core[<span class="st">"n"</span>].to_numpy())</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    rows.append(<span class="bu">dict</span>(characteristic<span class="op">=</span>c, fine<span class="op">=</span><span class="bu">len</span>(core),</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>                     IV_fine<span class="op">=</span><span class="bu">round</span>(iv_fine, <span class="dv">4</span>), MAPA<span class="op">=</span><span class="bu">len</span>(tc),</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>                     IV_coarse<span class="op">=</span><span class="bu">round</span>(iv_coarse, <span class="dv">4</span>),</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>                     isotonic<span class="op">=</span><span class="bu">len</span>(np.unique(np.<span class="bu">round</span>(iso, <span class="dv">10</span>)))))</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(pd.DataFrame(rows).to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             characteristic  fine  IV_fine  MAPA  IV_coarse  isotonic
+                        Age    20   0.0110     5     0.0066         6
+                IncomeTotal    20   0.0663     9     0.0598        11
+               LoanDuration     5   0.0330     3     0.0311         3
+                   Interest    20   0.5658    11     0.5594        14
+        ExistingLiabilities     9   0.0658     6     0.0655         6
+             MonthlyPayment    20   0.1324     6     0.0579         8
+NoOfPreviousLoansBeforeLoan     6   0.1448     5     0.1418         6
+               DebtToIncome     5   0.0079     2     0.0053         2</code></pre>
+</div>
+</div>
+<p>Two things in that table are worth stopping on. Monotone adjacent pooling and isotonic regression disagree about the class count on almost every characteristic, which is the validation point the risk-factor binning literature makes and which a validator assessing rating-scale granularity has to price in: the number of classes is a property of the algorithm the team chose as much as of the risk driver. Furthermore the information value falls every time classes are merged, and on some characteristics it falls a long way. Coarse classing is a lossy compression, and the loss is measurable.</p>
+</section>
+</section>
+<section id="information-value-and-what-it-cannot-see" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Information value, and what it cannot see</h1>
+<p>Information value is the screening statistic of the discretise tradition. It is computed once per candidate characteristic, before any multivariate work, and a threshold decides what survives to selection. The bands in common use put anything below 0.02 beyond consideration, 0.02 to 0.10 as weak, 0.10 to 0.30 as medium, 0.30 to 0.50 as strong, and anything above 0.50 under suspicion of leakage.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Two qualifications those bands need, and rarely get">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Two qualifications those bands need, and rarely get
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The bands circulate widely and are usually attributed to the standard scorecard texts. This lecture states them as common practice and attributes them to nobody, because they were not verified against a primary source during its preparation, and two properties limit what they can be asked to do.</p>
+<p><strong>Information value depends on the class count.</strong> Adding classes cannot reduce it and usually raises it, as the table in section 5 shows on every row. Consequently comparing the information value of a nine-class characteristic against a three-class one ranks the classings at least as much as the characteristics, and a league table is only meaningful when the class counts are comparable.</p>
+<p><strong>A high value is as informative as a low one.</strong> The upper band exists because a characteristic that separates default too well is usually measuring the outcome, and that reading is confirmed below.</p>
+</div>
+</div>
+<div id="401e06a1" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cat_labels(s):</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Categorical labels with missingness promoted to its own class."""</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s.astype(<span class="st">"object"</span>).where(s.notna(), <span class="st">"missing"</span>).astype(<span class="bu">str</span>).to_numpy()</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>screen <span class="op">=</span> []</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"Age"</span>, <span class="st">"IncomeTotal"</span>, <span class="st">"LoanDuration"</span>, <span class="st">"Interest"</span>, <span class="st">"DebtToIncome"</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>          <span class="st">"FreeCash"</span>, <span class="st">"LiabilitiesTotal"</span>, <span class="st">"ExistingLiabilities"</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>          <span class="st">"AppliedAmount"</span>, <span class="st">"MonthlyPayment"</span>, <span class="st">"NoOfPreviousLoansBeforeLoan"</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>          <span class="st">"ApplicationSignedHour"</span>]:</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> g[c].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    edges, _ <span class="op">=</span> coarse(x, y)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    ci <span class="op">=</span> np.clip(np.searchsorted(edges, x, side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, <span class="bu">len</span>(edges) <span class="op">-</span> <span class="dv">2</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> class_table(np.where(pd.isna(x), <span class="op">-</span><span class="dv">1</span>, ci), y)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    _, iv <span class="op">=</span> woe_iv(t[<span class="st">"n"</span>].to_numpy(), t[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>    screen.append(<span class="bu">dict</span>(characteristic<span class="op">=</span>c, kind<span class="op">=</span><span class="st">"numeric"</span>, classes<span class="op">=</span><span class="bu">len</span>(t),</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>                       smallest<span class="op">=</span><span class="bu">int</span>(t[<span class="st">"n"</span>].<span class="bu">min</span>()), IV<span class="op">=</span><span class="bu">round</span>(iv, <span class="dv">4</span>)))</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"Country"</span>, <span class="st">"Rating"</span>, <span class="st">"Education"</span>, <span class="st">"HomeOwnershipType"</span>, <span class="st">"Gender"</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>          <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>, <span class="st">"MaritalStatus"</span>,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>          <span class="st">"EmploymentDurationCurrentEmployer"</span>, <span class="st">"EmploymentStatus"</span>,</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>          <span class="st">"OccupationArea"</span>, <span class="st">"UseOfLoan"</span>, <span class="st">"LanguageCode"</span>]:</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    lab <span class="op">=</span> cat_labels(g[c])</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> class_table(lab, y)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    _, iv <span class="op">=</span> woe_iv(t[<span class="st">"n"</span>].to_numpy(), t[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    screen.append(<span class="bu">dict</span>(characteristic<span class="op">=</span>c, kind<span class="op">=</span><span class="st">"categorical"</span>, classes<span class="op">=</span><span class="bu">len</span>(t),</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>                       smallest<span class="op">=</span><span class="bu">int</span>(t[<span class="st">"n"</span>].<span class="bu">min</span>()), IV<span class="op">=</span><span class="bu">round</span>(iv, <span class="dv">4</span>)))</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>sc <span class="op">=</span> pd.DataFrame(screen).sort_values(<span class="st">"IV"</span>, ascending<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(sc.to_string(index<span class="op">=</span><span class="va">False</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                   characteristic        kind  classes  smallest     IV
+                           Rating categorical        9      2673 0.5982
+                         Interest     numeric       11      7441 0.5594
+                     LanguageCode categorical       13         1 0.5381
+                          Country categorical        4       296 0.5334
+                           Gender categorical        3     12180 0.1586
+      NoOfPreviousLoansBeforeLoan     numeric        6         3 0.1417
+                   MonthlyPayment     numeric        7      6636 0.1212
+                NewCreditCustomer categorical        2     63849 0.1199
+                HomeOwnershipType categorical       12        38 0.0907
+              ExistingLiabilities     numeric        6     12463 0.0655
+                      IncomeTotal     numeric        9      7921 0.0598
+                    AppliedAmount     numeric        4      7513 0.0405
+                     LoanDuration     numeric        3     16401 0.0311
+                    MaritalStatus categorical        6       601 0.0258
+                 VerificationType categorical        4      1826 0.0250
+                        Education categorical        5      6436 0.0243
+                   OccupationArea categorical       22         3 0.0187
+EmploymentDurationCurrentEmployer categorical       10       751 0.0137
+                 EmploymentStatus categorical        8        24 0.0118
+                        UseOfLoan categorical       10       955 0.0092
+                              Age     numeric        5     12122 0.0066
+                         FreeCash     numeric        2      7437 0.0060
+                     DebtToIncome     numeric        2      7434 0.0053
+                 LiabilitiesTotal     numeric        3      7437 0.0013
+            ApplicationSignedHour     numeric        2     19960 0.0011</code></pre>
+</div>
+</div>
+<p>Read that table as a scorecard team would, from the top down and with suspicion.</p>
+<p>Two characteristics clear 0.50 and fail on provenance. <code>Rating</code> is Bondora’s own risk grade, so it records the platform’s opinion of the loan and no attribute of the borrower reaches it. <code>Interest</code> is the coupon the platform charged, which was set from that same grade, and lecture 1’s data notes already record that it rank-orders default from about 9 per cent below a 10 per cent coupon to about 78 per cent above 100 per cent. Both are the outcome of an underwriting decision the model is supposed to be replacing, and admitting either would produce a scorecard whose real target is Bondora’s pricing.</p>
+<p><code>Country</code> clears 0.50 as well, on four levels, and it survives. Nothing about a country of residence is downstream of the credit decision, the level populations run to tens of thousands, and lecture 1 established that country is the confounder driving the income paradox. A characteristic can be very strong and legitimate, so the upper band is a prompt to check provenance before it is grounds to drop.</p>
+<p><code>LanguageCode</code> fails on redundancy instead. Its information value of about 0.538 sits within a whisker of <code>Country</code>’s 0.533, and Bondora’s language field is very largely a restatement of the borrower’s country. Admitting both would put two readings of one fact into the same model, and lecture F2 takes up that collinearity problem with the machinery to detect it. Additionally it carries thirteen levels of which several hold single-digit populations, and section 8 uses it to show what such levels do and, more usefully, what they turn out not to do.</p>
+<section id="what-the-screen-does-to-age" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="what-the-screen-does-to-age"><span class="header-section-number">6.1</span> What the screen does to age</h2>
+<p>The result at the bottom of the table is the one worth the lecture.</p>
+<div id="1aeb7ffb" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> g[<span class="st">"Age"</span>].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>edges_mono, _ <span class="op">=</span> coarse(x, y)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>ci <span class="op">=</span> np.clip(np.searchsorted(edges_mono, x, side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, <span class="bu">len</span>(edges_mono) <span class="op">-</span> <span class="dv">2</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>t_mono <span class="op">=</span> class_table(ci, y)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>_, iv_mono <span class="op">=</span> woe_iv(t_mono[<span class="st">"n"</span>].to_numpy(), t_mono[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># a two-arm classing: split at a turning point, then force each arm monotone</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>best <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cut <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">30</span>, <span class="dv">60</span>):</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    lo, hi <span class="op">=</span> x <span class="op">&lt;=</span> cut, x <span class="op">&gt;</span> cut</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    parts <span class="op">=</span> []</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> m, d <span class="kw">in</span> ((lo, <span class="op">-</span><span class="dv">1</span>), (hi, <span class="op">+</span><span class="dv">1</span>)):</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        e, _ <span class="op">=</span> coarse(x[m], y[m], min_frac<span class="op">=</span><span class="fl">0.03</span>, n_fine<span class="op">=</span><span class="dv">10</span>, direction<span class="op">=</span>d)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        cj <span class="op">=</span> np.clip(np.searchsorted(e, x[m], side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, <span class="bu">len</span>(e) <span class="op">-</span> <span class="dv">2</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>        tt <span class="op">=</span> class_table(cj, y[m])</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>        parts.append((tt[<span class="st">"n"</span>].to_numpy(), tt[<span class="st">"bad"</span>].to_numpy()))</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    nt <span class="op">=</span> np.concatenate([p[<span class="dv">0</span>] <span class="cf">for</span> p <span class="kw">in</span> parts])</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    nb <span class="op">=</span> np.concatenate([p[<span class="dv">1</span>] <span class="cf">for</span> p <span class="kw">in</span> parts])</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    _, iv2 <span class="op">=</span> woe_iv(nt, nb)</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> best <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> iv2 <span class="op">&gt;</span> best[<span class="dv">1</span>]:</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>        best <span class="op">=</span> (cut, iv2, <span class="bu">len</span>(nt))</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"age, forced monotone : </span><span class="sc">{</span><span class="bu">len</span>(t_mono)<span class="sc">}</span><span class="ss"> classes, IV </span><span class="sc">{</span>iv_mono<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"age, split at </span><span class="sc">{</span>best[<span class="dv">0</span>]<span class="sc">:&lt;9}</span><span class="ss">: </span><span class="sc">{</span>best[<span class="dv">2</span>]<span class="sc">}</span><span class="ss"> classes, IV </span><span class="sc">{</span>best[<span class="dv">1</span>]<span class="sc">:.4f}</span><span class="ss">"</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"  (</span><span class="sc">{</span>best[<span class="dv">1</span>] <span class="op">/</span> iv_mono<span class="sc">:.2f}</span><span class="ss"> times the monotone value)"</span>)</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"either way, the 0.02 screening floor is not cleared"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>age, forced monotone : 5 classes, IV 0.0066
+age, split at 41       : 9 classes, IV 0.0109  (1.64 times the monotone value)
+either way, the 0.02 screening floor is not cleared</code></pre>
+</div>
+</div>
+<p>Borrower age scores an information value below 0.01. Lectures 1 and 2 gave age two exhibits, seven hand-chosen bands, and a merged tail, and the classical univariate screen would have dropped it before selection began.</p>
+<p>The first reason is the monotonicity constraint. Age is hump-shaped on this book, so forcing a monotone profile makes the algorithm merge away either the young peak or the old rise, and a characteristic whose two ends both carry elevated risk reports almost no separation once it is required to move in one direction only. Splitting age at a turning point and forcing each arm monotone separately, the standard remedy for a U-shaped risk profile, recovers a good deal of the lost information value. However, it does not recover enough to clear the floor, so the honest conclusion is that the remedy helps and does not rescue.</p>
+<p>The second reason is more interesting and the screen cannot reach it. Age’s contribution on this book is conditional, in that it matters once income and country are held fixed, and a univariate statistic computed one characteristic at a time is blind to any such effect by construction. Lecture F2 takes up marginal information value, which is the tradition’s own answer to precisely this gap, and lecture C1 shows what conditioning does to the age and income surface. For now the finding is a limitation of the screen. A characteristic can be worth modelling and still score nothing univariately.</p>
+</section>
+</section>
+<section id="monotonicity-which-no-regulation-requires" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> Monotonicity, which no regulation requires</h1>
+<p>Practitioners defend the monotonicity constraint on three grounds, and it is worth separating them, because one of the three is commonly overstated to the point of being wrong.</p>
+<p>The statistical ground is stability. A wiggly weight-of-evidence profile is fitting sampling noise in the middle classes, and a profile fitted to noise in the development window will not reproduce in the out-of-time window. Forcing monotonicity is a strong regularisation, and it is chosen for the same reason any regularisation is, namely that a slightly biased estimator with much lower variance predicts better out of sample.</p>
+<p>The business ground is coherence. A scorecard whose points fall and then rise across adjacent income classes cannot be explained to a credit committee, and a model that cannot be explained will not be approved. Scallan’s triple test makes this explicit by requiring that a characteristic’s risk pattern be economically interpretable alongside its statistical credentials, and it is the criterion no statistic can substitute for.</p>
+<div class="callout callout-style-default callout-important no-icon callout-titled" title="No regulation mandates a monotone weight-of-evidence profile">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>No regulation mandates a monotone weight-of-evidence profile
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The third ground offered is regulatory, and it does not survive checking. Monotonicity is routinely attributed to CRR Article 174, and Article 174(c) is in fact the requirement that the data used to build a model be representative of the actual population of obligors, which lecture R3 quotes in black letter and builds a section around. It says nothing about the shape of a risk profile.</p>
+<p>Consequently a model development document should defend monotonicity on the stability and coherence arguments above, and should not cite an article for a requirement the article does not contain. Where the underlying risk really is U-shaped, as it is for age here and as it commonly is for loan-to-value, a two-arm classing is the better answer and there is no regulatory obstacle to using one.</p>
+</div>
+</div>
+</section>
+<section id="small-classes-and-the-thirteen-loans" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Small classes, and the thirteen loans</h1>
+<p>Return to the lecture 2 episode, since the arithmetic behind it generalises.</p>
+<div id="3d16554a" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>tail <span class="op">=</span> g[g[<span class="st">"Age"</span>] <span class="op">&gt;</span> <span class="dv">70</span>]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Age &gt; 70: n = </span><span class="sc">{</span><span class="bu">len</span>(tail)<span class="sc">}</span><span class="ss">, defaults = </span><span class="sc">{</span><span class="bu">int</span>(tail[<span class="st">'default_12m'</span>].<span class="bu">sum</span>())<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>lang <span class="op">=</span> cat_labels(g[<span class="st">"LanguageCode"</span>])</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>tl <span class="op">=</span> class_table(lang, y).sort_values(<span class="st">"n"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">LanguageCode, the four smallest levels:"</span>)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tl.head(<span class="dv">4</span>).to_string(index<span class="op">=</span><span class="va">False</span>))</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>_, iv_lang <span class="op">=</span> woe_iv(tl[<span class="st">"n"</span>].to_numpy(), tl[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>big <span class="op">=</span> tl[tl[<span class="st">"n"</span>] <span class="op">&gt;=</span> <span class="dv">500</span>]</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>_, iv_big <span class="op">=</span> woe_iv(big[<span class="st">"n"</span>].to_numpy(), big[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">IV on all </span><span class="sc">{</span><span class="bu">len</span>(tl)<span class="sc">}</span><span class="ss"> levels          : </span><span class="sc">{</span>iv_lang<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"IV on the </span><span class="sc">{</span><span class="bu">len</span>(big)<span class="sc">}</span><span class="ss"> levels above 500 rows: </span><span class="sc">{</span>iv_big<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Age &gt; 70: n = 13, defaults = 0
+
+LanguageCode, the four smallest levels:
+ k  n  bad  rate
+10  1    1   1.0
+13  1    1   1.0
+15  1    1   1.0
+21  1    0   0.0
+
+IV on all 13 levels          : 0.5381
+IV on the 5 levels above 500 rows: 0.5327</code></pre>
+</div>
+</div>
+<p>Thirteen loans and no defaults is what quasi-complete separation looks like from the data side, and it is not confined to the age tail. <code>LanguageCode</code> presents the same pathology in a categorical characteristic. Three of its thirteen levels hold a single loan each, and among the levels below 500 rows there is one with no defaults at all. Each of those is an unbounded weight of evidence waiting to happen, and the only reason the arithmetic above returned a finite number is the half-count adjustment of section 5.</p>
+<p>The obvious next question is whether those levels are also manufacturing the characteristic’s information value, and the printed answer is that they are not. Dropping every level below 500 rows moves the information value from 0.5381 to 0.5327, a relative change of about one per cent, so essentially all of the separation is coming from the well-populated levels. That is worth dwelling on for two reasons. The diagnostic is cheap and it should be run on any characteristic whose value looks surprising, because a value carried by its smallest classes is an artefact. Here it comes back clean, which means the case for merging those singletons rests on estimation stability alone. A weight of evidence computed from one loan will not reproduce on any other sample, whatever it contributes to a summary statistic today.</p>
+<p>Two remedies exist and they are complements. The classical one is a minimum population constraint, applied during classing, which merges any under-populated class into a neighbour. It is easy to document and it destroys the class’s identity. Lecture 6 sets out the alternative, which shrinks each class mean towards the portfolio mean in proportion to the data standing behind it, and thereby keeps the identity while borrowing strength. Bondora’s default rate of nearly 29 per cent makes the population constraint the binding one here, since a class large enough to be stable will comfortably hold defaults. On the 1.4 per cent card portfolio of lecture 3 the defaults bind first, and that is the setting the twenty-five-defaults rule of thumb was written for.</p>
+<p>For an unordered categorical there is no adjacency to merge along, so the standard algorithm merges the pair of levels whose combination costs the least information value, which for an under-populated level means the surviving level whose weight of evidence is closest to its own.</p>
+<div id="070c7dfb" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> merge_levels(lab, yy, min_n, half<span class="op">=</span><span class="fl">0.5</span>, protect<span class="op">=</span>(<span class="st">"missing"</span>,), min_out<span class="op">=</span><span class="dv">25</span>):</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""IV-driven merging for categorical levels. Repeatedly take the smallest</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="co">    under-populated level and merge it into the level whose weight of evidence</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co">    is nearest, which is the merge that loses the least information value.</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="co">    A level named in `protect` survives the population floor provided it holds</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co">    at least `min_out` of each outcome. Missingness is protected on that basis</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="co">    because section 9's argument is that it carries its own risk, and the</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="co">    reason the exemption is conditional rather than absolute is that the floor</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">    exists to make a weight of evidence estimable: 25 defaults and 25</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co">    non-defaults is the classical minimum, and a missing attribute clearing it</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">    is estimable whatever share of the book it holds."""</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    lab <span class="op">=</span> np.asarray(lab, dtype<span class="op">=</span><span class="bu">object</span>).copy()</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="va">True</span>:</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> class_table(lab, yy)</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>        safe <span class="op">=</span> {<span class="bu">str</span>(t[<span class="st">"k"</span>].iloc[i]) <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(t))</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> <span class="bu">str</span>(t[<span class="st">"k"</span>].iloc[i]) <span class="kw">in</span> protect</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>                <span class="kw">and</span> <span class="bu">min</span>(t[<span class="st">"bad"</span>].iloc[i], t[<span class="st">"n"</span>].iloc[i] <span class="op">-</span> t[<span class="st">"bad"</span>].iloc[i]) <span class="op">&gt;=</span> min_out}</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>        under <span class="op">=</span> [i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(t))</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>                 <span class="cf">if</span> t[<span class="st">"n"</span>].iloc[i] <span class="op">&lt;</span> min_n <span class="kw">and</span> <span class="bu">str</span>(t[<span class="st">"k"</span>].iloc[i]) <span class="kw">not</span> <span class="kw">in</span> safe]</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(t) <span class="op">&lt;=</span> <span class="dv">2</span> <span class="kw">or</span> <span class="kw">not</span> under:</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> lab</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>        w, _ <span class="op">=</span> woe_iv(t[<span class="st">"n"</span>].to_numpy(), t[<span class="st">"bad"</span>].to_numpy(), half)</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>        src <span class="op">=</span> <span class="bu">min</span>(under, key<span class="op">=</span><span class="kw">lambda</span> i: t[<span class="st">"n"</span>].iloc[i])</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>        cand <span class="op">=</span> [i <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(t))</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> i <span class="op">!=</span> src <span class="kw">and</span> <span class="bu">str</span>(t[<span class="st">"k"</span>].iloc[i]) <span class="kw">not</span> <span class="kw">in</span> safe]</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> cand:</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> lab</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>        tgt <span class="op">=</span> <span class="bu">min</span>(cand, key<span class="op">=</span><span class="kw">lambda</span> i: <span class="bu">abs</span>(w[i] <span class="op">-</span> w[src]))</span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>        a, b <span class="op">=</span> <span class="bu">str</span>(t[<span class="st">"k"</span>].iloc[src]), <span class="bu">str</span>(t[<span class="st">"k"</span>].iloc[tgt])</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>        merged <span class="op">=</span> <span class="st">"+"</span>.join(<span class="bu">sorted</span>(<span class="bu">set</span>(a.split(<span class="st">"+"</span>)) <span class="op">|</span> <span class="bu">set</span>(b.split(<span class="st">"+"</span>))))</span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>        lab[(lab <span class="op">==</span> t[<span class="st">"k"</span>].iloc[src]) <span class="op">|</span> (lab <span class="op">==</span> t[<span class="st">"k"</span>].iloc[tgt])] <span class="op">=</span> merged</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a>MIN_LEVEL <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.01</span> <span class="op">*</span> <span class="bu">len</span>(g))</span>
+<span id="cb15-36"><a href="#cb15-36" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"LanguageCode"</span>, <span class="st">"HomeOwnershipType"</span>, <span class="st">"OccupationArea"</span>, <span class="st">"Country"</span>]:</span>
+<span id="cb15-37"><a href="#cb15-37" aria-hidden="true" tabindex="-1"></a>    raw <span class="op">=</span> cat_labels(g[c])</span>
+<span id="cb15-38"><a href="#cb15-38" aria-hidden="true" tabindex="-1"></a>    mg <span class="op">=</span> merge_levels(raw, y, MIN_LEVEL)</span>
+<span id="cb15-39"><a href="#cb15-39" aria-hidden="true" tabindex="-1"></a>    t0, t1 <span class="op">=</span> class_table(raw, y), class_table(mg, y)</span>
+<span id="cb15-40"><a href="#cb15-40" aria-hidden="true" tabindex="-1"></a>    _, iv0 <span class="op">=</span> woe_iv(t0[<span class="st">"n"</span>].to_numpy(), t0[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb15-41"><a href="#cb15-41" aria-hidden="true" tabindex="-1"></a>    _, iv1 <span class="op">=</span> woe_iv(t1[<span class="st">"n"</span>].to_numpy(), t1[<span class="st">"bad"</span>].to_numpy())</span>
+<span id="cb15-42"><a href="#cb15-42" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">:&lt;20}</span><span class="ss"> </span><span class="sc">{</span><span class="bu">len</span>(t0)<span class="sc">:&gt;3}</span><span class="ss"> levels (smallest </span><span class="sc">{</span>t0[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:&gt;6,}</span><span class="ss">, IV </span><span class="sc">{</span>iv0<span class="sc">:.4f}</span><span class="ss">)"</span></span>
+<span id="cb15-43"><a href="#cb15-43" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"  -&gt;  </span><span class="sc">{</span><span class="bu">len</span>(t1)<span class="sc">:&gt;2}</span><span class="ss"> (smallest </span><span class="sc">{</span>t1[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:&gt;6,}</span><span class="ss">, IV </span><span class="sc">{</span>iv1<span class="sc">:.4f}</span><span class="ss">)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>LanguageCode          13 levels (smallest      1, IV 0.5381)  -&gt;   4 (smallest 14,454, IV 0.5365)
+HomeOwnershipType     12 levels (smallest     38, IV 0.0907)  -&gt;  10 (smallest  1,540, IV 0.0903)
+OccupationArea        22 levels (smallest      3, IV 0.0187)  -&gt;  10 (smallest  1,933, IV 0.0177)
+Country                4 levels (smallest    296, IV 0.5334)  -&gt;   3 (smallest 26,564, IV 0.5323)</code></pre>
+</div>
+</div>
+<p>A one per cent floor is the constraint here, and it costs remarkably little information value on any of the four. <code>OccupationArea</code> more than halves its level count and gives up around five per cent of its value in relative terms, while <code>LanguageCode</code> collapses from thirteen levels to four for a loss in the third decimal place, confirming again that its smallest levels were contributing almost nothing.</p>
+<p><code>Country</code> loses a level too, and the level it loses is the one the series has already had trouble with. Slovakia holds a few hundred loans here, and lecture R1 excluded it from the macroeconomic fit outright, on the ground that its Bondora risk set has a median of seventeen loans a month. The merge reaches the same verdict by a different route and folds it into Spain, whose default rate is the nearest of the three. Hence the algorithm is not being clever; it is recovering a judgement a modeller had already made by eye two lectures earlier.</p>
+<p>The scorecard fitted in the next section applies this merge to every categorical characteristic, so that the table it prints contains no class too small to defend.</p>
+</section>
+<section id="missing-values-and-a-zero-that-means-nothing" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Missing values, and a zero that means nothing</h1>
+<p>The discretise tradition handles missingness by promoting it to a class. That is cheap, since a step function has room for one more step, and it is right whenever missingness carries information. The standard taxonomy distinguishes three cases: values missing at random, where the missingness is unrelated to the value itself; values missing not at random, where the missingness is systematically related to what is missing; and structural missingness, where the field does not apply, as a loan-to-value ratio does not apply to an unsecured loan.</p>
+<div id="e28af8ad" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"HomeOwnershipType"</span>, <span class="st">"EmploymentDurationCurrentEmployer"</span>]:</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> g[c].isna().to_numpy()</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>c<span class="sc">:&lt;36}</span><span class="ss"> missing </span><span class="sc">{</span>m<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss">  rate </span><span class="sc">{</span>y[m]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>z <span class="op">=</span> (g[<span class="st">"DebtToIncome"</span>] <span class="op">==</span> <span class="dv">0</span>).to_numpy()</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'DebtToIncome == 0'</span><span class="sc">:&lt;36}</span><span class="ss"> n       </span><span class="sc">{</span>z<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss">  rate </span><span class="sc">{</span>y[z]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'DebtToIncome &gt; 0'</span><span class="sc">:&lt;36}</span><span class="ss"> n       </span><span class="sc">{</span>(<span class="op">~</span>z)<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:&gt;6,}</span><span class="ss">  rate </span><span class="sc">{</span>y[<span class="op">~</span>z]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'portfolio'</span><span class="sc">:&lt;36}</span><span class="ss">                rate </span><span class="sc">{</span>BASE<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>HomeOwnershipType                    missing  1,604  rate 0.2382
+EmploymentDurationCurrentEmployer    missing    820  rate 0.2402
+DebtToIncome == 0                    n       114,360  rate 0.2858
+DebtToIncome &gt; 0                     n       34,307  rate 0.3016
+portfolio                                           rate 0.2894</code></pre>
+</div>
+</div>
+<p>Lecture 2’s instinct is vindicated on both fields. Applicants who left home ownership or employment duration blank defaulted at appreciably below the portfolio rate, so the missingness is informative and it is informative in the direction that a naive imputation would have destroyed. Filling those rows with the modal category would have moved them into a class whose risk they do not share, and the model would have lost a real signal in exchange for a complete data matrix.</p>
+<p>One consequence of promoting missingness to a class is that it then has to survive the population floor of section 8, and the merge above protects it conditionally rather than absolutely. Employment duration’s missing attribute holds 664 loans and about 160 defaults, comfortably enough to estimate a weight of evidence, so it stays. Occupation area’s holds 41 loans and five defaults, so it does not, and the algorithm folds it into the level it most resembles. Consequently estimability governs the exemption.</p>
+<p><code>DebtToIncome</code> is the opposite case and it is the one this tradition is built to catch. Over three quarters of the book records a debt-to-income ratio of exactly zero, which no lender believes of three quarters of its applicants. The zero is a coded absence rather than a measurement. Nevertheless the classical test is empirical. The zero group and the positive group default at rates close enough together that the distinction carries almost nothing, which is why the characteristic screens out at an information value near 0.005. Here the coded value turned out to be uninformative, and the point of testing it is that it might not have been.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="What travels from the bureau case, and what does not">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What travels from the bureau case, and what does not
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The production version of this step is written for bureau feeds, where a vendor reserves specific numeric codes for a non-hit or a not-applicable response. The transferable rule has three parts. Ignore a coded value holding one per cent of the book or less. Above that, cut the valid range into deciles, compare the observed default rate at each end, and establish the direction of risk. Then, where the coded value sits outside the monotone trend, place it at an artificial value beyond the valid range so that the classing stays monotone, and plot the default rates before and after to prove that it does.</p>
+<p>Bondora carries no vendor codes, so the illustration above uses its own zero and null sentinels. A named vendor’s code list belongs to the engagement it came from and does not travel here.</p>
+</div>
+</div>
+</section>
+<section id="the-characteristic-analysis-table-and-a-scorecard" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> The characteristic analysis table, and a scorecard</h1>
+<p>A characteristic analysis table is the deliverable of everything above. One block per characteristic, one row per class, and for each row the population, its share, the defaults, the observed rate, and the weight of evidence, with the information value totalled per block. Every scorecard sign-off in the industry rests on a document containing this table, and its readability is the tradition’s strongest claim.</p>
+<div id="5e3a626a" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_woe(learn, frames, num_cols, cat_cols, min_frac<span class="op">=</span><span class="fl">0.05</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>              min_level_frac<span class="op">=</span><span class="fl">0.01</span>):</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Learn class boundaries, level groupings and WoE maps on `learn` only,</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">    then apply all three to every frame. Estimating on the learning sample</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co">    alone is what keeps the out-of-time readout honest, for the reason</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="co">    lecture 6's leakage section sets out."""</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    yl <span class="op">=</span> learn[<span class="st">"default_12m"</span>].to_numpy()</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    min_level <span class="op">=</span> <span class="bu">int</span>(min_level_frac <span class="op">*</span> <span class="bu">len</span>(learn))</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    edges, group, maps, ivs <span class="op">=</span> {}, {}, {}, {}</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> c <span class="kw">in</span> num_cols:</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>        e, _ <span class="op">=</span> coarse(learn[c].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>), yl, min_frac<span class="op">=</span>min_frac)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>        edges[c] <span class="op">=</span> e</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>        maps[c], ivs[c] <span class="op">=</span> woe_lookup(</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>            num_labels(learn[c].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>), e), yl)</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> c <span class="kw">in</span> cat_cols:</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>        raw <span class="op">=</span> cat_labels(learn[c])</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>        merged <span class="op">=</span> merge_levels(raw, yl, min_level)</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>        group[c] <span class="op">=</span> <span class="bu">dict</span>(<span class="bu">zip</span>(raw, merged))</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>        maps[c], ivs[c] <span class="op">=</span> woe_lookup(merged, yl)</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> []</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> fr <span class="kw">in</span> frames:</span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>        d <span class="op">=</span> pd.DataFrame(index<span class="op">=</span><span class="bu">range</span>(<span class="bu">len</span>(fr)))</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> c <span class="kw">in</span> num_cols:</span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>            lab <span class="op">=</span> num_labels(fr[c].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>), edges[c])</span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>            d[<span class="st">"w_"</span> <span class="op">+</span> c] <span class="op">=</span> [maps[c].get(v, <span class="fl">0.0</span>) <span class="cf">for</span> v <span class="kw">in</span> lab]</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> c <span class="kw">in</span> cat_cols:</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>            lab <span class="op">=</span> [group[c].get(v, v) <span class="cf">for</span> v <span class="kw">in</span> cat_labels(fr[c])]</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>            d[<span class="st">"w_"</span> <span class="op">+</span> c] <span class="op">=</span> [maps[c].get(v, <span class="fl">0.0</span>) <span class="cf">for</span> v <span class="kw">in</span> lab]</span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>        d[<span class="st">"y"</span>] <span class="op">=</span> fr[<span class="st">"default_12m"</span>].to_numpy()</span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>        out.append(d)</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> out, ivs, maps, (edges, group)</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> num_labels(x, edges):</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>    ci <span class="op">=</span> np.clip(np.searchsorted(edges, x, side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>, <span class="dv">0</span>, <span class="bu">len</span>(edges) <span class="op">-</span> <span class="dv">2</span>)</span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.where(pd.isna(x), <span class="st">"missing"</span>, ci.astype(<span class="bu">str</span>))</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> woe_lookup(lab, yy, half<span class="op">=</span><span class="fl">0.5</span>):</span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> class_table(lab, yy)</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>    w, iv <span class="op">=</span> woe_iv(t[<span class="st">"n"</span>].to_numpy(), t[<span class="st">"bad"</span>].to_numpy(), half)</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">dict</span>(<span class="bu">zip</span>(t[<span class="st">"k"</span>], w)), iv</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The characteristics are the eight lecture 2 fitted, held fixed on purpose. Comparing a classed model against lecture 2’s on a different characteristic list would measure the list and the classing at once, so the list stays put and the classing is the only thing that moves.</p>
+<div id="31d70fe5" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"HomeOwnership"</span>] <span class="op">=</span> np.where(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    g[<span class="st">"HomeOwnershipType"</span>].isna() <span class="op">|</span> (g[<span class="st">"HomeOwnershipType"</span>] <span class="op">==</span> <span class="op">-</span><span class="dv">1</span>), <span class="st">"missing"</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    g[<span class="st">"HomeOwnershipType"</span>].fillna(<span class="op">-</span><span class="dv">1</span>).astype(<span class="bu">int</span>).astype(<span class="bu">str</span>))</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"EmploymentDuration"</span>] <span class="op">=</span> g[<span class="st">"EmploymentDurationCurrentEmployer"</span>].fillna(<span class="st">"missing"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>g[<span class="st">"AgeClass"</span>] <span class="op">=</span> pd.cut(g[<span class="st">"Age"</span>], [<span class="dv">18</span>, <span class="dv">20</span>, <span class="dv">25</span>, <span class="dv">30</span>, <span class="dv">40</span>, <span class="dv">50</span>, <span class="dv">60</span>, <span class="dv">101</span>],</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>                       labels<span class="op">=</span>[<span class="st">"18-20"</span>, <span class="st">"21-25"</span>, <span class="st">"26-30"</span>, <span class="st">"31-40"</span>, <span class="st">"41-50"</span>,</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"51-60"</span>, <span class="st">"61+"</span>], include_lowest<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>NUM <span class="op">=</span> [<span class="st">"Age"</span>, <span class="st">"logIncome"</span>]</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>CAT <span class="op">=</span> [<span class="st">"Country"</span>, <span class="st">"Education"</span>, <span class="st">"HomeOwnership"</span>, <span class="st">"NewCreditCustomer"</span>,</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>       <span class="st">"VerificationType"</span>, <span class="st">"EmploymentDuration"</span>]</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>perm <span class="op">=</span> rng.permutation(<span class="bu">len</span>(g))</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>n_learn <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> <span class="bu">len</span>(g))</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>g_rand <span class="op">=</span> g.iloc[perm].reset_index(drop<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>learn_r, test_r <span class="op">=</span> g_rand.iloc[:n_learn], g_rand.iloc[n_learn:]</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>cutoff <span class="op">=</span> g[<span class="st">"LoanDate"</span>].quantile(<span class="fl">0.8</span>)</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>learn_t, test_t <span class="op">=</span> g[g[<span class="st">"LoanDate"</span>] <span class="op">&lt;=</span> cutoff], g[g[<span class="st">"LoanDate"</span>] <span class="op">&gt;</span> cutoff]</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>(dl, dt), ivs, maps, (edges, group) <span class="op">=</span> build_woe(</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    learn_r, [learn_r, test_r], NUM, CAT)</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>blocks <span class="op">=</span> []</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> NUM <span class="op">+</span> CAT:</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    lab <span class="op">=</span> (num_labels(learn_r[c].to_numpy(dtype<span class="op">=</span><span class="bu">float</span>), edges[c]) <span class="cf">if</span> c <span class="kw">in</span> NUM</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>           <span class="cf">else</span> [group[c].get(v, v) <span class="cf">for</span> v <span class="kw">in</span> cat_labels(learn_r[c])])</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> class_table(lab, learn_r[<span class="st">"default_12m"</span>].to_numpy())</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>    t[<span class="st">"share"</span>] <span class="op">=</span> t[<span class="st">"n"</span>] <span class="op">/</span> t[<span class="st">"n"</span>].<span class="bu">sum</span>()</span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    t[<span class="st">"WoE"</span>] <span class="op">=</span> [maps[c][k] <span class="cf">for</span> k <span class="kw">in</span> t[<span class="st">"k"</span>]]</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>    t.insert(<span class="dv">0</span>, <span class="st">"characteristic"</span>, c)</span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>    t[<span class="st">"IV"</span>] <span class="op">=</span> <span class="bu">round</span>(ivs[c], <span class="dv">4</span>)</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>    blocks.append(t)</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>ca <span class="op">=</span> pd.concat(blocks)[[<span class="st">"characteristic"</span>, <span class="st">"k"</span>, <span class="st">"n"</span>, <span class="st">"share"</span>, <span class="st">"bad"</span>, <span class="st">"rate"</span>,</span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>                        <span class="st">"WoE"</span>, <span class="st">"IV"</span>]]</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ca.to_string(index<span class="op">=</span><span class="va">False</span>,</span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>                   formatters<span class="op">=</span>{<span class="st">"share"</span>: <span class="st">"</span><span class="sc">{:.3f}</span><span class="st">"</span>.<span class="bu">format</span>, <span class="st">"rate"</span>: <span class="st">"</span><span class="sc">{:.4f}</span><span class="st">"</span>.<span class="bu">format</span>,</span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"WoE"</span>: <span class="st">"</span><span class="sc">{:+.4f}</span><span class="st">"</span>.<span class="bu">format</span>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    characteristic                      k     n share   bad   rate     WoE     IV
+               Age                      0 15360 0.129  5079 0.3307 +0.1962 0.0067
+               Age                      1 12870 0.108  3823 0.2970 +0.0400 0.0067
+               Age                      2 40460 0.340 11473 0.2836 -0.0255 0.0067
+               Age                      3 50243 0.422 13970 0.2780 -0.0528 0.0067
+         logIncome                      0 15968 0.134  3307 0.2071 -0.4411 0.0579
+         logIncome                      1  7081 0.060  1529 0.2159 -0.3880 0.0579
+         logIncome                      2  6673 0.056  1537 0.2303 -0.3050 0.0579
+         logIncome                      3  8596 0.072  2192 0.2550 -0.1707 0.0579
+         logIncome                      4  8348 0.070  2325 0.2785 -0.0505 0.0579
+         logIncome                      5  6399 0.054  1920 0.3000 +0.0543 0.0579
+         logIncome                      6  6377 0.054  1967 0.3085 +0.0940 0.0579
+         logIncome                      7 22134 0.186  7257 0.3279 +0.1834 0.0579
+         logIncome                      8 37357 0.314 12311 0.3296 +0.1911 0.0579
+           Country                     EE 68962 0.580 11654 0.1690 -0.6914 0.5404
+           Country                  ES+SK 21308 0.179 11874 0.5573 +1.1313 0.5404
+           Country                     FI 28663 0.241 10817 0.3774 +0.4007 0.5404
+         Education                      1 11423 0.096  3822 0.3346 +0.2139 0.0256
+         Education                      2  5122 0.043  1646 0.3214 +0.1539 0.0256
+         Education                      3 26318 0.221  8588 0.3263 +0.1764 0.0256
+         Education                      4 45167 0.380 11372 0.2518 -0.1878 0.0256
+         Education                      5 30903 0.260  8917 0.2885 -0.0011 0.0256
+     HomeOwnership                    0+4  3688 0.031  1397 0.3788 +0.4067 0.0909
+     HomeOwnership                      1 42450 0.357  9602 0.2262 -0.3286 0.0909
+     HomeOwnership                     10  7635 0.064  2297 0.3009 +0.0581 0.0909
+     HomeOwnership                      2 18237 0.153  6422 0.3521 +0.2916 0.0909
+     HomeOwnership                      3 26382 0.222  9534 0.3614 +0.3319 0.0909
+     HomeOwnership                      5  1238 0.010   347 0.2803 -0.0409 0.0909
+     HomeOwnership                      6  1309 0.011   396 0.3025 +0.0666 0.0909
+     HomeOwnership                    7+9  3257 0.027   680 0.2088 -0.4305 0.0909
+     HomeOwnership                      8 13442 0.113  3368 0.2506 -0.1943 0.0909
+     HomeOwnership                missing  1295 0.011   302 0.2332 -0.2879 0.0909
+ NewCreditCustomer                  False 51079 0.429 10624 0.2080 -0.4357 0.1210
+ NewCreditCustomer                   True 67854 0.571 23721 0.3496 +0.2805 0.1210
+  VerificationType                      1 40979 0.345 10048 0.2452 -0.2231 0.0257
+  VerificationType                      2  1472 0.012   411 0.2792 -0.0463 0.0257
+  VerificationType                      3  7521 0.063  2548 0.3388 +0.2327 0.0257
+  VerificationType                      4 68961 0.580 21338 0.3094 +0.0985 0.0257
+EmploymentDuration         MoreThan5Years 45932 0.386 12799 0.2787 -0.0499 0.0132
+EmploymentDuration                  Other  4906 0.041  1483 0.3023 +0.0650 0.0132
+EmploymentDuration                Retiree  6980 0.059  2579 0.3695 +0.3669 0.0132
+EmploymentDuration TrialPeriod+UpTo2Years  5759 0.048  1806 0.3136 +0.1180 0.0132
+EmploymentDuration              UpTo1Year 21426 0.180  6441 0.3006 +0.0569 0.0132
+EmploymentDuration             UpTo3Years  4364 0.037  1210 0.2773 -0.0565 0.0132
+EmploymentDuration             UpTo4Years  2919 0.025   857 0.2936 +0.0236 0.0132
+EmploymentDuration             UpTo5Years 25983 0.218  7009 0.2698 -0.0946 0.0132
+EmploymentDuration                missing   664 0.006   161 0.2425 -0.2358 0.0132</code></pre>
+</div>
+</div>
+<p>Now fit both models on both partitions.</p>
+<div id="fd05e897" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> report(tag, obs, pred):</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    dev <span class="op">=</span> <span class="op">-</span><span class="dv">2</span> <span class="op">*</span> np.<span class="bu">sum</span>(obs <span class="op">*</span> np.log(np.clip(pred, <span class="fl">1e-12</span>, <span class="dv">1</span>)) <span class="op">+</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>                      (<span class="dv">1</span> <span class="op">-</span> obs) <span class="op">*</span> np.log(np.clip(<span class="dv">1</span> <span class="op">-</span> pred, <span class="fl">1e-12</span>, <span class="dv">1</span>)))</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>tag<span class="sc">:&lt;26}</span><span class="ss"> dev/n </span><span class="sc">{</span>dev <span class="op">/</span> <span class="bu">len</span>(obs)<span class="sc">:.5f}</span><span class="ss">   AUC "</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"</span><span class="sc">{</span>roc_auc_score(obs, pred)<span class="sc">:.4f}</span><span class="ss">   mean pred </span><span class="sc">{</span>pred<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>FORMULA <span class="op">=</span> (<span class="st">"default_12m ~ AgeClass + logIncome + Country + C(Education)"</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(HomeOwnership) + NewCreditCustomer + C(VerificationType)"</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>           <span class="st">" + C(EmploymentDuration)"</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, (lrn, tst) <span class="kw">in</span> {<span class="st">"random"</span>: (learn_r, test_r),</span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"out-of-time"</span>: (learn_t, test_t)}.items():</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss"> split, test default rate </span><span class="sc">{</span>tst[<span class="st">'default_12m'</span>]<span class="sc">.</span>mean()<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> smf.glm(FORMULA, data<span class="op">=</span>lrn, family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>    report(<span class="st">"lecture 2 GLM"</span>, tst[<span class="st">"default_12m"</span>].to_numpy(),</span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>           b.predict(tst).to_numpy())</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>    (el, et), _, _, _ <span class="op">=</span> build_woe(lrn, [lrn, tst], NUM, CAT)</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>    cols <span class="op">=</span> [c <span class="cf">for</span> c <span class="kw">in</span> el.columns <span class="cf">if</span> c.startswith(<span class="st">"w_"</span>)]</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> sm.GLM(el[<span class="st">"y"</span>], sm.add_constant(el[cols]),</span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>               family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a>    report(<span class="st">"WoE scorecard"</span>, et[<span class="st">"y"</span>].to_numpy(),</span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>           m.predict(sm.add_constant(et[cols])).to_numpy())</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>random split, test default rate 0.2921
+  lecture 2 GLM              dev/n 1.08197   AUC 0.7182   mean pred 0.2888
+  WoE scorecard              dev/n 1.08742   AUC 0.7138   mean pred 0.2885
+
+out-of-time split, test default rate 0.2280
+  lecture 2 GLM              dev/n 1.00400   AUC 0.7158   mean pred 0.3072
+  WoE scorecard              dev/n 1.00896   AUC 0.7112   mean pred 0.3064
+</code></pre>
+</div>
+</div>
+<p>The classical procedure loses, by a little, on both partitions. Its held-out AUC sits roughly four tenths of a percentage point below lecture 2’s dummy-coded GLM under the random split and by a similar margin out of time, and its held-out deviance is slightly worse in both.</p>
+<p>That gap has a mechanical explanation and it is not a defect in the arithmetic. Weight-of-evidence encoding gives each characteristic exactly one coefficient, so eight characteristics spend eight degrees of freedom. Lecture 2’s specification gives each categorical level its own coefficient and spends about thirty. The classed model has therefore been handed a much smaller hypothesis space, and it is also carrying the information the monotone classing threw away, most visibly on age. Hence the deficit measures the cost of the step function on this book, and a scorecard team would answer that four tenths of an AUC point is a reasonable price for a model whose every attribute carries a defensible number of points. Whether that trade is worth making is a governance judgement, and the value of running the procedure is that the trade arrives as a figure.</p>
+</section>
+<section id="two-results-the-procedure-does-not-advertise" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> Two results the procedure does not advertise</h1>
+<section id="a-coefficient-is-a-diagnostic-and-lecture-1s-paradox-trips-it" class="level2" data-number="11.1">
+<h2 data-number="11.1" class="anchored" data-anchor-id="a-coefficient-is-a-diagnostic-and-lecture-1s-paradox-trips-it"><span class="header-section-number">11.1</span> A coefficient is a diagnostic, and lecture 1’s paradox trips it</h2>
+<p>Weight-of-evidence encoding has a property that makes its coefficients readable. Since the encoding already expresses each class as a log-odds shift, a univariate logistic regression on a single weight-of-evidence column should return a coefficient of exactly one. Any departure from one in the multivariate fit therefore says something about what the other characteristics did to that one.</p>
+<div id="c0b84da6" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>qi <span class="op">=</span> np.unique(np.percentile(g[<span class="st">"IncomeTotal"</span>], np.linspace(<span class="dv">0</span>, <span class="dv">100</span>, <span class="dv">11</span>)))</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>inc <span class="op">=</span> np.clip(np.searchsorted(qi, g[<span class="st">"IncomeTotal"</span>], side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>              <span class="dv">0</span>, <span class="bu">len</span>(qi) <span class="op">-</span> <span class="dv">2</span>).astype(<span class="bu">str</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>w_inc, iv_inc <span class="op">=</span> woe_lookup(inc, y)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>w_ctry, iv_ctry <span class="op">=</span> woe_lookup(cat_labels(g[<span class="st">"Country"</span>]), y)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>X_inc <span class="op">=</span> np.array([w_inc[v] <span class="cf">for</span> v <span class="kw">in</span> inc])</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>X_ctry <span class="op">=</span> np.array([w_ctry[v] <span class="cf">for</span> v <span class="kw">in</span> cat_labels(g[<span class="st">"Country"</span>])])</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> tag, X <span class="kw">in</span> [(<span class="st">"income alone"</span>, X_inc[:, <span class="va">None</span>]),</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>               (<span class="st">"income and country"</span>, np.column_stack([X_inc, X_ctry]))]:</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    m <span class="op">=</span> sm.GLM(y, sm.add_constant(X), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>tag<span class="sc">:&lt;22}</span><span class="ss"> income coefficient </span><span class="sc">{</span><span class="bu">float</span>(m.params[<span class="dv">1</span>])<span class="sc">:+.4f}</span><span class="ss">"</span>)</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="ss">  income IV </span><span class="sc">{</span>iv_inc<span class="sc">:.4f}</span><span class="ss">, country IV </span><span class="sc">{</span>iv_ctry<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"  income WoE by class:"</span>,</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>      <span class="st">" "</span>.join(<span class="ss">f"</span><span class="sc">{</span>w_inc[<span class="bu">str</span>(k)]<span class="sc">:+.2f}</span><span class="ss">"</span> <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(qi) <span class="op">-</span> <span class="dv">1</span>)))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  income alone           income coefficient +1.0001
+  income and country     income coefficient -0.1459
+
+  income IV 0.0640, country IV 0.5334
+  income WoE by class: -0.46 -0.40 -0.28 -0.05 +0.07 +0.22 +0.14 +0.29 +0.24 +0.05</code></pre>
+</div>
+</div>
+<p>On its own, the income coefficient comes back at one to four decimal places, which is the arithmetic identity working as advertised. Adding country drops it to about minus 0.15. The classing said that risk rises with declared income, the fitted model says that it falls once country is held fixed, and the sign flip is lecture 1’s Simpson paradox arriving through a different door.</p>
+<p>The classical procedure supplies the alarm here, and lecture C1 supplies the diagnosis. A negative coefficient on a risk-positive weight of evidence is a standard scorecard red flag, it means the univariate classing has been contradicted by the multivariate fit, and it is checked as a matter of routine. Indeed the flag works because of the coefficient-of-one property. A tradition that encoded income as its raw value would see a small negative number and learn nothing from it. Lecture C1 is where the confounding is diagnosed properly and the marginal income curve is recovered; the contribution of the classing is to make the problem impossible to miss.</p>
+</section>
+<section id="a-weight-of-evidence-model-does-not-reproduce-itself" class="level2" data-number="11.2">
+<h2 data-number="11.2" class="anchored" data-anchor-id="a-weight-of-evidence-model-does-not-reproduce-itself"><span class="header-section-number">11.2</span> A weight-of-evidence model does not reproduce itself</h2>
+<p>The last result is the least known and it matters for monitoring. Train a model, predict with it, then retrain the same specification using those predictions as the target. A model that reproduces itself exactly under that operation is self replicating. Dummy encoding is. Weight of evidence is not, because the weights are recomputed from the target distribution each cycle, so a changed target changes the encoding before it changes any coefficient.</p>
+<div id="f0b925fc" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> woe_from_target(lab, target, half<span class="op">=</span><span class="fl">0.5</span>):</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""WoE from a continuous target in [0, 1], i.e. expected outcome counts."""</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> pd.DataFrame({<span class="st">"lab"</span>: lab, <span class="st">"y"</span>: target}).groupby(<span class="st">"lab"</span>)[<span class="st">"y"</span>].agg(</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>        [<span class="st">"size"</span>, <span class="st">"sum"</span>])</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    nb <span class="op">=</span> t[<span class="st">"sum"</span>].to_numpy()</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>    ng <span class="op">=</span> (t[<span class="st">"size"</span>] <span class="op">-</span> t[<span class="st">"sum"</span>]).to_numpy()</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>    pb <span class="op">=</span> (nb <span class="op">+</span> half) <span class="op">/</span> (nb.<span class="bu">sum</span>() <span class="op">+</span> half <span class="op">*</span> <span class="bu">len</span>(nb))</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>    pg <span class="op">=</span> (ng <span class="op">+</span> half) <span class="op">/</span> (ng.<span class="bu">sum</span>() <span class="op">+</span> half <span class="op">*</span> <span class="bu">len</span>(ng))</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">dict</span>(<span class="bu">zip</span>(t.index, np.log(pb <span class="op">/</span> pg)))</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>LAB <span class="op">=</span> {c: cat_labels(g[c]) <span class="cf">for</span> c <span class="kw">in</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>       [<span class="st">"Country"</span>, <span class="st">"Education"</span>, <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>]}</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>LAB[<span class="st">"Income"</span>] <span class="op">=</span> inc</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>m0 <span class="op">=</span> {c: woe_lookup(LAB[c], y)[<span class="dv">0</span>] <span class="cf">for</span> c <span class="kw">in</span> LAB}</span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>X0 <span class="op">=</span> np.column_stack([[m0[c][v] <span class="cf">for</span> v <span class="kw">in</span> LAB[c]] <span class="cf">for</span> c <span class="kw">in</span> LAB])</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>f0 <span class="op">=</span> sm.GLM(y, sm.add_constant(X0), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>p0 <span class="op">=</span> f0.predict(sm.add_constant(X0))</span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>m1 <span class="op">=</span> {c: woe_from_target(LAB[c], p0) <span class="cf">for</span> c <span class="kw">in</span> LAB}</span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>X1 <span class="op">=</span> np.column_stack([[m1[c][v] <span class="cf">for</span> v <span class="kw">in</span> LAB[c]] <span class="cf">for</span> c <span class="kw">in</span> LAB])</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>f1 <span class="op">=</span> sm.GLM(p0, sm.add_constant(X1), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>p1 <span class="op">=</span> f1.predict(sm.add_constant(X1))</span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>D <span class="op">=</span> pd.get_dummies(pd.DataFrame(LAB), drop_first<span class="op">=</span><span class="va">True</span>).astype(<span class="bu">float</span>).to_numpy()</span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>d0 <span class="op">=</span> sm.GLM(y, sm.add_constant(D), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>q0 <span class="op">=</span> d0.predict(sm.add_constant(D))</span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a>d1 <span class="op">=</span> sm.GLM(q0, sm.add_constant(D), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a>q1 <span class="op">=</span> d1.predict(sm.add_constant(D))</span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"WoE   max |WoE change|  </span><span class="sc">{</span><span class="bu">max</span>(<span class="bu">abs</span>(m1[c][v] <span class="op">-</span> m0[c][v]) <span class="cf">for</span> c <span class="kw">in</span> LAB <span class="cf">for</span> v <span class="kw">in</span> m0[c])<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"WoE   max |beta change| </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(f1.params <span class="op">-</span> f0.params)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"WoE   max |PD change|   </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(p1 <span class="op">-</span> p0)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.5f}</span><span class="ss">"</span>)</span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"dummy max |beta change| </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(d1.params <span class="op">-</span> d0.params)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3e}</span><span class="ss">"</span>)</span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"dummy max |PD change|   </span><span class="sc">{</span>np<span class="sc">.</span><span class="bu">abs</span>(q1 <span class="op">-</span> q0)<span class="sc">.</span><span class="bu">max</span>()<span class="sc">:.3e}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>WoE   max |WoE change|  0.39547
+WoE   max |beta change| 0.20050
+WoE   max |PD change|   0.06708
+dummy max |beta change| 4.059e-13
+dummy max |PD change|   9.959e-14</code></pre>
+</div>
+</div>
+<p>The dummy-encoded model returns to itself at the limit of double precision. The weight-of-evidence model moves a fitted probability of default by several percentage points on the same unchanged data.</p>
+<p>The consequence lands on monitoring. When a scorecard is refitted on a recent window as a stability check, some of the observed parameter drift is a mechanical consequence of recomputing the weights and carries no information about the portfolio. Attribution therefore requires the encoding effect to be separated from genuine distributional change, and a validator who reads coefficient movement as evidence of population shift will overstate the shift. Lecture R3 owns the representativeness diagnostics that answer the other half of that question, and it records the related finding that a weight-of-evidence table estimated on a rebalanced sample carries the rebalancing into every downstream fit.</p>
+<p>There is a second, quieter version of the same instability. Because the encoding is a marginal transformation, the intercept of a weight-of-evidence regression depends on which characteristics were selected: a published simulation over 7,007 model combinations drawn from ten variables found intercept-implied default probabilities running from 29.64 to 30.39 per cent against an observed 30 per cent. Anyone using the intercept to anchor a calibration is therefore carrying a source of uncertainty that has nothing to do with sampling error in the portfolio rate.</p>
+</section>
+</section>
+<section id="the-same-characteristic-undiscretised" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> The same characteristic, undiscretised</h1>
+<p>Section 3 promised that the two traditions would be put side by side, and income is the natural test, since this series has been log-transforming it since lecture 1 without ever asking whether classing would have done better. Hold country fixed as a weight-of-evidence column in both fits, vary only the treatment of income, and read both on the same held-out sample.</p>
+<div id="2a54479f" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>li <span class="op">=</span> np.clip(np.searchsorted(qi, learn_r[<span class="st">"IncomeTotal"</span>], side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>,</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>             <span class="dv">0</span>, <span class="bu">len</span>(qi) <span class="op">-</span> <span class="dv">2</span>).astype(<span class="bu">str</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>ti <span class="op">=</span> np.clip(np.searchsorted(qi, test_r[<span class="st">"IncomeTotal"</span>], side<span class="op">=</span><span class="st">"right"</span>) <span class="op">-</span> <span class="dv">1</span>,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>             <span class="dv">0</span>, <span class="bu">len</span>(qi) <span class="op">-</span> <span class="dv">2</span>).astype(<span class="bu">str</span>)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>yl <span class="op">=</span> learn_r[<span class="st">"default_12m"</span>].to_numpy()</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>wm, _ <span class="op">=</span> woe_lookup(li, yl)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>wc, _ <span class="op">=</span> woe_lookup(cat_labels(learn_r[<span class="st">"Country"</span>]), yl)</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>Xl <span class="op">=</span> np.column_stack([[wm[v] <span class="cf">for</span> v <span class="kw">in</span> li],</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>                      [wc[v] <span class="cf">for</span> v <span class="kw">in</span> cat_labels(learn_r[<span class="st">"Country"</span>])]])</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>Xt <span class="op">=</span> np.column_stack([[wm.get(v, <span class="fl">0.0</span>) <span class="cf">for</span> v <span class="kw">in</span> ti],</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>                      [wc.get(v, <span class="fl">0.0</span>) <span class="cf">for</span> v <span class="kw">in</span> cat_labels(test_r[<span class="st">"Country"</span>])]])</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>mc <span class="op">=</span> sm.GLM(yl, sm.add_constant(Xl), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>Zl <span class="op">=</span> np.column_stack([learn_r[<span class="st">"logIncome"</span>].to_numpy(),</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>                      [wc[v] <span class="cf">for</span> v <span class="kw">in</span> cat_labels(learn_r[<span class="st">"Country"</span>])]])</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>Zt <span class="op">=</span> np.column_stack([test_r[<span class="st">"logIncome"</span>].to_numpy(),</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a>                      [wc.get(v, <span class="fl">0.0</span>) <span class="cf">for</span> v <span class="kw">in</span> cat_labels(test_r[<span class="st">"Country"</span>])]])</span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a>ms <span class="op">=</span> sm.GLM(yl, sm.add_constant(Zl), family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>obs <span class="op">=</span> test_r[<span class="st">"default_12m"</span>].to_numpy()</span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"income, 10 classes"</span>, obs, mc.predict(sm.add_constant(Xt)))</span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>report(<span class="st">"income, log transform"</span>, obs, ms.predict(sm.add_constant(Zt)))</span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  classes spend </span><span class="sc">{</span>Xl<span class="sc">.</span>shape[<span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss"> parameters, "</span></span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"the log transform spends </span><span class="sc">{</span>Zl<span class="sc">.</span>shape[<span class="dv">1</span>] <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  income, 10 classes         dev/n 1.10589   AUC 0.6818   mean pred 0.2882
+  income, log transform      dev/n 1.10552   AUC 0.6862   mean pred 0.2882
+  classes spend 3 parameters, the log transform spends 3</code></pre>
+</div>
+</div>
+<p>The log transform wins narrowly. Both regressions estimate three parameters, so the comparison is fair at the fitting stage, and the classed model has additionally spent nine class boundaries on the way there. Income’s weight-of-evidence profile rises steeply across the lower classes and then flattens above the median, close to what a logarithm does to a right-skewed monetary variable. Hence the classing is spending those nine boundaries approximating a shape the log transform captures with none, and discarding the ordering inside each class as it goes.</p>
+<p>That result generalises less than it appears to. The log transform wins here because income’s relationship with the log-odds really is close to logarithmic. Age’s is hump-shaped, and no single power transformation from Tukey’s ladder will straighten it, so the discretise tradition has the better answer there. Consequently the choice between the two belongs to the characteristic, and a build that applies one tradition to every column has stopped looking. Lecture F2 runs the second tradition properly, on a portfolio wide enough for its screening machinery to have something to do.</p>
+</section>
+<section id="what-a-validator-asks-and-what-this-lecture-does-not-show" class="level1" data-number="13">
+<h1 data-number="13"><span class="header-section-number">13</span> What a validator asks, and what this lecture does not show</h1>
+<p>The questions this lecture equips a reader to answer are the ones a review of a scorecard build opens with. On what rule were the fine classes cut, and which algorithm coarsened them? What did the information value screen admit, what did it drop, and was anything above the leakage band checked for provenance? Is any characteristic’s information value carried by its smallest classes? Was missingness promoted to an attribute or imputed away, and on what evidence? Does every fitted coefficient carry the sign its classing predicted, and where one does not, what explains it?</p>
+<p>Four limitations bound everything above.</p>
+<p><strong>The screen here is univariate throughout.</strong> Information value is computed one characteristic at a time, and it is blind to conditional effects for exactly that reason. Age is the casualty on this book, and marginal information value, which is the tradition’s own remedy, belongs to lecture F2.</p>
+<p><strong>The classing is estimated once and never stress-tested across time.</strong> A production classing is checked for stability vintage by vintage before it is signed off, and this lecture stops at the fitted feature set. Lecture R3 owns the stability machinery, and the characteristic stability index, which weights a class’s population shift by the points it carries, needs the points scale that lecture F2 builds.</p>
+<p><strong>No selection has taken place.</strong> Every fit above uses a characteristic list chosen by hand, in one case chosen by lecture 2. Stepwise selection, its documented failure on noise, partition variables, and the triple test are all F2’s material, and nothing here should be read as a claim about which characteristics a real build would retain.</p>
+<p><strong>Bondora’s default rate misleads about small samples.</strong> At nearly 29 per cent, a class with enough rows has enough defaults, so the two constraints that normally fight each other do not. Every rule of thumb quoted above was written for portfolios defaulting in the low single digits, and lecture 3’s card book is the setting where the defaults bind first.</p>
+</section>
+<section id="references" class="level1" data-number="14">
+<h1 data-number="14"><span class="header-section-number">14</span> References</h1>
+<p>Djurovic, A. (2025). <em>Statistical Binning of Numeric Risk Factors: Probability of Default Modeling</em>. Industry paper.</p>
+<p>Djurovic, A. (2025). <em>Statistical Binning of Categorical Risk Factors: Probability of Default Modeling</em>. Industry paper.</p>
+<p>Djurovic, A. (2025). <em>Statistical Binning and Model Validation: How the Choice of Binning Algorithm Influences Model Validation</em>. Industry paper.</p>
+<p>Djurovic, A. (2025). <em>Weight of Evidence Regression for Probability of Default Modeling: Intercept Estimation Uncertainty</em>. Industry paper.</p>
+<p>Forrest, A., and Djurovic, A. (2025). <em>The Instability of WoE Encoding in PD Modeling</em>. Industry paper.</p>
+<p>Micci-Barreca, D. (2001). A preprocessing scheme for high-cardinality categorical attributes in classification and prediction problems. <em>ACM SIGKDD Explorations</em> 3(1), 27-32.</p>
+<p>Scallan, G. (2011). <em>Class(ic) Scorecards: Selecting Characteristics and Attributes in Logistic Regression</em>. Edinburgh Credit Scoring Conference, 25 August 2011.</p>
+<p>Regulation (EU) No 575/2013 of the European Parliament and of the Council of 26 June 2013 on prudential requirements for credit institutions and investment firms (Capital Requirements Regulation), Article 174.</p>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>
