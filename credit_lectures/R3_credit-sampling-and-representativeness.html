@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-03">
+
+<title>Credit Lecture R3: Sample Design, Representativeness and Class Imbalance</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#what-the-series-never-stopped-to-ask" id="toc-what-the-series-never-stopped-to-ask" class="nav-link active" data-scroll-target="#what-the-series-never-stopped-to-ask"><span class="header-section-number">1</span> What the series never stopped to ask</a>
+  <ul class="collapse">
+  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation"><span class="header-section-number">1.1</span> Notation</a></li>
+  </ul></li>
+  <li><a href="#the-four-samples-and-the-fifth" id="toc-the-four-samples-and-the-fifth" class="nav-link" data-scroll-target="#the-four-samples-and-the-fifth"><span class="header-section-number">2</span> The four samples, and the fifth</a></li>
+  <li><a href="#three-clocks-and-why-a-random-split-confuses-them" id="toc-three-clocks-and-why-a-random-split-confuses-them" class="nav-link" data-scroll-target="#three-clocks-and-why-a-random-split-confuses-them"><span class="header-section-number">3</span> Three clocks, and why a random split confuses them</a></li>
+  <li><a href="#the-unit-of-a-split-is-the-loan" id="toc-the-unit-of-a-split-is-the-loan" class="nav-link" data-scroll-target="#the-unit-of-a-split-is-the-loan"><span class="header-section-number">4</span> The unit of a split is the loan</a></li>
+  <li><a href="#which-snapshots-are-eligible" id="toc-which-snapshots-are-eligible" class="nav-link" data-scroll-target="#which-snapshots-are-eligible"><span class="header-section-number">5</span> Which snapshots are eligible</a></li>
+  <li><a href="#the-distorted-window-on-this-book" id="toc-the-distorted-window-on-this-book" class="nav-link" data-scroll-target="#the-distorted-window-on-this-book"><span class="header-section-number">6</span> The distorted window, on this book</a>
+  <ul class="collapse">
+  <li><a href="#volume-and-the-observed-rate" id="toc-volume-and-the-observed-rate" class="nav-link" data-scroll-target="#volume-and-the-observed-rate"><span class="header-section-number">6.1</span> Volume and the observed rate</a></li>
+  <li><a href="#relief-and-what-it-does-to-the-flag" id="toc-relief-and-what-it-does-to-the-flag" class="nav-link" data-scroll-target="#relief-and-what-it-does-to-the-flag"><span class="header-section-number">6.2</span> Relief, and what it does to the flag</a></li>
+  <li><a href="#the-notch" id="toc-the-notch" class="nav-link" data-scroll-target="#the-notch"><span class="header-section-number">6.3</span> The notch</a></li>
+  </ul></li>
+  <li><a href="#what-an-exclusion-costs-and-the-table-that-cannot-pay-it" id="toc-what-an-exclusion-costs-and-the-table-that-cannot-pay-it" class="nav-link" data-scroll-target="#what-an-exclusion-costs-and-the-table-that-cannot-pay-it"><span class="header-section-number">7</span> What an exclusion costs, and the table that cannot pay it</a>
+  <ul class="collapse">
+  <li><a href="#why-the-fixed-horizon-table-cannot-express-a-calendar-exclusion" id="toc-why-the-fixed-horizon-table-cannot-express-a-calendar-exclusion" class="nav-link" data-scroll-target="#why-the-fixed-horizon-table-cannot-express-a-calendar-exclusion"><span class="header-section-number">7.1</span> Why the fixed-horizon table cannot express a calendar exclusion</a></li>
+  <li><a href="#the-demonstration-on-the-table-that-can" id="toc-the-demonstration-on-the-table-that-can" class="nav-link" data-scroll-target="#the-demonstration-on-the-table-that-can"><span class="header-section-number">7.2</span> The demonstration, on the table that can</a></li>
+  </ul></li>
+  <li><a href="#is-the-held-out-sample-representative" id="toc-is-the-held-out-sample-representative" class="nav-link" data-scroll-target="#is-the-held-out-sample-representative"><span class="header-section-number">8</span> Is the held-out sample representative?</a>
+  <ul class="collapse">
+  <li><a href="#the-population-stability-index-and-its-two-failure-modes" id="toc-the-population-stability-index-and-its-two-failure-modes" class="nav-link" data-scroll-target="#the-population-stability-index-and-its-two-failure-modes"><span class="header-section-number">8.1</span> The population stability index, and its two failure modes</a></li>
+  <li><a href="#the-diagnostic-finds-a-data-break-before-it-finds-any-drift" id="toc-the-diagnostic-finds-a-data-break-before-it-finds-any-drift" class="nav-link" data-scroll-target="#the-diagnostic-finds-a-data-break-before-it-finds-any-drift"><span class="header-section-number">8.2</span> The diagnostic finds a data break before it finds any drift</a></li>
+  <li><a href="#the-joint-distribution-which-the-marginals-miss" id="toc-the-joint-distribution-which-the-marginals-miss" class="nav-link" data-scroll-target="#the-joint-distribution-which-the-marginals-miss"><span class="header-section-number">8.3</span> The joint distribution, which the marginals miss</a></li>
+  </ul></li>
+  <li><a href="#class-imbalance" id="toc-class-imbalance" class="nav-link" data-scroll-target="#class-imbalance"><span class="header-section-number">9</span> Class imbalance</a>
+  <ul class="collapse">
+  <li><a href="#the-balance-property-survives-on-a-measure-nobody-wanted" id="toc-the-balance-property-survives-on-a-measure-nobody-wanted" class="nav-link" data-scroll-target="#the-balance-property-survives-on-a-measure-nobody-wanted"><span class="header-section-number">9.1</span> The balance property survives, on a measure nobody wanted</a></li>
+  <li><a href="#putting-the-level-back" id="toc-putting-the-level-back" class="nav-link" data-scroll-target="#putting-the-level-back"><span class="header-section-number">9.2</span> Putting the level back</a></li>
+  <li><a href="#which-metrics-survive-a-1.4-per-cent-base-rate" id="toc-which-metrics-survive-a-1.4-per-cent-base-rate" class="nav-link" data-scroll-target="#which-metrics-survive-a-1.4-per-cent-base-rate"><span class="header-section-number">9.3</span> Which metrics survive a 1.4 per cent base rate</a></li>
+  </ul></li>
+  <li><a href="#what-a-validator-asks-and-what-this-lecture-does-not-show" id="toc-what-a-validator-asks-and-what-this-lecture-does-not-show" class="nav-link" data-scroll-target="#what-a-validator-asks-and-what-this-lecture-does-not-show"><span class="header-section-number">10</span> What a validator asks, and what this lecture does not show</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references"><span class="header-section-number">11</span> References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture R3: Sample Design, Representativeness and Class Imbalance</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 3, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Every lecture in this series has split a sample, and none has stopped to ask how. Lecture 2 introduced the random and the out-of-time partition in nine lines, lectures 4 to 8 inherited that partition unexamined, and lecture 1 promised that class imbalance would return with force and then left the debt unpaid. This lecture pays it and audits the inheritance. It sets out the four samples a rating system is built on, derives the clustered split a panel requires, states the three rules that decide which snapshots are eligible, and then turns the machinery on the book. Four findings come out of that. The pandemic relief window is visible in the Bondora hazard as a two-month notch rather than the multi-year exclusion the industry reached for, and dropping it lifts the twelve-month probability of default by 2.4 per cent relative. The fixed-horizon table the series has used since lecture 1 cannot express a calendar exclusion at all, and the proof is that the cleaned out-of-time test sample is empty. A representativeness sweep finds a data-collection break in July 2017 that no lecture had noticed. And on the joint distribution, a classifier separates the development and out-of-time samples at an AUC of 0.96 while marginal indices call most covariates stable.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="what-the-series-never-stopped-to-ask" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> What the series never stopped to ask</h1>
+<p>Lecture 2 needed a test sample, so it built two. It partitioned the Bondora book at random, then partitioned it again at the 0.8 quantile of origination dates, observed that the second partition is the honest one because a lender only ever meets business written after its development window, and moved on to the generalisation loss. That passage is nine lines long and it is the whole of the series’ treatment of sample design.</p>
+<p>Everything downstream inherited it. Lectures 4 and 5 reuse the same two partitions with the same seeds, lecture 6 states that “the learning and test split is made once outside that routine”, lecture 7 refits on the out-of-time learning window to show calibration failing, and lecture S3 takes the partition across into the survival table. None of them re-opens the question, because lecture 2 appeared to have settled it.</p>
+<p>It had not, and this lecture is the audit. Sample design in credit carries at least four decisions that an insurance frequency exercise never has to make: which snapshots are eligible at all, how a partition respects a panel whose rows repeat per loan, what to do with a period during which the outcome variable stopped meaning what it usually means, and how to handle a book on which the event of interest is either commonplace or vanishingly rare depending on which portfolio is in front of you. The course’s French motor third-party liability data raises none of the four.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Where this sits in the series">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Where this sits in the series
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture 1 defines the outcome, the twelve-month flag <span class="math inline">\(D^{(k)}_{i,t}\)</span>, the availability <span class="math inline">\(A_i = \tau - g_i\)</span>, the retention set <span class="math inline">\(\mathcal{W}_k\)</span> and the vintage axis. <strong>It owns the outcome window</strong>, and this lecture uses it rather than re-deriving it.</p>
+<p>Lecture 2 owns the random against out-of-time contrast and the deviance results computed on it. Lecture 6 owns encoding leakage and has already measured it, so the rule that a weight of evidence table is estimated inside the learning sample belongs there. Lecture 7 owns calibration and the balance property. Lectures S1 and S3 own the person-period expansion and the mask that replaces it.</p>
+<p>R1 owns the point-in-time question and built the calendar-indexed table that section 7 borrows. R2 owns the long-run average, the period it is taken over, and the margin of conservatism.</p>
+<p>R3 owns the sample: which rows are eligible, how they are partitioned, whether the partition is representative, and what an imbalanced response does to the fit.</p>
+</div>
+</div>
+<section id="notation" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="notation"><span class="header-section-number">1.1</span> Notation</h2>
+<p>Nothing here is renamed. Lecture 1 owns the snapshot <span class="math inline">\(\tau\)</span>, the origination month <span class="math inline">\(g_i\)</span>, the calendar identity <span class="math inline">\(u = g_i + t\)</span>, the loan age <span class="math inline">\(t\)</span>, the window flag <span class="math inline">\(D^{(k)}_{i,t}\)</span> and the availability <span class="math inline">\(A_i\)</span>. Lecture S1 owns the exit kind and the discrete hazard.</p>
+<p>This lecture adds the sampling apparatus of Botha and Verster (2025), which the series has not needed until now, and it adds nothing else.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(\mathcal{D}\)</span></td>
+<td>the panel dataset, one row per loan-period</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(\mathcal{D}_S\)</span></td>
+<td>a sub-sample of <span class="math inline">\(\mathcal{D}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\mathcal{D}_T\)</span>, <span class="math inline">\(\mathcal{D}_V\)</span></td>
+<td>the training and validation partitions</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(s_f\)</span></td>
+<td>the sampling fraction, <span class="math inline">\(\lvert\mathcal{D}_T\rvert / \lvert\mathcal{D}\rvert\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(N_p\)</span></td>
+<td>the number of loans, and therefore of clusters</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\((i, j)\)</span></td>
+<td>the subject-spell key: loan <span class="math inline">\(i\)</span>, spell <span class="math inline">\(j\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\psi\)</span></td>
+<td>an event type, from the exit kinds S1 defines</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_\psi(u, \mathcal{D})\)</span></td>
+<td>the resolution rate for event <span class="math inline">\(\psi\)</span> in calendar month <span class="math inline">\(u\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(w_i\)</span></td>
+<td>an observation weight</td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="Two symbols that mean something else in Botha's papers">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Two symbols that mean something else in Botha’s papers
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A reader moving between this lecture and the source papers will meet two clashes, and both were settled earlier in the series.</p>
+<p><strong><span class="math inline">\(\tau\)</span>.</strong> Botha and Verster write <span class="math inline">\(\tau_e(i,j)\)</span>, <span class="math inline">\(\tau_r(i,j)\)</span> and <span class="math inline">\(\tau_s(i,j)\)</span> for the entry, resolution and stopping times of a spell. Lecture 1 fixed <span class="math inline">\(\tau\)</span> as the snapshot date, so lecture S1 already declined the subscripted forms and this lecture does the same. Exit times here are durations in months on book.</p>
+<p><strong><span class="math inline">\(T_{ij}\)</span>.</strong> Botha’s <span class="math inline">\(T_{ij} = \tau_s - \tau_e\)</span> is a <em>spell age</em>, whereas lecture 1’s <span class="math inline">\(T_i\)</span> is time from origination to default. The two coincide only for a first spell with no left-truncation. Bondora’s snapshot gives one performance spell per loan, so the distinction does no work here, and it would do a great deal of work on a book with re-defaults.</p>
+<p>Botha’s calendar time <span class="math inline">\(t'\)</span> is this series’ <span class="math inline">\(u\)</span>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="the-four-samples-and-the-fifth" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> The four samples, and the fifth</h1>
+<p>A rating system is not built on a training set and a test set. It is built on four samples with four different jobs, and a fifth that only exists once the model is live.</p>
+<p>The <strong>development sample</strong> fits the model. The <strong>calibration sample</strong> sets the level, which in the internal ratings-based world means the long-run average that lecture R2 spends half its length on, and it is generally drawn over a much longer window than the development sample because it has to span a cycle. The <strong>out-of-sample</strong> partition holds out facilities from the same period, so it asks whether the fit generalises across borrowers. The <strong>out-of-time</strong> partition holds out a later period, so it asks whether the fit generalises across time. The <strong>application sample</strong> is the live book the model scores, and monitoring compares it against the development sample for as long as the model is in use.</p>
+<p>The distinction the series has never drawn is between the third and the fourth. Out-of-sample and out-of-time are not two names for a holdout. They vary different things, they fail for different reasons, and passing one is no evidence about the other. A model can generalise perfectly across borrowers within 2015 and collapse on 2019, which is exactly what lecture 7 found when the deciles all sat below the diagonal while the Gini improved.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="The regulation asks for both, in black letter">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>The regulation asks for both, in black letter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Article 175 of the Capital Requirements Regulation governs the documentation of rating systems. Its fourth paragraph applies where an institution uses statistical models, and it requires the documentation to:</p>
+<blockquote class="blockquote">
+<ol start="2" type="a">
+<li>establish a rigorous statistical process including out-of-time and out-of-sample performance tests for validating the model;</li>
+</ol>
+</blockquote>
+<p>Read the obligation precisely, because it is narrower than a general testing mandate: the article says what the <em>documentation</em> must establish. Even read narrowly it settles the point of this section, since a documentation standard that names both tests is a standard that treats them as different tests.</p>
+<p>Representativeness itself sits one article earlier. Article 174 lists the requirements that apply when statistical models assign exposures to grades or pools, and point (c) is the one this lecture turns on:</p>
+<blockquote class="blockquote">
+<ol start="3" type="a">
+<li>the data used to build the model shall be representative of the population of the institution’s actual obligors or exposures;</li>
+</ol>
+</blockquote>
+<p>On the supervisory side, section 8 of the Prudential Regulation Authority’s SS4/24 is titled “Data representativeness” and carries the expectations that amplify Article 174(c). Note the date: the January 2026 consolidation takes effect on 1 January 2027 alongside PS1/26, so it is the regulator’s published position rather than a binding rule at the time of writing.</p>
+<p>A caution on a citation this lecture deliberately does <strong>not</strong> make. Representativeness is sometimes attributed to Article 179. That article requires estimates to be representative of <em>long-run experience</em>, which is the cycle-coverage argument lecture R2 already runs, and it is a different requirement from the comparison between the development and the application population. Article 174(c) is the one that carries this lecture.</p>
+</div>
+</div>
+</section>
+<section id="three-clocks-and-why-a-random-split-confuses-them" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Three clocks, and why a random split confuses them</h1>
+<p>Lecture 2 argued that consecutive loans are not exchangeable in time, and that argument is right. It is also less than half the problem, because a credit panel carries three clocks and a random split scrambles all three at once.</p>
+<p>The <strong>loan age</strong> <span class="math inline">\(t\)</span> counts months since origination, and it is the axis a hazard runs on. The <strong>calendar month</strong> <span class="math inline">\(u\)</span> counts absolute time, and it is the axis the economy runs on. The <strong>vintage</strong> <span class="math inline">\(g_i\)</span> is the origination month, and it is the axis underwriting policy runs on. Lecture 1’s identity <span class="math inline">\(u = g_i + t\)</span> ties them together and, on a single snapshot, ties them too tightly: hold the vintage fixed and age and calendar move together, which is why lecture 1 could not fit a point-in-time model and R1 had to rebuild the table before it could.</p>
+<p>A random split respects none of the three. It draws loans of every vintage into both sides, so the test sample is a sample of the same underwriting policy, the same economy and the same age mix as the learning sample. That is precisely the assumption of exchangeability the book violates, and it is why lecture 2’s random-split test deviance flattered the model.</p>
+<p>An out-of-time split fixes the vintage axis and only the vintage axis. It leaves two problems standing, and this lecture is largely about them: the held-out period may be unrepresentative for reasons that have nothing to do with model quality, which is section 6, and the held-out period may differ from the development period in the covariates themselves, which is section 8.</p>
+</section>
+<section id="the-unit-of-a-split-is-the-loan" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> The unit of a split is the loan</h1>
+<p>The moment a panel is expanded to one row per loan-month, a row-level random split becomes wrong. Lecture S1 turned 179,171 loans into roughly 2.7 million loan-months, and a random partition of those rows would put January and February of the same loan on opposite sides of the split. The model would then be tested on a loan it had already been trained on, at a neighbouring age, with almost all of the same covariates.</p>
+<p>The fix is to cluster before sampling. Botha and Verster (2025) state it directly:</p>
+<blockquote class="blockquote">
+<p>In survival analysis, it is preferable to retain the entire spell history across all of its periods <span class="math inline">\(t_{ij}\)</span> when resampling from <span class="math inline">\(\mathcal{D}\)</span>, lest the subsequent survival estimates become compromised due to missing spell periods. Row-observations in <span class="math inline">\(\mathcal{D}\)</span> therefore need to be clustered around a common characteristic before sampling randomly amongst the resulting clusters. This sampling design is usually called simple random clustered sampling and implies that all monthly observations in <span class="math inline">\(\mathcal{D}\)</span> are first grouped by the loan ID <span class="math inline">\(i\)</span>, thereby forming <span class="math inline">\(N_p\)</span> clusters. Thereafter, we reserve a proportion (<span class="math inline">\(s_f = 70\%\)</span>) thereof for <span class="math inline">\(\mathcal{D}_T\)</span>, whereupon the underlying credit histories of these randomly chosen clusters are sampled into <span class="math inline">\(\mathcal{D}_T\)</span>, whilst relegating the rest into <span class="math inline">\(\mathcal{D}_V\)</span>.</p>
+</blockquote>
+<p>They put <span class="math inline">\(s_f\)</span> in the range 60 to 80 per cent, following Siddiqi, and use 70 per cent throughout. The same design is illustrated by Baesens and co-authors.</p>
+<p>Two consequences are worth carrying. First, the clustering has to propagate into the evaluation metric and not only into the split, which is why Botha, Verster and Scheepers (2025) build a clustered extension of the time-dependent receiver operating characteristic curve: the standard nearest-neighbour estimator assumes independent markers, and markers within a spell are not independent. Second, sub-sampling a panel is normal practice and has a second motive beyond computation, since a large enough sample drives every <span class="math inline">\(p\)</span>-value to zero and makes significance testing meaningless.</p>
+<div class="callout callout-style-default callout-tip no-icon callout-titled" title="Where the series already got this right, and where it got lucky">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Where the series already got this right, and where it got lucky
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture S1’s expansion is a reshaping rather than a resampling, and it never splits, so it is safe. Lecture S3 splits at the loan level before expanding, which is the correct order.</p>
+<p>Lecture 2’s partitions run on <code>bondora_pd.parquet</code>, which carries one row per loan, so a row-level split <em>is</em> a loan-level split there. The series has therefore never made this mistake, and it has never stated the rule that protects it either.</p>
+</div>
+</div>
+</section>
+<section id="which-snapshots-are-eligible" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Which snapshots are eligible</h1>
+<p>Three rules decide whether a snapshot may enter the development sample at all, and they apply before any partition is drawn.</p>
+<p><strong>The outcome window must be fully observed.</strong> A flag for the <span class="math inline">\(k\)</span> months after a reference date can only be scored where the extract covers those months, so the latest eligible reference date is the snapshot less <span class="math inline">\(k\)</span>. Lecture 1 implements exactly this as the retention set <span class="math inline">\(\mathcal{W}_k = \{i : A_i \ge k\}\)</span>, which is why the modelling table stops at July 2020 on an extract dated July 2021.</p>
+<p><strong>Distorted periods are excluded, with documented dates.</strong> This is section 6.</p>
+<p><strong>Pre-history is excluded.</strong> Snapshots predating the operational implementation of the current default definition, or of the data collection the model depends on, carry a definition that has been back-derived rather than observed. Section 8 finds an instance of this in the Bondora book that nothing in the series had noticed.</p>
+<p>On the length of the window, the regulation is more permissive than it is usually reported to be. Article 180(2)(e) requires a retail observation period of at least five years for at least one source, and it says nothing whatever about good years and bad years or about an economic cycle. That requirement lives in the European Banking Authority’s guidelines on probability of default and loss given default estimation, and attributing it to Article 180 overstates the article. What Article 180(2)(e) does say, and what is rarely quoted, is this:</p>
+<blockquote class="blockquote">
+<p>An institution need not give equal importance to historic data if more recent data is a better predictor of loss rates.</p>
+</blockquote>
+<p>That sentence matters for section 6, because it means the choice is not confined to keeping a distorted period whole or dropping it whole. Weighting is available and the regulation says so.</p>
+</section>
+<section id="the-distorted-window-on-this-book" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> The distorted window, on this book</h1>
+<p>The pandemic is the case every credit team has now argued about, and it is the right case to work because the distortion has three separate mechanisms that push the observed default rate in different directions.</p>
+<p><strong>Underwriting tightened</strong>, so the loans originated during the window are a different and generally better population. <strong>Relief was granted</strong>, so borrowers who would have rolled into 90 days past due did not, and the default flag stopped meaning what it usually means. <strong>The economy deteriorated</strong>, which pushes the other way. A single default flag cannot separate the three, and a model fitted across the window silently averages them.</p>
+<div id="ea14103b" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> statsmodels.api <span class="im">as</span> sm</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> stats <span class="im">as</span> sps</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>plt.rcParams.update({</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">"figure.figsize"</span>: (<span class="dv">9</span>, <span class="dv">4</span>), <span class="st">"figure.dpi"</span>: <span class="dv">150</span>, <span class="st">"font.size"</span>: <span class="dv">9</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"axes.spines.top"</span>: <span class="va">False</span>, <span class="st">"axes.spines.right"</span>: <span class="va">False</span>,</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE, BLUE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span>, <span class="st">"#1F4E79"</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>dat  <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>raw  <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_raw.parquet"</span>,</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>                       columns<span class="op">=</span>[<span class="st">"LoanId"</span>, <span class="st">"LoanDate"</span>, <span class="st">"ReScheduledOn"</span>, <span class="st">"Restructured"</span>])</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>surv <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_survival.parquet"</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> month_index(col):</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Calendar month as an integer index, matching lecture 1's u."""</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> pl.col(col).dt.year() <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> pl.col(col).dt.month() <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> as_month(u):</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f"</span><span class="sc">{</span>u <span class="op">//</span> <span class="dv">12</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>u <span class="op">%</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">1</span><span class="sc">:02d}</span><span class="ss">"</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>dat<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> seasoned loans; </span><span class="sc">{</span>surv<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loans in the survival table"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>148,733 seasoned loans; 179,235 loans in the survival table</code></pre>
+</div>
+</div>
+<section id="volume-and-the-observed-rate" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="volume-and-the-observed-rate"><span class="header-section-number">6.1</span> Volume and the observed rate</h2>
+<div id="94cdbee1" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>orig <span class="op">=</span> (dat.with_columns(u<span class="op">=</span>month_index(<span class="st">"LoanDate"</span>))</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>           .group_by(<span class="st">"u"</span>).agg(n<span class="op">=</span>pl.<span class="bu">len</span>(), dr<span class="op">=</span>pl.col(<span class="st">"default_12m"</span>).mean())</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>           .sort(<span class="st">"u"</span>))</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>win <span class="op">=</span> orig.<span class="bu">filter</span>((pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2019</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">3</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"u"</span>) <span class="op">&lt;=</span> <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">6</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(win.with_columns(month<span class="op">=</span>pl.col(<span class="st">"u"</span>).map_elements(as_month, return_dtype<span class="op">=</span>pl.String))</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>         .select(<span class="st">"month"</span>, <span class="st">"n"</span>, <span class="st">"dr"</span>))</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>pre  <span class="op">=</span> orig.<span class="bu">filter</span>((pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2019</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">6</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"u"</span>) <span class="op">&lt;=</span> <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>post <span class="op">=</span> orig.<span class="bu">filter</span>((pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">3</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"u"</span>) <span class="op">&lt;=</span> <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">6</span>))</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> nm, w <span class="kw">in</span> ((<span class="st">"2019-07 to 2020-02"</span>, pre), (<span class="st">"2020-04 to 2020-07"</span>, post)):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>nm<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>w[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> loans, "</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"weighted 12-month default rate </span><span class="sc">{</span>(w[<span class="st">'n'</span>] <span class="op">*</span> w[<span class="st">'dr'</span>])<span class="sc">.</span><span class="bu">sum</span>() <span class="op">/</span> w[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>shape: (16, 3)
+┌─────────┬──────┬──────────┐
+│ month   ┆ n    ┆ dr       │
+│ ---     ┆ ---  ┆ ---      │
+│ str     ┆ u32  ┆ f64      │
+╞═════════╪══════╪══════════╡
+│ 2019-04 ┆ 3645 ┆ 0.299314 │
+│ 2019-05 ┆ 3711 ┆ 0.28941  │
+│ 2019-06 ┆ 3479 ┆ 0.297212 │
+│ 2019-07 ┆ 5781 ┆ 0.356686 │
+│ 2019-08 ┆ 5382 ┆ 0.305834 │
+│ …       ┆ …    ┆ …        │
+│ 2020-03 ┆ 4186 ┆ 0.262303 │
+│ 2020-04 ┆ 1449 ┆ 0.132505 │
+│ 2020-05 ┆ 1292 ┆ 0.119969 │
+│ 2020-06 ┆ 920  ┆ 0.1      │
+│ 2020-07 ┆ 693  ┆ 0.108225 │
+└─────────┴──────┴──────────┘
+2019-07 to 2020-02: 45,975 loans, weighted 12-month default rate 0.2800
+2020-04 to 2020-07: 4,354 loans, weighted 12-month default rate 0.1181</code></pre>
+</div>
+</div>
+<p>Origination collapses from 7,361 loans in October 2019 to 693 in July 2020, a fall of 91 per cent. Across the eight months to February 2020 the platform wrote 45,975 loans that went on to default at 28.00 per cent; across the four months from April 2020 it wrote 4,354 that defaulted at 11.81 per cent. A validation pack reporting the second figure as evidence of a safer book would be reporting a different book.</p>
+</section>
+<section id="relief-and-what-it-does-to-the-flag" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="relief-and-what-it-does-to-the-flag"><span class="header-section-number">6.2</span> Relief, and what it does to the flag</h2>
+<p>The Bondora extract carries the relief directly. <code>Restructured</code> marks loans whose schedule was changed, and <code>ReScheduledOn</code> dates the change.</p>
+<div id="60f233aa" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>resched <span class="op">=</span> (raw.<span class="bu">filter</span>(pl.col(<span class="st">"ReScheduledOn"</span>).is_not_null())</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>              .with_columns(u<span class="op">=</span>month_index(<span class="st">"ReScheduledOn"</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>              .group_by(<span class="st">"u"</span>).agg(n<span class="op">=</span>pl.<span class="bu">len</span>()).sort(<span class="st">"u"</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"restructured at any point: </span><span class="sc">{</span>raw[<span class="st">'Restructured'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> of </span><span class="sc">{</span>raw<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loans "</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(</span><span class="sc">{</span>raw[<span class="st">'Restructured'</span>]<span class="sc">.</span>mean()<span class="sc">:.1%}</span><span class="ss">)"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"loans carrying a rescheduling date: </span><span class="sc">{</span>resched[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss">"</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> resched.<span class="bu">filter</span>((pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2019</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">8</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"u"</span>) <span class="op">&lt;=</span> <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">1</span>))[<span class="st">"n"</span>].mean()</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>apr  <span class="op">=</span> resched.<span class="bu">filter</span>(pl.col(<span class="st">"u"</span>) <span class="op">==</span> <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">3</span>)[<span class="st">"n"</span>][<span class="dv">0</span>]</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"baseline September 2019 to February 2020: </span><span class="sc">{</span>base<span class="sc">:,.0f}</span><span class="ss"> a month"</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"April 2020: </span><span class="sc">{</span>apr<span class="sc">:,}</span><span class="ss">, a factor of </span><span class="sc">{</span>apr <span class="op">/</span> base<span class="sc">:.2f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>restructured at any point: 56,008 of 179,235 loans (31.2%)
+loans carrying a rescheduling date: 63,044
+baseline September 2019 to February 2020: 1,597 a month
+April 2020: 3,076, a factor of 1.93</code></pre>
+</div>
+</div>
+<p>Nearly a third of the book was restructured at some point, and the monthly rescheduling count doubles in April 2020 against its immediately preceding baseline. Consequently the flag that lecture 1 built the outcome on was, for those borrowers, recording an administrative decision as much as a credit event. That is the mechanism the Bank for International Settlements’ Financial Stability Institute described across jurisdictions in May 2020: mass payment deferral broke the mapping between the past-due signal and its usual meaning, so a model reading the signal at face value reads it wrongly.</p>
+</section>
+<section id="the-notch" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="the-notch"><span class="header-section-number">6.3</span> The notch</h2>
+<p>The clearest view of the distortion is the monthly hazard, taken from the survival table rather than the fixed-horizon one, because the hazard is indexed by calendar month and can therefore show a month.</p>
+<div id="a0ec7e2a" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>HORIZON <span class="op">=</span> <span class="dv">60</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>COUNTRIES <span class="op">=</span> [<span class="st">"EE"</span>, <span class="st">"FI"</span>, <span class="st">"ES"</span>]           <span class="co"># R1's restriction: thick monthly risk sets only</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>pp <span class="op">=</span> (surv.<span class="bu">filter</span>(pl.col(<span class="st">"Country"</span>).is_in(COUNTRIES))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>          .with_columns(n_periods<span class="op">=</span>pl.min_horizontal(pl.col(<span class="st">"t_obs_m"</span>), pl.lit(HORIZON)))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>          .with_columns(t<span class="op">=</span>pl.int_ranges(<span class="dv">1</span>, pl.col(<span class="st">"n_periods"</span>) <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>          .explode(<span class="st">"t"</span>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>          .with_columns(</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>              y<span class="op">=</span>((pl.col(<span class="st">"t"</span>) <span class="op">==</span> pl.col(<span class="st">"t_obs_m"</span>))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>                 <span class="op">&amp;</span> (pl.col(<span class="st">"exit_kind"</span>) <span class="op">==</span> <span class="st">"default"</span>)).cast(pl.Int8),</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>              u<span class="op">=</span>month_index(<span class="st">"LoanDate"</span>) <span class="op">+</span> pl.col(<span class="st">"t"</span>)))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>pp<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loan-months, </span><span class="sc">{</span>pp[<span class="st">'y'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> default events"</span>)</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>haz <span class="op">=</span> (pp.group_by(<span class="st">"u"</span>).agg(n<span class="op">=</span>pl.<span class="bu">len</span>(), d<span class="op">=</span>pl.col(<span class="st">"y"</span>).<span class="bu">sum</span>()).sort(<span class="st">"u"</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>         .with_columns(q<span class="op">=</span>pl.col(<span class="st">"d"</span>) <span class="op">/</span> pl.col(<span class="st">"n"</span>))</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>         .<span class="bu">filter</span>(pl.col(<span class="st">"n"</span>) <span class="op">&gt;=</span> <span class="dv">500</span>))</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>show <span class="op">=</span> haz.<span class="bu">filter</span>((pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2019</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">5</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"u"</span>) <span class="op">&lt;=</span> <span class="dv">2021</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">5</span>))</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(show.with_columns(month<span class="op">=</span>pl.col(<span class="st">"u"</span>).map_elements(as_month, return_dtype<span class="op">=</span>pl.String))</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>          .select(<span class="st">"month"</span>, <span class="st">"n"</span>, <span class="st">"q"</span>))</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>normal <span class="op">=</span> haz.<span class="bu">filter</span>((pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2018</span> <span class="op">*</span> <span class="dv">12</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"u"</span>) <span class="op">&lt;=</span> <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">1</span>))</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"mean hazard January 2018 to February 2020: </span><span class="sc">{</span>normal[<span class="st">'q'</span>]<span class="sc">.</span>mean()<span class="sc">:.5f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>2,668,838 loan-months, 70,939 default events
+shape: (25, 3)
+┌─────────┬───────┬──────────┐
+│ month   ┆ n     ┆ q        │
+│ ---     ┆ ---   ┆ ---      │
+│ str     ┆ u32   ┆ f64      │
+╞═════════╪═══════╪══════════╡
+│ 2019-06 ┆ 41801 ┆ 0.025023 │
+│ 2019-07 ┆ 43602 ┆ 0.026834 │
+│ 2019-08 ┆ 47503 ┆ 0.025935 │
+│ 2019-09 ┆ 50892 ┆ 0.026487 │
+│ 2019-10 ┆ 54372 ┆ 0.026962 │
+│ …       ┆ …     ┆ …        │
+│ 2021-02 ┆ 59234 ┆ 0.026674 │
+│ 2021-03 ┆ 59078 ┆ 0.02671  │
+│ 2021-04 ┆ 59123 ┆ 0.020736 │
+│ 2021-05 ┆ 60297 ┆ 0.019487 │
+│ 2021-06 ┆ 62003 ┆ 0.015757 │
+└─────────┴───────┴──────────┘
+mean hazard January 2018 to February 2020: 0.02904</code></pre>
+</div>
+</div>
+<div id="f89eeecb" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>h <span class="op">=</span> haz.<span class="bu">filter</span>(pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2017</span> <span class="op">*</span> <span class="dv">12</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.4</span>))</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>ax.plot(h[<span class="st">"u"</span>], h[<span class="st">"q"</span>], color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.1</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>ax.axvspan(<span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="fl">2.5</span>, <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="fl">4.5</span>, color<span class="op">=</span>OX, alpha<span class="op">=</span><span class="fl">0.18</span>, linewidth<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">2021</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="fl">1.5</span>, color<span class="op">=</span>GREY, lw<span class="op">=</span><span class="dv">1</span>, ls<span class="op">=</span><span class="st">"--"</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="dv">0</span>, <span class="va">None</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"monthly default hazard"</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>ticks <span class="op">=</span> [y <span class="op">*</span> <span class="dv">12</span> <span class="cf">for</span> y <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2017</span>, <span class="dv">2022</span>)]</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(ticks)<span class="op">;</span> ax.set_xticklabels([<span class="bu">str</span>(y) <span class="cf">for</span> y <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">2017</span>, <span class="dv">2022</span>)])</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"relief notch"</span>, (<span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="fl">3.5</span>, <span class="fl">0.013</span>), ha<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span>OX)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"censoring tail"</span>, (<span class="dv">2021</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="fl">3.2</span>, <span class="fl">0.031</span>), ha<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="dv">8</span>, color<span class="op">=</span>GREY)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()<span class="op">;</span> plt.show()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="R3_credit-sampling-and-representativeness_files/figure-html/cell-6-output-1.png" width="1339" height="498" class="figure-img"></p>
+<figcaption>Monthly default hazard on the Estonian, Finnish and Spanish sub-book, restricted to calendar months carrying at least 500 loans at risk. The hazard runs a little under 3 per cent for two years, falls to 1.40 per cent in May 2020 and returns to 3.25 per cent by July. The shaded pair of months is the relief notch that section 7 excludes. The decline from March 2021 is a different artefact, namely the thinning of observed exits as the July 2021 extract date approaches, and it is excluded from both fits rather than treated as economics.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The notch is two months wide. Against a mean of 2.90 per cent over the twenty-six months to February 2020, the hazard reads 3.24 per cent in March 2020, 2.05 in April, 1.40 in May, 2.45 in June and 3.25 in July. May 2020 is 57 per cent below the March reading, and the book is back to normal within eight weeks.</p>
+<p>That shape is worth dwelling on, because it is not the shape the industry assumed. The distortion is sharp, dated and short, and it coincides to the month with the rescheduling spike. An exclusion window of two or three years, which was a common answer, would discard several years of usable experience to remove eight weeks of contamination, and on a book with only one other stress episode that trade is expensive. Lecture R2 declined to exclude the pandemic year for exactly that reason, and this section supplies the evidence R2 asserted.</p>
+</section>
+</section>
+<section id="what-an-exclusion-costs-and-the-table-that-cannot-pay-it" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> What an exclusion costs, and the table that cannot pay it</h1>
+<p>Having dated the distortion, the obvious next step is to drop it and refit. The obvious next step is impossible on the table this series has used since lecture 1, and the impossibility is more instructive than the refit.</p>
+<section id="why-the-fixed-horizon-table-cannot-express-a-calendar-exclusion" class="level2" data-number="7.1">
+<h2 data-number="7.1" class="anchored" data-anchor-id="why-the-fixed-horizon-table-cannot-express-a-calendar-exclusion"><span class="header-section-number">7.1</span> Why the fixed-horizon table cannot express a calendar exclusion</h2>
+<p><code>bondora_pd.parquet</code> carries one row per loan, and the outcome window opens at origination. A loan originated in month <span class="math inline">\(g\)</span> therefore carries performance over <span class="math inline">\([g, g+12]\)</span>. Excluding a distorted calendar window means excluding every loan whose window <em>overlaps</em> it, and the arithmetic of that is brutal.</p>
+<div id="57d8a03f" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>d <span class="op">=</span> dat.sort(<span class="st">"LoanDate"</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>cut <span class="op">=</span> d[<span class="st">"LoanDate"</span>].quantile(<span class="fl">0.8</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>oot <span class="op">=</span> d.<span class="bu">filter</span>(pl.col(<span class="st">"LoanDate"</span>) <span class="op">&gt;=</span> cut)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>oot_lo, oot_hi <span class="op">=</span> oot[<span class="st">"LoanDate"</span>].<span class="bu">min</span>(), oot[<span class="st">"LoanDate"</span>].<span class="bu">max</span>()</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"out-of-time test sample: </span><span class="sc">{</span>oot<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> loans, </span><span class="sc">{</span>oot_lo<span class="sc">}</span><span class="ss"> to </span><span class="sc">{</span>oot_hi<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datetime <span class="im">as</span> dt</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> start <span class="kw">in</span> (dt.date(<span class="dv">2020</span>, <span class="dv">3</span>, <span class="dv">1</span>), dt.date(<span class="dv">2020</span>, <span class="dv">4</span>, <span class="dv">1</span>)):</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    overlap_cut <span class="op">=</span> dt.date(start.year <span class="op">-</span> <span class="dv">1</span>, start.month, start.day)   <span class="co"># g + 12m &gt;= start</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    survivors <span class="op">=</span> oot.<span class="bu">filter</span>(pl.col(<span class="st">"LoanDate"</span>) <span class="op">&lt;</span> overlap_cut).height</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    naive <span class="op">=</span> oot.<span class="bu">filter</span>(pl.col(<span class="st">"LoanDate"</span>) <span class="op">&lt;</span> start)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"distortion from </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss">: overlap-based exclusion drops g &gt;= </span><span class="sc">{</span>overlap_cut<span class="sc">}</span><span class="ss">, "</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"leaving </span><span class="sc">{</span>survivors<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span>oot<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss"> test loans"</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> naive.height:</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>        closes <span class="op">=</span> dt.date(oot_hi.year <span class="op">+</span> <span class="dv">1</span>, oot_hi.month, oot_hi.day)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f"    origination-based exclusion leaves </span><span class="sc">{</span>naive<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss">, whose windows "</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>              <span class="ss">f"close between </span><span class="sc">{</span>start<span class="sc">}</span><span class="ss"> and </span><span class="sc">{</span>closes<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>out-of-time test sample: 29,874 loans, 2019-11-04 to 2020-07-19
+distortion from 2020-03-01: overlap-based exclusion drops g &gt;= 2019-03-01, leaving 0 of 29,874 test loans
+    origination-based exclusion leaves 21,334, whose windows close between 2020-03-01 and 2021-07-19
+distortion from 2020-04-01: overlap-based exclusion drops g &gt;= 2019-04-01, leaving 0 of 29,874 test loans
+    origination-based exclusion leaves 25,520, whose windows close between 2020-04-01 and 2021-07-19</code></pre>
+</div>
+</div>
+<p>The cleaned out-of-time test sample is empty, and the count is exactly zero rather than merely small. Excluding a distortion that begins in March 2020 removes every loan originated from March 2019, whereas the out-of-time window only opens in November 2019, so the entire test sample goes. Excluding on the origination date alone leaves 21,334 loans, and it is a false comfort, because every one of their outcome windows closes inside the pandemic.</p>
+<p>This is the same limitation lecture R2 recorded when it noted that a cohort defined by origination vintage cannot show grade migration. A table indexed by origination can answer questions about vintages and cannot answer questions about calendar months, and a relief window is a question about calendar months.</p>
+</section>
+<section id="the-demonstration-on-the-table-that-can" class="level2" data-number="7.2">
+<h2 data-number="7.2" class="anchored" data-anchor-id="the-demonstration-on-the-table-that-can"><span class="header-section-number">7.2</span> The demonstration, on the table that can</h2>
+<p>R1 rebuilt the book as person-periods indexed by calendar month for exactly this reason. In that layout the risk set is re-formed every month, so a month can simply be dropped, and the loans that lived through it keep the rest of their history.</p>
+<div id="7ed8a735" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>DISTORTED <span class="op">=</span> [<span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">3</span>, <span class="dv">2020</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">4</span>]      <span class="co"># April and May 2020</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>TAIL      <span class="op">=</span> <span class="dv">2021</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">2</span>                        <span class="co"># censoring tail, dropped from both fits</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>BINS      <span class="op">=</span> [<span class="dv">0</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">12</span>, <span class="dv">18</span>, <span class="dv">24</span>, <span class="dv">36</span>, <span class="dv">60</span>]</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>LBL       <span class="op">=</span> [<span class="ss">f"age</span><span class="sc">{</span>lo <span class="op">+</span> <span class="dv">1</span><span class="sc">}</span><span class="ss">_</span><span class="sc">{</span>hi<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> lo, hi <span class="kw">in</span> <span class="bu">zip</span>(BINS[:<span class="op">-</span><span class="dv">1</span>], BINS[<span class="dv">1</span>:])]</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>panel <span class="op">=</span> pp.<span class="bu">filter</span>(pl.col(<span class="st">"u"</span>) <span class="op">&lt;</span> TAIL)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>dropped <span class="op">=</span> panel.<span class="bu">filter</span>(pl.col(<span class="st">"u"</span>).is_in(DISTORTED)).height</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"loan-months in scope </span><span class="sc">{</span>panel<span class="sc">.</span>height<span class="sc">:,}</span><span class="ss">; "</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"dropping April and May 2020 removes </span><span class="sc">{</span>dropped<span class="sc">:,}</span><span class="ss"> (</span><span class="sc">{</span>dropped <span class="op">/</span> panel<span class="sc">.</span>height<span class="sc">:.2%}</span><span class="ss">)"</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cells(df):</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (df.group_by([<span class="st">"t"</span>, <span class="st">"Country"</span>, <span class="st">"Rating"</span>])</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>              .agg(n<span class="op">=</span>pl.<span class="bu">len</span>(), d<span class="op">=</span>pl.col(<span class="st">"y"</span>).<span class="bu">sum</span>())</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>              .sort([<span class="st">"t"</span>, <span class="st">"Country"</span>, <span class="st">"Rating"</span>]).to_pandas())</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> design(c, columns<span class="op">=</span><span class="va">None</span>):</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    age <span class="op">=</span> pd.cut(c[<span class="st">"t"</span>], BINS, labels<span class="op">=</span>LBL)</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> pd.get_dummies(pd.DataFrame({<span class="st">"Country"</span>: c[<span class="st">"Country"</span>], <span class="st">"Rating"</span>: c[<span class="st">"Rating"</span>],</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>                                     <span class="st">"age"</span>: age}), drop_first<span class="op">=</span><span class="va">True</span>).astype(<span class="bu">float</span>)</span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>    X <span class="op">=</span> sm.add_constant(X, has_constant<span class="op">=</span><span class="st">"add"</span>)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> X <span class="cf">if</span> columns <span class="kw">is</span> <span class="va">None</span> <span class="cf">else</span> X.reindex(columns<span class="op">=</span>columns, fill_value<span class="op">=</span><span class="fl">0.0</span>)</span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>c_full  <span class="op">=</span> cells(panel)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>c_clean <span class="op">=</span> cells(panel.<span class="bu">filter</span>(<span class="op">~</span>pl.col(<span class="st">"u"</span>).is_in(DISTORTED)))</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>X_full  <span class="op">=</span> design(c_full)</span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>X_clean <span class="op">=</span> design(c_clean, X_full.columns)</span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> glm(c, X):</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> sm.GLM(np.c_[c[<span class="st">"d"</span>], c[<span class="st">"n"</span>] <span class="op">-</span> c[<span class="st">"d"</span>]], X,</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>                  family<span class="op">=</span>sm.families.Binomial()).fit()</span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>m_full, m_clean <span class="op">=</span> glm(c_full, X_full), glm(c_clean, X_clean)</span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"fitted on </span><span class="sc">{</span><span class="bu">len</span>(c_full)<span class="sc">:,}</span><span class="ss"> and </span><span class="sc">{</span><span class="bu">len</span>(c_clean)<span class="sc">:,}</span><span class="ss"> cells"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>loan-months in scope 2,322,666; dropping April and May 2020 removes 138,264 (5.95%)
+fitted on 1,382 and 1,381 cells</code></pre>
+</div>
+</div>
+<p>Both fits share one specification, namely a baseline hazard in loan-age bands plus country and credit rating. Only the months in the risk set differ, so any movement between them is attributable to the exclusion alone. The quantity to compare is the object a lender actually uses, which is the twelve-month cumulative probability of default implied by the fitted hazards.</p>
+<div id="81c9368a" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>REF_RATING <span class="op">=</span> c_full.groupby(<span class="st">"Rating"</span>)[<span class="st">"n"</span>].<span class="bu">sum</span>().idxmax()</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> term_structure(model):</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Twelve monthly hazards and the cumulative PD for the reference profile."""</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> []</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, <span class="dv">13</span>):</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        row <span class="op">=</span> pd.Series(<span class="fl">0.0</span>, index<span class="op">=</span>X_full.columns)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        row[<span class="st">"const"</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="ss">f"Rating_</span><span class="sc">{</span>REF_RATING<span class="sc">}</span><span class="ss">"</span> <span class="kw">in</span> row.index:</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>            row[<span class="ss">f"Rating_</span><span class="sc">{</span>REF_RATING<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> lo, hi, nm <span class="kw">in</span> <span class="bu">zip</span>(BINS[:<span class="op">-</span><span class="dv">1</span>], BINS[<span class="dv">1</span>:], LBL):</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> <span class="ss">f"age_</span><span class="sc">{</span>nm<span class="sc">}</span><span class="ss">"</span> <span class="kw">in</span> row.index <span class="kw">and</span> lo <span class="op">&lt;</span> t <span class="op">&lt;=</span> hi:</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>                row[<span class="ss">f"age_</span><span class="sc">{</span>nm<span class="sc">}</span><span class="ss">"</span>] <span class="op">=</span> <span class="fl">1.0</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        q.append(<span class="bu">float</span>(model.predict(pd.DataFrame([row]))[<span class="dv">0</span>]))</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> np.array(q)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> q, <span class="dv">1</span> <span class="op">-</span> np.prod(<span class="dv">1</span> <span class="op">-</span> q)</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>q_full,  pd_full  <span class="op">=</span> term_structure(m_full)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>q_clean, pd_clean <span class="op">=</span> term_structure(m_clean)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"reference profile: Estonia, rating </span><span class="sc">{</span>REF_RATING<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"12-month PD, distorted months retained : </span><span class="sc">{</span>pd_full<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"12-month PD, distorted months excluded : </span><span class="sc">{</span>pd_clean<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"difference </span><span class="sc">{</span>pd_clean <span class="op">-</span> pd_full<span class="sc">:+.4f}</span><span class="ss">, "</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>(pd_clean <span class="op">/</span> pd_full <span class="op">-</span> <span class="dv">1</span>) <span class="op">*</span> <span class="dv">100</span><span class="sc">:+.2f}</span><span class="ss"> per cent relative"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>reference profile: Estonia, rating C
+12-month PD, distorted months retained : 0.1820
+12-month PD, distorted months excluded : 0.1863
+difference +0.0043, +2.37 per cent relative</code></pre>
+</div>
+</div>
+<p>Excluding 5.95 per cent of the loan-months raises the estimated twelve-month probability of default from 18.20 to 18.63 per cent, a relative increase of 2.37 per cent. The direction is the one a supervisor cares about: retaining the relief window <strong>understates</strong> risk, because relief suppressed defaults that the borrower’s circumstances would otherwise have produced.</p>
+<p>The magnitude deserves an honest reading in both directions. On the one hand 2.37 per cent of a probability of default is not nothing, and it flows straight through to a capital number by lecture R2’s machinery. On the other hand it is a good deal smaller than the rhetoric around pandemic exclusions implied, and it was bought by dropping two months rather than two years. A firm that excluded 2020 through 2022 wholesale paid several years of cycle coverage for a correction of this size, and lecture R2 already showed that cycle coverage is the scarcer commodity on this book.</p>
+</section>
+</section>
+<section id="is-the-held-out-sample-representative" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> Is the held-out sample representative?</h1>
+<p>An out-of-time partition is a claim as well as a test. The claim is that the held-out period stands in for the business the model will actually meet, and Article 174(c) asks the firm to show it. This section runs the standard battery on the split the series has been using since lecture 2, and the battery finds three things, only one of which anybody was looking for.</p>
+<section id="the-population-stability-index-and-its-two-failure-modes" class="level2" data-number="8.1">
+<h2 data-number="8.1" class="anchored" data-anchor-id="the-population-stability-index-and-its-two-failure-modes"><span class="header-section-number">8.1</span> The population stability index, and its two failure modes</h2>
+<p>For a covariate binned into levels with development shares <span class="math inline">\(p_\ell\)</span> and application shares <span class="math inline">\(q_\ell\)</span>, the index is</p>
+<p><span class="math display">\[
+\mathrm{PSI} = \sum_{\ell} (q_\ell - p_\ell) \log \frac{q_\ell}{p_\ell},
+\]</span></p>
+<p>which is the symmetric, or Jeffreys, form of the Kullback-Leibler divergence. The chi-square statistic on the same table asks a different question, namely whether the difference is larger than sampling noise, and on samples of this size it answers yes to almost everything.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="The thresholds are contested, so quote both">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>The thresholds are contested, so quote both
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The bands usually given are 0.10 and 0.25, and they are not settled. The widely cited industry rule from Bhalla (2015) puts the upper band at 0.20, whereas Du Pisanie, Allison and Visagie (2022) derive 0.10 and 0.25 from a simulation harness for significance testing. The higher bound has the better statistical argument and the weaker claim to standard practice, and a model governance file should record which convention it uses rather than presenting either as received.</p>
+<p>The second failure mode is structural. Where a level is present in one sample and absent from the other, <span class="math inline">\(\log(q_\ell / p_\ell)\)</span> diverges and the index is undefined. Implementations routinely floor the share at some small <span class="math inline">\(\varepsilon\)</span>, which returns a large finite number that is a property of <span class="math inline">\(\varepsilon\)</span> rather than of the data. Any such variable should be reported as an emptied level and read qualitatively.</p>
+</div>
+</div>
+<div id="58f07ba1" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>CAT <span class="op">=</span> [<span class="st">"Rating"</span>, <span class="st">"Country"</span>, <span class="st">"Education"</span>, <span class="st">"HomeOwnershipType"</span>,</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>       <span class="st">"NewCreditCustomer"</span>, <span class="st">"VerificationType"</span>]</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>NUM <span class="op">=</span> {<span class="st">"Age"</span>:          [<span class="dv">17</span>, <span class="dv">25</span>, <span class="dv">35</span>, <span class="dv">45</span>, <span class="dv">55</span>, <span class="dv">100</span>],</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>       <span class="st">"IncomeTotal"</span>:  [<span class="op">-</span><span class="dv">1</span>, <span class="dv">500</span>, <span class="dv">1000</span>, <span class="dv">1500</span>, <span class="dv">2500</span>, <span class="fl">1e12</span>],</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>       <span class="st">"LoanDuration"</span>: [<span class="dv">0</span>, <span class="dv">12</span>, <span class="dv">24</span>, <span class="dv">36</span>, <span class="dv">48</span>, <span class="dv">120</span>],</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>       <span class="st">"Amount"</span>:       [<span class="op">-</span><span class="dv">1</span>, <span class="dv">500</span>, <span class="dv">1500</span>, <span class="dv">3000</span>, <span class="dv">6000</span>, <span class="fl">1e9</span>]}</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>dev_pd <span class="op">=</span> d.<span class="bu">filter</span>(pl.col(<span class="st">"LoanDate"</span>) <span class="op">&lt;</span>  cut).to_pandas()</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>oot_pd <span class="op">=</span> d.<span class="bu">filter</span>(pl.col(<span class="st">"LoanDate"</span>) <span class="op">&gt;=</span> cut).to_pandas()</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"development </span><span class="sc">{</span><span class="bu">len</span>(dev_pd)<span class="sc">:,}</span><span class="ss">, out-of-time </span><span class="sc">{</span><span class="bu">len</span>(oot_pd)<span class="sc">:,}</span><span class="ss">, cut </span><span class="sc">{</span>cut<span class="sc">.</span>date()<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> as_levels(s):</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> s.astype(<span class="st">"Int64"</span>).astype(<span class="bu">str</span>) <span class="cf">if</span> pd.api.types.is_numeric_dtype(s) <span class="cf">else</span> s.astype(<span class="bu">str</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> psi_chi(a, b):</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""PSI, chi-square, and the levels absent from one side."""</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    pa, pb <span class="op">=</span> a.value_counts(normalize<span class="op">=</span><span class="va">True</span>), b.value_counts(normalize<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>    lv <span class="op">=</span> <span class="bu">sorted</span>(<span class="bu">set</span>(pa.index) <span class="op">|</span> <span class="bu">set</span>(pb.index))</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> np.array([pa.get(k, <span class="fl">0.0</span>) <span class="cf">for</span> k <span class="kw">in</span> lv])</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> np.array([pb.get(k, <span class="fl">0.0</span>) <span class="cf">for</span> k <span class="kw">in</span> lv])</span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>    absent <span class="op">=</span> [lv[i] <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(lv)) <span class="cf">if</span> p[i] <span class="op">==</span> <span class="dv">0</span> <span class="kw">or</span> q[i] <span class="op">==</span> <span class="dv">0</span>]</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>    eps <span class="op">=</span> <span class="fl">1e-6</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>    pc, qc <span class="op">=</span> np.clip(p, eps, <span class="va">None</span>), np.clip(q, eps, <span class="va">None</span>)</span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    psi <span class="op">=</span> <span class="bu">float</span>(((qc <span class="op">-</span> pc) <span class="op">*</span> np.log(qc <span class="op">/</span> pc)).<span class="bu">sum</span>())</span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>    expected <span class="op">=</span> pc <span class="op">*</span> <span class="bu">len</span>(b)</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>    observed <span class="op">=</span> np.array([(b <span class="op">==</span> k).<span class="bu">sum</span>() <span class="cf">for</span> k <span class="kw">in</span> lv], <span class="bu">float</span>)</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>    chi <span class="op">=</span> <span class="bu">float</span>(((observed <span class="op">-</span> expected) <span class="op">**</span> <span class="dv">2</span> <span class="op">/</span> expected).<span class="bu">sum</span>())</span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> psi, chi, <span class="bu">len</span>(lv) <span class="op">-</span> <span class="dv">1</span>, absent</span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> [(v,) <span class="op">+</span> psi_chi(as_levels(dev_pd[v]), as_levels(oot_pd[v])) <span class="cf">for</span> v <span class="kw">in</span> CAT]</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>rows <span class="op">+=</span> [(v,) <span class="op">+</span> psi_chi(pd.cut(dev_pd[v], e, include_lowest<span class="op">=</span><span class="va">True</span>).astype(<span class="bu">str</span>),</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>                        pd.cut(oot_pd[v], e, include_lowest<span class="op">=</span><span class="va">True</span>).astype(<span class="bu">str</span>))</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>         <span class="cf">for</span> v, e <span class="kw">in</span> NUM.items()]</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="ch">\n</span><span class="sc">{</span><span class="st">'variable'</span><span class="sc">:&lt;20}{</span><span class="st">'PSI'</span><span class="sc">:&gt;9}{</span><span class="st">'chi2'</span><span class="sc">:&gt;11}{</span><span class="st">'dof'</span><span class="sc">:&gt;5}</span><span class="ss">   reading"</span>)</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> v, psi, chi, dof, absent <span class="kw">in</span> <span class="bu">sorted</span>(rows, key<span class="op">=</span><span class="kw">lambda</span> r: <span class="op">-</span>r[<span class="dv">1</span>]):</span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>    reading <span class="op">=</span> (<span class="ss">f"undefined, levels absent: </span><span class="sc">{</span>absent<span class="sc">}</span><span class="ss">"</span> <span class="cf">if</span> absent <span class="cf">else</span></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>               <span class="st">"material"</span> <span class="cf">if</span> psi <span class="op">&gt;=</span> <span class="fl">0.25</span> <span class="cf">else</span></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>               <span class="st">"investigate"</span> <span class="cf">if</span> psi <span class="op">&gt;=</span> <span class="fl">0.10</span> <span class="cf">else</span> <span class="st">"stable"</span>)</span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>v<span class="sc">:&lt;20}{</span>psi<span class="sc">:9.4f}{</span>chi<span class="sc">:11.1f}{</span>dof<span class="sc">:5d}</span><span class="ss">   </span><span class="sc">{</span>reading<span class="sc">}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>development 118,859, out-of-time 29,874, cut 2019-11-04
+
+variable                  PSI       chi2  dof   reading
+VerificationType       1.2616     9317.4    4   undefined, levels absent: ['0', '2', '3']
+HomeOwnershipType      0.4547     4799.8   11   undefined, levels absent: ['-1', '0']
+Rating                 0.3521    11115.0    7   material
+Education              0.2699     4246.7    6   undefined, levels absent: ['-1', '0']
+Amount                 0.1153     3596.3    4   investigate
+LoanDuration           0.0561     1346.7    4   stable
+Country                0.0227      174.6    3   undefined, levels absent: ['SK']
+IncomeTotal            0.0151      460.7    4   stable
+Age                    0.0027       81.6    4   stable
+NewCreditCustomer      0.0024       72.3    1   stable</code></pre>
+</div>
+</div>
+<p>Four of the ten covariates have an emptied level, so four of the ten indices are artefacts of the epsilon floor rather than measurements. Of the six that are readable, <code>Rating</code> at 0.3521 is material on either convention, <code>Amount</code> at 0.1153 sits in the investigate band, and the remaining four are stable, with <code>Age</code> at 0.0027 and <code>NewCreditCustomer</code> at 0.0024 essentially identical across the two samples.</p>
+<p>Note what has happened to <code>VerificationType</code>, which is a covariate in the generalised linear model of lecture 2 and in every network fitted since. The development sample carries levels 0 through 4 and the out-of-time sample carries only 1 and 4. The model therefore holds coefficients for three levels that the application window never presents, which is a milder problem than the reverse and still a fact a validator would want stated.</p>
+</section>
+<section id="the-diagnostic-finds-a-data-break-before-it-finds-any-drift" class="level2" data-number="8.2">
+<h2 data-number="8.2" class="anchored" data-anchor-id="the-diagnostic-finds-a-data-break-before-it-finds-any-drift"><span class="header-section-number">8.2</span> The diagnostic finds a data break before it finds any drift</h2>
+<p>Two Bondora fields behave in a way that no drift statistic should be asked to summarise.</p>
+<div id="3ca5dec0" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>breaks <span class="op">=</span> (dat.with_columns(u<span class="op">=</span>month_index(<span class="st">"LoanDate"</span>))</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>             .group_by(<span class="st">"u"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>             .agg(n<span class="op">=</span>pl.<span class="bu">len</span>(),</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>                  dti_zero<span class="op">=</span>(pl.col(<span class="st">"DebtToIncome"</span>) <span class="op">==</span> <span class="dv">0</span>).mean(),</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>                  use_missing<span class="op">=</span>(pl.col(<span class="st">"UseOfLoan"</span>) <span class="op">==</span> <span class="op">-</span><span class="dv">1</span>).mean())</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>             .sort(<span class="st">"u"</span>))</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>prev <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> r <span class="kw">in</span> breaks.iter_rows(named<span class="op">=</span><span class="va">True</span>):</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> prev <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:                      <span class="co"># report the death only, not the birth</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> prev[<span class="st">"dti_zero"</span>] <span class="op">&lt;</span> <span class="fl">0.99</span> <span class="op">&lt;=</span> r[<span class="st">"dti_zero"</span>]:</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"DebtToIncome becomes uniformly zero from </span><span class="sc">{</span>as_month(r[<span class="st">'u'</span>])<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> prev[<span class="st">"use_missing"</span>] <span class="op">&lt;</span> <span class="fl">0.99</span> <span class="op">&lt;=</span> r[<span class="st">"use_missing"</span>]:</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f"UseOfLoan becomes uniformly -1 from </span><span class="sc">{</span>as_month(r[<span class="st">'u'</span>])<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    prev <span class="op">=</span> r</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>tail <span class="op">=</span> breaks.<span class="bu">filter</span>(pl.col(<span class="st">"u"</span>) <span class="op">&gt;=</span> <span class="dv">2017</span> <span class="op">*</span> <span class="dv">12</span> <span class="op">+</span> <span class="dv">6</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"from July 2017 onward: </span><span class="sc">{</span>tail[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:,}</span><span class="ss"> loans, "</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"DebtToIncome zero in </span><span class="sc">{</span>(tail[<span class="st">'n'</span>] <span class="op">*</span> tail[<span class="st">'dti_zero'</span>])<span class="sc">.</span><span class="bu">sum</span>() <span class="op">/</span> tail[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1%}</span><span class="ss">, "</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"UseOfLoan missing in </span><span class="sc">{</span>(tail[<span class="st">'n'</span>] <span class="op">*</span> tail[<span class="st">'use_missing'</span>])<span class="sc">.</span><span class="bu">sum</span>() <span class="op">/</span> tail[<span class="st">'n'</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1%}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>DebtToIncome becomes uniformly zero from 2017-07
+UseOfLoan becomes uniformly -1 from 2017-07
+from July 2017 onward: 110,816 loans, DebtToIncome zero in 100.0%, UseOfLoan missing in 100.0%</code></pre>
+</div>
+</div>
+<p>From July 2017 the platform stops populating <code>DebtToIncome</code> and <code>UseOfLoan</code> entirely. Every loan from that month onward carries a debt-to-income ratio of exactly zero and a loan purpose of <span class="math inline">\(-1\)</span>, and both persist to the end of the extract. Consequently the development sample is itself two populations spliced together, and the splice predates the out-of-time cutoff by more than two years. That is a data-collection break rather than a population shift, and the third eligibility rule in section 5 exists precisely for it.</p>
+<p>The series escaped consequences by luck. Neither field appears in any fitted model: lecture 1 lists <code>DebtToIncome</code> in its data dictionary and no lecture uses it as a covariate. Had lecture 2 included it in GLM3, the coefficient would have been estimated on pre-2017 loans alone and then applied to a test sample in which the variable is a constant, and no in-sample diagnostic would have shown anything wrong. A representativeness sweep is the cheapest place to catch this, and the series had never run one.</p>
+</section>
+<section id="the-joint-distribution-which-the-marginals-miss" class="level2" data-number="8.3">
+<h2 data-number="8.3" class="anchored" data-anchor-id="the-joint-distribution-which-the-marginals-miss"><span class="header-section-number">8.3</span> The joint distribution, which the marginals miss</h2>
+<p>Marginal indices test one covariate at a time. A shift in which each margin looks stable while the dependence between covariates has moved will pass every one of them. The classifier two-sample test asks the question directly: pool the two samples, label each row by which sample it came from, and train a classifier to tell them apart. Where the samples are exchangeable the classifier cannot beat chance and its area under the curve tends to 0.5.</p>
+<div id="a1f24481" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.ensemble <span class="im">import</span> HistGradientBoostingClassifier</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.model_selection <span class="im">import</span> cross_val_predict, StratifiedKFold</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.inspection <span class="im">import</span> permutation_importance</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>C2 <span class="op">=</span> pd.concat([dev_pd, oot_pd])[CAT <span class="op">+</span> <span class="bu">list</span>(NUM)].copy()</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> CAT:</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    C2[c] <span class="op">=</span> as_levels(C2[c]).astype(<span class="st">"category"</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>origin <span class="op">=</span> np.r_[np.zeros(<span class="bu">len</span>(dev_pd)), np.ones(<span class="bu">len</span>(oot_pd))]</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>clf <span class="op">=</span> HistGradientBoostingClassifier(categorical_features<span class="op">=</span>CAT, max_iter<span class="op">=</span><span class="dv">120</span>, random_state<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>oof <span class="op">=</span> cross_val_predict(clf, C2, origin, method<span class="op">=</span><span class="st">"predict_proba"</span>,</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>                        cv<span class="op">=</span>StratifiedKFold(<span class="dv">5</span>, shuffle<span class="op">=</span><span class="va">True</span>, random_state<span class="op">=</span><span class="dv">1</span>))[:, <span class="dv">1</span>]</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"C2ST cross-validated AUC = </span><span class="sc">{</span>roc_auc_score(origin, oof)<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"(0.5 would mean the two samples are indistinguishable)"</span>)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>clf.fit(C2, origin)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>imp <span class="op">=</span> permutation_importance(clf, C2, origin, n_repeats<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>                             random_state<span class="op">=</span><span class="dv">1</span>, scoring<span class="op">=</span><span class="st">"roc_auc"</span>)</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">drop in AUC when each covariate is permuted:"</span>)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> np.argsort(<span class="op">-</span>imp.importances_mean):</span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"   </span><span class="sc">{</span>C2<span class="sc">.</span>columns[i]<span class="sc">:&lt;20}{</span>imp<span class="sc">.</span>importances_mean[i]<span class="sc">:+.4f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>C2ST cross-validated AUC = 0.9595   (0.5 would mean the two samples are indistinguishable)
+
+drop in AUC when each covariate is permuted:
+   Amount              +0.2417
+   Rating              +0.1081
+   VerificationType    +0.0694
+   Country             +0.0344
+   HomeOwnershipType   +0.0246
+   NewCreditCustomer   +0.0123
+   Education           +0.0120
+   LoanDuration        +0.0021
+   IncomeTotal         +0.0021
+   Age                 +0.0020</code></pre>
+</div>
+</div>
+<p>The classifier separates the development sample from the out-of-time sample at an area under the curve of 0.9595. Given a loan and its ten covariates, a model can say which side of November 2019 it was written on almost every time.</p>
+<p>Set that against the marginal table. Six of the ten covariates are readable there and four of those six are stable, with three sitting below a population stability index of 0.03. The two readings are not in conflict, and the resolution is the point of the exercise: the margins have moved modestly while the joint distribution has moved enormously, and only the second is visible to a test that looks at the covariates together.</p>
+<p>The importance ranking sharpens it further. <code>Amount</code> is by a wide margin the strongest separator, costing 0.24 of area under the curve when permuted, yet its population stability index is 0.1153, which the conventional bands classify as worth investigating rather than material. The marginal index and the joint test disagree about which variable matters most, and on this book the joint test is the one telling the truth.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="What the classifier test is, and is not">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What the classifier test is, and is not
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The test is a complement to the stability index and not a replacement for it. The index monitors one covariate through time, which is what a monitoring pack needs, and it has threshold conventions a supervisor recognises. The classifier answers a single yes-or-no question about the joint distribution and locates the drivers, which is what a development sample needs before anyone fits anything.</p>
+<p>Two cautions. A high area under the curve says the samples differ and says nothing about whether the difference harms the model, so pair it with an impact analysis rather than reading it as a verdict. And the method reaches this series from an industry presentation rather than a peer-reviewed source, so the finding above stands on the computation shown here rather than on the authority of the reference.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="class-imbalance" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> Class imbalance</h1>
+<p>Lecture 1 recorded that Bondora defaults at 28.95 per cent, observed that rarity is a property of the portfolio rather than of credit risk, and promised that imbalance would return with force once the credit card portfolio took the stage. Lecture 3 put that portfolio on the stage and named its 1.42 per cent bad rate without treating it. Here is the debt.</p>
+<p>One guard before starting. The card file carries no origination date, so everything in this section is a statement about imbalance alone. Consequently the vintage argument of sections 6 and 7 does not transfer, and neither does the out-of-time reasoning that rests on it.</p>
+<div id="790801f7" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.linear_model <span class="im">import</span> LogisticRegression</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> sklearn.metrics <span class="im">import</span> roc_auc_score, average_precision_score</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>rng <span class="op">=</span> np.random.default_rng(<span class="dv">1</span>)</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>card <span class="op">=</span> pl.read_parquet(<span class="st">"../data/credit_card_dev.parquet"</span>)</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> card[<span class="st">"bad_flag"</span>].to_numpy().astype(<span class="bu">float</span>)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>feat <span class="op">=</span> [c <span class="cf">for</span> c, t <span class="kw">in</span> <span class="bu">zip</span>(card.columns, card.dtypes)</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> t <span class="op">!=</span> pl.String <span class="kw">and</span> c <span class="kw">not</span> <span class="kw">in</span> (<span class="st">"account_number"</span>, <span class="st">"bad_flag"</span>)]</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>Xc <span class="op">=</span> card.select(feat).to_numpy().astype(np.float32)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="bu">len</span>(y)<span class="sc">:,}</span><span class="ss"> accounts, </span><span class="sc">{</span><span class="bu">len</span>(feat)<span class="sc">:,}</span><span class="ss"> numeric covariates, bad rate </span><span class="sc">{</span>y<span class="sc">.</span>mean()<span class="sc">:.4%}</span><span class="ss">"</span>)</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Bondora, for contrast: </span><span class="sc">{</span>dat[<span class="st">'default_12m'</span>]<span class="sc">.</span>mean()<span class="sc">:.4%}</span><span class="ss">"</span>)</span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>perm <span class="op">=</span> rng.permutation(<span class="bu">len</span>(Xc))</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>n_learn <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.8</span> <span class="op">*</span> <span class="bu">len</span>(Xc))</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>learn, test <span class="op">=</span> perm[:n_learn], perm[n_learn:]</span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>med <span class="op">=</span> np.nan_to_num(np.nanmedian(Xc[learn], axis<span class="op">=</span><span class="dv">0</span>))</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>Xc <span class="op">=</span> np.where(np.isnan(Xc), med, Xc)</span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>mu, sd <span class="op">=</span> Xc[learn].mean(<span class="dv">0</span>), Xc[learn].std(<span class="dv">0</span>)</span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>keep <span class="op">=</span> sd <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>Xc <span class="op">=</span> np.clip((Xc[:, keep] <span class="op">-</span> mu[keep]) <span class="op">/</span> sd[keep], <span class="op">-</span><span class="dv">10</span>, <span class="dv">10</span>)</span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>corr <span class="op">=</span> np.<span class="bu">abs</span>(np.corrcoef(np.c_[Xc[learn], y[learn]], rowvar<span class="op">=</span><span class="va">False</span>)[<span class="op">-</span><span class="dv">1</span>, :<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a>sel <span class="op">=</span> np.argsort(<span class="op">-</span>np.nan_to_num(corr))[:<span class="dv">40</span>]          <span class="co"># ranked on the learning sample alone</span></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>Xt, Xs, yt, ys <span class="op">=</span> Xc[learn][:, sel], Xc[test][:, sel], y[learn], y[test]</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"learn </span><span class="sc">{</span><span class="bu">len</span>(yt)<span class="sc">:,}</span><span class="ss"> (</span><span class="sc">{</span>yt<span class="sc">.</span>mean()<span class="sc">:.4%}</span><span class="ss"> bad), test </span><span class="sc">{</span><span class="bu">len</span>(ys)<span class="sc">:,}</span><span class="ss"> (</span><span class="sc">{</span>ys<span class="sc">.</span>mean()<span class="sc">:.4%}</span><span class="ss"> bad)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>96,806 accounts, 1,212 numeric covariates, bad rate 1.4173%
+Bondora, for contrast: 28.9492%
+learn 77,444 (1.4372% bad), test 19,362 (1.3377% bad)</code></pre>
+</div>
+</div>
+<p>Three fits follow, all on the same forty covariates: one with no correction, one on a one-to-one random undersample of the majority class, and one on a one-to-one random oversample of the minority.</p>
+<div id="b83b7a9f" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> assess(name, model, offset<span class="op">=</span><span class="fl">0.0</span>):</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    lp <span class="op">=</span> model.decision_function(Xs) <span class="op">+</span> offset</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    p <span class="op">=</span> <span class="dv">1</span> <span class="op">/</span> (<span class="dv">1</span> <span class="op">+</span> np.exp(<span class="op">-</span>lp))</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>name<span class="sc">:&lt;26}</span><span class="ss"> AUC </span><span class="sc">{</span>roc_auc_score(ys, p)<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"PR-AUC </span><span class="sc">{</span>average_precision_score(ys, p)<span class="sc">:.4f}</span><span class="ss">   "</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"mean predicted </span><span class="sc">{</span>p<span class="sc">.</span>mean()<span class="sc">:.4%}</span><span class="ss">   observed </span><span class="sc">{</span>ys<span class="sc">.</span>mean()<span class="sc">:.4%}</span><span class="ss">   "</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"ratio </span><span class="sc">{</span>p<span class="sc">.</span>mean() <span class="op">/</span> ys<span class="sc">.</span>mean()<span class="sc">:.2f}</span><span class="ss">"</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> LogisticRegression(max_iter<span class="op">=</span><span class="dv">2000</span>).fit(Xt, yt)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>assess(<span class="st">"no correction"</span>, base)</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>bad <span class="op">=</span> np.where(yt <span class="op">==</span> <span class="dv">1</span>)[<span class="dv">0</span>]</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>good <span class="op">=</span> np.where(yt <span class="op">==</span> <span class="dv">0</span>)[<span class="dv">0</span>]</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>under <span class="op">=</span> np.r_[rng.choice(good, size<span class="op">=</span><span class="bu">len</span>(bad), replace<span class="op">=</span><span class="va">False</span>), bad]</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>m_under <span class="op">=</span> LogisticRegression(max_iter<span class="op">=</span><span class="dv">2000</span>).fit(Xt[under], yt[under])</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>assess(<span class="st">"undersampled to 1:1"</span>, m_under)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>over <span class="op">=</span> np.r_[good, rng.choice(bad, size<span class="op">=</span><span class="bu">len</span>(good), replace<span class="op">=</span><span class="va">True</span>)]</span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>m_over <span class="op">=</span> LogisticRegression(max_iter<span class="op">=</span><span class="dv">2000</span>).fit(Xt[over], yt[over])</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>assess(<span class="st">"oversampled to 1:1"</span>, m_over)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>no correction              AUC 0.7945   PR-AUC 0.0563   mean predicted 1.4333%   observed 1.3377%   ratio 1.07
+undersampled to 1:1        AUC 0.7891   PR-AUC 0.0509   mean predicted 38.2375%   observed 1.3377%   ratio 28.59
+oversampled to 1:1         AUC 0.7932   PR-AUC 0.0531   mean predicted 38.1703%   observed 1.3377%   ratio 28.53</code></pre>
+</div>
+</div>
+<p>The uncorrected fit is well calibrated, predicting 1.43 per cent against an observed 1.34 per cent. Both corrected fits predict roughly 38 per cent on a book that defaults at 1.34, which is an overstatement by a factor of about 28. Neither buys any discrimination: the area under the curve is 0.7945 uncorrected, 0.7891 undersampled and 0.7932 oversampled, so the corrections range from neutral to mildly harmful. The precision-recall area moves the same way, from 0.0563 down to 0.0509.</p>
+<p>That is exactly the result van den Goorbergh, van Smeden, Timmerman and Van Calster reported in 2022 across simulations and a clinical case study. Their abstract puts it plainly: all correction methods “led to poor calibration (strong overestimation of the probability to belong to the minority class), but not to better discrimination”, and their conclusion is that “outcome imbalance is not a problem in itself, and that imbalance correction may even worsen model performance”.</p>
+<section id="the-balance-property-survives-on-a-measure-nobody-wanted" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="the-balance-property-survives-on-a-measure-nobody-wanted"><span class="header-section-number">9.1</span> The balance property survives, on a measure nobody wanted</h2>
+<p>Lecture 7 owns the balance property, so this section states it exactly rather than loosely. The property is an identity of the fitted model on its own fitting sample, and a resampled or weighted fit satisfies it there in full.</p>
+<div id="b41f8868" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> nm, model, idx <span class="kw">in</span> ((<span class="st">"uncorrected"</span>, base, np.arange(<span class="bu">len</span>(yt))),</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                       (<span class="st">"undersampled"</span>, m_under, under)):</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    fitted <span class="op">=</span> model.predict_proba(Xt[idx])[:, <span class="dv">1</span>]</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>nm<span class="sc">:&lt;13}</span><span class="ss"> on its own fitting sample: "</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"observed </span><span class="sc">{</span>yt[idx]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.0f}</span><span class="ss"> bads, fitted </span><span class="sc">{</span>fitted<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.1f}</span><span class="ss">"</span>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"</span><span class="ch">\n</span><span class="st">on the portfolio learning sample:"</span>)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   observed                </span><span class="sc">{</span>yt<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.0f}</span><span class="ss"> bads"</span>)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   uncorrected model       </span><span class="sc">{</span>base<span class="sc">.</span>predict_proba(Xt)[:, <span class="dv">1</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.0f}</span><span class="ss">"</span>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"   undersampled model      </span><span class="sc">{</span>m_under<span class="sc">.</span>predict_proba(Xt)[:, <span class="dv">1</span>]<span class="sc">.</span><span class="bu">sum</span>()<span class="sc">:.0f}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>uncorrected   on its own fitting sample: observed 1113 bads, fitted 1108.8
+undersampled  on its own fitting sample: observed 1113 bads, fitted 1112.8
+
+on the portfolio learning sample:
+   observed                1113 bads
+   uncorrected model       1109
+   undersampled model      29733</code></pre>
+</div>
+</div>
+<p>Each model reproduces the observed count on the sample it was fitted to, to within rounding. Applied to the portfolio, the undersampled model predicts 29,733 defaults where 1,113 occurred. The identity held throughout, and the measure it held on stopped being the portfolio the moment the majority class was thinned.</p>
+</section>
+<section id="putting-the-level-back" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="putting-the-level-back"><span class="header-section-number">9.2</span> Putting the level back</h2>
+<p>Where undersampling is unavoidable, the intercept can be corrected analytically. With a population prevalence <span class="math inline">\(\tau\)</span> and a sample prevalence <span class="math inline">\(\bar y\)</span>, the correction is</p>
+<p><span class="math display">\[
+\hat\beta_0^{\ \text{corrected}} = \hat\beta_0 - \log\!\left(\frac{1 - \tau}{\tau}
+\cdot \frac{\bar y}{1 - \bar y}\right),
+\]</span></p>
+<p>which is the standard prior correction for choice-based sampling.</p>
+<div id="8f0ac02f" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>tau, ybar <span class="op">=</span> yt.mean(), <span class="fl">0.5</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>offset <span class="op">=</span> <span class="op">-</span>np.log(((<span class="dv">1</span> <span class="op">-</span> tau) <span class="op">/</span> tau) <span class="op">*</span> (ybar <span class="op">/</span> (<span class="dv">1</span> <span class="op">-</span> ybar)))</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"population prevalence </span><span class="sc">{</span>tau<span class="sc">:.4%}</span><span class="ss">, sample prevalence </span><span class="sc">{</span>ybar<span class="sc">:.0%}</span><span class="ss">, "</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"offset </span><span class="sc">{</span>offset<span class="sc">:.4f}</span><span class="ss">"</span>)</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>assess(<span class="st">"undersampled + offset"</span>, m_under, offset<span class="op">=</span>offset)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>population prevalence 1.4372%, sample prevalence 50%, offset -4.2280
+undersampled + offset      AUC 0.7891   PR-AUC 0.0509   mean predicted 1.7842%   observed 1.3377%   ratio 1.33</code></pre>
+</div>
+</div>
+<p>The correction moves the mean prediction from 38.24 per cent to 1.78 per cent against an observed 1.34, so it recovers the order of magnitude and leaves a 33 per cent overstatement behind. It changes no ranking at all, since adding a constant to every linear predictor leaves the area under the curve at 0.7891 exactly. The honest summary is that undersampling costs calibration, that the offset returns most of it, and that not undersampling costs nothing and returns all of it.</p>
+<p>Botha and Verster take the third road, and it is worth stating because it is neither of the two above. They fit a weighted logistic regression with defaulted observations weighted ten to one, and they apply no intercept correction whatever, because they chose the weight by minimising the error against the empirical twelve-month default rate. The calibration is imposed by construction rather than repaired afterwards.</p>
+</section>
+<section id="which-metrics-survive-a-1.4-per-cent-base-rate" class="level2" data-number="9.3">
+<h2 data-number="9.3" class="anchored" data-anchor-id="which-metrics-survive-a-1.4-per-cent-base-rate"><span class="header-section-number">9.3</span> Which metrics survive a 1.4 per cent base rate</h2>
+<p>Lecture 2 established that the area under the curve, accuracy and <span class="math inline">\(F_1\)</span> are invariant under any monotone rescaling of the scores, so they leave the level of <span class="math inline">\(\mathrm{PD}_k\)</span> unidentified. Under heavy imbalance a second problem arrives on top of the first.</p>
+<p>Saito and Rehmsmeier (2015) show that the visual interpretability of a receiver operating characteristic plot “can be deceptive with respect to conclusions about the reliability of classification performance, owing to an intuitive but wrong interpretation of specificity”. The mechanism is that a false positive rate is measured against a very large negative class, so a specificity of 0.99 still admits an enormous number of false positives in absolute terms. A precision-recall plot escapes it because precision evaluates “the fraction of true positives among positive predictions”, which is the quantity an operational cutoff actually delivers.</p>
+<p>The numbers above show the gap. The uncorrected model reaches an area under the receiver operating characteristic curve of 0.7945, which reads as a respectable model. Its precision-recall area is 0.0563 against a no-skill baseline of 0.0134, so it is roughly four times better than random at the thing a collections queue cares about. Both statements describe the same fitted model.</p>
+</section>
+</section>
+<section id="what-a-validator-asks-and-what-this-lecture-does-not-show" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> What a validator asks, and what this lecture does not show</h1>
+<p>The questions this lecture equips a reader to answer are the ones a validator opens with. Which snapshots were eligible, and on what rule? Was the split drawn on loans or on rows? Is the out-of-time sample representative of the application population on the margins, and on the joint distribution? Which periods were excluded, on what evidence, and what did the exclusion move? Was the response rebalanced, and if so what put the level back?</p>
+<p>Four limitations bound everything above.</p>
+<p><strong>Bondora is not an internal ratings-based portfolio</strong>, and never will be. Every regulatory reference here illustrates mechanics on a book that would not qualify. The point is the procedure rather than the number.</p>
+<p><strong>The relief window is dated from the platform’s own rescheduling field</strong>, which is a good proxy on this book and is not what a bank would use. A lender has the forbearance flag, the moratorium indicator and the collections policy calendar, and would date the window from those.</p>
+<p><strong>The exclusion demonstration uses one specification.</strong> A baseline hazard in age bands with country and rating is enough to show the direction and the order of magnitude of the effect, and a production model with time-varying covariates could move the 2.37 per cent either way.</p>
+<p><strong>The imbalance section is cross-sectional throughout.</strong> The card portfolio has no origination date, so nothing there speaks to how an imbalanced response interacts with vintage drift, which is the combination most retail books actually present.</p>
+<p>Lecture C2, already named and deferred, takes attribution into the causal frame. The natural sequel to this lecture is the interaction between resampling and the encodings of lecture 6, since a weight of evidence table estimated on a rebalanced sample carries the rebalancing into every downstream fit.</p>
+</section>
+<section id="references" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> References</h1>
+<p>Baesens, B., Roesch, D., and Scheule, H. (2016). <em>Credit Risk Analytics: Measurement Techniques, Applications, and Examples in SAS</em>. Wiley.</p>
+<p>Bhalla, D. (2015). <em>Population Stability Index and Characteristic Analysis</em>. ListenData.</p>
+<p>Botha, A., and Verster, T. (2025). <em>Approaches for modelling the term-structure of default risk under IFRS 9: a tutorial using discrete-time survival analysis</em>.</p>
+<p>Botha, A., Verster, T., and Scheepers, B. (2025). <em>Exploring different subtypes of recurrent event Cox-regression models in modelling lifetime default risk: a tutorial</em>. arXiv:2505.01044.</p>
+<p>Coelho, R., and Zamil, R. (2020). <em>Payment holidays in the age of Covid: implications for loan valuations, market trust and financial stability</em>. FSI Briefs No 8, Bank for International Settlements.</p>
+<p>Djurovic, A. (2025). <em>Rethinking Representativeness Analysis in IRB Modeling: Classifier Two-Sample Test</em>.</p>
+<p>Du Pisanie, J., Allison, J. S., and Visagie, J. (2022). <em>A proposed simulation technique for population stability testing in credit risk scorecards</em>. arXiv:2206.11344.</p>
+<p>European Parliament and Council (2013). <em>Regulation (EU) No 575/2013 on prudential requirements for credit institutions and investment firms</em>, Articles 174, 175 and 180.</p>
+<p>Prudential Regulation Authority (2026). <em>SS4/24: Credit risk: internal ratings based approach</em>, January 2026 consolidation, sections 8 and 11.</p>
+<p>Saito, T., and Rehmsmeier, M. (2015). The precision-recall plot is more informative than the ROC plot when evaluating binary classifiers on imbalanced datasets. <em>PLOS ONE</em>, 10(3), e0118432.</p>
+<p>van den Goorbergh, R., van Smeden, M., Timmerman, D., and Van Calster, B. (2022). The harm of class imbalance corrections for risk prediction models: illustration and simulation using logistic regression. <em>Journal of the American Medical Informatics Association</em>, 29(9), 1525-1534.</p>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>
