@@ -189,6 +189,96 @@ non-linear layers, so the features of one layer are built from the features
 of the layer below, and the hierarchy is what lets a modest parameter count
 express an intricate transformation.
 
+::: {.callout-note icon=false title="Principal components, partial least squares and the rest of the linear family"}
+Both classical mappings fix $\phi$ to a linear one, $\boldsymbol{Z}_m = \boldsymbol{X}\alpha_m$,
+and they differ only in the criterion that selects the directions $\alpha_m$. Since the
+demonstration later in this lecture turns on exactly that choice of criterion, it is worth
+setting the two out properly. Throughout this callout $\boldsymbol{X}$ denotes the
+$n \times q$ design matrix and $S$ its sample covariance matrix, in place of the single
+covariate vector the surrounding text uses. The number of retained directions is written
+$M$, playing the part that $p$ plays in the definition above.
+
+**Principal components.** PCA is unsupervised, and the response plays no part in it. On
+standardised covariates the $m$th direction solves
+
+$$
+\begin{gathered}
+\max_{\alpha} \; \mathrm{Var}(\boldsymbol{X}\alpha) \\[2pt]
+\text{subject to} \quad \lVert \alpha \rVert = 1, \quad
+\alpha^{\top} S v_{\ell} = 0, \quad \ell = 1, \ldots, m-1,
+\end{gathered}
+$$
+
+so each direction claims the most variance left once its predecessors are accounted for, and
+the constraint $\alpha^{\top} S v_{\ell} = 0$ makes the resulting scores mutually
+uncorrelated (Hastie, Tibshirani and Friedman, 2009, equation 3.63). The solutions are the
+leading eigenvectors of $S$, equivalently the right singular vectors of the centred design
+matrix. Deisenroth, Faisal and Ong (2020) derive the same subspace twice over, once as the
+maximiser of retained variance and once as the minimiser of squared reconstruction error, so
+a component admits two readings, as a direction of maximal spread and as part of the best
+low-rank summary of the same data. That second reading is why the linear compression is the
+benchmark the autoencoder below has to beat on its own terms. Note also that the criterion
+depends on the units, which is why the covariates are standardised first.
+
+**Principal components regression** then regresses the response on the first $M$ scores.
+Because the full set of $q$ scores spans the same column space as $\boldsymbol{X}$, taking
+$M = q$ returns the ordinary least squares fit exactly. Hence truncating at $M < q$ acts as a
+shrinkage device on the same model rather than fitting a different one.
+
+**Partial least squares.** PLS brings the response into the construction. After
+standardising, it sets $\hat\varphi_{1j} = \langle x_j, y \rangle$ and forms the first
+direction $z_1 = \sum_j \hat\varphi_{1j} x_j$, so every covariate is weighted by the strength
+of its univariate effect on the outcome. The response is regressed on $z_1$, every covariate
+is then orthogonalised with respect to $z_1$, and the step repeats on the residualised
+covariates until $M \le q$ directions are in hand (Hastie, Tibshirani and Friedman, 2009,
+algorithm 3.3). The criterion behind that algorithm is
+
+$$
+\begin{gathered}
+\max_{\alpha} \; \mathrm{Corr}^{2}(y, \boldsymbol{X}\alpha) \, \mathrm{Var}(\boldsymbol{X}\alpha) \\[2pt]
+\text{subject to} \quad \lVert \alpha \rVert = 1, \quad
+\alpha^{\top} S \hat\varphi_{\ell} = 0, \quad \ell = 1, \ldots, m-1,
+\end{gathered}
+$$
+
+established by Stone and Brooks (1990) and Frank and Friedman (1993), the algorithm itself
+being Wold's (1975). Whereas PCA keys on variance alone, PLS trades variance off against
+correlation with the response. In practice the variance factor tends to dominate the product,
+so PLS ends up behaving much like ridge regression and principal components regression, and
+$M = q$ again recovers ordinary least squares.
+
+**The rest of the family.** Linear discriminant analysis is the supervised sibling that
+chooses the subspace maximising between-class scatter relative to within-class scatter, and
+it is the mapping behind Altman (1968), so credit has been doing supervised linear
+representation learning since well before the term existed. Non-linear embeddings such as
+t-SNE compress to two dimensions as well, and they serve as diagnostic plots, since the map
+is fitted to the sample in hand and offers no way to place a new applicant.
+
+**Why the criterion matters in credit.** Consider IFRS 9 forward-looking modelling, where a
+decade of quarterly observations has to support a wide set of candidate macroeconomic
+indicators. PCA is the usual reduction there. However, the components are built without any
+reference to the default rate, so a component can load its dominant predictor in the
+direction that contradicts economic expectation, and the model built on it then carries a
+counter-intuitive sign (Djurovic, 2025). The practical remedy is to check the directional
+alignment of each raw predictor against the target after the reduction and before the
+component is accepted as an input. Alternatively, condition the composite on the outcome from
+the outset and impose the signs directly, which is what a supervised macroeconomic index does
+(Djurovic, 2026), and which is PLS's argument restated in a regulatory register.
+
+**Where principal components do earn their place.** A production scorecard build reaches for
+PCA away from the model input, in the variable reduction that precedes it. Correlated
+covariates are clustered by principal component, a cluster whose second eigenvalue exceeds
+one is split again, and the most predictive member of each surviving cluster is retained.
+The eigen-decomposition of the correlation matrix then returns as the condition index that
+flags severe multicollinearity among whatever survived, which is a diagnostic on the
+covariates rather than a transformation of them.
+
+The comparison later in this lecture puts these criteria to the test on the credit card book.
+Two principal components, an autoencoder of the same width, and a supervised extractor of
+the same width all pass through one readout, and the ranking they earn on reconstruction error
+reverses on discrimination.
+:::
+
 Depth earns its place through that hierarchy. A shallow network can
 approximate a complicated function, and to do so it needs to be very wide,
 in the way a step function approximates a diagonal line only by taking many
@@ -207,7 +297,10 @@ coincide. Credit, as we are about to see, is not so obliging.
 
 The dataset is an anonymised credit card book of 96,806 accounts, released
 as a development and validation pair, with a `bad_flag` on the development
-file at 1.42 per cent and no flag at all on the validation file. It is the
+file at 1.42 per cent and no flag at all on the validation file. It is public,
+and it is published on Kaggle as
+[Credit Card Behaviour Score](https://www.kaggle.com/datasets/suvroo/credit-card-behaviour-score);
+the two file names this repository carries are the uploader's own. It is the
 opposite of Bondora in every respect that matters here. The features carry
 no meaning a modeller could interpret, so there is no GLM story to tell
 about any coefficient, and the 1.42 per cent bad rate reproduces the
@@ -873,10 +966,24 @@ the course uses R. The original lecture notes are available at
   Machine Intelligence* 35(8), 1798-1828.
 - Cybenko, G. (1989). Approximation by superpositions of a sigmoidal
   function. *Mathematics of Control, Signals and Systems* 2(4), 303-314.
+- Deisenroth, M.P., Faisal, A.A. and Ong, C.S. (2020). *Mathematics for
+  Machine Learning*. Cambridge University Press.
+- Djurovic, A. (2025). *Principal Component Analysis for IFRS9
+  Forward-Looking Modeling*. Model development and validation series,
+  practitioner deck.
+- Djurovic, A. (2026). *IFRS9 Forward-Looking Modeling: Supervised
+  Macroeconomic Index*. Model development and validation series,
+  practitioner deck.
 - European Banking Authority (2021). *Discussion paper on machine learning
   for IRB models*. EBA/DP/2021/04, and its 2023 follow-up report.
 - European Union (2024). Regulation (EU) 2024/1689 laying down harmonised
   rules on artificial intelligence, Annex III.
+- Frank, I. and Friedman, J. (1993). A statistical view of some
+  chemometrics regression tools (with discussion). *Technometrics* 35(2),
+  109-148.
+- Hastie, T., Tibshirani, R. and Friedman, J. (2009). *The Elements of
+  Statistical Learning: Data Mining, Inference, and Prediction*, 2nd
+  edition. Springer.
 - He, K., Zhang, X., Ren, S. and Sun, J. (2016). Deep residual learning for
   image recognition. *Proceedings of the IEEE Conference on Computer Vision
   and Pattern Recognition*, 770-778.
@@ -897,12 +1004,20 @@ the course uses R. The original lecture notes are available at
 - Richman, R. and Wüthrich, M.V. (2024). High-cardinality categorical
   covariates in network regressions. *Japanese Journal of Statistics and
   Data Science* 7(2), 921-965.
+- Stone, M. and Brooks, R.J. (1990). Continuum regression:
+  cross-validated sequentially constructed prediction embracing ordinary
+  least squares, partial least squares and principal components
+  regression. *Journal of the Royal Statistical Society, Series B* 52(2),
+  237-269.
 - Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez,
   A.N., Kaiser, L. and Polosukhin, I. (2017). Attention is all you need.
   *Advances in Neural Information Processing Systems* 30.
 - Wiginton, J.C. (1980). A note on the comparison of logit and discriminant
   models of consumer credit behavior. *Journal of Financial and Quantitative
   Analysis* 15(3), 757-770.
+- Wold, H. (1975). Soft modelling by latent variables: the nonlinear
+  iterative partial least squares (NIPALS) approach. In *Perspectives in
+  Probability and Statistics, In Honor of M.S. Bartlett*, 117-144.
 - Wüthrich, M.V. and Merz, M. (2019). Editorial: Yes, we CANN! *ASTIN
   Bulletin* 49(1), 1-3.
 - Wüthrich, M.V. and Merz, M. (2023). *Statistical Foundations of Actuarial
