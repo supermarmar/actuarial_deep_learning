@@ -335,8 +335,8 @@ section 4.7 reports roughly 0.07 on the French motor portfolio.
 
 **The weight is a property of the fit.** Mean $1-P$ by seed, over ten fits differing only in
 seed: 0.0295, 0.0903, 0.0658, 0.0976, 0.0577, 0.1414, 0.0465, 0.0707, 0.1683, 0.0681. The
-between-fit standard deviation of the mean is 0.0428 and the within-fit standard deviation
-across borrowers runs 0.0045 to 0.0206, so the ratio at seed 100 is **9.5**. The fit means
+between-fit standard deviation of the mean is 0.0427 and the within-fit standard deviation
+across borrowers runs 0.0045 to 0.0206, so the ratio at seed 100 is **9.4**. The fit means
 span 0.1388 where the whole book at seed 100 spans 0.0245, a factor of 5.7.
 
 Consequently no threshold on $1-P$ survives a refit, and the lecture says so. The comparison

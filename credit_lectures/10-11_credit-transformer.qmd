@@ -34,7 +34,7 @@ abstract: >
   with the weight on the covariates occupying the position of lecture 6's
   Bühlmann weight. The weight nonetheless carries none of that quantity's
   content. Reseeding moves its mean from 0.0295 to 0.1683, a between-fit
-  dispersion 9.5 times the spread across borrowers within one fit, and it
+  dispersion 9.4 times the spread across borrowers within one fit, and it
   separates borrowers with no prior loan from those with three or more by
   0.0012 in the wrong direction while correlating with the fitted
   probability at -0.67.
@@ -1025,6 +1025,12 @@ print(f"  in-sample {dev(p_plain_l, yl):.3f}   out-of-sample "
       f"{dev(p_plain_t, yt):.3f}   AUC {roc_auc_score(yt, p_plain_t):.4f}")
 ```
 
+Note that "switched off" is precise about the gate and loose about the
+architecture. The prior token and its parameters are still there, and
+section 4.2 shows that at $\alpha = 1$ they are never trained, so the
+parameter count below is the Credibility Transformer's rather than that of
+a plain tabular Transformer somebody would build from scratch.
+
 Out of sample it reaches 107.327 on 897 parameters. Set against the
 series, that is ahead of lecture 4's feed-forward network at 107.621, of
 lecture 8's ICEnet at 107.583, and of lecture 9's LocalGLMnet at 107.360,
@@ -1268,11 +1274,11 @@ print(f"ratio                            "
 This is the lecture's central result and it is unwelcome. Refitting the
 same architecture on the same learning sample, changing nothing but the
 seed, moves the mean credibility weight from 0.0295 to 0.1683, a factor of
-5.7 and a between-fit standard deviation of 0.0428. Within any single fit
+5.7 and a between-fit standard deviation of 0.0427. Within any single fit
 the weight varies across borrowers by a standard deviation of 0.0045 to
 0.0206, and at seed 100 the entire book spans 0.0245. Therefore the
 between-fit dispersion exceeds the within-fit dispersion by a factor of
-9.5, and the credibility weight a borrower receives is mostly a fact about
+9.4, and the credibility weight a borrower receives is mostly a fact about
 which fit produced it.
 
 The comparison with lecture 9 is exact and the verdict is harsher. There
@@ -1330,17 +1336,16 @@ $-0.16$.
 #| code-fold: true
 fig, (a1, a2) = plt.subplots(1, 2, figsize=(9, 3.8))
 a1.hist(prior_w, bins=60, color=GREY)
-top = a1.get_ylim()[1]
+top = a1.get_ylim()[1] * 1.28
 fit_means = pw_all.mean(axis=1)
-for k, v in enumerate(fit_means):
-    a1.plot(v, -0.07 * top - 0.04 * top * (k % 3), "v", color=RED, ms=5,
-            clip_on=False)
+a1.plot(fit_means, np.full(len(fit_means), 0.94 * top), "v", color=RED, ms=5,
+        linestyle="none")
 a1.set_ylim(0, top)
 a1.set_xlabel("$1 - P$, the weight on the prior token")
 a1.set_ylabel("test loans")
 a1.set_xlim(0, max(0.05, fit_means.max() * 1.10))
-a1.text(fit_means.max(), -0.20 * top, "  means of the ten refits",
-        color=RED, fontsize=8, va="center", clip_on=False)
+a1.text(fit_means.max(), 0.84 * top, "means of the ten refits  ",
+        color=RED, fontsize=8, va="center", ha="right")
 dec = pd.qcut(p_ct, 10, labels=False)
 a2.plot(range(1, 11), [prior_w[dec == d].mean() for d in range(10)], "o-",
         color=BLUE, ms=4)
@@ -1456,8 +1461,8 @@ rather than of either dataset.
 More seriously, the ordering is unstable where it matters most. Nine of the
 ten fits put `Country` first and the primary fit puts `NewCreditCustomer`
 first, so quoting seed 100's ordering as the model's view of importance
-would misreport it, and the across-fit standard deviations of 0.018 to
-0.039 are of the same order as the gaps between adjacent characteristics.
+would misreport it, and the across-fit standard deviations of 0.019 to
+0.041 are of the same order as the gaps between adjacent characteristics.
 Lecture 9 faced this problem and solved it by calibrating against a purely
 random covariate, which turns "this term matters" into a testable claim.
 This lecture runs no such calibration, so it reports the weights and
@@ -1512,6 +1517,10 @@ was flat and slightly declining. Consequently the discrimination profile
 against months of history is worth plotting for any sequential credit model
 before its accuracy is quoted anywhere.
 
+Those deviances belong to the Amex response and to the Amex sample, so
+they sit on the series' scale without being comparable with anything
+below; the figures that follow are Bondora twelve-month default.
+
 On tabular data the Credibility Transformer competes and does not lead.
 Its best single fit reached 107.342 and the plain Transformer's reached
 107.327, both at the front of the series and both one draw from a
@@ -1537,7 +1546,7 @@ rather than analogy, and $P$ occupies precisely the position of lecture 6's
 $\alpha_k$. What it lacks is $\alpha_k$'s content. Lecture 6's weight is a
 function of how much experience stands behind a level, whereas $1 - P$
 proved to be a property of the fit: reseeding moved its mean from 0.0295 to
-0.1683, a between-fit dispersion 9.5 times the spread across borrowers
+0.1683, a between-fit dispersion 9.4 times the spread across borrowers
 within any one fit. It also tracked no thin-file measure the book carries,
 separating borrowers with no prior loan from those with three or more by
 0.0012 in the wrong direction, while correlating with the fitted
