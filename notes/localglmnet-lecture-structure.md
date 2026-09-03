@@ -127,9 +127,9 @@ worth a sentence.
 **Initialisation.** The GLM-initialised network returns 106.945 and 108.522 exactly, to three
 decimals, on both samples.
 
-**Fit.** Seed 100: early stop 67, learn 104.874, test 107.360. Over seeds 100 to 104 the test
-deviance has mean 107.446 and standard deviation 0.115. Nagged over ten fits, 107.132 against
-an individual-fit mean of 107.434. Series comparison: GLM 108.20, FNN 107.621 at AUC 0.7241,
+**Fit.** Seed 100: early stop 67, learn 104.874, test 107.360. Over the ten seeds 100 to 109
+the test deviance has mean 107.434 and standard deviation 0.086. Nagged over the ten fits,
+107.132. Series comparison: GLM 108.20, FNN 107.621 at AUC 0.7241,
 ICEnet at $\lambda = 0.1$ 107.583. The LocalGLMnet therefore beats the FNN here, where in the
 course it came out slightly worse.
 
@@ -138,7 +138,11 @@ course it came out slightly worse.
 standard deviation falls to 0.01394 and the band to $\pm 0.0359$.
 
 **Variable importance, seed 100.** Smallest `RandN` 0.0408, largest `CountryEmb1` 0.8005. Over
-five seeds `RandN` is 0.0335 (sd 0.0069) and `logIncome` 0.1066 (sd 0.0308).
+the ten fits `RandN` is 0.0314 (sd 0.0064) and `logIncome` 0.1057 (sd 0.0261), so seed 100 sits
+at the top of income's range. No term's importance reaches the noise level, and the two
+`EmploymentDuration` coordinates come closest at about twice it. `CountryEmb1` is stable to
+within 4 per cent of its mean; the largest relative spread is `VerificationTypeEmb2`'s at 27
+per cent.
 
 **Grouped importance against the other two orderings.** Spearman correlation with `F1`'s
 information values is 0.619 over eight characteristics. All three orderings put `Country`
@@ -163,7 +167,7 @@ x_{\rm logIncome}$ at 0.0992 and $\partial z_{\rm logIncome} / \partial x_{\rm N
 0.0958. Own-component $\partial z_{\rm Age} / \partial x_{\rm Age}$ is 0.1368.
 
 **Reason codes.** The logit reconstruction $\vartheta_0 + \sum_j z_j X_j$ matches the fitted
-logit to a maximum absolute error of $1.67 \times 10^{-6}$. In the highest-PD decile, 2,974
+logit to a maximum absolute error of $1.19 \times 10^{-6}$ at characteristic level. In the highest-PD decile, 2,974
 applicants, ranked at characteristic level over ten fits:
 
 | Rank | Identical across all ten fits | Mean distinct codes |
@@ -177,11 +181,19 @@ the rank 1 to rank 2 gap is 1.0432 while rank 2 to rank 3 is 0.1181 and rank 3 t
 0.0677. `Country` is the rank 1 code for 2,770 of the 2,974, that is 93.1 per cent, and the
 rank 2 code splits across `HomeOwnership` 772, `NewCreditCustomer` 727, `Age` 601 and
 `Education` 313. Tightening to the highest-PD 5 per cent gives rank 1 at 96.3 per cent and rank
-2 at 0.7 per cent. For contrast only, over the 90 per cent outside the decline region rank 1
-agrees for 21.1 per cent.
+2 at 0.7, and widening to the top quintile lowers rank 1 to 72.8 with rank 2 at 2.1, so the
+leading code's stability depends on how deep into the decline region the applicant sits. For
+contrast only, over the 90 per cent outside the decline region rank 1 agrees for 21.1 per cent.
+
+**The worked applicant.** The median applicant of the decline region is Spanish, aged 27, on an
+income of 710, with a nagged fitted PD of 0.6237. Its adverse deviations rank `Country`
+$+1.1628$, `Age` $+0.5198$ and `NewCreditCustomer` $+0.2502$, with `logIncome` mildly
+protective at $-0.0317$.
 
 **Final model, noise column dropped.** Early stop 38, learn 105.203, test 107.358, AUC 0.7254,
-balance $-1.40$ per cent against the observed test rate.
+balance $-1.40$ per cent against the observed test rate. For comparison the embedded-design GLM
+scores AUC 0.7154 at balance $-1.08$ per cent, and the fit carrying the noise column 0.7251 at
+$-0.96$.
 
 ## Citation register
 
