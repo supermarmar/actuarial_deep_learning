@@ -47,8 +47,9 @@ ProbabilityOfDefault, EL_V0/V1, Rating_V0/V1/V2, ModelVersion). Rating itself
 is kept: it is assigned at listing time, and the lectures use it to discuss
 modelling on top of another model's output.
 
-Target definition: default_12m = 1 where DefaultDate (Bondora's 60+ days past
-due definition) falls within 365 days of LoanDate, on loans originated at
+Target definition: default_12m = 1 where DefaultDate (Bondora's own platform
+flag, declared at a median 79 days past due rather than on a fixed threshold;
+see credit lecture D1) falls within 365 days of LoanDate, on loans originated at
 least 365 days before the newest origination date in the file, so that every
 kept loan has a complete 12-month observation window.
 
@@ -63,7 +64,7 @@ DefaultDate, having defaulted and later recovered, and default is absorbing,
 so scoring them as settlements would discard them. A loan exits as `settled`
 where Status is Repaid and no DefaultDate exists, on its ContractEndDate.
 Everything else is `censored` at ReportAsOfEOD, which covers the 57,611
-Current loans and the 8,064 Late loans not yet 60+ days past due. That gives
+Current loans and the 8,064 Late loans carrying no DefaultDate. That gives
 71,416 defaults, 42,144 settlements and 65,675 censored observations.
 Settlement is a competing risk rather than censoring, which is why the exit
 kind travels in the file: a table carrying only the binary event indicator
@@ -96,9 +97,30 @@ shares the same observation window. The target is unaffected by which
 statement is kept, since Amex defines it 120 days after each customer's last
 statement regardless.
 
+Home Credit revolving cards: home_credit_cards.parquet is the one table taken
+from the Kaggle "Home Credit Default Risk" competition
+(https://www.kaggle.com/competitions/home-credit-default-risk), namely
+credit_card_balance.csv, 3,840,312 monthly statements across 104,307 card
+facilities held by 103,558 customers. It is here because it is the only public
+panel in this repo that carries a month-stamped days-past-due field, which is
+what a definition of default needs: a delinquency threshold and a persistence
+requirement are claims about a sequence of monthly states, and neither Bondora
+nor the Amex extract records one. Two columns carry the clock. SK_DPD is days
+past due in the month and SK_DPD_DEF is the same figure after a materiality
+tolerance, so the pair puts Article 178's materiality limb in two columns
+rather than in prose; 48,377 statements reach 90 days on the first and 1,078 on
+the second. MONTHS_BALANCE counts backwards from the application, so ordering
+ascending gives chronological order. The archive ships ten tables and nine are
+left alone, bureau_balance included: it keys on SK_ID_BUREAU and bridges to the
+rest only through the bureau table, and its STATUS field collapses 120+ days
+past due, sale and write-off into one bucket, which is the opposite of what a
+lecture separating those events wants. Only credit_card_balance.csv and the
+column dictionary are copied into data/home-credit-default-risk/.
+
 Run with the project environment:
     .venv/bin/python scripts/convert_credit_data.py                    # bondora + credit card
     .venv/bin/python scripts/convert_credit_data.py --datasets amex    # amex only
+    .venv/bin/python scripts/convert_credit_data.py --datasets home_credit
     .venv/bin/python scripts/convert_credit_data.py --datasets bondora credit_card amex
 """
 
@@ -109,6 +131,7 @@ import polars as pl
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 AMEX = DATA / "amex-default-prediction"
+HOME_CREDIT = DATA / "home-credit-default-risk"
 
 DATE_FORMATS = ["%Y-%m-%d", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 
@@ -269,6 +292,29 @@ def convert_credit_card() -> None:
         pl.read_csv(DATA / src, infer_schema_length=None).write_parquet(DATA / dst)
 
 
+# The one Home Credit table the definition-of-default lecture needs. Its
+# columns are documented in HomeCredit_columns_description.csv, shipped in the
+# same archive: SK_DPD is "DPD (Days past due) during the month on the previous
+# credit" and SK_DPD_DEF the same "with tolerance (debts with low loan amounts
+# are ignored)", which is a materiality threshold in a column rather than in
+# prose. MONTHS_BALANCE counts backwards from the application, so -1 is the
+# month before it and -96 the earliest observed.
+def convert_home_credit_cards() -> None:
+    """Convert the Home Credit revolving-card panel to a typed parquet.
+
+    Faithful conversion in the shape of convert_bondora_raw: every row, every
+    column, no derivation. The delinquency indicators the lecture builds on top
+    (arrears in payments, an instant-default flag, probation and cure) are
+    derived inside the lecture, so that changing a dial there does not mean
+    rebuilding the file.
+    """
+    src = HOME_CREDIT / "credit_card_balance.csv"
+    df = pl.read_csv(src, infer_schema_length=None).sort(
+        ["SK_ID_PREV", "MONTHS_BALANCE"]
+    )
+    df.write_parquet(DATA / "home_credit_cards.parquet")
+
+
 # Columns whose true type is not "one of the 185 anonymised Float32 features":
 # the identifier, the statement date, the two string-coded categoricals, and
 # the one binary flag. Verified against the full file: D_63 and B_31 carry no
@@ -348,10 +394,11 @@ def main() -> None:
     parser.add_argument(
         "--datasets",
         nargs="+",
-        choices=["bondora", "credit_card", "amex"],
+        choices=["bondora", "credit_card", "amex", "home_credit"],
         default=["bondora", "credit_card"],
         help="which datasets to rebuild (default: bondora credit_card; amex "
-        "reads a 15 GB CSV and is opt-in)",
+        "reads a 15 GB CSV and home_credit wants a Kaggle download, so both "
+        "are opt-in)",
     )
     args = parser.parse_args()
 
@@ -384,6 +431,14 @@ def main() -> None:
         cross_shape = cross.select(pl.len()).collect().item()
         cross_rate = cross.select(pl.col("target").mean()).collect().item()
         print(f"amex_cross_section.parquet: ({cross_shape}, ...), target rate {cross_rate:.4f}")
+
+    if "home_credit" in args.datasets:
+        convert_home_credit_cards()
+        panel = pl.scan_parquet(DATA / "home_credit_cards.parquet")
+        shape = panel.select(
+            pl.len(), pl.col("SK_ID_PREV").n_unique(), pl.col("SK_ID_CURR").n_unique()
+        ).collect()
+        print(f"home_credit_cards.parquet: {shape.row(0)} (rows, facilities, customers)")
 
 
 if __name__ == "__main__":

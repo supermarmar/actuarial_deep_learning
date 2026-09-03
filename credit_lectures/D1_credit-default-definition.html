@@ -1,0 +1,1657 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Mario Ervedosa">
+<meta name="dcterms.date" content="2026-09-03">
+
+<title>Credit Lecture D1: The Definition of Default, Cure and Write-off</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js" integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script><script src="https://cdn.jsdelivr.net/npm/requirejs@2.3.6/require.min.js" integrity="sha384-c9c+LnTbwQ3aujuU7ULEPVvgLs+Fn6fJUvIGTsuu1ZcCf11fiEubah0ttpca4ntM sha384-6V1/AdqZRWk1KAlWbKBlGhN7VG4iE/yAZcO6NZPMF8od0vukrvr0tg4qY6NSrItx" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../lectures/lecture.css">
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#where-lecture-1-stopped" id="toc-where-lecture-1-stopped" class="nav-link active" data-scroll-target="#where-lecture-1-stopped"><span class="header-section-number">1</span> Where lecture 1 stopped</a>
+  <ul class="collapse">
+  <li><a href="#the-one-number-lecture-1-got-wrong" id="toc-the-one-number-lecture-1-got-wrong" class="nav-link" data-scroll-target="#the-one-number-lecture-1-got-wrong"><span class="header-section-number">1.1</span> The one number lecture 1 got wrong</a></li>
+  </ul></li>
+  <li><a href="#terminology" id="toc-terminology" class="nav-link" data-scroll-target="#terminology"><span class="header-section-number">2</span> Terminology</a>
+  <ul class="collapse">
+  <li><a href="#notation" id="toc-notation" class="nav-link" data-scroll-target="#notation"><span class="header-section-number">2.1</span> Notation</a></li>
+  </ul></li>
+  <li><a href="#the-four-dials" id="toc-the-four-dials" class="nav-link" data-scroll-target="#the-four-dials"><span class="header-section-number">3</span> The four dials</a></li>
+  <li><a href="#three-targets-wearing-one-name" id="toc-three-targets-wearing-one-name" class="nav-link" data-scroll-target="#three-targets-wearing-one-name"><span class="header-section-number">4</span> Three targets wearing one name</a></li>
+  <li><a href="#cure" id="toc-cure" class="nav-link" data-scroll-target="#cure"><span class="header-section-number">5</span> Cure</a>
+  <ul class="collapse">
+  <li><a href="#the-cure-rate-is-not-a-number-until-the-threshold-is-fixed" id="toc-the-cure-rate-is-not-a-number-until-the-threshold-is-fixed" class="nav-link" data-scroll-target="#the-cure-rate-is-not-a-number-until-the-threshold-is-fixed"><span class="header-section-number">5.1</span> The cure rate is not a number until the threshold is fixed</a></li>
+  </ul></li>
+  <li><a href="#write-off" id="toc-write-off" class="nav-link" data-scroll-target="#write-off"><span class="header-section-number">6</span> Write-off</a></li>
+  <li><a href="#sicr-bounded-above-by-default" id="toc-sicr-bounded-above-by-default" class="nav-link" data-scroll-target="#sicr-bounded-above-by-default"><span class="header-section-number">7</span> SICR, bounded above by default</a></li>
+  <li><a href="#from-a-definition-to-a-data-shape" id="toc-from-a-definition-to-a-data-shape" class="nav-link" data-scroll-target="#from-a-definition-to-a-data-shape"><span class="header-section-number">8</span> From a definition to a data shape</a></li>
+  <li><a href="#what-a-snapshot-extract-cannot-answer" id="toc-what-a-snapshot-extract-cannot-answer" class="nav-link" data-scroll-target="#what-a-snapshot-extract-cannot-answer"><span class="header-section-number">9</span> What a snapshot extract cannot answer</a></li>
+  <li><a href="#what-a-monthly-panel-adds" id="toc-what-a-monthly-panel-adds" class="nav-link" data-scroll-target="#what-a-monthly-panel-adds"><span class="header-section-number">10</span> What a monthly panel adds</a>
+  <ul class="collapse">
+  <li><a href="#the-cleaning-the-outcome-build-actually-needs" id="toc-the-cleaning-the-outcome-build-actually-needs" class="nav-link" data-scroll-target="#the-cleaning-the-outcome-build-actually-needs"><span class="header-section-number">10.1</span> The cleaning the outcome build actually needs</a></li>
+  <li><a href="#materiality-expressed-as-two-columns" id="toc-materiality-expressed-as-two-columns" class="nav-link" data-scroll-target="#materiality-expressed-as-two-columns"><span class="header-section-number">10.2</span> Materiality, expressed as two columns</a></li>
+  <li><a href="#building-the-outcome-one-dial-at-a-time" id="toc-building-the-outcome-one-dial-at-a-time" class="nav-link" data-scroll-target="#building-the-outcome-one-dial-at-a-time"><span class="header-section-number">10.3</span> Building the outcome, one dial at a time</a></li>
+  <li><a href="#turning-the-first-two-dials" id="toc-turning-the-first-two-dials" class="nav-link" data-scroll-target="#turning-the-first-two-dials"><span class="header-section-number">10.4</span> Turning the first two dials</a></li>
+  <li><a href="#turning-the-probation-dial" id="toc-turning-the-probation-dial" class="nav-link" data-scroll-target="#turning-the-probation-dial"><span class="header-section-number">10.5</span> Turning the probation dial</a></li>
+  <li><a href="#the-three-targets-measured" id="toc-the-three-targets-measured" class="nav-link" data-scroll-target="#the-three-targets-measured"><span class="header-section-number">10.6</span> The three targets, measured</a></li>
+  </ul></li>
+  <li><a href="#what-this-lecture-omits-and-why" id="toc-what-this-lecture-omits-and-why" class="nav-link" data-scroll-target="#what-this-lecture-omits-and-why"><span class="header-section-number">11</span> What this lecture omits, and why</a></li>
+  <li><a href="#takeaways" id="toc-takeaways" class="nav-link" data-scroll-target="#takeaways"><span class="header-section-number">12</span> Takeaways</a></li>
+  <li><a href="#copyright-and-attribution" id="toc-copyright-and-attribution" class="nav-link" data-scroll-target="#copyright-and-attribution">Copyright and attribution</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Credit Lecture D1: The Definition of Default, Cure and Write-off</h1>
+<p class="subtitle lead">Deep Learning for Actuarial Modelling: a credit risk companion</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Mario Ervedosa </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">September 3, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+<div>
+  <div class="abstract">
+    <div class="block-title">Abstract</div>
+    <p>Credit lecture 1 named default three times and finished the job none of them. It cited Article 178, quoted a three-dial formalism from the impairment literature, and coined the worst-ever window flag, yet it never separated the competing response variables those dials produce, mentioned cure once in a subordinate clause, and never mentioned write-off at all. This lecture pays that debt and then argues something stronger. A default definition is a claim about a sequence of monthly delinquency states, so which definitions a modeller can implement is settled by the shape of the data rather than by the regulation. Three response variables are separated and measured against each other, where 90 per cent of the flags under one of them mark loans already in default earlier in the window. Cure, probation and write-off are defined and then swept, where lengthening probation from three months to twenty-four suppresses re-default from 9.8 per cent to 1.4 and destroys two fifths of the cures doing it. The lecture closes on what a snapshot extract cannot answer, and hands the sampling question to lecture R3.</p>
+  </div>
+</div>
+
+
+</header>
+
+
+<section id="where-lecture-1-stopped" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Where lecture 1 stopped</h1>
+<p>Lecture 1 treated the definition of default as settled background and moved on to the modelling. It was right to move on and wrong to call it settled. Three times it reached for the definition and three times it stopped short. It cited Article 178 of the Capital Requirements Regulation for the ninety-day backstop, then noted that Bondora records its own flag instead. It quoted a formalism with three dials from the impairment literature, tabulated what Bondora’s choice of each one was, and never turned any of the dials. And it coined the phrase worst-ever aggregation for the window maximum, observing in passing that a loan which breaches and then cures still scores a one, without ever asking what curing is or how often it happens.</p>
+<p>This lecture, by contrast, turns the dials. Along the way it corrects one number lecture 1 asserted, separates three response variables that practice routinely calls by one name, and gives cure, probation and write-off the definitions the earlier lectures assumed they already had.</p>
+<p>Furthermore, it argues something the series has not yet said. Every dial below is a statement about a sequence of monthly delinquency states. A cross-sectional loan extract records dates and a terminal status, so it carries no such sequence, and consequently a modeller holding one cannot implement most of the definitions on offer whatever the regulation permits. The definition and the data shape are one question rather than two, which is why the second half of this lecture is about data engineering and belongs here rather than in an appendix.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="Where this sits in the series">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Where this sits in the series
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture 1 fixes the outcome window and coins the worst-ever aggregation. This lecture owns the <strong>response variable</strong>, meaning what the target column is and how a definitional choice changes it.</p>
+<p>Four neighbours own the rest. Lecture <code>R1</code> owns estimation, and it already derives the marginal PD this lecture merely names. Lecture <code>R2</code> owns the capital formula and, importantly for the vocabulary below, the <strong>worst-case default rate</strong>, which is a stressed quantile and has nothing to do with this lecture’s worst-ever window flag. The <code>S</code> track owns the hazard machinery that estimates any of the three targets defined here. Lecture <code>R3</code> owns sampling and representativeness: this lecture builds the outcome variable and <code>R3</code> picks the rows that carry it.</p>
+</div>
+</div>
+<section id="the-one-number-lecture-1-got-wrong" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="the-one-number-lecture-1-got-wrong"><span class="header-section-number">1.1</span> The one number lecture 1 got wrong</h2>
+<p>Lecture 1’s dials table recorded Bondora’s delinquency threshold as “roughly two payments, since the platform flags at 60 days past due”, and its outcome-window section reasoned from the same sixty days. Neither figure was measured. Measuring it turns out to matter, and for a reason beyond the number itself.</p>
+<p>Bondora publishes two fields that between them settle the question. <code>DebtOccuredOn</code> records a date associated with the onset of arrears and <code>CurrentDebtDaysPrimary</code> a running count of days past due. However, what is not documented is whether <code>DebtOccuredOn</code> marks the first day past due or some later operational milestone, and the whole exercise turns on which. The identity below settles it.</p>
+<div id="73d098c6" class="cell" data-execution_count="1">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> polars <span class="im">as</span> pl</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>OX, GREY, RULE <span class="op">=</span> <span class="st">"#8C2F1E"</span>, <span class="st">"#B0B0B0"</span>, <span class="st">"#444444"</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>raw <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_raw.parquet"</span>)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>late <span class="op">=</span> (</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    raw.<span class="bu">filter</span>(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>        (pl.col(<span class="st">"Status"</span>) <span class="op">==</span> <span class="st">"Late"</span>)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">&amp;</span> pl.col(<span class="st">"DebtOccuredOn"</span>).is_not_null()</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>        <span class="op">&amp;</span> pl.col(<span class="st">"CurrentDebtDaysPrimary"</span>).is_not_null()</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    .with_columns(</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>        ((pl.col(<span class="st">"ReportAsOfEOD"</span>) <span class="op">-</span> pl.col(<span class="st">"DebtOccuredOn"</span>)).dt.total_days()</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>         <span class="op">-</span> pl.col(<span class="st">"CurrentDebtDaysPrimary"</span>)).alias(<span class="st">"residual"</span>)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>pl.DataFrame({</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"quantile"</span>: [<span class="st">"10th"</span>, <span class="st">"25th"</span>, <span class="st">"50th"</span>, <span class="st">"75th"</span>, <span class="st">"90th"</span>],</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"residual"</span>: [late[<span class="st">"residual"</span>].quantile(q) <span class="cf">for</span> q <span class="kw">in</span> (<span class="fl">0.1</span>, <span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>, <span class="fl">0.9</span>)],</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>}).with_columns(pl.lit(late.height).alias(<span class="st">"loans"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="1">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 3)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">quantile</th>
+<th data-quarto-table-cell-role="th">residual</th>
+<th data-quarto-table-cell-role="th">loans</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>f64</td>
+<td>i32</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"10th"</td>
+<td>1.0</td>
+<td>68480</td>
+</tr>
+<tr class="even">
+<td>"25th"</td>
+<td>1.0</td>
+<td>68480</td>
+</tr>
+<tr class="odd">
+<td>"50th"</td>
+<td>1.0</td>
+<td>68480</td>
+</tr>
+<tr class="even">
+<td>"75th"</td>
+<td>1.0</td>
+<td>68480</td>
+</tr>
+<tr class="odd">
+<td>"90th"</td>
+<td>1.0</td>
+<td>68480</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>The residual is exactly one day across the middle eight deciles of the 68,480 late loans. Hence <code>CurrentDebtDaysPrimary</code> counts forward from <code>DebtOccuredOn</code> with a one-day offset, which means <code>DebtOccuredOn</code> is the day the days-past-due counter starts. Consequently the gap between it and <code>DefaultDate</code> is days past due at the moment default was declared, and that is a quantity we can put a distribution on.</p>
+<div id="2b624dae" class="cell" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>lag <span class="op">=</span> (</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    raw.<span class="bu">filter</span>(pl.col(<span class="st">"DebtOccuredOn"</span>).is_not_null() <span class="op">&amp;</span> pl.col(<span class="st">"DefaultDate"</span>).is_not_null())</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>       .with_columns(</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>           (pl.col(<span class="st">"DefaultDate"</span>) <span class="op">-</span> pl.col(<span class="st">"DebtOccuredOn"</span>)).dt.total_days().alias(<span class="st">"dpd"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>       )</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>pos <span class="op">=</span> lag.<span class="bu">filter</span>(pl.col(<span class="st">"dpd"</span>) <span class="op">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"loans carrying both dates      </span><span class="sc">{</span>lag<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  lag exactly zero             </span><span class="sc">{</span>lag<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'dpd'</span>) <span class="op">==</span> <span class="dv">0</span>)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  lag negative                 </span><span class="sc">{</span>lag<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'dpd'</span>) <span class="op">&lt;</span> <span class="dv">0</span>)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  lag strictly positive        </span><span class="sc">{</span>pos<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>qs <span class="op">=</span> [<span class="fl">0.01</span>, <span class="fl">0.05</span>, <span class="fl">0.10</span>, <span class="fl">0.25</span>, <span class="fl">0.50</span>, <span class="fl">0.75</span>, <span class="fl">0.90</span>, <span class="fl">0.99</span>]</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"days past due at declaration, percentiles of the positive-lag loans"</span>)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">"  "</span> <span class="op">+</span> <span class="st">"  "</span>.join(<span class="ss">f"p</span><span class="sc">{</span><span class="bu">int</span>(<span class="dv">100</span><span class="op">*</span>q)<span class="sc">:02d}</span><span class="ss">=</span><span class="sc">{</span><span class="bu">int</span>(pos[<span class="st">'dpd'</span>].quantile(q))<span class="sc">:&gt;4d}</span><span class="ss">"</span> <span class="cf">for</span> q <span class="kw">in</span> qs))</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> lo, hi, label <span class="kw">in</span> [(<span class="va">None</span>, <span class="dv">60</span>, <span class="st">"under 60 days"</span>), (<span class="dv">60</span>, <span class="dv">90</span>, <span class="st">"60 to 90 days"</span>), (<span class="dv">90</span>, <span class="va">None</span>, <span class="st">"90 days or more"</span>)]:</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> lo <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> pos.<span class="bu">filter</span>(pl.col(<span class="st">"dpd"</span>) <span class="op">&lt;</span> hi).height</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">elif</span> hi <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> pos.<span class="bu">filter</span>(pl.col(<span class="st">"dpd"</span>) <span class="op">&gt;=</span> lo).height</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> pos.<span class="bu">filter</span>(pl.col(<span class="st">"dpd"</span>).is_between(lo, hi)).height</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  declared </span><span class="sc">{</span>label<span class="sc">:&lt;16}</span><span class="ss"> </span><span class="sc">{</span>n<span class="sc">:&gt;7,}</span><span class="ss">  (</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> n <span class="op">/</span> pos<span class="sc">.</span>height<span class="sc">:4.1f}</span><span class="ss"> per cent)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>loans carrying both dates       67,712
+  lag exactly zero               7,917
+  lag negative                     101
+  lag strictly positive         59,694
+
+days past due at declaration, percentiles of the positive-lag loans
+  p01=   1  p05=  21  p10=  48  p25=  74  p50=  79  p75=  92  p90= 122  p99= 126
+
+  declared under 60 days      9,209  (15.4 per cent)
+  declared 60 to 90 days     33,763  (56.6 per cent)
+  declared 90 days or more   16,861  (28.2 per cent)</code></pre>
+</div>
+</div>
+<p>Two anomalies travel with that table and are named rather than dropped. 7,917 loans carry a declaration on the very day arrears began, and 101 carry a <code>DefaultDate</code> before their <code>DebtOccuredOn</code>. Both are, in all likelihood, operational artefacts of a platform reconstructing its own history, and a bank’s data quality assessment would raise an exception on each. They are excluded from the percentiles above and they are not excluded from the count of defaults anywhere in this series, which is the honest treatment: the event happened, and only its dating is unreliable.</p>
+<p>The correction, then, is that the median declaration sits at 79 days rather than 60. More useful, however, is the dispersion around it. The lag runs from a single day to 126, some 15.4 per cent of declarations land under sixty days past due, and 28 per cent reach ninety or beyond.</p>
+<div id="e6aab805" class="cell" data-execution_count="3">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.4</span>))</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>vals <span class="op">=</span> pos[<span class="st">"dpd"</span>].to_numpy()</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ax.hist(vals[vals <span class="op">&lt;=</span> <span class="dv">200</span>], bins<span class="op">=</span>np.arange(<span class="dv">0</span>, <span class="dv">205</span>, <span class="dv">5</span>), color<span class="op">=</span>OX, alpha<span class="op">=</span><span class="fl">0.85</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x, lab <span class="kw">in</span> [(<span class="dv">60</span>, <span class="st">"60"</span>), (<span class="dv">90</span>, <span class="st">"90"</span>)]:</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    ax.axvline(x, color<span class="op">=</span>RULE, ls<span class="op">=</span><span class="st">"--"</span>, lw<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    ax.annotate(lab, (x, ax.get_ylim()[<span class="dv">1</span>] <span class="op">*</span> <span class="fl">0.94</span>), color<span class="op">=</span>RULE, ha<span class="op">=</span><span class="st">"center"</span>,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                fontsize<span class="op">=</span><span class="dv">9</span>, backgroundcolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>ax.axvline(<span class="dv">79</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.6</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>ax.annotate(<span class="st">"median 79"</span>, (<span class="dv">79</span>, ax.get_ylim()[<span class="dv">1</span>] <span class="op">*</span> <span class="fl">0.78</span>), color<span class="op">=</span>RULE,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>            ha<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="dv">9</span>, backgroundcolor<span class="op">=</span><span class="st">"white"</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"days past due at declaration"</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"loans"</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> s <span class="kw">in</span> (<span class="st">"top"</span>, <span class="st">"right"</span>):</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    ax.spines[s].set_visible(<span class="va">False</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="D1_credit-default-definition_files/figure-html/cell-4-output-1.png" width="1336" height="497" class="figure-img"></p>
+<figcaption>Days past due at the moment Bondora declared default, on the 59,694 loans whose arrears-onset date precedes their default date. The histogram is truncated at 200 days for legibility, which drops 24 loans. Dashed rules mark the two thresholds the literature and the regulation reach for, at 60 and 90 days; the platform’s own median, the solid rule at 79 days, sits between them and its mass straddles both. A definition that fires on a fixed threshold would put every loan on one side of a single rule, so the spread here is the evidence that this flag is an operational decision rather than a rule.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Lecture 1’s outcome-window argument survives the correction and strengthens on it. That lecture observed that a three-month window returns a default rate of 0.16 per cent, which measures nothing, because a first instalment falling due a month after drawdown cannot accumulate enough arrears before the window closes. At 79 days rather than 60 the earliest possible declaration moves out to roughly 110 days after origination, past the close of a three-month window. The book agrees.</p>
+<div id="056b59dc" class="cell" data-execution_count="4">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mob <span class="op">=</span> (</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    raw.<span class="bu">filter</span>(pl.col(<span class="st">"DefaultDate"</span>).is_not_null())</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>       .with_columns(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>           ((pl.col(<span class="st">"DefaultDate"</span>) <span class="op">-</span> pl.col(<span class="st">"LoanDate"</span>)).dt.total_days() <span class="op">/</span> <span class="fl">30.44</span>).alias(<span class="st">"mob"</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>       )</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"defaults in the book              </span><span class="sc">{</span>mob<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  earliest, months on book        </span><span class="sc">{</span>mob[<span class="st">'mob'</span>]<span class="sc">.</span><span class="bu">min</span>()<span class="sc">:&gt;7.2f}</span><span class="ss">"</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> cut <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>):</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  declared before month </span><span class="sc">{</span>cut<span class="sc">}</span><span class="ss">         </span><span class="sc">{</span>mob<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'mob'</span>) <span class="op">&lt;</span> cut)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>defaults in the book               71,416
+  earliest, months on book           1.61
+  declared before month 1               0
+  declared before month 2               1
+  declared before month 3             259
+  declared before month 4           7,499</code></pre>
+</div>
+</div>
+<p>No default precedes the first month on book, exactly one precedes the second, and 259 of 71,416 precede the third. Indeed, lecture <code>S1</code> built an argument on the same structural fact when it explained why the estimated hazard is genuinely zero in month one. Both lectures were right about the mechanism and wrong about the threshold driving it, and both now quote the measured figure.</p>
+</section>
+</section>
+<section id="terminology" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Terminology</h1>
+<p>This lecture is the one the rest of the credit series points back to for vocabulary, so the terms come before the formulae. Each definition below is used to build the next, which is why they run in this order rather than alphabetically.</p>
+<p><strong>Performing.</strong> A loan meeting its contractual obligations. The state every other state is defined against.</p>
+<p><strong>Arrears, or delinquency.</strong> A missed or partial payment, measured either in days past due or in whole missed payments. The two measures are not interchangeable, and the difference matters more than it looks. Days past due is a property of a calendar, whereas payments in arrears is a property of a schedule. On a monthly instalment loan with equal payments they track each other, so thirty days is roughly one payment. However, on a revolving card they part company. On a revolving card with a minimum payment that moves with the balance, they come apart.</p>
+<p><strong>Default.</strong> An event declared when delinquency crosses a threshold, or when the lender judges the borrower unlikely to pay. Regulation fixes a floor for capital purposes. Nothing fixes it, however, for a behavioural or impairment model, where the modeller chooses, and the choices are the dials of the next section.</p>
+<p><strong>Cure.</strong> The transition from default back to performing. It is distinct from <strong>settlement</strong>, however, where the contract closes because the balance was repaid, since a cured loan is still on the book and still capable of defaulting again.</p>
+<p><strong>Probation.</strong> A period a loan must spend clear of every default trigger before it is allowed to count as cured. Without one, however, a borrower who makes a single payment leaves default immediately and re-enters it the following month, and the default series turns into noise.</p>
+<p><strong>Re-default.</strong> A second default after a cure. Whether it counts as one event or two is, again, a choice. Whether two episodes are one event or two is a definitional choice in the same family as the others.</p>
+<p><strong>Write-off.</strong> The accounting decision to derecognise a balance the lender has no reasonable expectation of recovering. Absorbing, and distinct from default: a loan can sit in default for years without being written off, and the two decisions answer to different rulebooks.</p>
+<p><strong>SICR</strong>, a significant increase in credit risk. The trigger that moves a loan from a twelve-month to a lifetime expected-loss measurement under IFRS 9. It sits, in other words, upstream. Upstream of default, and bounded above by it, since a defaulted loan has already gone past the point SICR is trying to anticipate.</p>
+<p><strong>Staging.</strong> The consequence of SICR. Stage 1 carries twelve-month expected loss, Stage 2 lifetime, and Stage 3 is the defaulted or credit-impaired bucket.</p>
+<p><strong>Worst-ever.</strong> Lecture 1’s name for the window-maximum aggregation, where a loan scores a one if it defaulted at any point inside the window even if it recovered before the window closed.</p>
+<p><strong>Point-at-horizon.</strong> The status at exactly the end of the window, which is a different flag and is measured against worst-ever in section 4.</p>
+<p><strong>Marginal PD.</strong> The probability of a first default dated to a particular period, conditional on having survived to it. Lecture <code>R1</code> derives it; this lecture only needs to keep it apart from the other two.</p>
+<div class="callout callout-style-default callout-warning no-icon callout-titled" title="Worst-ever is not the worst-case default rate">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Worst-ever is not the worst-case default rate
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Lecture <code>R2</code> uses <strong>worst-case default rate</strong> for the stressed default rate at the 99.9th percentile of the systematic factor, which is the quantity the regulatory capital formula evaluates. It has nothing to do with the window maximum defined here beyond an unfortunate overlap in English. This lecture says <strong>worst-ever</strong> throughout and never abbreviates it.</p>
+</div>
+</div>
+<section id="notation" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="notation"><span class="header-section-number">2.1</span> Notation</h2>
+<p>Lecture 1’s symbols are canon and none of them is redefined here. Two errata surfaced while checking that claim, both recorded in <code>notes/default-definition-lecture-structure.md</code>, and one of them frees a letter this lecture needs.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Symbol</th>
+<th>Meaning</th>
+<th>Provenance</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(t\)</span></td>
+<td>months on book</td>
+<td>lecture 1</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(g_i\)</span></td>
+<td>origination month of loan <span class="math inline">\(i\)</span></td>
+<td>lecture 1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\tau\)</span></td>
+<td>the snapshot date, never subscripted</td>
+<td>lecture 1</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(y_{i,t}\)</span></td>
+<td>monthly default flag</td>
+<td>lecture 1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(D_i^{(k)}\)</span></td>
+<td>window default indicator over <span class="math inline">\(k\)</span> months</td>
+<td>lecture 1</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(q_{i,t}\)</span></td>
+<td>discrete hazard</td>
+<td><code>R1</code>, <code>S1</code></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(a_{i,t}\)</span></td>
+<td>arrears in payments at month <span class="math inline">\(t\)</span></td>
+<td><strong>new here</strong></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(d\)</span></td>
+<td>delinquency threshold, in payments</td>
+<td><strong>new here</strong></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(s\)</span></td>
+<td>consecutive months the threshold must hold</td>
+<td><strong>new here</strong></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(k\)</span></td>
+<td>outcome period, in months</td>
+<td>lecture 1</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(p\)</span></td>
+<td>probation period, in months</td>
+<td><strong>new here</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Four rules keep those apart from what the series already spends. A bare <span class="math inline">\(d\)</span> is the delinquency threshold and a superscripted <span class="math inline">\(d^{\rm def}_t\)</span> is a life-table decrement count, which is lecture 1’s existing convention extended rather than changed. Similarly, a bare, unsubscripted <span class="math inline">\(p\)</span> is the probation period, and every probability in the series carries a subscript, so <span class="math inline">\({}_k p_{i,t}\)</span> and <span class="math inline">\(p_{ml}\)</span> are untouched. <span class="math inline">\(D\)</span> appears as an indicator only with a sub- or superscript, leaving <code>R1</code>’s bare Markov state labels alone. And <span class="math inline">\(\tau\)</span> stays unsubscripted, unlike in the source literature, where entry and resolution times are written as subscripted variants of it.</p>
+<p>The arrears measure earns a note of its own. Lecture 1 introduced a delinquency counter in its own callout and never reused it, and the guides define an arrears measure as days past due divided by thirty. This lecture writes <span class="math inline">\(a_{i,t}\)</span> for arrears in payments and converts explicitly wherever the data supplies days instead. The two agree only where instalments are monthly and equal, which holds for Bondora and fails for the revolving card portfolio of section 10, so they are never silently swapped.</p>
+</section>
+</section>
+<section id="the-four-dials" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> The four dials</h1>
+<p>A default definition is a function of the delinquency history, and it has four parameters. Practice writes down at most one of them.</p>
+<p>Let <span class="math inline">\(a_{i,t}\)</span> be the arrears on loan <span class="math inline">\(i\)</span> at month <span class="math inline">\(t\)</span>, counted in payments. Fix a threshold <span class="math inline">\(d\)</span> and a persistence requirement <span class="math inline">\(s\)</span>. A preliminary event is declared at <span class="math inline">\(t\)</span> when the arrears have held at or above the threshold for <span class="math inline">\(s\)</span> consecutive months,</p>
+<p><span class="math display">\[
+\mathcal{G}_{i,t}(d, s) = \left[ \sum_{v = t - (s - 1)}^{t} \left[ a_{i,v} \ge d \right] = s \right],
+\]</span></p>
+<p>writing <span class="math inline">\([\,\cdot\,]\)</span> for Iverson brackets, so that the inner bracket is one where the month’s arrears reach the threshold and the outer bracket is one where every month in the window did. Lecture 1 stated this and could go no further, because Bondora records no monthly arrears series to evaluate it on. Section 10 evaluates it.</p>
+<p>The provenance deserves a line, because the formalism is borrowed slightly out of its original setting. Botha, Oberholzer, Larney and de Jongh write <span class="math inline">\(\mathcal{G}\)</span> as a <strong>SICR</strong>-decision function and sweep it at <span class="math inline">\(d \in \{1, 2\}\)</span>, one or two payments in arrears, which is the shallow end where a significant increase in credit risk is detected. Their own default column is the same delinquency measure at a deeper threshold, <span class="math inline">\(g_0(t) \ge 3\)</span>. The machinery is therefore identical and only the threshold moves, which is exactly this lecture’s point, so <span class="math inline">\(\mathcal{G}\)</span> is used here for the default trigger with the threshold pushed out to where default lives. The <span class="math inline">\(s\)</span>-parameter, in their words, “smooths away rapid 0/1-fluctuations” in the status over time.</p>
+<p>The third dial is the one lecture 1 did spend. The response variable at <span class="math inline">\(t\)</span> reads the state <span class="math inline">\(k\)</span> months ahead, and section 4 shows that “reads the state” hides a choice of its own.</p>
+<p>The fourth dial, by contrast, governs the way back. Once a loan is in default, a single clear month should not release it, so a probation period <span class="math inline">\(p\)</span> requires the loan to be clear of every trigger for <span class="math inline">\(p\)</span> consecutive months before it counts as cured. Formally, the loan is in probation at <span class="math inline">\(t\)</span> if it triggered at any point in the preceding <span class="math inline">\(p\)</span> months,</p>
+<p><span class="math display">\[
+\mathcal{H}_{i,t}(p) = \left[ \sum_{v = t - p}^{t - 1} \mathcal{G}_{i,v}(d, s) &gt; 0 \right],
+\]</span></p>
+<p>and it is cured at <span class="math inline">\(t\)</span> when it is neither triggering now nor in probation,</p>
+<p><span class="math display">\[
+\mathcal{C}_{i,t}(d, s, p) = \left[ \mathcal{G}_{i,t}(d, s) = 0 \right] \cdot \left[ \mathcal{H}_{i,t}(p) = 0 \right] .
+\]</span></p>
+<p>The default state that a model actually predicts is the complement of cure rather than the preliminary trigger itself, so write <span class="math inline">\(D_{i,t}(d, s, p) = 1 - \mathcal{C}_{i,t}(d, s, p)\)</span>. Hence that distinction between the trigger and the state is where cure lives, and dropping it collapses the whole return path.</p>
+<div id="d91cc698" class="cell" data-execution_count="5">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>HW, HH <span class="op">=</span> <span class="fl">0.80</span>, <span class="fl">0.26</span>          <span class="co"># box half-width, half-height in data units</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>NODES <span class="op">=</span> {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">"performing"</span>:  (<span class="fl">1.2</span>, <span class="fl">2.55</span>), <span class="st">"arrears"</span>: (<span class="fl">3.6</span>, <span class="fl">2.55</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"default"</span>:     (<span class="fl">6.0</span>, <span class="fl">2.55</span>), <span class="st">"written off"</span>: (<span class="fl">8.6</span>, <span class="fl">2.55</span>),</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"probation"</span>:   (<span class="fl">6.0</span>, <span class="fl">1.05</span>), <span class="st">"cured"</span>:   (<span class="fl">3.6</span>, <span class="fl">1.05</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>FILL <span class="op">=</span> {<span class="st">"default"</span>: OX, <span class="st">"written off"</span>: RULE}</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.0</span>))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>ax.set_xlim(<span class="fl">0.1</span>, <span class="fl">9.7</span>)<span class="op">;</span> ax.set_ylim(<span class="fl">0.30</span>, <span class="fl">3.25</span>)<span class="op">;</span> ax.axis(<span class="st">"off"</span>)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, (x, y) <span class="kw">in</span> NODES.items():</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    fc <span class="op">=</span> FILL.get(name, <span class="st">"white"</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    ax.add_patch(plt.Rectangle((x <span class="op">-</span> HW, y <span class="op">-</span> HH), <span class="dv">2</span> <span class="op">*</span> HW, <span class="dv">2</span> <span class="op">*</span> HH,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>                               facecolor<span class="op">=</span>fc, edgecolor<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.1</span>, zorder<span class="op">=</span><span class="dv">3</span>))</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    ax.text(x, y, name, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="dv">9</span>, zorder<span class="op">=</span><span class="dv">4</span>,</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span><span class="st">"white"</span> <span class="cf">if</span> name <span class="kw">in</span> FILL <span class="cf">else</span> RULE)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> edge(p, q):</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Point where the segment p-&gt;q leaves p's box."""</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>    (x0, y0), (x1, y1) <span class="op">=</span> p, q</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>    dx, dy <span class="op">=</span> x1 <span class="op">-</span> x0, y1 <span class="op">-</span> y0</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    scale <span class="op">=</span> <span class="bu">min</span>(HW <span class="op">/</span> <span class="bu">abs</span>(dx) <span class="cf">if</span> dx <span class="cf">else</span> np.inf, HH <span class="op">/</span> <span class="bu">abs</span>(dy) <span class="cf">if</span> dy <span class="cf">else</span> np.inf)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x0 <span class="op">+</span> dx <span class="op">*</span> scale, y0 <span class="op">+</span> dy <span class="op">*</span> scale</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> link(a, b, label, colour<span class="op">=</span>RULE, rad<span class="op">=</span><span class="fl">0.0</span>, xoff<span class="op">=</span><span class="fl">0.0</span>, lab_at<span class="op">=</span><span class="fl">0.5</span>,</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a>         lab_dx<span class="op">=</span><span class="fl">0.0</span>, lab_dy<span class="op">=</span><span class="fl">0.18</span>, ls<span class="op">=</span><span class="st">"-"</span>):</span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a>    pa <span class="op">=</span> (NODES[a][<span class="dv">0</span>] <span class="op">+</span> xoff, NODES[a][<span class="dv">1</span>])</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>    pb <span class="op">=</span> (NODES[b][<span class="dv">0</span>] <span class="op">+</span> xoff, NODES[b][<span class="dv">1</span>])</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="st">""</span>, xy<span class="op">=</span>edge(pb, pa), xytext<span class="op">=</span>edge(pa, pb), zorder<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>                arrowprops<span class="op">=</span><span class="bu">dict</span>(arrowstyle<span class="op">=</span><span class="st">"-|&gt;"</span>, color<span class="op">=</span>colour, lw<span class="op">=</span><span class="fl">1.1</span>, ls<span class="op">=</span>ls,</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>                                connectionstyle<span class="op">=</span><span class="ss">f"arc3,rad=</span><span class="sc">{</span>rad<span class="sc">}</span><span class="ss">"</span>))</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    lx <span class="op">=</span> pa[<span class="dv">0</span>] <span class="op">+</span> (pb[<span class="dv">0</span>] <span class="op">-</span> pa[<span class="dv">0</span>]) <span class="op">*</span> lab_at <span class="op">+</span> lab_dx</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    ly <span class="op">=</span> pa[<span class="dv">1</span>] <span class="op">+</span> (pb[<span class="dv">1</span>] <span class="op">-</span> pa[<span class="dv">1</span>]) <span class="op">*</span> lab_at <span class="op">+</span> lab_dy</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    ax.text(lx, ly, label, ha<span class="op">=</span><span class="st">"center"</span>, va<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="fl">8.5</span>,</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>            color<span class="op">=</span>colour, style<span class="op">=</span><span class="st">"italic"</span>, zorder<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>            bbox<span class="op">=</span><span class="bu">dict</span>(boxstyle<span class="op">=</span><span class="st">"round,pad=0.14"</span>, fc<span class="op">=</span><span class="st">"white"</span>, ec<span class="op">=</span><span class="st">"none"</span>))</span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>link(<span class="st">"performing"</span>, <span class="st">"arrears"</span>, <span class="st">"$a_{i,t} </span><span class="ch">\\</span><span class="st">geq d$"</span>)</span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>link(<span class="st">"arrears"</span>, <span class="st">"default"</span>, <span class="st">"held $s$ months"</span>, lab_dy<span class="op">=</span><span class="fl">0.36</span>)</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>link(<span class="st">"default"</span>, <span class="st">"written off"</span>, <span class="st">"no recovery</span><span class="ch">\n</span><span class="st">expected"</span>, lab_dy<span class="op">=</span><span class="fl">0.40</span>)</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>link(<span class="st">"default"</span>, <span class="st">"probation"</span>, <span class="st">"triggers clear"</span>, xoff<span class="op">=-</span><span class="fl">0.26</span>, lab_dx<span class="op">=-</span><span class="fl">0.52</span>, lab_dy<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>link(<span class="st">"probation"</span>, <span class="st">"default"</span>, <span class="st">"re-triggers"</span>, colour<span class="op">=</span>OX, xoff<span class="op">=</span><span class="fl">0.30</span>,</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>     lab_dx<span class="op">=</span><span class="fl">0.50</span>, lab_dy<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>link(<span class="st">"probation"</span>, <span class="st">"cured"</span>, <span class="st">"$p$ clear months"</span>, lab_dy<span class="op">=-</span><span class="fl">0.38</span>)</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>link(<span class="st">"cured"</span>, <span class="st">"performing"</span>, <span class="st">"and may default again"</span>, rad<span class="op">=</span><span class="fl">0.30</span>,</span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>     lab_at<span class="op">=</span><span class="fl">0.45</span>, lab_dx<span class="op">=-</span><span class="fl">0.30</span>, lab_dy<span class="op">=-</span><span class="fl">0.34</span>, ls<span class="op">=</span><span class="st">":"</span>)</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="D1_credit-default-definition_files/figure-html/cell-6-output-1.png" width="1335" height="435" class="figure-img"></p>
+<figcaption>The state machine the four dials parameterise. A loan leaves performing when arrears reach the threshold <span class="math inline">\(d\)</span>, and the transition to default fires only once that has held for <span class="math inline">\(s\)</span> consecutive months, which is why the trigger and the state are drawn separately. The return path is gated by <span class="math inline">\(p\)</span> clear months, and a loan that re-enters arrears during probation never reaches cure. Write-off is absorbing and sits outside the default-to-cure loop entirely, because it answers to an accounting test rather than to a delinquency counter. The outcome period <span class="math inline">\(k\)</span> does not appear: it is not a transition but the horizon over which the diagram is read, which is the subject of the next section.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Before turning to the dials the regulation does fix, it is worth recording that one standard says outright that the definition is the firm’s own. IFRS 9 paragraph B5.5.37 requires that</p>
+<blockquote class="blockquote">
+<p>an entity shall apply a default definition that is consistent with the definition used for internal credit risk management purposes for the relevant financial instrument […] However, there is a rebuttable presumption that default does not occur later than when a financial asset is 90 days past due unless an entity has reasonable and supportable information to demonstrate that a more lagging default criterion is more appropriate.</p>
+</blockquote>
+<p>So the accounting standard sets a backstop and otherwise defers to whatever the bank already does, which makes the dials of this section the bank’s to choose and its own consistency the binding constraint. Nonetheless a firm running one default definition for capital and another for impairment is not breaching the standard by having two, and it is breaching it if either one drifts from what its credit risk management actually uses.</p>
+<p>Two of these dials are visible in the regulation and two are not. Article 178 of the Capital Requirements Regulation fixes a threshold, in days rather than payments, and pairs it with a judgement-based limb that fires regardless of arrears. It also requires a period clear of triggers before a defaulted exposure returns to performing, which is <span class="math inline">\(p\)</span> under another name. What it does not fix is <span class="math inline">\(s\)</span>, and what no regulation fixes is the modeller’s freedom over <span class="math inline">\(k\)</span>. Consequently a behavioural or impairment model has at least two dials that are pure choices, and a reported default rate is uninterpretable until both are stated.</p>
+</section>
+<section id="three-targets-wearing-one-name" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Three targets wearing one name</h1>
+<p>Fix all four dials and one question remains, and it is the question this lecture exists to separate. Having decided what default means at a month, what does the response variable say about a horizon <span class="math inline">\(k\)</span> months away?</p>
+<p>There are, in practice, three answers in circulation. They are commonly all called the twelve-month PD, two of them are routinely conflated, and they are different quantities that answer different questions.</p>
+<p>Write <span class="math inline">\(y_{i,t} = D_{i,t}(d, s, p)\)</span> for the monthly default state under the dials of the previous section, and condition throughout on the loan performing at <span class="math inline">\(t\)</span>.</p>
+<p><strong>The worst-ever flag</strong> takes the maximum over the window,</p>
+<p><span class="math display">\[
+D_i^{(k)} = \max\left( y_{i,t+1},\, \ldots,\, y_{i,t+k} \right) .
+\]</span></p>
+<p>A loan that defaults in month three and cures by month eight nevertheless scores a one, because the maximum remembers the breach. This is lecture 1’s aggregation and it is what a regulatory twelve-month PD targets, since the capital question is whether the exposure went bad inside the year at all.</p>
+<p><strong>The point-at-horizon flag</strong> reads the state at the end and nothing else,</p>
+<p><span class="math display">\[
+y_{i,t+k} .
+\]</span></p>
+<p>By contrast, the same loan scores a zero here, having cured before the horizon arrived. This is the quantity that the notation in Mario’s own A-IRB and IFRS 9 guides literally defines, writing the default outcome as the default state evaluated at <span class="math inline">\(t+k\)</span>, while the surrounding prose in the same documents describes the target as worst-ever. Both cannot be right, and section 10 therefore measures how far apart they are.</p>
+<p><strong>The marginal PD</strong> asks for a first default dated to the horizon,</p>
+<p><span class="math display">\[
+f_{i,t+k} = \mathbb{P}\left( y_{i,t+k} = 1,\ y_{i,t+1} = \cdots = y_{i,t+k-1} = 0 \right) ,
+\]</span></p>
+<p>which lecture <code>R1</code> derives properly as a survival probability multiplied by a hazard. This is what an expected-credit-loss sum consumes, because a loss has to be dated before it can be discounted, and <code>R1</code> states the consequence: a cumulative probability cannot appear in that sum at all.</p>
+<div class="callout callout-style-default callout-important no-icon callout-titled" title="The distinction in one row of data">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>The distinction in one row of data
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Three illustrative loans over a six-month window, at <span class="math inline">\(k = 6\)</span>. These are constructed cases rather than portfolio data, in the manner of lecture 1’s censoring figure.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Loan</th>
+<th>Monthly states <span class="math inline">\(y_{t+1} \ldots y_{t+6}\)</span></th>
+<th>Worst-ever</th>
+<th>Point-at-horizon</th>
+<th>Marginal at 6</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>A</td>
+<td>0 1 1 0 0 0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>B</td>
+<td>0 0 0 0 0 1</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr class="odd">
+<td>C</td>
+<td>0 1 1 1 1 1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td>D</td>
+<td>0 0 0 0 0 0</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>Loan A defaulted and cured, so the three targets disagree completely. Loan B is the only one whose default is both live at the horizon and dated there, and it is the only one the marginal probability is about. Loan C is the case that does the damage: it is counted by the point-at-horizon flag exactly as loan B is, although its default is five months old. A model trained on the point-at-horizon flag therefore learns to predict a <strong>stock</strong> of defaulted loans, while the expected-loss calculation it feeds needs a <strong>flow</strong> of new ones.</p>
+</div>
+</div>
+<p>Loan C is not a curiosity. Indeed, section 10 shows that on a real revolving book nine out of ten point-at-horizon flags are loans of type C rather than type B, which makes the point-at-horizon target roughly twelve times the marginal quantity it is sometimes mistaken for.</p>
+<p>Which target belongs to which question is, thereafter, straightforward, and stating it is most of the value of the distinction.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Question</th>
+<th>Target</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Regulatory twelve-month PD</td>
+<td>worst-ever</td>
+<td>The capital rules ask whether default occurred within the year</td>
+</tr>
+<tr class="even">
+<td>Expected credit loss at month <span class="math inline">\(k\)</span></td>
+<td>marginal</td>
+<td>A loss must be dated to be discounted</td>
+</tr>
+<tr class="odd">
+<td>Portfolio delinquency reporting</td>
+<td>point-at-horizon</td>
+<td>A stock measure is what a balance-sheet snapshot wants</td>
+</tr>
+<tr class="even">
+<td>Behavioural scorecard</td>
+<td>worst-ever, usually</td>
+<td>The decision being supported is whether to act before anything happens</td>
+</tr>
+</tbody>
+</table>
+<p>The point-at-horizon flag has a legitimate use, and building a PD model on it is not that use.</p>
+</section>
+<section id="cure" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Cure</h1>
+<p>Default is a state a loan can leave. That sentence sounds obvious and most modelling datasets are built as though it were false, with a single absorbing default flag per loan and no record of what happened afterwards.</p>
+<p>The regulation is explicit that the state is reversible, and it is worth reading the primary text closely, because where the probation period actually comes from is not where it is usually said to come from. Article 178(5) of the EU Capital Requirements Regulation says only this:</p>
+<blockquote class="blockquote">
+<p>If the institution considers that a previously defaulted exposure is such that no trigger of default continues to apply, the institution shall rate the obligor or facility as they would for a non-defaulted exposure. Where the definition of default is subsequently triggered, another default would be deemed to have occurred.</p>
+</blockquote>
+<p>Note what is absent. The EU CRR states no minimum period at all, so on the primary text a loan returns to performing the moment its triggers clear, which is <span class="math inline">\(p = 0\)</span>. Instead, the familiar three-month minimum lives in supervisory guidance, namely the EBA guidelines on the application of the definition of default, and in the United Kingdom it was written into the rulebook itself. UK CRR Article 178(5)(a) requires an institution to</p>
+<blockquote class="blockquote">
+<p>continue to rate an exposure as being in default until at least 3 months have passed since the conditions in points (a) and (b) of paragraph 1 ceased to be met.</p>
+</blockquote>
+<p>A longer one-year probation applies to exposures that defaulted through distressed restructuring, carried in UK CRR Article 178(5A) and, in the EU, in the EBA guidelines rather than in the Regulation.</p>
+<p>That is the probation period <span class="math inline">\(p\)</span> of section 3, and the cure indicator <span class="math inline">\(\mathcal{C}_{i,t}(d, s, p)\)</span> is its formal content. Two points follow for a modeller. The probation period is a supervisory choice rather than a fact of the primary legislation in the EU, so it can and does differ between jurisdictions and between exposure types. And its floor is three months for ordinary cures against twelve for restructured ones, which means one portfolio routinely carries two probation periods at once.</p>
+<p>Two things get called cure and they are worth separating before any measurement.</p>
+<p><strong>Cure after default</strong> is the regulatory sense: a default was declared, the triggers cleared, the probation period elapsed, and the exposure returned to performing. <strong>Cure before default</strong> is recovery from arrears that never crossed the threshold at all. The second is not cure in any regulatory sense, since nothing was ever declared. Nonetheless it matters, because it is precisely the population that a loosening of the delinquency threshold <span class="math inline">\(d\)</span> would reclassify as defaulted.</p>
+<p>Bondora records both, and it records them in a shape that limits what can be said.</p>
+<div id="5549d728" class="cell" data-execution_count="6">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>late_ever <span class="op">=</span> pl.col(<span class="st">"WorseLateCategory"</span>).is_not_null()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>has_dd    <span class="op">=</span> pl.col(<span class="st">"DefaultDate"</span>).is_not_null()</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>repaid    <span class="op">=</span> pl.col(<span class="st">"Status"</span>) <span class="op">==</span> <span class="st">"Repaid"</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>before <span class="op">=</span> raw.<span class="bu">filter</span>(late_ever <span class="op">&amp;</span> <span class="op">~</span>has_dd <span class="op">&amp;</span> repaid)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>after  <span class="op">=</span> raw.<span class="bu">filter</span>(has_dd <span class="op">&amp;</span> repaid)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"reached arrears, never declared, repaid   </span><span class="sc">{</span>before<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">   (cure before default)"</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  of which reached the 180+ bucket        "</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>before<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'WorseLateCategory'</span>) <span class="op">==</span> <span class="st">'180+'</span>)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"declared in default, later repaid         </span><span class="sc">{</span>after<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">   (cure after default)"</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"never late at all                         "</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>raw<span class="sc">.</span><span class="bu">filter</span>(<span class="op">~</span>late_ever)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"loans in the book                         </span><span class="sc">{</span>raw<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>reached arrears, never declared, repaid    19,287   (cure before default)
+  of which reached the 180+ bucket            460
+declared in default, later repaid          10,743   (cure after default)
+
+never late at all                          52,329
+loans in the book                         179,235</code></pre>
+</div>
+</div>
+<p>19,287 loans reached arrears, were never declared in default, and repaid in full. Moreover, 460 of them reached the deepest bucket the platform records, more than 180 days late, and still repaid without ever being flagged. Separately, 10,743 loans were declared in default and repaid afterwards.</p>
+<p>The limitation is the shape of the extract rather than the size of the numbers. Bondora publishes one row per loan, so both figures are read off a <strong>terminal disposition</strong> rather than off an observed return to performing. We know these loans ended repaid. However, we cannot see the month they stopped being delinquent, we cannot apply a probation period to them, and we cannot tell a loan that cured once from one that cured, re-defaulted, and cured again. Consequently the cure rate is a lower bound on the phenomenon and it is not a measurement of the definition. Section 10 does that on data with the right shape.</p>
+<section id="the-cure-rate-is-not-a-number-until-the-threshold-is-fixed" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="the-cure-rate-is-not-a-number-until-the-threshold-is-fixed"><span class="header-section-number">5.1</span> The cure rate is not a number until the threshold is fixed</h2>
+<p>What Bondora can support is a sweep of the one dial its columns do expose, and it is worth being exact about which quantity moves. <code>WorseLateCategory</code> records the worst arrears bucket each loan ever reached, so a threshold can be slid across those boundaries to vary <strong>who counts as having been at risk of default</strong>. The platform’s own <code>DefaultDate</code> stays fixed throughout, because nothing in the extract would let us re-declare default at a different threshold. So this is a sweep of the denominator rather than a re-definition of the event, and it is the strongest version of the exercise the data shape permits. Section 10 re-declares the event itself.</p>
+<div id="fb14d635" class="cell" data-execution_count="7">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>BUCKETS <span class="op">=</span> [<span class="st">"1-7"</span>, <span class="st">"8-15"</span>, <span class="st">"16-30"</span>, <span class="st">"31-60"</span>, <span class="st">"61-90"</span>, <span class="st">"91-120"</span>, <span class="st">"121-150"</span>, <span class="st">"151-180"</span>, <span class="st">"180+"</span>]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>FLOOR <span class="op">=</span> <span class="bu">dict</span>(<span class="bu">zip</span>(BUCKETS, [<span class="dv">1</span>, <span class="dv">8</span>, <span class="dv">16</span>, <span class="dv">31</span>, <span class="dv">61</span>, <span class="dv">91</span>, <span class="dv">121</span>, <span class="dv">151</span>, <span class="dv">181</span>]))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>worst <span class="op">=</span> (</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    raw.select([<span class="st">"WorseLateCategory"</span>, <span class="st">"DefaultDate"</span>])</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>       .<span class="bu">filter</span>(pl.col(<span class="st">"WorseLateCategory"</span>).is_in(BUCKETS))</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>       .with_columns([</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>           pl.col(<span class="st">"WorseLateCategory"</span>).replace_strict(FLOOR, return_dtype<span class="op">=</span>pl.Int32).alias(<span class="st">"floor"</span>),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>           pl.col(<span class="st">"DefaultDate"</span>).is_not_null().alias(<span class="st">"declared"</span>),</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>       ])</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> b <span class="kw">in</span> BUCKETS:</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    at_or_above <span class="op">=</span> worst.<span class="bu">filter</span>(pl.col(<span class="st">"floor"</span>) <span class="op">&gt;=</span> FLOOR[b])</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    avoided <span class="op">=</span> at_or_above.<span class="bu">filter</span>(<span class="op">~</span>pl.col(<span class="st">"declared"</span>)).height</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>        <span class="st">"threshold d"</span>: <span class="ss">f"&gt;= </span><span class="sc">{</span>b<span class="sc">}</span><span class="ss"> days"</span>,</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">"loans reaching it"</span>: at_or_above.height,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">"never declared"</span>: avoided,</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">"avoided default %"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> avoided <span class="op">/</span> at_or_above.height, <span class="dv">1</span>),</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>sweep <span class="op">=</span> pl.DataFrame(rows)</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>sweep</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (9, 4)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">threshold d</th>
+<th data-quarto-table-cell-role="th">loans reaching it</th>
+<th data-quarto-table-cell-role="th">never declared</th>
+<th data-quarto-table-cell-role="th">avoided default %</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>i64</td>
+<td>i64</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"&gt;= 1-7 days"</td>
+<td>126906</td>
+<td>55503</td>
+<td>43.7</td>
+</tr>
+<tr class="even">
+<td>"&gt;= 8-15 days"</td>
+<td>100230</td>
+<td>28851</td>
+<td>28.8</td>
+</tr>
+<tr class="odd">
+<td>"&gt;= 16-30 days"</td>
+<td>92574</td>
+<td>21213</td>
+<td>22.9</td>
+</tr>
+<tr class="even">
+<td>"&gt;= 31-60 days"</td>
+<td>84701</td>
+<td>13437</td>
+<td>15.9</td>
+</tr>
+<tr class="odd">
+<td>"&gt;= 61-90 days"</td>
+<td>75194</td>
+<td>4421</td>
+<td>5.9</td>
+</tr>
+<tr class="even">
+<td>"&gt;= 91-120 days"</td>
+<td>71374</td>
+<td>1397</td>
+<td>2.0</td>
+</tr>
+<tr class="odd">
+<td>"&gt;= 121-150 days"</td>
+<td>69451</td>
+<td>591</td>
+<td>0.9</td>
+</tr>
+<tr class="even">
+<td>"&gt;= 151-180 days"</td>
+<td>68033</td>
+<td>516</td>
+<td>0.8</td>
+</tr>
+<tr class="odd">
+<td>"&gt;= 180+ days"</td>
+<td>66620</td>
+<td>463</td>
+<td>0.7</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="28d115a1" class="cell" data-execution_count="8">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.4</span>))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>x <span class="op">=</span> np.arange(<span class="bu">len</span>(BUCKETS))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>ax.plot(x, sweep[<span class="st">"avoided default %"</span>], <span class="st">"o-"</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.6</span>, ms<span class="op">=</span><span class="dv">5</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(x)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>ax.set_xticklabels(BUCKETS, fontsize<span class="op">=</span><span class="fl">8.5</span>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"delinquency threshold $d$, worst arrears bucket reached (days)"</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"never declared in default (%)"</span>, color<span class="op">=</span>OX)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>ax.tick_params(axis<span class="op">=</span><span class="st">"y"</span>, labelcolor<span class="op">=</span>OX)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>ax2 <span class="op">=</span> ax.twinx()</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>ax2.bar(x, sweep[<span class="st">"loans reaching it"</span>], color<span class="op">=</span>GREY, alpha<span class="op">=</span><span class="fl">0.35</span>, zorder<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>ax2.set_ylabel(<span class="st">"loans at or above the threshold"</span>, color<span class="op">=</span>RULE)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>ax2.tick_params(axis<span class="op">=</span><span class="st">"y"</span>, labelcolor<span class="op">=</span>RULE)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> s <span class="kw">in</span> (<span class="st">"top"</span>,):</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    ax.spines[s].set_visible(<span class="va">False</span>)<span class="op">;</span> ax2.spines[s].set_visible(<span class="va">False</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="D1_credit-default-definition_files/figure-html/cell-9-output-1.png" width="1337" height="493" class="figure-img"></p>
+<figcaption>The share of Bondora loans that reached a given arrears depth and were never declared in default, as the delinquency threshold moves across the platform’s own reporting buckets. Read it as the quantity a modeller would report as a cure rate under each choice of threshold. The fall is steep, and yet it is not a property of borrower behaviour: the same loans are in the book at every point on the curve, and only the definition of who counts as having been at risk has changed. The count of loans at or above each threshold, on the right axis, is what makes the far end unstable.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The number a bank would report as its cure rate runs from 43.7 per cent down to 0.7 as the threshold slides from one week of arrears to six months, on one book, over one period, with no borrower behaving differently. Some of that fall is mechanical, since a threshold that admits only deeply delinquent loans admits mostly loans that were declared, and the mechanism is the point rather than a confound: the at-risk population is part of the definition, and a cure rate reported without <span class="math inline">\(d\)</span>, <span class="math inline">\(s\)</span> and <span class="math inline">\(p\)</span> beside it conveys almost nothing about the book.</p>
+</section>
+</section>
+<section id="write-off" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Write-off</h1>
+<p>Write-off is the lender’s decision to remove a balance from the balance sheet because it has no reasonable expectation of recovering it. IFRS 9 paragraph 5.4.4 puts it in one sentence:</p>
+<blockquote class="blockquote">
+<p>An entity shall directly reduce the gross carrying amount of a financial asset when the entity has no reasonable expectations of recovering a financial asset in its entirety or a portion thereof. A write-off constitutes a derecognition event.</p>
+</blockquote>
+<p>The accounting consequence catches people out: the charge to profit and loss happened earlier, when the expected-loss provision was raised, so the write-off itself moves the gross asset and the loss allowance together and leaves the net carrying amount where it was.</p>
+<p>For this lecture the accounting is background and the state machine is the point. Write-off is absorbing, it is downstream of default, and it answers to a different test. In particular, default and write-off ask different questions. Default asks whether the borrower has breached; write-off asks whether the lender still expects money. A loan can sit in default for years and never be written off, and Bondora shows exactly that. Thus the two are separate transitions rather than one.</p>
+<div id="bf751c23" class="cell" data-execution_count="9">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>wo   <span class="op">=</span> pl.col(<span class="st">"PrincipalWriteOffs"</span>) <span class="op">&gt;</span> <span class="dv">0</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>rec  <span class="op">=</span> pl.col(<span class="st">"RecoveryStage"</span>).is_not_null()</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"declared in default                       </span><span class="sc">{</span>raw<span class="sc">.</span><span class="bu">filter</span>(has_dd)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  entered a recovery stage                </span><span class="sc">{</span>raw<span class="sc">.</span><span class="bu">filter</span>(rec)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  carry a principal write-off             </span><span class="sc">{</span>raw<span class="sc">.</span><span class="bu">filter</span>(wo)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"  written off having never been declared  </span><span class="sc">{</span>raw<span class="sc">.</span><span class="bu">filter</span>(wo <span class="op">&amp;</span> <span class="op">~</span>has_dd)<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"write-offs as a share of declared defaults "</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span><span class="dv">100</span> <span class="op">*</span> raw<span class="sc">.</span><span class="bu">filter</span>(wo <span class="op">&amp;</span> has_dd)<span class="sc">.</span>height <span class="op">/</span> raw<span class="sc">.</span><span class="bu">filter</span>(has_dd)<span class="sc">.</span>height<span class="sc">:&gt;6.1f}</span><span class="ss"> per cent"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>declared in default                        71,416
+  entered a recovery stage                111,940
+  carry a principal write-off               7,745
+  written off having never been declared      448
+
+write-offs as a share of declared defaults   10.2 per cent</code></pre>
+</div>
+</div>
+<p>Entering recovery and being written off differ by more than an order of magnitude. That gap is the reason the life table of lecture 1 needs a third decrement rather than two. Lecture 1 counted defaults <span class="math inline">\(d^{\rm def}_t\)</span> and settlements <span class="math inline">\(d^{\rm set}_t\)</span> leaving the risk set each month; a write-off decrement <span class="math inline">\(d^{\rm wo}_t\)</span> is a separate exit, and treating it as a default overstates the event of interest while treating it as a settlement discards a total loss as though it were a repayment.</p>
+<p>One caution about third-party data belongs here, because it is a trap rather than a detail. Bureau feeds routinely publish a delinquency status whose worst bucket bundles deep arrears together with sale and write-off. The Home Credit archive’s own bureau table does exactly this, documenting its top status code as “DPD 120+ or sold or written off”. Consequently a modeller reading that field cannot separate the three events at all, so a definition that distinguishes them cannot be implemented on it, whatever the regulation says. That is the argument of section 8 arriving early.</p>
+</section>
+<section id="sicr-bounded-above-by-default" class="level1" data-number="7">
+<h1 data-number="7"><span class="header-section-number">7</span> SICR, bounded above by default</h1>
+<p>Significant increase in credit risk is the trigger that moves an exposure from twelve-month to lifetime expected-loss measurement under IFRS 9. It belongs in this lecture for one reason: it is defined by reference to default, and it is bounded above by it.</p>
+<p>The bound is structural. Because a defaulted exposure is already credit-impaired and sits in Stage 3, SICR is trying to detect deterioration strictly before the point this lecture’s dials fire. Where the default definition moves, the SICR event moves with it, and a bank that loosens <span class="math inline">\(d\)</span> has narrowed the window SICR was supposed to occupy without touching its SICR model at all.</p>
+<p>The test itself is stated in paragraph 5.5.9, and what it does not say is the striking part:</p>
+<blockquote class="blockquote">
+<p>At each reporting date, an entity shall assess whether the credit risk on a financial instrument has increased significantly since initial recognition. When making the assessment, an entity shall use the change in the risk of a default occurring over the expected life of the financial instrument instead of the change in the amount of expected credit losses.</p>
+</blockquote>
+<p>No metric, no threshold, and no method. Consequently a SICR event is parameterised by choices of exactly the kind section 3 enumerated, which is why the impairment literature reaches for the same <span class="math inline">\((d, s, k)\)</span> formalism to define one.</p>
+<p>Paragraph 5.5.11 then supplies a backstop rather than a definition, in the same way the ninety-day limb is a backstop rather than the whole of Article 178. There is, it says, “a rebuttable presumption that the credit risk on a financial asset has increased significantly since initial recognition when contractual payments are more than 30 days past due”, and the same paragraph requires that an entity able to look further forward than past-due status must do so. A thirty-day trigger is therefore the floor of what a SICR model may be, and a bank whose SICR model is a thirty-day arrears rule has built the backstop and called it the model.</p>
+<p>The consequence for the term structure is <code>R1</code>’s subject and is not repeated here: the staging test decides how much of the term structure gets used, twelve months in Stage 1 and the full remaining life in Stages 2 and 3, so the horizon a model is asked for depends on a flag whose own definition is unstandardised. A full SICR methodology, with its threshold calibration and its own validation questions, is a lecture in its own right and this is deliberately not it.</p>
+</section>
+<section id="from-a-definition-to-a-data-shape" class="level1" data-number="8">
+<h1 data-number="8"><span class="header-section-number">8</span> From a definition to a data shape</h1>
+<p>Every dial of section 3 is a statement about a sequence. The threshold <span class="math inline">\(d\)</span> asks what the arrears were in a given month, the persistence requirement <span class="math inline">\(s\)</span> asks whether that held across several consecutive months, the probation period <span class="math inline">\(p\)</span> asks for a run of clear months after an episode, and the outcome period <span class="math inline">\(k\)</span> asks what the state became some months later. A table with one row per loan, however, carries no sequence, so it can answer the first of those questions only at the single date it was extracted, and none of the other three at all. That is why the definitional question and the data-engineering question are one question, and the rest of this lecture works both ends of it.</p>
+</section>
+<section id="what-a-snapshot-extract-cannot-answer" class="level1" data-number="9">
+<h1 data-number="9"><span class="header-section-number">9</span> What a snapshot extract cannot answer</h1>
+<p>Bondora is a good dataset and a fair example of the shape most published loan books arrive in. Its constraint lies in the granularity of the rows rather than in any missing column.</p>
+<div id="d5f1a039" class="cell" data-execution_count="10">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>per_loan <span class="op">=</span> raw.select(pl.col(<span class="st">"LoanId"</span>).n_unique()).item()</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rows in the extract          </span><span class="sc">{</span>raw<span class="sc">.</span>height<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"distinct LoanId              </span><span class="sc">{</span>per_loan<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rows per loan                </span><span class="sc">{</span>raw<span class="sc">.</span>height <span class="op">/</span> per_loan<span class="sc">:&gt;7.1f}</span><span class="ss">"</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> c <span class="kw">in</span> [<span class="st">"ActiveLateCategory"</span>, <span class="st">"WorseLateCategory"</span>, <span class="st">"CurrentDebtDaysPrimary"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>          <span class="st">"DebtOccuredOn"</span>, <span class="st">"DefaultDate"</span>, <span class="st">"Status"</span>, <span class="st">"PrincipalWriteOffs"</span>]:</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    nn <span class="op">=</span> raw.<span class="bu">filter</span>(pl.col(c).is_not_null()).height</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"  </span><span class="sc">{</span>c<span class="sc">:&lt;24}</span><span class="ss"> one value per loan, populated on </span><span class="sc">{</span>nn<span class="sc">:&gt;7,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>rows in the extract          179,235
+distinct LoanId              179,235
+rows per loan                    1.0
+
+  ActiveLateCategory       one value per loan, populated on  74,984
+  WorseLateCategory        one value per loan, populated on 126,906
+  CurrentDebtDaysPrimary   one value per loan, populated on  76,224
+  DebtOccuredOn            one value per loan, populated on  76,224
+  DefaultDate              one value per loan, populated on  71,416
+  Status                   one value per loan, populated on 179,235
+  PrincipalWriteOffs       one value per loan, populated on  76,150</code></pre>
+</div>
+</div>
+<p>One row per loan, and every delinquency field is a scalar on that row. Of those, two are dated (<code>DebtOccuredOn</code>, <code>DefaultDate</code>), one is the state at the extract date (<code>ActiveLateCategory</code>), and one is an all-time aggregate (<code>WorseLateCategory</code>). That is four numbers where the definition wants a monthly series, and consequently it is enough for exactly one of the four dials.</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Dial</th>
+<th>Observable on Bondora?</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(d\)</span>, delinquency threshold</td>
+<td>Partly</td>
+<td><code>WorseLateCategory</code> gives the worst depth ever reached, so a threshold can select an at-risk population. It cannot re-declare the event, since <code>DefaultDate</code> is the platform’s own fixed flag</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(s\)</span>, persistence</td>
+<td>No</td>
+<td>Testing whether arrears held for <span class="math inline">\(s\)</span> consecutive months requires the arrears in each of those months, and the extract records none of them</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(p\)</span>, probation</td>
+<td>No</td>
+<td>A probation period needs a run of clear months after an episode. The extract records a terminal status and no intervening months</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(k\)</span>, outcome period</td>
+<td>Yes</td>
+<td><span class="math inline">\(k\)</span> is the modeller’s own choice of horizon, measured against <code>DefaultDate</code>, and lecture 1 already swept it</td>
+</tr>
+</tbody>
+</table>
+<p>The last row is the one to notice. Lecture 1 swept the only dial the data let it sweep, and having swept it, treated the definition as settled. That is a very easy mistake to make, and it is therefore worth naming the general form: the dials a dataset exposes feel like the dials that exist.</p>
+<p>Finally, <code>WorseLateCategory</code> deserves a remark of its own, because it is a worst-ever aggregate and this lecture has a name for that. The field applies the worst-ever operator of section 4 over the whole life of the loan rather than over a fixed window, which makes it an unusable target (a modeller cannot condition on a covariate measured after the outcome) and a useful diagnostic. It is how section 5 could see cure at all.</p>
+</section>
+<section id="what-a-monthly-panel-adds" class="level1" data-number="10">
+<h1 data-number="10"><span class="header-section-number">10</span> What a monthly panel adds</h1>
+<p>To turn the dials we need a dataset whose rows are loan-months. This section uses the revolving card panel from the public Home Credit competition data, which carries a days-past-due figure stamped to each month. It is a different portfolio from Bondora and a different product. Nevertheless the point is the shape rather than the book.</p>
+<div id="f1eed848" class="cell" data-execution_count="11">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>cards <span class="op">=</span> pl.scan_parquet(<span class="st">"../data/home_credit_cards.parquet"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>shape <span class="op">=</span> cards.select(</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    rows        <span class="op">=</span> pl.<span class="bu">len</span>(),</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    facilities  <span class="op">=</span> pl.col(<span class="st">"SK_ID_PREV"</span>).n_unique(),</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    customers   <span class="op">=</span> pl.col(<span class="st">"SK_ID_CURR"</span>).n_unique(),</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    first_month <span class="op">=</span> pl.col(<span class="st">"MONTHS_BALANCE"</span>).<span class="bu">min</span>(),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    last_month  <span class="op">=</span> pl.col(<span class="st">"MONTHS_BALANCE"</span>).<span class="bu">max</span>(),</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>).collect()</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>shape</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="11">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (1, 5)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">rows</th>
+<th data-quarto-table-cell-role="th">facilities</th>
+<th data-quarto-table-cell-role="th">customers</th>
+<th data-quarto-table-cell-role="th">first_month</th>
+<th data-quarto-table-cell-role="th">last_month</th>
+</tr>
+<tr class="even">
+<td>u32</td>
+<td>u32</td>
+<td>u32</td>
+<td>i64</td>
+<td>i64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>3840312</td>
+<td>104307</td>
+<td>103558</td>
+<td>-96</td>
+<td>-1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>3.8 million monthly statements over 104,307 card facilities. <code>MONTHS_BALANCE</code> counts backwards from the application date, so it runs from <span class="math inline">\(-96\)</span> to <span class="math inline">\(-1\)</span> and ordering it ascending gives chronological order. Getting that direction wrong, moreover, reverses every sequence in the file while leaving every marginal distribution intact, which is the kind of error that survives a review of summary statistics.</p>
+<section id="the-cleaning-the-outcome-build-actually-needs" class="level2" data-number="10.1">
+<h2 data-number="10.1" class="anchored" data-anchor-id="the-cleaning-the-outcome-build-actually-needs"><span class="header-section-number">10.1</span> The cleaning the outcome build actually needs</h2>
+<p>A data quality assessment on a panel asks different questions from one on a cross-section, because the row key is composite and the sequence is the object of interest. Three checks matter before any definition can be built on it.</p>
+<div id="a5b4790a" class="cell" data-execution_count="12">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>KEY <span class="op">=</span> [<span class="st">"SK_ID_PREV"</span>, <span class="st">"SK_ID_CURR"</span>, <span class="st">"MONTHS_BALANCE"</span>]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>n_rows <span class="op">=</span> cards.select(pl.<span class="bu">len</span>()).collect().item()</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>n_keys <span class="op">=</span> cards.select(pl.struct(KEY).n_unique()).collect().item()</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"rows                                </span><span class="sc">{</span>n_rows<span class="sc">:&gt;9,}</span><span class="ss">"</span>)</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"distinct composite keys             </span><span class="sc">{</span>n_keys<span class="sc">:&gt;9,}</span><span class="ss">"</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"duplicate key rows                  </span><span class="sc">{</span>n_rows <span class="op">-</span> n_keys<span class="sc">:&gt;9,}</span><span class="ss">"</span>)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>gaps <span class="op">=</span> (</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>    cards.group_by(<span class="st">"SK_ID_PREV"</span>)</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>         .agg(span<span class="op">=</span>pl.col(<span class="st">"MONTHS_BALANCE"</span>).<span class="bu">max</span>() <span class="op">-</span> pl.col(<span class="st">"MONTHS_BALANCE"</span>).<span class="bu">min</span>() <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>              obs<span class="op">=</span>pl.<span class="bu">len</span>())</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>         .with_columns((pl.col(<span class="st">"span"</span>) <span class="op">-</span> pl.col(<span class="st">"obs"</span>)).alias(<span class="st">"missing_months"</span>))</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>         .collect()</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"facilities with a gap in the series </span><span class="sc">{</span>gaps<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'missing_months'</span>) <span class="op">&gt;</span> <span class="dv">0</span>)<span class="sc">.</span>height<span class="sc">:&gt;9,}</span><span class="ss">"</span>)</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>dpd_nulls <span class="op">=</span> cards.select(</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>    pl.col(<span class="st">"SK_DPD"</span>).null_count().alias(<span class="st">"SK_DPD"</span>),</span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>    pl.col(<span class="st">"SK_DPD_DEF"</span>).null_count().alias(<span class="st">"SK_DPD_DEF"</span>),</span>
+<span id="cb17-21"><a href="#cb17-21" aria-hidden="true" tabindex="-1"></a>).collect()</span>
+<span id="cb17-22"><a href="#cb17-22" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"null days-past-due values           "</span></span>
+<span id="cb17-23"><a href="#cb17-23" aria-hidden="true" tabindex="-1"></a>      <span class="ss">f"</span><span class="sc">{</span>dpd_nulls[<span class="st">'SK_DPD'</span>][<span class="dv">0</span>]<span class="sc">:&gt;9,}</span><span class="ss"> and </span><span class="sc">{</span>dpd_nulls[<span class="st">'SK_DPD_DEF'</span>][<span class="dv">0</span>]<span class="sc">:,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>rows                                3,840,312
+distinct composite keys             3,840,312
+duplicate key rows                          0
+facilities with a gap in the series        14
+null days-past-due values                   0 and 0</code></pre>
+</div>
+</div>
+<p>The composite key is unique and the two days-past-due columns are complete. Fourteen facilities out of 104,307 have a hole in their monthly series, and that last figure is the one worth acting on precisely because it is small enough to be tempting to ignore.</p>
+<p>Each check earns its place by the error it prevents. A duplicated key would double-count a month inside the persistence window and thus inflate every trigger. A gap lets a rolling window silently span a period it never observed, so a facility absent for three months reads as three clear months, and under a probation rule that absence reads as recovery. A null days-past-due value would be treated as zero by a naive comparison and would read as performing.</p>
+<p>Those three failures share a structure worth naming. Each turns missing information into good news about the borrower, so each biases the default count downward and the cure count upward. A panel build therefore wants its <strong>absences treated as unknown rather than as clear</strong>, and where absence cannot be distinguished from good standing the affected facility belongs outside the risk set rather than inside it as performing. The fourteen gapped facilities are dropped below on that basis, which costs 0.01 per cent of the book and removes a population whose cure rate would otherwise have been manufactured by a reporting gap.</p>
+<p>Not everything in this file is clean, and the columns that are not are instructive about where a lender’s systems are silent.</p>
+<div id="344139ae" class="cell" data-execution_count="13">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cols <span class="op">=</span> [<span class="st">"AMT_BALANCE"</span>, <span class="st">"AMT_CREDIT_LIMIT_ACTUAL"</span>, <span class="st">"AMT_DRAWINGS_ATM_CURRENT"</span>,</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>        <span class="st">"AMT_PAYMENT_CURRENT"</span>, <span class="st">"AMT_INST_MIN_REGULARITY"</span>, <span class="st">"CNT_INSTALMENT_MATURE_CUM"</span>]</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>nulls <span class="op">=</span> cards.select([</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    (pl.col(c).null_count() <span class="op">/</span> pl.<span class="bu">len</span>() <span class="op">*</span> <span class="dv">100</span>).<span class="bu">round</span>(<span class="dv">1</span>).alias(c) <span class="cf">for</span> c <span class="kw">in</span> cols</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>]).collect()</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>nulls.transpose(include_header<span class="op">=</span><span class="va">True</span>, header_name<span class="op">=</span><span class="st">"column"</span>, column_names<span class="op">=</span>[<span class="st">"null %"</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="13">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (6, 2)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">column</th>
+<th data-quarto-table-cell-role="th">null %</th>
+</tr>
+<tr class="even">
+<td>str</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>"AMT_BALANCE"</td>
+<td>0.0</td>
+</tr>
+<tr class="even">
+<td>"AMT_CREDIT_LIMIT_ACTUAL"</td>
+<td>0.0</td>
+</tr>
+<tr class="odd">
+<td>"AMT_DRAWINGS_ATM_CURRENT"</td>
+<td>19.5</td>
+</tr>
+<tr class="even">
+<td>"AMT_PAYMENT_CURRENT"</td>
+<td>20.0</td>
+</tr>
+<tr class="odd">
+<td>"AMT_INST_MIN_REGULARITY"</td>
+<td>7.9</td>
+</tr>
+<tr class="even">
+<td>"CNT_INSTALMENT_MATURE_CUM"</td>
+<td>7.9</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>The drawings and payment columns are missing on roughly a fifth of statements while the balance and the limit are always present. On a revolving product, however, that pattern is informative rather than random: a month with no recorded ATM drawing is most likely a month with no ATM drawing. Consequently the guides’ own pipeline fills these with zero rather than imputing them, and that is the right call for a count of transactions and the wrong call for a payment amount, where a missing value may mean no payment or may mean no record of one. This lecture needs none of these columns. Even so, it names the distinction because a payment column filled with zeros is exactly how an arrears series gets manufactured out of a reporting gap.</p>
+</section>
+<section id="materiality-expressed-as-two-columns" class="level2" data-number="10.2">
+<h2 data-number="10.2" class="anchored" data-anchor-id="materiality-expressed-as-two-columns"><span class="header-section-number">10.2</span> Materiality, expressed as two columns</h2>
+<p>The panel carries the days-past-due figure twice. The competition’s own dictionary documents <code>SK_DPD</code> as days past due during the month, and <code>SK_DPD_DEF</code> as the same figure “with tolerance (debts with low loan amounts are ignored)”. That tolerance is a materiality threshold, and Article 178 of the Capital Requirements Regulation requires one in turn: an obligation counts as past due only once the amount outstanding is material, and the threshold is set by the competent authority rather than by the modeller.</p>
+<p>Reading the two columns side by side puts a number on what the threshold does.</p>
+<div id="c410d84a" class="cell" data-execution_count="14">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>mat <span class="op">=</span> cards.select(</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>    [<span class="st">"SK_DPD"</span>, <span class="st">"SK_DPD_DEF"</span>]</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>).with_columns(</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    (pl.col(<span class="st">"SK_DPD"</span>) <span class="op">!=</span> pl.col(<span class="st">"SK_DPD_DEF"</span>)).alias(<span class="st">"disagree"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>).collect()</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"statements where the two disagree   </span><span class="sc">{</span>mat<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'disagree'</span>))<span class="sc">.</span>height<span class="sc">:&gt;9,}</span><span class="ss">"</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'threshold'</span><span class="sc">:&gt;12}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'SK_DPD'</span><span class="sc">:&gt;10}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'SK_DPD_DEF'</span><span class="sc">:&gt;12}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'ratio'</span><span class="sc">:&gt;7}</span><span class="ss">"</span>)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>, <span class="dv">120</span>):</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>    a <span class="op">=</span> mat.<span class="bu">filter</span>(pl.col(<span class="st">"SK_DPD"</span>) <span class="op">&gt;=</span> d).height</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    b <span class="op">=</span> mat.<span class="bu">filter</span>(pl.col(<span class="st">"SK_DPD_DEF"</span>) <span class="op">&gt;=</span> d).height</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>d<span class="sc">:&gt;10}</span><span class="ss">+d  </span><span class="sc">{</span>a<span class="sc">:&gt;10,}</span><span class="ss">  </span><span class="sc">{</span>b<span class="sc">:&gt;12,}</span><span class="ss">  </span><span class="sc">{</span>a <span class="op">/</span> <span class="bu">max</span>(b, <span class="dv">1</span>)<span class="sc">:&gt;7.1f}</span><span class="ss">x"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>statements where the two disagree      64,439
+
+   threshold      SK_DPD    SK_DPD_DEF    ratio
+         1+d     153,355        89,340      1.7x
+        30+d      55,020         2,101     26.2x
+        60+d      50,851         1,259     40.4x
+        90+d      48,377         1,078     44.9x
+       120+d      46,486         1,029     45.2x</code></pre>
+</div>
+</div>
+<p>At ninety days the raw count is 48,377 statements and the material count is 1,078, a factor of 45. Same portfolio, same ninety-day rule, and yet a defaulted population differing by more than an order of magnitude depending on a threshold that most model documentation mentions in a footnote.</p>
+<p>The direction is worth dwelling on. A materiality threshold makes the default count <strong>smaller</strong>, so a bank that sets it generously reports fewer defaults, a lower observed default rate and, all else equal, less capital. Accordingly the threshold is not the bank’s to choose, and that is also why the supervisory expectations lecture 1 cited concern themselves with how the threshold is applied rather than merely with whether one exists.</p>
+<p>An Article 178 definition is built on the material figure, so <code>SK_DPD_DEF</code> is the column the rest of this section ought to use. It cannot.</p>
+<div id="678fbdaa" class="cell" data-execution_count="15">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>probe <span class="op">=</span> (</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>    cards.select([<span class="st">"SK_ID_PREV"</span>, <span class="st">"SK_DPD"</span>, <span class="st">"SK_DPD_DEF"</span>])</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>         .group_by(<span class="st">"SK_ID_PREV"</span>)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>         .agg(raw_max<span class="op">=</span>pl.col(<span class="st">"SK_DPD"</span>).<span class="bu">max</span>(), mat_max<span class="op">=</span>pl.col(<span class="st">"SK_DPD_DEF"</span>).<span class="bu">max</span>())</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>         .collect()</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span><span class="st">'threshold'</span><span class="sc">:&gt;12}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'facilities on SK_DPD'</span><span class="sc">:&gt;22}</span><span class="ss">  </span><span class="sc">{</span><span class="st">'on SK_DPD_DEF'</span><span class="sc">:&gt;15}</span><span class="ss">"</span>)</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> (<span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>):</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"</span><span class="sc">{</span>d<span class="sc">:&gt;10}</span><span class="ss">+d  </span><span class="sc">{</span>probe<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'raw_max'</span>) <span class="op">&gt;=</span> d)<span class="sc">.</span>height<span class="sc">:&gt;22,}</span><span class="ss">"</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>          <span class="ss">f"  </span><span class="sc">{</span>probe<span class="sc">.</span><span class="bu">filter</span>(pl.col(<span class="st">'mat_max'</span>) <span class="op">&gt;=</span> d)<span class="sc">.</span>height<span class="sc">:&gt;15,}</span><span class="ss">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   threshold    facilities on SK_DPD    on SK_DPD_DEF
+        30+d                   3,162              393
+        60+d                   2,192              114
+        90+d                   1,806               39</code></pre>
+</div>
+</div>
+<p>At a ninety-day threshold the material figure leaves 39 facilities in the whole portfolio that ever breach. Consequently a sweep across four probation periods, each needing a cure count and a re-default count, cannot be run on 39 facilities and would produce percentages built on single-digit numerators.</p>
+<p>This is the lecture’s own thesis arriving from an unexpected direction, so it is worth stating plainly rather than working around quietly. The definition that is <strong>correct</strong> here is not <strong>estimable</strong> here, and no amount of method fixes that: the constraint is the portfolio’s composition, since this is a revolving card book whose material arrears are rare and shallow.</p>
+<p>Consequently the sweeps below use <code>SK_DPD</code>, the raw figure, and the reader should hold two things about them. The <strong>levels</strong> are not Article 178 default rates and must not be quoted as such, because the materiality threshold has been dropped to obtain a workable sample. The <strong>shape</strong> of the trade-off between probation length, cure and re-default is what transfers, and it is a statement about how a definition behaves rather than about how this portfolio performs.</p>
+</section>
+<section id="building-the-outcome-one-dial-at-a-time" class="level2" data-number="10.3">
+<h2 data-number="10.3" class="anchored" data-anchor-id="building-the-outcome-one-dial-at-a-time"><span class="header-section-number">10.3</span> Building the outcome, one dial at a time</h2>
+<p>With a monthly arrears series in hand the chain of section 3 is four window functions. The gapped facilities go first, on the reasoning above.</p>
+<div id="9408582e" class="cell" data-execution_count="16">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>panel <span class="op">=</span> (</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    cards.select([<span class="st">"SK_ID_PREV"</span>, <span class="st">"MONTHS_BALANCE"</span>, <span class="st">"SK_DPD"</span>])</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>         .sort([<span class="st">"SK_ID_PREV"</span>, <span class="st">"MONTHS_BALANCE"</span>])</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>         .collect()</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>span <span class="op">=</span> (</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    panel.group_by(<span class="st">"SK_ID_PREV"</span>)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>         .agg(span<span class="op">=</span>pl.col(<span class="st">"MONTHS_BALANCE"</span>).<span class="bu">max</span>() <span class="op">-</span> pl.col(<span class="st">"MONTHS_BALANCE"</span>).<span class="bu">min</span>() <span class="op">+</span> <span class="dv">1</span>,</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>              obs<span class="op">=</span>pl.<span class="bu">len</span>())</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>complete <span class="op">=</span> span.<span class="bu">filter</span>(pl.col(<span class="st">"span"</span>) <span class="op">==</span> pl.col(<span class="st">"obs"</span>))[<span class="st">"SK_ID_PREV"</span>]</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>panel <span class="op">=</span> panel.<span class="bu">filter</span>(pl.col(<span class="st">"SK_ID_PREV"</span>).is_in(complete.implode()))</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"facilities retained </span><span class="sc">{</span>panel[<span class="st">'SK_ID_PREV'</span>]<span class="sc">.</span>n_unique()<span class="sc">:&gt;9,}</span><span class="ss">"</span>)</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"statements retained </span><span class="sc">{</span>panel<span class="sc">.</span>height<span class="sc">:&gt;9,}</span><span class="ss">"</span>)</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> trigger(df, d, s):</span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""G(d, s): arrears at or above d payments, held for s consecutive months."""</span></span>
+<span id="cb24-21"><a href="#cb24-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb24-22"><a href="#cb24-22" aria-hidden="true" tabindex="-1"></a>        df.with_columns((pl.col(<span class="st">"SK_DPD"</span>) <span class="op">&gt;=</span> d).cast(pl.Int8).alias(<span class="st">"breach"</span>))</span>
+<span id="cb24-23"><a href="#cb24-23" aria-hidden="true" tabindex="-1"></a>          .with_columns(</span>
+<span id="cb24-24"><a href="#cb24-24" aria-hidden="true" tabindex="-1"></a>              pl.col(<span class="st">"breach"</span>).rolling_sum(window_size<span class="op">=</span>s, min_samples<span class="op">=</span>s)</span>
+<span id="cb24-25"><a href="#cb24-25" aria-hidden="true" tabindex="-1"></a>                .over(<span class="st">"SK_ID_PREV"</span>).alias(<span class="st">"run"</span>)</span>
+<span id="cb24-26"><a href="#cb24-26" aria-hidden="true" tabindex="-1"></a>          )</span>
+<span id="cb24-27"><a href="#cb24-27" aria-hidden="true" tabindex="-1"></a>          .with_columns((pl.col(<span class="st">"run"</span>) <span class="op">==</span> s).cast(pl.Int8).alias(<span class="st">"G"</span>))</span>
+<span id="cb24-28"><a href="#cb24-28" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb24-29"><a href="#cb24-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-30"><a href="#cb24-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-31"><a href="#cb24-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> default_state(df, p):</span>
+<span id="cb24-32"><a href="#cb24-32" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""H(p) probation and C(p) cure, giving the default state D = 1 - C."""</span></span>
+<span id="cb24-33"><a href="#cb24-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> (</span>
+<span id="cb24-34"><a href="#cb24-34" aria-hidden="true" tabindex="-1"></a>        df.with_columns(</span>
+<span id="cb24-35"><a href="#cb24-35" aria-hidden="true" tabindex="-1"></a>              pl.col(<span class="st">"G"</span>).shift(<span class="dv">1</span>).rolling_sum(window_size<span class="op">=</span>p, min_samples<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb24-36"><a href="#cb24-36" aria-hidden="true" tabindex="-1"></a>                .over(<span class="st">"SK_ID_PREV"</span>).alias(<span class="st">"H"</span>)</span>
+<span id="cb24-37"><a href="#cb24-37" aria-hidden="true" tabindex="-1"></a>          )</span>
+<span id="cb24-38"><a href="#cb24-38" aria-hidden="true" tabindex="-1"></a>          .with_columns(</span>
+<span id="cb24-39"><a href="#cb24-39" aria-hidden="true" tabindex="-1"></a>              ((pl.col(<span class="st">"G"</span>) <span class="op">==</span> <span class="dv">0</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"H"</span>).fill_null(<span class="dv">0</span>) <span class="op">==</span> <span class="dv">0</span>)).cast(pl.Int8).alias(<span class="st">"C"</span>)</span>
+<span id="cb24-40"><a href="#cb24-40" aria-hidden="true" tabindex="-1"></a>          )</span>
+<span id="cb24-41"><a href="#cb24-41" aria-hidden="true" tabindex="-1"></a>          .with_columns((<span class="dv">1</span> <span class="op">-</span> pl.col(<span class="st">"C"</span>)).alias(<span class="st">"D"</span>))</span>
+<span id="cb24-42"><a href="#cb24-42" aria-hidden="true" tabindex="-1"></a>    )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>facilities retained   104,293
+statements retained 3,839,303</code></pre>
+</div>
+</div>
+<p>Note what <code>default_state</code> does that a naive build does not. The default state is the complement of cure rather than the trigger itself, so a facility that stops triggering stays in default until it has served its probation. Every difference in the sweeps below flows from that one line.</p>
+</section>
+<section id="turning-the-first-two-dials" class="level2" data-number="10.4">
+<h2 data-number="10.4" class="anchored" data-anchor-id="turning-the-first-two-dials"><span class="header-section-number">10.4</span> Turning the first two dials</h2>
+<div id="ac13aa61" class="cell" data-execution_count="17">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> d <span class="kw">in</span> (<span class="dv">30</span>, <span class="dv">60</span>, <span class="dv">90</span>):</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> (<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>):</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>        ever <span class="op">=</span> (</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>            trigger(panel, d, s)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>            .group_by(<span class="st">"SK_ID_PREV"</span>).agg(ever<span class="op">=</span>pl.col(<span class="st">"G"</span>).<span class="bu">max</span>())[<span class="st">"ever"</span>].<span class="bu">sum</span>()</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>        rows.append({<span class="st">"d (days)"</span>: d, <span class="st">"s (months)"</span>: s, <span class="st">"facilities"</span>: <span class="bu">int</span>(ever)})</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>ds <span class="op">=</span> pl.DataFrame(rows).pivot(on<span class="op">=</span><span class="st">"s (months)"</span>, index<span class="op">=</span><span class="st">"d (days)"</span>, values<span class="op">=</span><span class="st">"facilities"</span>)</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>ds</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="17">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (3, 4)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">d (days)</th>
+<th data-quarto-table-cell-role="th">1</th>
+<th data-quarto-table-cell-role="th">2</th>
+<th data-quarto-table-cell-role="th">3</th>
+</tr>
+<tr class="even">
+<td>i64</td>
+<td>i64</td>
+<td>i64</td>
+<td>i64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>30</td>
+<td>3160</td>
+<td>2219</td>
+<td>1839</td>
+</tr>
+<tr class="even">
+<td>60</td>
+<td>2190</td>
+<td>1805</td>
+<td>1645</td>
+</tr>
+<tr class="odd">
+<td>90</td>
+<td>1804</td>
+<td>1645</td>
+<td>1534</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>One note on units before reading the table. Section 3 wrote the threshold <span class="math inline">\(d\)</span> in payments, following the impairment literature, while this panel supplies days past due, so <span class="math inline">\(d\)</span> is expressed in days here and the code compares directly against <code>SK_DPD</code>. On a monthly schedule 30, 60 and 90 days correspond to one, two and three payments, which is the conversion of section 2, and it is exact only because the comparison is against a monthly statement date rather than against an instalment calendar.</p>
+<p>The same portfolio yields 3,160 defaulted facilities under the loosest pair and 1,534 under the tightest, a factor of 2.06. Neither dial, moreover, is exotic. A month of arrears held for one month against three months of arrears held for three is the ordinary range of what a behavioural definition might reasonably pick, and the resulting default population differs twofold before a single covariate has been looked at.</p>
+<p>Two readings of the table are worth separating. Moving down a column tightens the depth of arrears required and moving across a row tightens the persistence, and they are not interchangeable: going from <span class="math inline">\((30, 1)\)</span> to <span class="math inline">\((90, 1)\)</span> removes 1,356 facilities while going from <span class="math inline">\((30, 1)\)</span> to <span class="math inline">\((30, 3)\)</span> removes 1,321, so on this book a two-month persistence requirement is worth about as much as tripling the arrears threshold. A definition stated only as “ninety days past due” has silently set <span class="math inline">\(s = 1\)</span> and has made a choice of comparable size to the one it did state.</p>
+</section>
+<section id="turning-the-probation-dial" class="level2" data-number="10.5">
+<h2 data-number="10.5" class="anchored" data-anchor-id="turning-the-probation-dial"><span class="header-section-number">10.5</span> Turning the probation dial</h2>
+<p>Now the dial that decides what cure means. Fix the trigger at ninety days held for one month, then vary the probation period and watch two quantities move in opposite directions. A facility enters the risk set only if it has room after its first default to serve the probation period and then be observed for a further twelve months, so the risk set shrinks as <span class="math inline">\(p\)</span> grows and it is reported alongside the rates.</p>
+<div id="94e9f2d4" class="cell" data-execution_count="18">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>trig <span class="op">=</span> trigger(panel, d<span class="op">=</span><span class="dv">90</span>, s<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>ever_default <span class="op">=</span> (</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    trig.group_by(<span class="st">"SK_ID_PREV"</span>).agg(e<span class="op">=</span>pl.col(<span class="st">"G"</span>).<span class="bu">max</span>()).<span class="bu">filter</span>(pl.col(<span class="st">"e"</span>) <span class="op">==</span> <span class="dv">1</span>)[<span class="st">"SK_ID_PREV"</span>]</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>trig <span class="op">=</span> trig.<span class="bu">filter</span>(pl.col(<span class="st">"SK_ID_PREV"</span>).is_in(ever_default.implode()))</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>REDEFAULT_WINDOW <span class="op">=</span> <span class="dv">12</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> p <span class="kw">in</span> (<span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">9</span>, <span class="dv">12</span>, <span class="dv">18</span>, <span class="dv">24</span>):</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>    st <span class="op">=</span> default_state(trig, p).with_columns(pl.int_range(pl.<span class="bu">len</span>()).over(<span class="st">"SK_ID_PREV"</span>).alias(<span class="st">"i"</span>))</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    first <span class="op">=</span> pl.col(<span class="st">"i"</span>).<span class="bu">filter</span>(pl.col(<span class="st">"G"</span>) <span class="op">==</span> <span class="dv">1</span>).<span class="bu">min</span>()</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    per_fac <span class="op">=</span> st.group_by(<span class="st">"SK_ID_PREV"</span>).agg(</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>        n     <span class="op">=</span> pl.<span class="bu">len</span>(),</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>        first <span class="op">=</span> first,</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>        cure  <span class="op">=</span> pl.col(<span class="st">"i"</span>).<span class="bu">filter</span>((pl.col(<span class="st">"C"</span>) <span class="op">==</span> <span class="dv">1</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"i"</span>) <span class="op">&gt;</span> first)).<span class="bu">min</span>(),</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>        last  <span class="op">=</span> pl.col(<span class="st">"i"</span>).<span class="bu">filter</span>(pl.col(<span class="st">"G"</span>) <span class="op">==</span> <span class="dv">1</span>).<span class="bu">max</span>(),</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    risk <span class="op">=</span> per_fac.<span class="bu">filter</span>((pl.col(<span class="st">"n"</span>) <span class="op">-</span> <span class="dv">1</span> <span class="op">-</span> pl.col(<span class="st">"first"</span>)) <span class="op">&gt;=</span> p <span class="op">+</span> REDEFAULT_WINDOW)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>    cured <span class="op">=</span> risk.<span class="bu">filter</span>(pl.col(<span class="st">"cure"</span>).is_not_null())</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>    redef <span class="op">=</span> cured.<span class="bu">filter</span>(pl.col(<span class="st">"last"</span>) <span class="op">&gt;</span> pl.col(<span class="st">"cure"</span>))</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">"p (months)"</span>: p, <span class="st">"risk set"</span>: risk.height, <span class="st">"cured"</span>: cured.height,</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cure rate %"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> cured.height <span class="op">/</span> risk.height, <span class="dv">1</span>),</span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">"re-defaulted"</span>: redef.height,</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">"re-default rate %"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> redef.height <span class="op">/</span> <span class="bu">max</span>(cured.height, <span class="dv">1</span>), <span class="dv">1</span>),</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>prob <span class="op">=</span> pl.DataFrame(rows)</span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>prob</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="18">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (6, 6)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">p (months)</th>
+<th data-quarto-table-cell-role="th">risk set</th>
+<th data-quarto-table-cell-role="th">cured</th>
+<th data-quarto-table-cell-role="th">cure rate %</th>
+<th data-quarto-table-cell-role="th">re-defaulted</th>
+<th data-quarto-table-cell-role="th">re-default rate %</th>
+</tr>
+<tr class="even">
+<td>i64</td>
+<td>i64</td>
+<td>i64</td>
+<td>f64</td>
+<td>i64</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>3</td>
+<td>1613</td>
+<td>997</td>
+<td>61.8</td>
+<td>98</td>
+<td>9.8</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>1581</td>
+<td>906</td>
+<td>57.3</td>
+<td>42</td>
+<td>4.6</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>1557</td>
+<td>839</td>
+<td>53.9</td>
+<td>21</td>
+<td>2.5</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>1518</td>
+<td>778</td>
+<td>51.3</td>
+<td>14</td>
+<td>1.8</td>
+</tr>
+<tr class="odd">
+<td>18</td>
+<td>1421</td>
+<td>631</td>
+<td>44.4</td>
+<td>9</td>
+<td>1.4</td>
+</tr>
+<tr class="even">
+<td>24</td>
+<td>1319</td>
+<td>498</td>
+<td>37.8</td>
+<td>7</td>
+<td>1.4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div id="2a03325f" class="cell" data-execution_count="19">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="fl">3.6</span>))</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>p_vals <span class="op">=</span> prob[<span class="st">"p (months)"</span>].to_numpy()</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>ax.plot(p_vals, prob[<span class="st">"cure rate %"</span>], <span class="st">"o-"</span>, color<span class="op">=</span>OX, lw<span class="op">=</span><span class="fl">1.7</span>, ms<span class="op">=</span><span class="dv">5</span>, label<span class="op">=</span><span class="st">"cure rate"</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>ax.plot(p_vals, prob[<span class="st">"re-default rate %"</span>], <span class="st">"s--"</span>, color<span class="op">=</span>RULE, lw<span class="op">=</span><span class="fl">1.4</span>, ms<span class="op">=</span><span class="dv">5</span>,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>        label<span class="op">=</span><span class="st">"re-default rate among cured"</span>)</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x, y, n <span class="kw">in</span> <span class="bu">zip</span>(p_vals, prob[<span class="st">"cure rate %"</span>], prob[<span class="st">"risk set"</span>]):</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    ax.annotate(<span class="ss">f"</span><span class="sc">{</span>n<span class="sc">:,}</span><span class="ss">"</span>, (x, y), textcoords<span class="op">=</span><span class="st">"offset points"</span>, xytext<span class="op">=</span>(<span class="dv">0</span>, <span class="dv">9</span>),</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>                ha<span class="op">=</span><span class="st">"center"</span>, fontsize<span class="op">=</span><span class="fl">7.5</span>, color<span class="op">=</span>GREY)</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>ax.set_xticks(p_vals)</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>ax.set_xlabel(<span class="st">"probation period $p$ (months)"</span>)</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>ax.set_ylabel(<span class="st">"per cent"</span>)</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>ax.set_ylim(<span class="dv">0</span>, <span class="dv">70</span>)</span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>ax.legend(frameon<span class="op">=</span><span class="va">False</span>, fontsize<span class="op">=</span><span class="dv">9</span>)</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> s_ <span class="kw">in</span> (<span class="st">"top"</span>, <span class="st">"right"</span>):</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    ax.spines[s_].set_visible(<span class="va">False</span>)</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>plt.tight_layout()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="D1_credit-default-definition_files/figure-html/cell-20-output-1.png" width="1336" height="525" class="figure-img"></p>
+<figcaption>The probation trade-off on the retained card panel, at a ninety-day trigger held for one month. As the probation period lengthens the re-default rate among cured facilities falls from 9.8 per cent to 1.4, and the cure rate falls with it from 61.8 per cent to 37.8. The two curves are the same decision seen from opposite sides: a longer probation buys a cleaner cure population by refusing to call anything cured. The re-default curve flattens between eighteen and twenty-four months, so the last six months of probation purchase almost no additional cleanliness and cost a further six percentage points of cures. Risk-set sizes are printed above the cure points, since they shrink as the observation requirement grows.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>This is the trade-off every probation choice makes, and it is the reason the choice cannot be made on either quantity alone. In particular, a three-month probation calls 61.8 per cent of defaulted facilities cured and then watches nearly one in ten of them default again, which is a cure population contaminated with borrowers who had simply made a payment. A twenty-four-month probation reduces re-default to 1.4 per cent and refuses to call two thirds of the book cured, which discards genuine recoveries and starves any downstream cure model of events.</p>
+<p>The curve’s own shape suggests where to stop. Re-default falls steeply to twelve months, reaching 1.8 per cent, and then flattens, so the final six months of a twenty-four-month probation buy 0.4 percentage points of cleanliness at a cost of six and a half points of cures. That diminishing return is an empirical argument for a probation period around a year, arrived at from the data rather than from the rulebook, and it lands close to where the supervisors did. It is worth noticing that the three-month floor sits at the steepest part of this curve rather than the flat part, so a firm cured at the minimum is operating where the re-default rate is most sensitive to the choice, while the twelve-month floor that applies to restructured exposures sits where the curve has almost levelled.</p>
+<div class="callout callout-style-default callout-note no-icon callout-titled" title="What this demonstration is and is not">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>What this demonstration is and is not
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>It is a measurement of how a definition behaves on one public revolving book, using the raw days-past-due figure for the sampling reason given above. It is not an estimate of a cure rate for any portfolio, and the levels should not be quoted as such.</p>
+<p>It is also not a cure model. Predicting which defaulted borrowers recover is a survival problem with a competing risk, and it belongs with the <code>S</code> track. The object being modelled here is the definition itself.</p>
+</div>
+</div>
+</section>
+<section id="the-three-targets-measured" class="level2" data-number="10.6">
+<h2 data-number="10.6" class="anchored" data-anchor-id="the-three-targets-measured"><span class="header-section-number">10.6</span> The three targets, measured</h2>
+<p>Section 4 separated worst-ever, point-at-horizon and marginal on four constructed loans. The panel puts sizes on the gaps, and it turns up a relationship between the targets and the probation dial that section 4 could not have guessed.</p>
+<p>The population is every facility-month performing under the default state and carrying a full twelve-month forward window. The trigger is fixed at ninety days held for one month, and the probation period varies, including <span class="math inline">\(p = 0\)</span>, meaning no probation at all, where the default state collapses to the trigger.</p>
+<div id="253c99fc" class="cell" data-execution_count="20">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>K <span class="op">=</span> <span class="dv">12</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>rows <span class="op">=</span> []</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> p <span class="kw">in</span> (<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">12</span>):</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    trig <span class="op">=</span> trigger(panel, d<span class="op">=</span><span class="dv">90</span>, s<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    st <span class="op">=</span> trig.with_columns(pl.col(<span class="st">"G"</span>).alias(<span class="st">"D"</span>)) <span class="cf">if</span> p <span class="op">==</span> <span class="dv">0</span> <span class="cf">else</span> default_state(trig, p)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>    fwd <span class="op">=</span> st.with_columns([pl.col(<span class="st">"D"</span>).shift(<span class="op">-</span>i).over(<span class="st">"SK_ID_PREV"</span>).alias(<span class="ss">f"f</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>                           <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, K <span class="op">+</span> <span class="dv">1</span>)])</span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>    fcols <span class="op">=</span> [<span class="ss">f"f</span><span class="sc">{</span>i<span class="sc">}</span><span class="ss">"</span> <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>, K <span class="op">+</span> <span class="dv">1</span>)]</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    fwd <span class="op">=</span> (</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>        fwd.<span class="bu">filter</span>(pl.all_horizontal([pl.col(c).is_not_null() <span class="cf">for</span> c <span class="kw">in</span> fcols]))</span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>           .<span class="bu">filter</span>(pl.col(<span class="st">"D"</span>) <span class="op">==</span> <span class="dv">0</span>)</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a>           .with_columns([</span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a>               pl.max_horizontal(fcols).alias(<span class="st">"worst_ever"</span>),</span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a>               pl.col(<span class="ss">f"f</span><span class="sc">{</span>K<span class="sc">}</span><span class="ss">"</span>).alias(<span class="st">"point_at_k"</span>),</span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a>               pl.max_horizontal(fcols[:<span class="op">-</span><span class="dv">1</span>]).alias(<span class="st">"before_k"</span>),</span>
+<span id="cb29-17"><a href="#cb29-17" aria-hidden="true" tabindex="-1"></a>           ])</span>
+<span id="cb29-18"><a href="#cb29-18" aria-hidden="true" tabindex="-1"></a>           .with_columns(</span>
+<span id="cb29-19"><a href="#cb29-19" aria-hidden="true" tabindex="-1"></a>               ((pl.col(<span class="st">"point_at_k"</span>) <span class="op">==</span> <span class="dv">1</span>) <span class="op">&amp;</span> (pl.col(<span class="st">"before_k"</span>) <span class="op">==</span> <span class="dv">0</span>)).cast(pl.Int8).alias(<span class="st">"marginal"</span>)</span>
+<span id="cb29-20"><a href="#cb29-20" aria-hidden="true" tabindex="-1"></a>           )</span>
+<span id="cb29-21"><a href="#cb29-21" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb29-22"><a href="#cb29-22" aria-hidden="true" tabindex="-1"></a>    we, pk, mg <span class="op">=</span> (<span class="bu">int</span>(fwd[c].<span class="bu">sum</span>()) <span class="cf">for</span> c <span class="kw">in</span> (<span class="st">"worst_ever"</span>, <span class="st">"point_at_k"</span>, <span class="st">"marginal"</span>))</span>
+<span id="cb29-23"><a href="#cb29-23" aria-hidden="true" tabindex="-1"></a>    rows.append({</span>
+<span id="cb29-24"><a href="#cb29-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">"p"</span>: p, <span class="st">"at risk"</span>: fwd.height, <span class="st">"worst-ever"</span>: we, <span class="st">"point-at-horizon"</span>: pk,</span>
+<span id="cb29-25"><a href="#cb29-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">"marginal"</span>: mg, <span class="st">"cured in window %"</span>: <span class="bu">round</span>(<span class="dv">100</span> <span class="op">*</span> (we <span class="op">-</span> pk) <span class="op">/</span> we, <span class="dv">1</span>),</span>
+<span id="cb29-26"><a href="#cb29-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">"point / marginal"</span>: <span class="bu">round</span>(pk <span class="op">/</span> mg, <span class="dv">1</span>),</span>
+<span id="cb29-27"><a href="#cb29-27" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb29-28"><a href="#cb29-28" aria-hidden="true" tabindex="-1"></a>targets <span class="op">=</span> pl.DataFrame(rows)</span>
+<span id="cb29-29"><a href="#cb29-29" aria-hidden="true" tabindex="-1"></a>targets</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display" data-execution_count="20">
+<div><style>
+.dataframe > thead > tr,
+.dataframe > tbody > tr {
+  text-align: right;
+  white-space: pre-wrap;
+}
+</style>
+<small>shape: (5, 7)</small>
+<table class="dataframe caption-top table table-sm table-striped small" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th">p</th>
+<th data-quarto-table-cell-role="th">at risk</th>
+<th data-quarto-table-cell-role="th">worst-ever</th>
+<th data-quarto-table-cell-role="th">point-at-horizon</th>
+<th data-quarto-table-cell-role="th">marginal</th>
+<th data-quarto-table-cell-role="th">cured in window %</th>
+<th data-quarto-table-cell-role="th">point / marginal</th>
+</tr>
+<tr class="even">
+<td>i64</td>
+<td>i64</td>
+<td>i64</td>
+<td>i64</td>
+<td>i64</td>
+<td>f64</td>
+<td>f64</td>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0</td>
+<td>2694233</td>
+<td>20291</td>
+<td>16070</td>
+<td>1611</td>
+<td>20.8</td>
+<td>10.0</td>
+</tr>
+<tr class="even">
+<td>1</td>
+<td>2693297</td>
+<td>20180</td>
+<td>16525</td>
+<td>1608</td>
+<td>18.1</td>
+<td>10.3</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>2691506</td>
+<td>19976</td>
+<td>17375</td>
+<td>1606</td>
+<td>13.0</td>
+<td>10.8</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>2689111</td>
+<td>19778</td>
+<td>18476</td>
+<td>1604</td>
+<td>6.6</td>
+<td>11.5</td>
+</tr>
+<tr class="odd">
+<td>12</td>
+<td>2685267</td>
+<td>19691</td>
+<td>19691</td>
+<td>1602</td>
+<td>0.0</td>
+<td>12.3</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<p>Three things fall out of that table, and the third is the one worth carrying away.</p>
+<p>The <strong>marginal</strong> count barely moves, sitting near 1,600 at every probation length. That is what it should do, because a first default dated to month twelve is a fresh event, and rules governing how long an old default lingers have almost nothing to say about it.</p>
+<p>The <strong>point-at-horizon</strong> count climbs steadily with the probation period, from 16,070 to 19,691, because a longer probation keeps old defaults alive at the horizon. It runs between ten and twelve times the marginal count throughout, so the gap section 4 warned about is real at every setting and gets worse as probation lengthens.</p>
+<p>And the gap between <strong>worst-ever and point-at-horizon closes to exactly nothing at <span class="math inline">\(p = 12\)</span>.</strong> The reason, however, is structural rather than empirical. With a probation period as long as the outcome window, no facility that defaults inside the window can complete probation before the window closes, so every worst-ever positive is still in default at the horizon and the two flags are the same column of data. At <span class="math inline">\(p = 0\)</span> they differ on 20.8 per cent of positives, and the difference shrinks monotonically as <span class="math inline">\(p\)</span> approaches <span class="math inline">\(k\)</span>.</p>
+<div class="callout callout-style-default callout-important no-icon callout-titled" title="Why the conflation survives">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Why the conflation survives
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A firm running a twelve-month probation period and a twelve-month outcome window, which is an entirely ordinary pair of choices, <strong>cannot distinguish the worst-ever flag from the point-at-horizon flag on its own data.</strong> The two definitions produce identical columns, so a document that defines one and describes the other is never contradicted by anything the firm can compute.</p>
+<p>That is the most likely explanation for the inconsistency section 4 opened with. It is also a warning about the fix, because the two definitions come apart again the moment the horizon is extended past the probation period, which is exactly what a lifetime expected-loss calculation does. A definition that was harmlessly ambiguous at twelve months becomes materially ambiguous at sixty.</p>
+</div>
+</div>
+<p>The worst-ever and point-at-horizon flags differ for the opposite reason to the marginal one. Where probation is shorter than the horizon, a fifth of the loans that default somewhere inside the year have cured by the time the year closes, so a capital model built on the point-at-horizon flag would miss them and understate a twelve-month PD the regulation intends to capture every default in the window. Where probation is longer, the two agree and the ambiguity hides.</p>
+</section>
+</section>
+<section id="what-this-lecture-omits-and-why" class="level1" data-number="11">
+<h1 data-number="11"><span class="header-section-number">11</span> What this lecture omits, and why</h1>
+<p><strong>Severity.</strong> Loss given default and exposure at default are the other two parameters of a credit loss, and neither appears here. This lecture is about the event.</p>
+<p><strong>Estimating any of the three targets.</strong> Fitting a hazard model, a term structure or a network to the response variables defined here is the <code>S</code> track’s subject and <code>R1</code>’s demonstration. D1 defines what the column is and stops.</p>
+<p><strong>A fitted multistate model.</strong> The state machine of section 3 is a picture. <code>R1</code> carries the transition-matrix treatment and states the two assumptions it needs.</p>
+<p><strong>Cure as a prediction problem.</strong> Which defaulted borrowers recover is a survival question with a competing risk, and the sweeps here model the definition rather than the outcome.</p>
+<p><strong>SICR beyond section 7.</strong> A threshold calibration, a comparison against the PD-ratio approach and the validation questions that follow are a lecture in their own right.</p>
+<p><strong>Sampling and representativeness.</strong> Which observations enter the modelling sample, how snapshots are spaced, what is excluded and how the sample is shown to represent the book all belong to lecture <code>R3</code>. This lecture builds the outcome variable and <code>R3</code> picks the rows carrying it.</p>
+<p><strong>Rebuilding lecture 1’s models.</strong> The correction in section 1 changes a stated figure rather than the <code>default_12m</code> column, which was always Bondora’s own flag within 365 days, so no parquet was rebuilt and no coefficient moved.</p>
+<p><strong>Nine of the ten Home Credit tables.</strong> Only the revolving card panel is read. The bureau table is named once, in section 6, for the way its status field destroys the distinction this lecture draws.</p>
+</section>
+<section id="takeaways" class="level1" data-number="12">
+<h1 data-number="12"><span class="header-section-number">12</span> Takeaways</h1>
+<ol type="1">
+<li><strong>Four dials, and practice writes down one.</strong> A default definition is parameterised by the delinquency threshold <span class="math inline">\(d\)</span>, the persistence requirement <span class="math inline">\(s\)</span>, the outcome period <span class="math inline">\(k\)</span> and the probation period <span class="math inline">\(p\)</span>. Moving the first two alone takes the defaulted population on one book from 3,160 facilities to 1,534.</li>
+<li><strong>Bondora has no threshold to quote.</strong> Its declaration lag runs from one day to 126 with a median of 79, and 15.4 per cent of declarations land under sixty days past due, so the platform runs an operational decision rather than a rule. Lecture 1’s sixty-day figure is corrected and its outcome-window argument survives on the measured number.</li>
+<li><strong>Three response variables wear the name twelve-month PD.</strong> Worst-ever takes the window maximum and is what a capital model wants. Point-at-horizon reads the state at the end. The marginal PD dates a first default to a period and is the only one an expected-loss sum can consume.</li>
+<li><strong>The point-at-horizon flag measures a stock.</strong> Nine in ten of the facilities it marks at month twelve were already in default before month twelve, making it roughly twelve times the marginal quantity it is mistaken for. The error is invisible to a discrimination test and an order of magnitude wrong in level.</li>
+<li><strong>Whether the first two of those differ at all depends on the fourth dial.</strong> Where the probation period is as long as the outcome window, no default inside the window can cure before it closes, so worst-ever and point-at-horizon are the same column of data. That is why a document can define one, describe the other, and never be contradicted, and it is why the ambiguity reappears the moment a lifetime horizon is used.</li>
+<li><strong>Probation buys cleanliness with cures.</strong> Lengthening it from three months to twenty-four takes re-default among cured facilities from 9.8 per cent to 1.4 and the cure rate from 61.8 per cent to 37.8. The re-default curve flattens after about a year, which is an empirical argument for roughly the period supervisors picked, and the three-month floor sits at the steepest part of it.</li>
+<li><strong>A materiality threshold is worth a factor of 45.</strong> On the same panel under the same ninety-day rule, 48,377 statements breach on the raw days-past-due figure and 1,078 on the figure after a materiality tolerance. The threshold reduces the default count, which is precisely why it is set by the supervisor rather than by the bank.</li>
+<li><strong>The correct definition can be inestimable on the data in front of you.</strong> That same materiality figure leaves 39 facilities ever breaching at ninety days, too few to sweep anything, so the demonstrations fall back to the raw figure and say so. Noticing that is the job; quietly proceeding is the failure.</li>
+<li><strong>A definition is a claim about a sequence.</strong> A one-row-per-loan extract can answer for <span class="math inline">\(k\)</span> and partly for <span class="math inline">\(d\)</span>, and it cannot answer for <span class="math inline">\(s\)</span> or <span class="math inline">\(p\)</span> at all. The dials a dataset exposes feel like the dials that exist, which is the trap lecture 1 fell into.</li>
+<li><strong>In a panel build, missing information reads as good news.</strong> A duplicated key inflates triggers, a gap in the series reads as clear months and therefore as recovery, and a null arrears value reads as performing. Fourteen facilities here had gaps and were dropped, because absence is unknown rather than clear.</li>
+</ol>
+</section>
+<section id="copyright-and-attribution" class="level1 unnumbered">
+<h1 class="unnumbered">Copyright and attribution</h1>
+<p>This lecture answers no lecture of the summer school <strong>Deep Learning for Actuarial Modeling</strong> and is original to this repository. It grows out of credit lecture 1, which named the definition of default three times without finishing it, and it supplies the vocabulary the rest of the credit series points back to.</p>
+<p>The three-dial formalism <span class="math inline">\(\mathcal{G}(d, s, t)\)</span> is Botha, Oberholzer, Larney and de Jongh’s, whose paper sweeps <span class="math inline">\(d \in \{1, 2\}\)</span>, <span class="math inline">\(s \in \{1, 2, 3\}\)</span> and <span class="math inline">\(k \in \{3, 6, 9, 12\}\)</span> to define SICR events rather than defaults; the underlying delinquency measure <span class="math inline">\(g_0\)</span> is from the earlier Botha, Beyers and De Villiers paper and the two should not be conflated. The probation and cure construction follows the same tradition and Mario’s own A-IRB and IFRS 9 methodology material, with no portfolio specifics carried over. Quotations from the Capital Requirements Regulation are the European Union’s and, for the near-final United Kingdom text, the Prudential Regulation Authority’s; quotations from IFRS 9 are the IASB’s. Every regulatory quotation in this lecture was verified against the primary document, and the register recording that, including four claims that had to be corrected or re-attributed, is at <code>notes/default-definition-citations.md</code>.</p>
+<p>The Bondora loan book is public. The revolving card panel is from the public Kaggle “Home Credit Default Risk” competition data, converted by <code>scripts/convert_credit_data.py --datasets home_credit</code>; the column dictionary quoted in section 10 is the competition’s own.</p>
+</section>
+<section id="references" class="level1 unnumbered">
+<h1 class="unnumbered">References</h1>
+<ul>
+<li>Botha, A., Beyers, C. and De Villiers, P. (2021). <em>Simulation-based optimisation of the timing of loan recovery across different portfolios</em>. Expert Systems with Applications, 177.</li>
+<li>Botha, A., Oberholzer, E., Larney, J. and de Jongh, R. (2025). <em>Defining and comparing SICR-events for classifying impaired loans under IFRS 9</em>. Annals of Operations Research, online first. DOI 10.1007/s10479-025-06546-3. Preprint arXiv:2303.03080, 2023.</li>
+<li>European Union (2013). <em>Regulation (EU) No 575/2013 on prudential requirements for credit institutions and investment firms</em>, Article 178 and Article 180. Consolidated text to 9 January 2024.</li>
+<li>European Banking Authority (2016). <em>Guidelines on the application of the definition of default under Article 178 of Regulation (EU) No 575/2013</em>, EBA/GL/2016/07.</li>
+<li>IASB (2014, as amended). <em>IFRS 9 Financial Instruments</em>, paragraphs 5.4.4, 5.5.9, 5.5.11 and B5.5.37.</li>
+<li>Prudential Regulation Authority (2024). <em>Implementation of the Basel 3.1 standards near-final part 2</em>, PS9/24, Credit Risk: Internal Ratings Based Approach, Article 178.</li>
+<li>Prudential Regulation Authority (2024). <em>The definition of default</em>, Supervisory Statement SS3/24.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -302,8 +302,9 @@ print(table.filter(pl.col("month").is_in([1, 2, 3, 4, 6, 12, 24, 36, 48, 60])))
 ```
 
 The first two rows carry a structural feature of the default definition rather than
-a quirk of the data. Bondora marks a loan defaulted at 60 days past due, so no loan
-can reach that threshold in its first month, and exactly one does in its second.
+a quirk of the data. Bondora declares default at a median 79 days past due, so no loan
+accumulates enough arrears to be flagged in its first month, and exactly one does in its
+second.
 The hazard is therefore genuinely zero at $t = 1$, which will matter when the model
 of the next section tries to estimate a parameter for it.
 
