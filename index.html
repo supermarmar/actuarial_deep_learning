@@ -3,7 +3,7 @@
   Landing page for the credit risk companion lectures.
 
   It links `lectures/lecture.css` rather than the Gini documents layer, so that
-  the index and the fourteen lectures it points at share one register. That
+  the index and the fifteen lectures it points at share one register. That
   sheet states the deviation at its own head: warm paper, oxblood accent, Tufte
   reading layout, chosen for long-form study rather than for client delivery.
   Every value below therefore comes from its token block, and nothing here
@@ -22,7 +22,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deep Learning for Actuarial Modeling: a credit risk companion</title>
-<meta name="description" content="Thirteen companion lectures reading the Milan 2026 actuarial deep learning course through a consumer credit probability of default problem.">
+<meta name="description" content="Fifteen companion lectures reading the Milan 2026 actuarial deep learning course through a consumer credit probability of default problem.">
 <link rel="stylesheet" href="lectures/lecture.css">
 <style>
   /* Layout. The lectures put a table-of-contents rail beside the prose; this
@@ -119,7 +119,7 @@
   <h1 class="title">Deep Learning for Actuarial Modeling</h1>
   <div class="abstract">
     <div class="block-title">A credit risk companion</div>
-    <p>Thirteen lectures read the Milan 2026 summer school through one running
+    <p>Fifteen lectures read the Milan 2026 summer school through one running
     example: a consumer probability of default problem on the Bondora
     peer-to-peer loan book. Eight follow the course lecture for lecture, and
     five answer questions the course does not ask, on survival analysis,
@@ -276,6 +276,18 @@ cross-section could not carry it.</p>
   </div>
 </div>
 
+<div class="entry">
+  <div class="entry-num">R3</div>
+  <div>
+    <p class="entry-title"><a href="credit_lectures/R3_credit-sampling-and-representativeness.html">Sample Design, Representativeness and Class Imbalance</a></p>
+    <p class="entry-note">Audits the partition every other lecture inherited. Dates the
+    pandemic relief distortion to a two-month notch, shows the fixed-horizon table cannot
+    express a calendar exclusion, finds a 2017 data break, and separates development from
+    out-of-time at an AUC of 0.96.</p>
+    <p class="entry-links"><a href="credit_lectures/R3_credit-sampling-and-representativeness.html">Read</a><span class="sep">·</span><a href="credit_lectures/R3_credit-sampling-and-representativeness.pdf">PDF</a></p>
+  </div>
+</div>
+
 <h2>Causal track</h2>
 <p class="track-note">Lecture 1 made a causal argument correctly and without a
 single causal word. This track supplies the vocabulary and then spends it.</p>
@@ -319,9 +331,11 @@ series is built on.</p>
 
   <p>The data is the public <a href="https://www.bondora.com/en/public-reports">Bondora
   loan book</a>, extract dated 20 July 2021, with three public Eurostat series
-  behind the R track. Each lecture renders from a Quarto source, and every
-  displayed figure is computed at render time. No client data is involved
-  anywhere on this site.</p>
+  behind the R track. Lecture 3 and the imbalance section of R3 use a second
+  public set, the anonymised <a href="https://www.kaggle.com/datasets/suvroo/credit-card-behaviour-score">credit
+  card behaviour score</a> development and validation pair. Each lecture renders
+  from a Quarto source, and every displayed figure is computed at render time. No
+  client data is involved anywhere on this site.</p>
 </div>
 
 </div>

@@ -442,6 +442,28 @@ recent vintages, because the model will only ever be used on business
 written after its development window. We build both partitions below and
 let the numbers make the argument.
 
+::: {.callout-note icon=false title="This partition is audited in lecture R3"}
+The split built below is the one lectures 4 to 8 and S3 inherit, and lecture R3 examines it
+rather than taking it on trust. Three of its findings bear on the numbers in this section.
+
+The held-out window is 28.6 per cent pandemic-era originations, so the fall in the default rate
+reported just below mixes a tightened underwriting standard, a relief programme that suppressed
+the flag, and the economy itself. R3 dates the relief distortion to a two-month notch in the
+monthly hazard, in April and May 2020.
+
+That distortion cannot be excluded on this table. Because the outcome window opens at
+origination, dropping every loan whose window overlaps the notch empties the test sample
+completely, and R3 shows the count is exactly zero. The demonstration moves to lecture R1's
+calendar-indexed table, where excluding the notch lifts the twelve-month probability of default
+by 2.4 per cent relative.
+
+Finally, the development and out-of-time samples are separable by a classifier at an area under
+the curve of 0.96, while most marginal stability indices call the covariates unchanged.
+
+**The results in this lecture are left as they stand.** They are correct for the partition they
+were computed on, and R3 is the lecture that questions the partition.
+:::
+
 ```{python}
 import numpy as np
 import polars as pl
