@@ -20,9 +20,12 @@ abstract: >
   same bug. The one surviving tell is the shape of the profile, which is
   flat where a genuine behavioural model rises.
   On the Bondora application book the architecture is tokenised covariate by
-  covariate and read out through a CLS token. It competes without leading:
-  107.342 at seed 100 is the series' best single fit, and yet the ten-seed
-  mean of 107.381 sits between the LocalGLMnet's 107.434 and lecture 6's
+  covariate and read out through a CLS token. It competes without leading.
+  At seed 100 it reaches 107.342, and the same architecture with the
+  credibility mechanism switched off reaches 107.327, so the two lead the
+  single fits this series has published and are one draw each from a
+  distribution whose standard deviation is 0.126. The ten-seed mean of
+  107.381 then sits between the LocalGLMnet's 107.434 and lecture 6's
   embedded network's 107.313 with neither difference significant, while
   nagging reaches 107.097 against that network's 106.921. The credibility
   mechanism divides. Its explicit half behaves exactly as described, the
@@ -1404,8 +1407,11 @@ print("\n" + series.to_string(index=False, na_rep="",
 
 The ordering does not support the architecture's reputation. On single
 fits the Credibility Transformer's 107.342 and the plain Transformer's
-107.327 lead the series, and both are one draw from a distribution whose
-standard deviation is 0.126. On means over ten seeds the Credibility
+107.327 lead the single fits this series has published, and both are one
+draw from a distribution whose standard deviation is 0.126. That
+qualification matters, since lecture 6 quoted a ten-seed mean of 107.313
+for its embedded network without printing an individual fit, so its best
+draw very plausibly went lower. On means over ten seeds the Credibility
 Transformer's 107.381 sits between lecture 9's LocalGLMnet at 107.434 and
 lecture 6's embedded network at 107.313, and neither difference is
 significant: the unpaired standard error of the first comparison is 0.048
@@ -1523,7 +1529,8 @@ below; the figures that follow are Bondora twelve-month default.
 
 On tabular data the Credibility Transformer competes and does not lead.
 Its best single fit reached 107.342 and the plain Transformer's reached
-107.327, both at the front of the series and both one draw from a
+107.327, both ahead of every single fit the series has published and both
+one draw from a
 distribution whose standard deviation is 0.126. Over ten seeds its 107.381
 sits between the LocalGLMnet's 107.434 and lecture 6's embedded network's
 107.313 with neither difference significant, and nagged over ten fits its

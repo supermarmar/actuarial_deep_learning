@@ -278,7 +278,12 @@ default rate 0.28878. Cardinalities `Country` 4, `Education` 5, `HomeOwnership` 
 | FNN, embedding, nagged $M = 10$ | | 106.921 | `06:965` |
 
 **The comparison the lecture must make honestly.** The seed-100 fit at 107.342 is the best
-single fit in the series, and that is largely seed luck. On means over ten seeds the CT's
+of the single fits this series has **published**, and even that is shared with the
+$\alpha = 1$ fit at 107.327, which is lower. Two scoping points therefore bind any claim
+here. The $\alpha = 1$ figure comes from this lecture too, so a bare "best single fit"
+sentence naming 107.342 is wrong; and lecture 6 quoted a ten-seed mean of 107.313 without
+printing an individual fit, so its best draw very plausibly beat both. Any edit reaching for
+a superlative must say "published" and must not attach it to 107.342 alone. On means over ten seeds the CT's
 107.381 sits between the LocalGLMnet's 107.434 and the embedded network's 107.313, and
 neither difference is significant: the unpaired standard error of the CT-against-LocalGLMnet
 difference is 0.048 against a difference of 0.053, and of the CT-against-embedding
@@ -385,7 +390,7 @@ from it.
 
 ## Render cost
 
-Thirteen tabular fits and four sequential fits, so the render takes roughly half an hour on
+Thirteen tabular fits and four sequential fits, so the render takes roughly twenty minutes on
 this machine. The fits are: one at $\alpha = 1$ for section 3.5, three more for the sweep at
 0.50, 0.80 and 0.95, and nine at seeds 101 to 109 for the nagging. The seed-100
 $\alpha = 0.95$ fit from the sweep is reused as the primary model and the $\alpha = 1$ fit is
