@@ -284,7 +284,7 @@ exactly its own 64 neighbours, which is the sharpest context available.
 | context instances | 1,000 | 64 |
 | $a_{i,i}$ mean | $9.06 \times 10^{-4}$ | $1.50 \times 10^{-2}$ |
 | uniform weight | $9.99 \times 10^{-4}$ | $1.54 \times 10^{-2}$ |
-| context weight coefficient of variation | 0.099 | 0.023 |
+| context weight coefficient of variation | 0.099 | 0.022 |
 | largest weight / mean | 1.97 | 1.02 |
 | deviance on 400 test rows | 102.024 | 102.201 |
 | base model on the same 400 rows | 102.052 | 102.052 |
