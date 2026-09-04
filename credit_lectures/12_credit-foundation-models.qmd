@@ -1,0 +1,2061 @@
+---
+title: "Credit Lecture 12: Foundation Models, In-Context Learning and the Cold Start"
+subtitle: "Deep Learning for Actuarial Modelling: a credit risk companion"
+author: "Mario Ervedosa, adapting Scognamiglio, Maggi, Wüthrich and Richman"
+date: "2026-09-04"
+abstract: >
+  Foundation models, tabular in-context learning and the in-context learning
+  credibility transformer of Padayachy, Richman, Scognamiglio and Wüthrich
+  (2025), asked one question throughout: does a prior the model never learned
+  from this book, or context it retrieves at prediction time, buy what
+  lecture 10-11's credibility gate did not? The yardstick is that lecture's
+  seed standard deviation of 0.126.
+  A pretrained prior pays where the sample is small and stops paying fast.
+  TabPFN v2 leads a learning curve from 250 rows to 10,000, reaching 113.3
+  at 250 rows where the Credibility Transformer manages 119.6 against a null
+  of 122.1, and where the maximum-likelihood GLM does not merely lose but
+  separates, averaging 1,901. By 10,000 rows the three arms span 0.16 in
+  total. Above all, TabPFN handed 10,000 rows matches a logistic GLM fitted
+  on all 118,933 almost exactly, 110.88 against 110.87, so a cross-table
+  prior substitutes for the lender's history without bettering the lender's
+  model. It also arrives 1.9 percentage points below the observed default
+  rate, about 2.3 sampling standard errors, and it has no parameter through
+  which that can be corrected.
+  The ICL-CT transfers with one part missing. Its decorator weights each
+  retrieved outcome by exposure, and a fixed-horizon table has none, so the
+  weight collapses to a constant and loses the borrower-level content that
+  made it a credibility construction. Initialised at the fitted base model it
+  reproduces that model exactly, which is the check to run before reading any
+  attention weight, and from there five paired fits put in-context learning
+  0.012 behind the base model with a paired standard deviation of 0.032. In
+  two of the five seeds no epoch beat the initialisation at all. Three
+  measurements say why. The paper's batch retrieval unions 200 targets'
+  neighbourhoods and caps the union at 1,000, and since 95 per cent of
+  retrieved rows are retrieved by exactly one target the cap hands the median
+  borrower three of its own sixty-four neighbours. Scoring one borrower at a
+  time against its own neighbours makes the attention row flatter still, a
+  coefficient of variation of 0.02 against 0.10, without improving the
+  deviance. And the neighbourhood mean that survives the averaging correlates
+  0.65 with what the base model already predicts.
+  Credit's version of the course's limited-data problem is a cold start, and
+  Bondora supplies a real one in a Slovak book of 296 loans, originated over
+  ten months and then closed, defaulting at 70.6 per cent against Estonia's
+  17.0. There every model under-predicts by forty percentage points, both
+  networks are decisively worse than the null model at 236.6 and 234.6
+  against 195.8, and only the GLM beats it. Retrieval makes it worse rather
+  than better, drawing 71.0 per cent of its context from Estonia against 58.1
+  per cent of the pool, because similarity is measured in the space of the
+  very model that is wrong about the segment. That experiment also yields a
+  methodological warning: the paired bootstrap reports a confident two-point
+  gain under one training budget and a confident four-point loss under a
+  longer one, with no resample dissenting either way, so an interval computed
+  on 296 loans measures sampling variation and not the model-selection
+  variation that dominates it.
+  The governance bill is smaller than the construction suggests, and for the
+  same reason the accuracy gain is. Re-drawing half the retrieval pool moves a
+  borrower's fitted log-odds by 0.002, against the 1.043 that separates
+  lecture 9's leading reason code from its second, so the explanation
+  survives. An architecture attending sharply enough to buy accuracy would put
+  that back at risk, which is why the re-draw is worth running rather than
+  assuming.
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    # Render with scripts/render_lecture.sh, not bare `quarto render`.
+    # The script strips Quarto's Bootstrap and JS assets from the output so the
+    # page has the same effective structure as the authors' lecture documents,
+    # which is what lecture.css lays out.
+    css: ../lectures/lecture.css
+    embed-resources: false
+    fig-width: 9
+    fig-height: 4
+    fig-dpi: 150
+execute:
+  echo: true
+  warning: false
+jupyter: python3
+---
+
+# Introduction {.unnumbered}
+
+Every lecture in this series so far has fitted its model on the book it
+then scored. Lecture 12 breaks that pattern twice over. A **foundation
+model** carries a prior learned somewhere else entirely, and **in-context
+learning** supplies experience at prediction time rather than at fitting
+time, so neither one is fully described by the weights a lender would
+document.
+
+The question this lecture asks is narrower than the course's, and it is
+set by what lectures 10 and 11 found. There the Credibility Transformer's
+explicit gate behaved exactly as described and bought no accuracy, its
+sweep spanning 0.213 against a seed standard deviation of 0.126, and its
+implicit credibility weight turned out to be a property of the fit rather
+than of the borrower. Consequently the honest question here is not whether
+in-context learning is impressive. It is whether retrieved context delivers
+what a learned prior did not. That standard deviation of 0.126 is the
+yardstick, and it is quoted again at every deviance table below.
+
+Credit reframes the course's motivation as well. Insurance lecture 12
+motivates credibility with small portfolios, new products, rare events,
+and new vehicle models. A lender's version is sharper, because lenders open and
+close whole books: a new country, a new product, a segment whose default
+history does not exist yet. Bondora supplies a real instance rather than a
+constructed one, and section 4 uses it.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Imports and shared settings"
+import time
+import numpy as np
+import pandas as pd
+import polars as pl
+import patsy
+import statsmodels.api as sm
+import torch
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_auc_score
+
+BLUE, RED, GREY = "#3B4A75", "#8C2F1E", "#8A8377"
+plt.rcParams.update({"figure.dpi": 150, "font.size": 9,
+                     "axes.spines.top": False, "axes.spines.right": False})
+torch.set_num_threads(4)
+T_START = time.time()
+
+
+def dev(pred, obs):
+    """Bernoulli deviance on the series scale: 100 x 2 x the mean contribution."""
+    p = np.clip(np.asarray(pred, float), 1e-12, 1 - 1e-12)
+    y = np.asarray(obs, float)
+    return 100 * 2 * np.mean(-y * np.log(p) - (1 - y) * np.log(1 - p))
+
+
+def logit(p):
+    p = np.clip(np.asarray(p, float), 1e-9, 1 - 1e-9)
+    return np.log(p / (1 - p))
+```
+
+# Foundation models as a model class
+
+## What the term means
+
+A **foundation model** is trained on a broad and diverse corpus and then
+transfers to many downstream tasks with minimal task-specific change. Three
+properties travel with the definition: scale, in parameters and in training
+tokens; general representations, meaning the learned features are not tied
+to one task; and versatile adaptation, meaning the same weights serve many
+jobs. In particular the third property is what makes the term useful, since
+a model that transferred only to tasks resembling its training corpus would
+be a pretrained model and nothing more.
+
+The backbone is almost always a Transformer with autoregressive generation,
+which lectures 10 and 11 built. Capability then follows a joint power law in
+compute, data, and parameters (Kaplan et al., 2020). However that law was
+initially read as a licence to grow parameters, and Hoffmann et al. (2022)
+corrected it into the compute-optimal balance that told the field to budget
+tokens as well.
+
+## The model class
+
+Write the input space as $\mathcal{X}$ and the output space as
+$\mathcal{Y}$. The model class is
+
+$$
+\mathcal{F} = \left\{ f_\theta : \mathcal{X} \to \mathcal{Y} ~\middle|~ \theta \in \Theta \right\},
+\qquad \Theta \subset \mathbb{R}^r, \quad r \gg 10^8 .
+$$
+
+In the categorical case with $K^{\rm cls}$ classes the model output
+parametrises next-token probabilities through a softmax,
+
+$$
+p_\theta(Y = k \mid \boldsymbol{x}) = \frac{\exp\{f_{k,\theta}(\boldsymbol{x})\}}{\sum_{l=1}^{K^{\rm cls}} \exp\{f_{l,\theta}(\boldsymbol{x})\}} .
+$$
+
+Pre-training maximises the autoregressive likelihood over a corpus of token
+sequences,
+
+$$
+\theta^\star_{\rm pre} \in \arg\max_{\theta \in \Theta} \sum_t \log p_\theta(Y = x_{t+1} \mid x_{1:t}),
+$$
+
+which is the same maximum-likelihood principle lecture 2 applied to a
+logistic generalised linear model (GLM), differing in the size of $\Theta$ and in the fact that the
+response at step $t$ is the covariate at step $t+1$.
+
+Note the notation. $K^{\rm cls}$ carries the class count here because
+section 3 needs $K$ for the number of retrieved neighbours, and a
+twelve-month default response has $K^{\rm cls} = 2$ throughout, so the
+softmax above reduces to the logistic link this series has used since
+lecture 2.
+
+## Adaptation, and what each rung means for a lender
+
+Adaptation is where a foundation model becomes a credit model, and the
+options form a ladder from cheapest to most invasive. Note that the rungs
+differ in what they leave a lender owning, which matters more here than
+their compute cost.
+
+- **In-context learning (ICL).** Put demonstrations $\mathcal{C}$ in the
+  input and evaluate $f_{\theta^\star_{\rm pre}}([\mathcal{C}, \boldsymbol{x}])$
+  (Brown et al., 2020). No weight changes at all.
+- **Retrieval-augmented generation (RAG).** Fetch relevant documents and
+  condition on them. Again no weight changes.
+- **Parameter-efficient fine-tuning (PEFT), including low-rank adaptation
+  (LoRA).** Train a small number of added parameters and freeze the rest.
+- **Full fine-tuning.** Train everything, which is the most expensive rung
+  and the only one that produces a model whose weights are wholly yours.
+
+Each rung reads differently in a lending context, and the first thing worth
+saying is that lenders have used the bottom rung for decades without calling
+it that. A **bureau score** is a pretrained prior, since somebody else fitted
+it, on a population you cannot inspect, and you consume it as a covariate.
+Consequently the governance apparatus around bureau scores, meaning the
+vendor's population documentation and the lender's own monitoring, is the
+closest existing precedent for what section 5 argues a tabular foundation
+model would need.
+
+Similarly RAG has an obvious home over a credit policy manual, where the
+question "does this application breach policy?" is a retrieval problem
+before it is a modelling one. That use is a document task rather than a
+scoring task, so it sits outside this series' scope. Nevertheless it is
+named here, because it is the rung most likely to reach a lending operation
+first.
+
+In-context learning over a retrieved set of similar borrowers is the rung
+sections 3 and 4 build, and it is the one that changes what a credit
+decision is made of.
+
+## The GPT series, briefly
+
+The trajectory matters mainly as evidence that adaptation improves with
+scale. GPT-1 and GPT-2 established that unsupervised pre-training transfers
+(Radford et al., 2018, 2019). GPT-3 showed that few-shot prompting alone
+covers a broad task range without gradient updates (Brown et al., 2020),
+which is the result that made in-context learning a research programme
+rather than a curiosity. InstructGPT added alignment through reinforcement
+learning from human feedback (Ouyang et al., 2022), and GPT-4 broadened
+reasoning and robustness (OpenAI, 2023).
+
+Two sensitivities travel with the whole family and both matter to anyone
+tempted to put a language model near a credit decision. Prompt format and
+demonstration order change the answer, so the same question asked twice can
+be answered differently. Furthermore the mechanism is next-token
+prediction, so an arithmetic or regulatory claim arrives as a plausible
+continuation rather than as a derivation. Neither observation argues
+against the technology; both argue against treating its output as a
+calculation.
+
+# Tabular foundation models
+
+## Why tabular data resists the recipe
+
+Language and images gave foundation models two gifts that a credit
+application table withholds. Tokens share a vocabulary across every
+document, and pixels share a grid across every image, so a model pretrained
+on one corpus meets familiar inputs in the next. A table's columns share
+nothing: `IncomeTotal` in euros and `Education` as a code are different
+kinds of object, they arrive in an arbitrary order, and the next lender's
+table has different columns entirely.
+
+Four consequences follow. Features are heterogeneous and mixed in type.
+Furthermore missingness is informative rather than incidental, as lecture
+2's `HomeOwnershipType` showed. There is no natural order across columns, so
+a model must be permutation invariant or else learn an ordering that means
+nothing. Above all, gradient-boosted trees set a high baseline that deep
+tabular models have repeatedly failed to clear, whereas language and vision
+offered no comparable incumbent.
+
+The foundation approach answers by pre-training a **cross-table prior**: a
+model learns, over many synthetic tables, what tabular relationships tend
+to look like, and then reuses that prior on a table it has never seen.
+
+## The families
+
+| Architecture | Idea | Reference |
+|:---|:---|:---|
+| TabTransformer | Tokenise categorical features, attend over them | Huang et al. (2020) |
+| FT-Transformer | Tokenise continuous features too | Gorishniy et al. (2021) |
+| TransTab | Cross-table transfer with aligned embeddings | Wang and Sun (2022) |
+| TabPFN | Prior-data fitted network, ICL in one forward pass | Hollmann et al. (2022) |
+| TabPFN v2 | Tabular foundation model, wins to $n \approx 10^4$ | Hollmann et al. (2025) |
+| TabICL | Two-stage scaling to $n \approx 5 \times 10^5$ | Qu et al. (2025) |
+
+One attribution is worth correcting, because the course misplaces it and
+this series has already checked the primary text. Feature tokenisation,
+meaning the treatment of a continuous covariate as a token through a small
+network, belongs to the **FT-Transformer** of Gorishniy, Rubachev, Khrulkov
+and Babenko (2021). Lecture 10-11 section 3.2 uses that construction and
+cites it correctly, and `notes/transformer-lecture-structure.md` records the
+verification. In contrast the course attributes it to TabM, which proposes
+no tokeniser at all, so the error is one of attribution rather than of
+substance.
+
+## TabPFN as approximate Bayesian inference
+
+The prior-data fitted network is the family's clearest idea, and it is
+easiest to state as a Bayesian one. Given a context dataset $\mathcal{D}$
+and a query $\boldsymbol{x}^\star$, the posterior predictive is
+
+$$
+p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D}) = \int p(y^\star \mid \boldsymbol{x}^\star, \boldsymbol{\theta})\, p(\boldsymbol{\theta} \mid \mathcal{D})\, \mathrm{d}\boldsymbol{\theta},
+$$
+
+which is intractable for any interesting model class. TabPFN instead learns
+a function $f_\psi(\boldsymbol{x}^\star, \mathcal{D})$ to approximate that
+posterior directly, by minimising expected negative log-likelihood over
+tasks drawn from a synthetic prior (Müller et al., 2021). The training
+distribution is therefore not data at all. It is a prior over
+data-generating mechanisms, and the network learns to do inference under
+it.
+
+At prediction time the whole context dataset is fed in alongside the query,
+and one forward pass returns the predictive distribution. Consequently
+fitting, in the usual sense, does not happen. TabPFN v1 alternates attention
+over columns and over rows, which handles the missing column order and yet
+costs quadratically in the number of rows, and that cost is what bounds the
+family's sample size. Alternatively TabICL embeds each row to a fixed
+dimension first and then runs in-context learning over those compact
+embeddings, which reaches about $5 \times 10^5$ rows (Qu et al., 2025).
+
+::: {.callout-note}
+## What "no fitting" does and does not mean
+
+TabPFN performs no gradient descent on your data, and yet the context
+dataset determines the prediction completely. So the estimation has moved
+rather than vanished: it happens inside the forward pass, using weights
+fitted on synthetic tasks. For a lender the practical consequence is that
+there is no fitted parameter vector to document, monitor or re-estimate,
+which section 5 takes up.
+:::
+
+## The Bondora book
+
+The frame, the filters, and the seed-1 split below are those of lectures 4
+to 11, so the deviances chain to theirs without rescaling.
+
+```{python}
+#| code-fold: true
+#| code-summary: "The Bondora modelling frame, unchanged from lectures 4 to 11"
+dat = pl.read_parquet("../data/bondora_pd.parquet")
+model_dat = (dat.filter(pl.col("Age").is_not_null() & (pl.col("IncomeTotal") > 0))
+             .with_columns(logIncome=pl.col("IncomeTotal").log())
+             .filter(pl.col("Education") != -1))
+g = model_dat.select(
+    ["default_12m", "Age", "logIncome", "Country", "Education",
+     "HomeOwnershipType", "NewCreditCustomer", "VerificationType",
+     "EmploymentDurationCurrentEmployer", "LoanDate",
+     "NoOfPreviousLoansBeforeLoan"]).to_pandas()
+
+ho = g["HomeOwnershipType"]
+g["HomeOwnership"] = np.where(ho.isna() | (ho == -1), "missing",
+                              ho.fillna(-1).astype(int).astype(str))
+g["EmploymentDuration"] = g["EmploymentDurationCurrentEmployer"].fillna("missing")
+g["Education"] = g["Education"].astype(int).astype(str)
+g["VerificationType"] = g["VerificationType"].astype(int).astype(str)
+g["AgeCens"] = g["Age"].clip(upper=70)
+g["AgeClass"] = pd.cut(g["Age"], [18, 20, 25, 30, 40, 50, 60, 101],
+                       labels=["18-20", "21-25", "26-30", "31-40", "41-50",
+                               "51-60", "61+"], include_lowest=True)
+
+CATS = ["Country", "Education", "HomeOwnership", "VerificationType",
+        "EmploymentDuration"]
+CONT = ["AgeCens", "logIncome", "NewCreditCustomer"]
+q = len(CATS) + len(CONT)
+
+
+def build_design(frame, country=None):
+    """Codes, standardised continuous block and the seed-1 80/20 split."""
+    f = frame.copy()
+    if country is not None:
+        f["Country"] = country
+    y_all = f["default_12m"].astype(float)
+    perm = np.random.default_rng(1).permutation(len(f))
+    cut = int(0.8 * len(f))
+    idx_learn, idx_test = perm[:cut], perm[cut:]
+    cards = {}
+    cols = []
+    for c in CATS:
+        cat = pd.Categorical(f[c].astype(str))
+        cards[c] = len(cat.categories)
+        cols.append(cat.codes.astype(np.int64))
+    Xc = np.stack(cols, axis=1)
+    Xn = f[CONT].astype(float).to_numpy()
+    mu, sd = Xn[idx_learn].mean(0), Xn[idx_learn].std(0)
+    Xn = ((Xn - mu) / sd).astype(np.float32)
+    return dict(y_all=y_all, idx_learn=idx_learn, idx_test=idx_test,
+                Xc=Xc, Xn=Xn, cards=cards)
+
+
+D = build_design(g)
+y_all = D["y_all"]
+idx_learn, idx_test = D["idx_learn"], D["idx_test"]
+Xc, Xn, cards = D["Xc"], D["Xn"], D["cards"]
+yl = y_all.iloc[idx_learn].to_numpy()
+yt = y_all.iloc[idx_test].to_numpy()
+print(f"n = {len(g):,},  learn {len(idx_learn):,} / test {len(idx_test):,},  "
+      f"learning-sample default rate {yl.mean():.5f}")
+```
+
+## The learning curve
+
+The course claims these architectures are strong where the sample is small
+and may struggle on unbalanced data. Both halves are testable here, so this
+section tests them.
+
+The design is a nested learning curve. Three independent subsamples of the
+learning sample are drawn at each of six sizes, and at each size three
+models are fitted: lecture 2's logistic GLM, the Credibility Transformer of
+section 3, and TabPFN v2. Every model is then scored on one fixed test
+sample so the arms are comparable.
+
+One departure from the rest of the series is forced and is worth stating
+plainly. TabPFN's cost grows quadratically in the size of its context, and
+scoring all 29,734 test rows at every point on the curve would dominate the
+render, so the curve is scored on a fixed random 3,000-row subsample of that
+test set. Consequently the curve's deviances are comparable **with each
+other** and sit slightly above the series' full-test figures. Section 3
+returns to the full test set for the numbers that chain.
+
+```{python}
+#| code-fold: true
+#| code-summary: "The three arms of the learning curve"
+from tabpfn import TabPFNClassifier
+
+FORMULA = ("AgeClass + logIncome + Country + C(Education)"
+           " + C(HomeOwnership) + NewCreditCustomer + C(VerificationType)"
+           " + C(EmploymentDuration)")
+Xg = np.asarray(patsy.dmatrix(FORMULA, g, return_type="dataframe"))
+Xp = np.hstack([Xc.astype(float), Xn.astype(float)])
+y_np = y_all.to_numpy()
+
+te = idx_test[np.random.default_rng(7).permutation(len(idx_test))[:3000]]
+yte = y_np[te]
+
+
+def glm_arm(tr):
+    """Lecture 2's specification, refitted by maximum likelihood on tr."""
+    Xt = Xg[tr]
+    keep = Xt.std(0) > 0
+    keep[0] = True
+    r = sm.GLM(y_np[tr], Xt[:, keep], family=sm.families.Binomial()).fit()
+    return r.predict(Xg[te][:, keep])
+
+
+def tabpfn_arm(tr, seed=1):
+    """TabPFN v2. The v2 checkpoint is named explicitly: see the note below."""
+    clf = TabPFNClassifier(device="mps", model_path="tabpfn-v2-classifier.ckpt",
+                           ignore_pretraining_limits=True,
+                           categorical_features_indices=list(range(len(CATS))),
+                           random_state=seed)
+    clf.fit(Xp[tr], y_np[tr].astype(int))
+    return clf.predict_proba(Xp[te])[:, 1]
+```
+
+::: {.callout-note}
+## Two traps in the TabPFN package
+
+The installed `tabpfn` resolves by default to its newest checkpoint, whose
+weights sit behind a gated licence on HuggingFace and fail without an
+accepted licence and a token. Naming `tabpfn-v2-classifier.ckpt` selects
+the **v2** weights, which download without credentials and are the version
+the course cites (Hollmann et al., 2025).
+
+Pinning the `tabpfn` 2.x release instead is the obvious alternative and it
+breaks the environment: it downgrades `scikit-learn` to 1.6.1, which is not
+the course's pin, and restoring 1.8.0 then breaks `tabpfn` outright. The
+package is installed on top of the course requirements and changes none of
+them; `notes/foundation-models-lecture-structure.md` records the detail.
+:::
+
+The third arm is lectures 10 and 11's Credibility Transformer, imported
+unchanged. That lecture owns the architecture, so the cell below is folded
+and cited rather than re-derived; section 3 explains only the parts this
+lecture adds.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Lecture 10-11's Credibility Transformer, unchanged"
+def attention(Q, K, V, mask=None):
+    """Scaled dot-product attention with an optional additive -inf mask."""
+    A0 = Q @ K.transpose(-2, -1) / Q.shape[-1] ** 0.5
+    if mask is not None:
+        A0 = A0 + mask
+    A = torch.softmax(A0, dim=-1)
+    return A @ V, A
+
+
+class FeatureTokeniser(torch.nn.Module):
+    """Every covariate to a b-dimensional token: an embedding, or a depth-2 FNN."""
+
+    def __init__(self, cards_list, n_cont, b):
+        super().__init__()
+        self.emb = torch.nn.ModuleList(
+            [torch.nn.Embedding(K, b) for K in cards_list])
+        self.num = torch.nn.ModuleList(
+            [torch.nn.Sequential(torch.nn.Linear(1, b), torch.nn.Tanh(),
+                                 torch.nn.Linear(b, b)) for _ in range(n_cont)])
+
+    def forward(self, xc, xn):
+        toks = [e(xc[:, j]) for j, e in enumerate(self.emb)]
+        toks += [f(xn[:, j:j + 1]) for j, f in enumerate(self.num)]
+        return torch.stack(toks, dim=1)
+
+
+class CredibilityTransformer(torch.nn.Module):
+    """Single-head Credibility Transformer with a Bernoulli(alpha) token gate."""
+
+    def __init__(self, cards_list, n_cont, b=8, alpha=0.95, seed=100):
+        super().__init__()
+        torch.manual_seed(seed)
+        self.b, self.alpha = b, alpha
+        self.tok = FeatureTokeniser(cards_list, n_cont, b)
+        self.cls = torch.nn.Parameter(torch.randn(b) * 0.1)
+        self.norm_in = torch.nn.LayerNorm(b)
+        self.WQ, self.WK, self.WV = (torch.nn.Linear(b, b) for _ in range(3))
+        self.norm_ff = torch.nn.LayerNorm(b)
+        self.ff = torch.nn.Linear(b, b)
+        self.norm_out = torch.nn.LayerNorm(b)
+        self.dec = torch.nn.Linear(b, 1)
+
+    def augmented(self, xc, xn):
+        X0 = self.tok(xc, xn)
+        return torch.cat([X0, self.cls.expand(X0.shape[0], 1, self.b)], dim=1)
+
+    def heads(self, X):
+        Xn_ = self.norm_in(X)
+        Q, K, V = (torch.tanh(self.WQ(Xn_)), torch.tanh(self.WK(Xn_)),
+                   torch.tanh(self.WV(Xn_)))
+        H, A = attention(Q, K, V)
+        return H, A, V
+
+    def tokens(self, xc, xn):
+        X = self.augmented(xc, xn)
+        H, A, V = self.heads(X)
+        skip = X + H
+        trans = skip + self.ff(self.norm_ff(skip))
+        return trans[:, -1, :], self.ff(self.norm_ff(V[:, -1, :])), A
+
+    def decode(self, c):
+        """The decoder, isolated so section 3.5 can freeze and reuse it."""
+        return torch.sigmoid(self.dec(torch.tanh(self.norm_out(c))))
+
+    def forward(self, xc, xn, gate=True, force=None):
+        c_trans, c_prior, _ = self.tokens(xc, xn)
+        if force == "prior":
+            c = c_prior
+        elif force == "trans" or not gate:
+            c = c_trans
+        else:
+            Z = torch.bernoulli(torch.full((c_trans.shape[0], 1), self.alpha))
+            c = Z * c_trans + (1 - Z) * c_prior
+        return self.decode(c)
+
+
+def train_ct(D_, seed=100, b=8, alpha=0.95, epochs=200, batch=5000,
+             patience=20, idx_learn_=None):
+    """Lecture 10-11's routine, with the learning index injectable for the curve."""
+    Xc_, Xn_, y_ = D_["Xc"], D_["Xn"], D_["y_all"]
+    il = D_["idx_learn"] if idx_learn_ is None else idx_learn_
+    p = np.random.default_rng(seed).permutation(len(il))
+    li, vi = il[p[:int(0.9 * len(p))]], il[p[int(0.9 * len(p)):]]
+    Ctr, Ntr = torch.tensor(Xc_[li]), torch.tensor(Xn_[li])
+    Cva, Nva = torch.tensor(Xc_[vi]), torch.tensor(Xn_[vi])
+    ytr = torch.tensor(y_.iloc[li].to_numpy(), dtype=torch.float32).unsqueeze(1)
+    yva = torch.tensor(y_.iloc[vi].to_numpy(), dtype=torch.float32).unsqueeze(1)
+    model = CredibilityTransformer([D_["cards"][c] for c in CATS], len(CONT),
+                                   b=b, alpha=alpha, seed=seed)
+    opt = torch.optim.NAdam(model.parameters())
+    bce = torch.nn.BCELoss()
+    gen = torch.Generator().manual_seed(seed)
+    torch.manual_seed(seed + 1)
+    best, best_epoch, best_state = np.inf, 0, None
+    for epoch in range(1, epochs + 1):
+        model.train()
+        for chunk in torch.randperm(len(Ctr), generator=gen).split(batch):
+            opt.zero_grad()
+            bce(model(Ctr[chunk], Ntr[chunk]), ytr[chunk]).backward()
+            opt.step()
+        model.eval()
+        with torch.no_grad():
+            v = 200 * bce(model(Cva, Nva, gate=False), yva).item()
+        if v < best:
+            best, best_epoch = v, epoch
+            best_state = {k: t.clone() for k, t in model.state_dict().items()}
+        if epoch - best_epoch >= patience:
+            break
+    model.load_state_dict(best_state)
+    model.eval()
+    return model, best_epoch
+
+
+def predict(model, D_, idx, force="trans"):
+    with torch.no_grad():
+        return model(torch.tensor(D_["Xc"][idx]), torch.tensor(D_["Xn"][idx]),
+                     gate=False, force=force).numpy().ravel()
+```
+
+```{python}
+#| code-fold: true
+#| code-summary: "Running the curve: three sizes-by-draws grid, three arms"
+NS = [250, 500, 1000, 2000, 5000, 10000]
+curve = []
+for draw in (1, 2, 3):
+    order = np.random.default_rng(100 + draw).permutation(len(idx_learn))
+    for n in NS:
+        tr = idx_learn[order[:n]]
+        p_g = glm_arm(tr)
+        m_c, _ = train_ct(D, seed=100 + draw, alpha=0.95, idx_learn_=tr)
+        p_c = predict(m_c, D, te)
+        p_t = tabpfn_arm(tr, seed=draw)
+        curve.append(dict(draw=draw, n=n,
+                          GLM=dev(p_g, yte), CT=dev(p_c, yte),
+                          TabPFN=dev(p_t, yte),
+                          GLM_auc=roc_auc_score(yte, p_g),
+                          CT_auc=roc_auc_score(yte, p_c),
+                          TabPFN_auc=roc_auc_score(yte, p_t)))
+curve = pd.DataFrame(curve)
+tab = curve.groupby("n")[["GLM", "CT", "TabPFN"]].mean().round(3)
+tab["null"] = dev(np.full(len(yte), yl.mean()), yte).round(3)
+print("mean out-of-sample deviance over three draws, 3,000-row test subsample")
+print(tab)
+print("\nmean AUC over three draws")
+print(curve.groupby("n")[["GLM_auc", "CT_auc", "TabPFN_auc"]].mean().round(4))
+```
+
+Three readings follow, and the first is the one the course predicts.
+
+**TabPFN leads wherever the sample is small, and its margin closes fast.**
+At 250 training rows it reaches 113.3 against the Credibility Transformer's
+119.6, on a subsample whose null model scores 122.1. So the network closes
+2.5 of the 8.8 deviance points the foundation model closes against that
+null, a little over a quarter, on identical data. By 10,000 rows the three
+arms span 0.16 of a deviance point in total, which is the same order as the
+seed spread of 0.126 and therefore not a ranking worth reading. Consequently the pretrained prior
+behaves exactly as advertised: it substitutes for data a lender does not
+have, and it stops paying once the lender has enough. Similarly the area
+under the receiver operating characteristic curve (AUC) tells the story more
+starkly, since TabPFN reaches 0.686 on 250 rows where the network manages
+0.595 and the GLM 0.569, and all three converge to about 0.703 by 10,000.
+
+**The GLM does not merely lose at small $n$; it separates.** Its mean
+deviance runs from 1,901 at 250 rows to 1,300 at 2,000 before collapsing to
+111.6 at 5,000, because maximum likelihood on around thirty parameters and a
+few hundred observations drives coefficients towards infinity whenever a
+covariate pattern is perfectly classified. A fitted probability of
+essentially zero attached to an observed default then costs the deviance
+without limit. The behaviour is erratic as well as bad, since whether any
+pattern separates depends on the draw. This is worth dwelling on, because it
+is the practical case for a prior rather than a rhetorical one: the classical
+estimator has no mechanism to shrink, so on a genuinely small book it fails
+loudly and needs either penalisation, classing (lecture `F1`), or a prior
+from somewhere else.
+
+**The plot below shows the shape.** Note the logarithmic vertical axis,
+without which the GLM's small-sample behaviour would flatten everything
+else into a line.
+
+```{python}
+#| code-fold: true
+#| code-summary: "The learning curve"
+fig, ax = plt.subplots(figsize=(9, 4))
+styles = {"TabPFN": (BLUE, "o-", "TabPFN v2"),
+          "CT": (RED, "s-", "Credibility Transformer"),
+          "GLM": (GREY, "^-", "logistic GLM")}
+for col, (colour, style, label) in styles.items():
+    mn = curve.groupby("n")[col].mean()
+    ax.plot(mn.index, mn.values, style, color=colour, label=label, ms=4, lw=1.2)
+ax.axhline(tab["null"].iloc[0], color="black", lw=0.8, ls=":",
+           label="null model")
+ax.set_xscale("log")
+ax.set_yscale("log")
+ax.set_xlabel("training rows (log scale)")
+ax.set_ylabel("out-of-sample deviance (log scale)")
+ax.legend(frameon=False, fontsize=8)
+ax.set_title("Learning curve on the Bondora book, mean of three draws",
+             fontsize=9, loc="left")
+plt.tight_layout()
+plt.show()
+```
+
+## What twelve times the data is worth
+
+The curve stops at 10,000 rows because TabPFN's cost grows quadratically in
+its context and its pretraining regime does not extend much beyond that.
+The comparison a lender actually faces is therefore between TabPFN at its
+ceiling and a network trained on everything.
+
+```{python}
+#| code-fold: true
+#| code-summary: "TabPFN at its ceiling against the full-sample Credibility Transformer"
+full_tr = idx_learn[np.random.default_rng(101).permutation(len(idx_learn))[:10000]]
+p_tab10 = tabpfn_arm(full_tr, seed=1)
+
+m_full, stop_full = train_ct(D, seed=100, alpha=0.95)
+p_full_sub = predict(m_full, D, te)
+p_full_all = predict(m_full, D, idx_test)
+p_glm_full = glm_arm(idx_learn)
+
+print(f"on the 3,000-row test subsample")
+print(f"  TabPFN v2, 10,000 context rows   dev {dev(p_tab10, yte):8.3f}   "
+      f"AUC {roc_auc_score(yte, p_tab10):.4f}")
+print(f"  GLM,       118,933 rows          dev {dev(p_glm_full, yte):8.3f}   "
+      f"AUC {roc_auc_score(yte, p_glm_full):.4f}")
+print(f"  CT,        118,933 rows          dev {dev(p_full_sub, yte):8.3f}   "
+      f"AUC {roc_auc_score(yte, p_full_sub):.4f}")
+print(f"\non the full 29,734-row test sample, which is the series' scale")
+print(f"  CT,        118,933 rows          dev {dev(p_full_all, yt):8.3f}   "
+      f"AUC {roc_auc_score(yt, p_full_all):.4f}   early stop {stop_full}")
+```
+
+Two comparisons come out of that cell and the second is the more useful one.
+
+TabPFN with 10,000 context rows reaches 110.88, against 110.36 for a
+Credibility Transformer trained on all 118,933. Twelve times the data is
+therefore worth about half a deviance point here, which is four times the
+seed standard deviation of 0.126 and so a real difference, and it is also
+small enough to be worth stating out loud.
+
+More striking, TabPFN with 10,000 context rows matches the logistic GLM
+fitted on all 118,933 rows almost exactly, 110.88 against 110.87. Hence on
+this book a foundation model handed 8 per cent of the data, and given no
+fitting at all, reproduces the classical model a lender would build on all of
+it. That is the clearest statement of what a cross-table prior is worth on
+credit application data: it is a substitute for the modeller's time and for
+the lender's history, and it is not a substitute for a better model.
+
+## Calibration, and the balance property
+
+Discrimination is only half of what a probability of default has to deliver.
+Lecture 7 established the **balance property**, namely that a model's fitted
+probabilities should sum to the observed number of defaults, and showed why
+a portfolio-level bias survives any amount of ranking accuracy. TabPFN
+carries no offset, no exposure, and no intercept a modeller can set, so there
+is no mechanism inside it that enforces the property.
+
+One caution has to come before the table. The comparison sample holds 3,000
+loans, so its own observed default rate carries a standard error of about
+0.8 percentage points, and the learning sample's rate differs from it by
+about one percentage point through sampling alone. A shortfall is therefore
+only worth calling a bias if it is large against that standard error.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Portfolio-level calibration on the test subsample"
+obs = yte.mean()
+se = np.sqrt(obs * (1 - obs) / len(yte))
+rows = [("observed, 3,000-row subsample", obs, np.nan, np.nan),
+        ("observed, learning sample", yl.mean(), np.nan, np.nan),
+        ("TabPFN v2, 10,000 context rows", p_tab10.mean(),
+         p_tab10.mean() - obs, (p_tab10.mean() - obs) / se),
+        ("CT, 118,933 rows", p_full_sub.mean(),
+         p_full_sub.mean() - obs, (p_full_sub.mean() - obs) / se),
+        ("GLM, 118,933 rows", np.mean(p_glm_full),
+         np.mean(p_glm_full) - obs, (np.mean(p_glm_full) - obs) / se)]
+cal = pd.DataFrame(rows, columns=["model", "mean predicted PD",
+                                  "gap to observed", "gap / standard error"])
+print(f"sampling standard error on the observed rate: {se:.5f}")
+print(cal.to_string(index=False, float_format=lambda v: f"{v:9.5f}"))
+print(f"\non the full 29,734-row test sample")
+print(f"  observed          {yt.mean():.5f}")
+print(f"  CT, 118,933 rows  {p_full_all.mean():.5f}   "
+      f"gap {p_full_all.mean() - yt.mean():+.5f}")
+```
+
+TabPFN lands 1.9 percentage points below the observed rate, which is 2.3
+sampling standard errors and so a real shortfall rather than noise, though a
+modest one. The Credibility Transformer's gap is about two-fifths of that at
+1.0 standard error and the GLM's is similar at 1.2, so neither is
+distinguishable from calibrated on this sample. On the full test sample,
+where the standard error is a quarter as large, the Credibility Transformer
+sits 0.3 percentage points below the observed rate.
+
+Consequently a TabPFN score is usable for ranking and wants lecture 7's
+recalibration before any exposure is priced off it. That is the same
+treatment lecture 7 applied to the plain network, for the same reason, with
+one difference that matters: the network could be given an offset or refitted
+with a balance correction, whereas TabPFN has no parameter to correct, so the
+recalibration has to sit outside the model as a separate mapping the lender
+owns and monitors.
+
+# The in-context learning credibility transformer
+
+Section 2's foundation model carries a prior learned on synthetic tasks. This
+section takes the opposite route to the same idea: keep a model fitted on
+this book, and give it, at prediction time, the observed outcomes of the
+most similar borrowers. That is the **in-context learning credibility
+transformer** (ICL-CT) of Padayachy, Richman, Scognamiglio and Wüthrich
+(2025). Consequently it is built in five components on top of lecture
+10-11's model, and each is taken in turn below.
+
+## Component 0: the base credibility transformer
+
+The base model is lecture 10-11's Credibility Transformer at $\alpha = 0.95$,
+fitted in this lecture rather than quoted from that one, because a single fit
+on this book is one draw from a distribution whose standard deviation is
+0.126 and a copied number would not reproduce. It does two jobs. Its
+classification (CLS) token embedding, which lecture 10-11 built as the single
+token the decoder reads, is the space in which similar borrowers are found.
+Furthermore its decoder is frozen and reused, so the ICL mechanism is
+confined to that CLS token space.
+
+It is the same fit section 2.7 already ran, reused here rather than
+repeated, since a second identical fit would cost two minutes of render time
+and produce the same weights.
+
+```{python}
+base_ct, base_stop = m_full, stop_full
+p_base_l = predict(base_ct, D, idx_learn)
+p_base_t = p_full_all
+print(f"base CT, alpha = 0.95, seed 100, early stop {base_stop}")
+print(f"  in-sample {dev(p_base_l, yl):.3f}   out-of-sample "
+      f"{dev(p_base_t, yt):.3f}   AUC {roc_auc_score(yt, p_base_t):.4f}")
+```
+
+## Component 1: context retrieval
+
+Similarity is measured in the base model's CLS token space by cosine
+similarity, which is the paper's choice and a sensible one here: the CLS
+token is what the decoder reads, so two borrowers with nearby CLS tokens are
+borrowers the fitted model treats alike.
+
+For each target the top $K = 64$ neighbours are taken, the results are
+unioned across a target batch of $m = 200$, and the union is capped at
+$c = 1000$ context instances by keeping those retrieved most often.
+
+```{python}
+def cls_tokens(model, D_, idx, batch=20000):
+    """The CLS token for each row, which is the retrieval space."""
+    out = []
+    with torch.no_grad():
+        for s in range(0, len(idx), batch):
+            chunk = idx[s:s + batch]
+            c_trans, _, _ = model.tokens(torch.tensor(D_["Xc"][chunk]),
+                                         torch.tensor(D_["Xn"][chunk]))
+            out.append(c_trans)
+    return torch.cat(out)
+
+
+def retrieve(Z_target, Z_pool, K=64, c_max=1000, exclude=None):
+    """Top-K cosine neighbours per target, unioned over the batch, capped at c_max."""
+    A_ = torch.nn.functional.normalize(Z_target, dim=1)
+    B_ = torch.nn.functional.normalize(Z_pool, dim=1)
+    S = A_ @ B_.T
+    if exclude is not None:
+        S = S.masked_fill(exclude.unsqueeze(0), -np.inf)
+    top = torch.topk(S, k=min(K, S.shape[1]), dim=1).indices.reshape(-1)
+    uniq, counts = torch.unique(top, return_counts=True)
+    if len(uniq) > c_max:
+        uniq = uniq[torch.topk(counts, k=c_max).indices]
+    return uniq
+```
+
+::: {.callout-important}
+## The retrieval leak
+
+During training the targets sit inside the pool the context is drawn from,
+and a borrower is always its own nearest neighbour. Retrieving a target as
+its own context would therefore hand the model that target's observed
+response, and the result would score beautifully in the backtest while
+predicting nothing. Hence the `exclude` mask above. Indeed this is the same
+class of error as lecture 10-11's mis-sorted panel, because it is a leak
+that validates cleanly while the validation shares it.
+:::
+
+## Component 2: the outcome token decorator, and the exposure that is not there
+
+The decorator is the mechanism's credibility half. Each context instance's
+CLS token is nudged by a learnable embedding of its observed response,
+
+$$
+\boldsymbol{c}^{\rm decor}(\boldsymbol{x}_j) = \widehat{\boldsymbol{c}}^{\,\rm cred}(\boldsymbol{x}_j)
+ + \frac{v_j}{v_j + \kappa}\, \boldsymbol{z}^{\rm FNN1}(Y_j),
+$$
+
+where $v_j$ is exposure and $\kappa > 0$ is the credibility coefficient.
+Targets are never decorated, since their responses are what the model has to
+predict. Exposure enters only through the weight $v/(v+\kappa)$ rather than
+as a covariate, which is what stops the construction leaking the response
+scale.
+
+That weight is what makes this a credibility construction. A policy observed
+for three years contributes its outcome nearly in full; one observed for a
+month contributes a shrunken version. In an insurance pricing table, where
+$v$ is exposure in policy-years and varies genuinely across rows, the weight
+carries real per-policy content.
+
+**Bondora's fixed-horizon table has no exposure.** Lecture `D1` owns this
+point: `default_12m` is an indicator over a twelve-month window that every
+seasoned loan carries identically by construction, so there is no $v_j$ to
+put in the formula. Setting $v \equiv 1$ collapses the weight to the
+constant $1/(1+\kappa)$, and $\kappa$ stops being a credibility coefficient
+and becomes a plain shrinkage scalar applied to every retrieved outcome
+alike.
+
+Two alternatives exist and both belong to other lectures. The survival
+table's observed duration is the honest exposure analogue, and it changes
+the estimand, which is the `S` track's subject. The loan `Amount` would make
+the decorator a loss-weighted construction rather than a credibility one,
+which is exposure at default rather than statistical exposure. Neither is
+substituted in here, because manufacturing a $v$ would make the formula look
+transferable when the transfer is precisely what fails.
+
+```{python}
+class ICLCT(torch.nn.Module):
+    """Base CT plus the outcome decorator and two causally masked ICL layers."""
+
+    def __init__(self, base, b=8, kappa=1.0, n_layers=2, seed=100):
+        super().__init__()
+        torch.manual_seed(seed + 7)
+        self.base, self.b, self.kappa = base, b, kappa
+        self.resp = torch.nn.Embedding(2, b)      # z^FNN1, the response embedding
+        self.layers = torch.nn.ModuleList([ICLLayer(b) for _ in range(n_layers)])
+
+    def decorate(self, c_ctx, y_ctx, v_ctx=None):
+        """Component 2. With v = 1 the weight is the constant 1 / (1 + kappa)."""
+        v = torch.ones(len(y_ctx)) if v_ctx is None else v_ctx
+        w = (v / (v + self.kappa)).unsqueeze(1)
+        return c_ctx + w * self.resp(y_ctx.long())
+
+    def forward(self, c_tgt, c_ctx, y_ctx, v_ctx=None, want_A=False):
+        ctx = self.decorate(c_ctx, y_ctx, v_ctx)
+        h, A = c_tgt, None
+        for layer in self.layers:
+            h, A = layer(h, ctx)
+        return (self.base.decode(h), A) if want_A else self.base.decode(h)
+```
+
+## Component 3: causal self-attention
+
+The context and target tokens are concatenated and a mask blocks
+target-to-target attention, so a target reads the context and itself and
+nothing else. Without the mask the targets in a batch would read each
+other's tokens and, through their shared neighbours, their own responses.
+
+```{python}
+class ICLLayer(torch.nn.Module):
+    """One causally masked attention layer: targets query [context | self]."""
+
+    def __init__(self, b):
+        super().__init__()
+        self.norm_in = torch.nn.LayerNorm(b)
+        self.WQ, self.WK, self.WV = (torch.nn.Linear(b, b) for _ in range(3))
+        self.norm_ff = torch.nn.LayerNorm(b)
+        self.ff = torch.nn.Linear(b, b)
+        # Identity initialisation: see section 3.6.
+        for lin in (self.WV, self.ff):
+            torch.nn.init.zeros_(lin.weight)
+            torch.nn.init.zeros_(lin.bias)
+
+    def forward(self, c_tgt, c_ctx):
+        m = c_tgt.shape[0]
+        Qn, Kn = self.norm_in(c_tgt), self.norm_in(c_ctx)
+        Q = torch.tanh(self.WQ(Qn))
+        K = torch.cat([torch.tanh(self.WK(Kn)), torch.tanh(self.WK(Qn))])
+        V = torch.cat([torch.tanh(self.WV(Kn)), torch.tanh(self.WV(Qn))])
+        A0 = Q @ K.T / Q.shape[-1] ** 0.5
+        mask = torch.zeros_like(A0)
+        mask[:, c_ctx.shape[0]:] = torch.where(~torch.eye(m, dtype=torch.bool),
+                                               -np.inf, 0.0)
+        A = torch.softmax(A0 + mask, dim=-1)
+        skip = c_tgt + A @ V
+        return skip + self.ff(self.norm_ff(skip)), A
+```
+
+## Component 4: the frozen decoder
+
+The decoder mapping the CLS token to a probability is taken from the base
+model and held fixed. The paper's argument for freezing it is an information
+bottleneck, because the ICL mechanism must then express itself as a movement
+within the CLS token space that the existing decoder already reads. Hence
+the base model's calibration is preserved and what in-context learning is
+allowed to do is regularised, and section 3.6's initialisation makes that
+concrete.
+
+## The proposition, and its arithmetic
+
+For target $i$ the causal attention head produces
+
+$$
+\boldsymbol{h}_i = a_{i,i}\, \boldsymbol{z}^{\rm FNN}_V\!\left( \widehat{\boldsymbol{c}}^{\,\rm cred}(\boldsymbol{x}_i) \right)
+ + \sum_{j \in \mathcal{I}_{\rm context}} a_{i,j}\, \boldsymbol{z}^{\rm FNN}_V\!\left( \boldsymbol{c}^{\rm decor}(\boldsymbol{x}_j) \right),
+$$
+
+with $a_{i,j} \geq 0$, with $a_{i,i} + \sum_j a_{i,j} = 1$, and with
+$a_{i,j} = 0$ for every $j$ that is another target. So the head returns a
+credibility blend of the target's own signal and the outcome-enriched
+signals of its neighbours, and the blend weights are the attention row.
+
+Indeed this is exact algebra rather than analogy, exactly as lecture 10-11
+found for the CLS token's own row. Nevertheless it is worth checking
+numerically before any weight is interpreted, because an arithmetic identity
+that fails in code is a masking bug rather than a proposition. Two things
+must hold: the row must sum to one, and the target-to-target weights must be
+exactly zero.
+
+## Identity initialisation
+
+Zeroing the value and feed-forward weights of each ICL layer makes the layer
+return its target token untouched, so before any ICL training the model
+reproduces the base model's fitted probabilities exactly. Lecture 9
+initialises its LocalGLMnet at the fitted GLM for the same reason: it turns
+a comparison between two models into a measurement of what one mechanism
+adds. The gradients survive, since the derivative of the loss with respect
+to $\boldsymbol{W}_V$ is not zero at $\boldsymbol{W}_V = 0$.
+
+The consequence for reading section 3.9 matters. Early stopping selects the
+best validation state including the initialisation itself, so an ICL-CT that
+matches the base model to three decimals is reporting that no epoch of
+in-context learning beat the state it started from.
+
+## The three training phases
+
+Phase one is the base model above. Phase two inserts the decorator and the
+ICL layers, freezes the base model outright and trains the new parts alone,
+which keeps the retrieval space fixed and lets the CLS tokens be computed
+once. Phase three unfreezes the encoder, keeps the decoder frozen and
+fine-tunes everything at a tenth of the learning rate.
+
+One departure from the paper is deliberate. Freezing the whole base model in
+phase two, rather than the decoder alone, is what makes the retrieval space
+constant during that phase; the paper's retrieval is computed in the base
+model's space in any case, so this removes a moving part rather than adding
+one. Validation is scored on a **fixed** set of context draws, re-seeded on
+every call, because re-drawing the context each epoch makes the
+early-stopping signal noisy enough to select an epoch at random.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Phases two and three"
+def train_icl(base, D_, Z_learn, seed=100, kappa=1.0, n_layers=2, m=200, K=64,
+              c_max=1000, phase2_epochs=20, phase3_epochs=5, steps=50,
+              patience=8, lr2=3e-4, lr3=3e-5):
+    il = D_["idx_learn"]
+    y_learn = torch.tensor(D_["y_all"].iloc[il].to_numpy(), dtype=torch.float32)
+    p = np.random.default_rng(seed).permutation(len(il))
+    tr_pos, va_pos = p[:int(0.9 * len(p))], p[int(0.9 * len(p)):]
+    model = ICLCT(base, b=base.b, kappa=kappa, n_layers=n_layers, seed=seed)
+    bce = torch.nn.BCELoss()
+    rng = np.random.default_rng(seed + 3)
+
+    def batch_from(pos, grad=False, gen=None):
+        r = rng if gen is None else gen
+        tgt = r.choice(pos, size=min(m, len(pos)), replace=False)
+        excl = torch.zeros(len(il), dtype=torch.bool)
+        excl[tgt] = True
+        ctx = retrieve(Z_learn[tgt], Z_learn, K=K, c_max=c_max, exclude=excl)
+        if grad:
+            c_tgt = model.base.tokens(torch.tensor(D_["Xc"][il[tgt]]),
+                                      torch.tensor(D_["Xn"][il[tgt]]))[0]
+            ci = il[ctx.numpy()]
+            c_ctx = model.base.tokens(torch.tensor(D_["Xc"][ci]),
+                                      torch.tensor(D_["Xn"][ci]))[0]
+        else:
+            c_tgt, c_ctx = Z_learn[tgt], Z_learn[ctx]
+        return c_tgt, c_ctx, y_learn[ctx], y_learn[tgt].unsqueeze(1)
+
+    def val_loss(grad_tokens, n_batch=30):
+        model.eval()
+        gen = np.random.default_rng(seed + 991)
+        tot = 0.0
+        with torch.no_grad():
+            for _ in range(n_batch):
+                c_tgt, c_ctx, yc, yv = batch_from(va_pos, grad_tokens, gen)
+                tot += 200 * bce(model(c_tgt, c_ctx, yc), yv).item()
+        return tot / n_batch
+
+    history = {}
+    for phase, n_ep, lr, grad_tokens in (("2", phase2_epochs, lr2, False),
+                                         ("3", phase3_epochs, lr3, True)):
+        for prm in base.parameters():
+            prm.requires_grad_(phase == "3")
+        if phase == "3":
+            for prm in list(base.dec.parameters()) + list(base.norm_out.parameters()):
+                prm.requires_grad_(False)        # the decoder stays frozen
+        params = [z for z in model.parameters() if z.requires_grad]
+        opt = torch.optim.AdamW(params, lr=lr, weight_decay=1e-2,
+                                betas=(0.9, 0.95))
+        baseline = val_loss(grad_tokens)
+        best, best_epoch = baseline, 0
+        best_state = {k: t.clone() for k, t in model.state_dict().items()}
+        trace = []
+        for epoch in range(1, n_ep + 1):
+            model.train()
+            for _ in range(steps):
+                c_tgt, c_ctx, yc, yv = batch_from(tr_pos, grad_tokens)
+                opt.zero_grad()
+                bce(model(c_tgt, c_ctx, yc), yv).backward()
+                opt.step()
+            v = val_loss(grad_tokens)
+            trace.append(round(v, 4))
+            if v < best:
+                best, best_epoch = v, epoch
+                best_state = {k: t.clone() for k, t in model.state_dict().items()}
+            if epoch - best_epoch >= patience:
+                break
+        model.load_state_dict(best_state)
+        history[phase] = dict(val=best, epochs=best_epoch, baseline=baseline,
+                              trace=trace)
+    model.eval()
+    return model, history
+
+
+def predict_icl(model, Z_pool, y_pool, Z_query, K=64, c_max=1000, chunk=200,
+                want_own=False, pool_idx=None):
+    """Score queries with context retrieved from the pool. Also returns a_ii."""
+    preds, own, ctx_rows = [], [], []
+    with torch.no_grad():
+        for s in range(0, len(Z_query), chunk):
+            sl = slice(s, s + chunk)
+            ctx = retrieve(Z_query[sl], Z_pool, K=K, c_max=c_max)
+            p, A = model(Z_query[sl], Z_pool[ctx], y_pool[ctx], want_A=True)
+            preds.append(p.numpy().ravel())
+            own.append(torch.diagonal(A[:, len(ctx):]).numpy())
+            if pool_idx is not None:
+                ctx_rows.append(pool_idx[ctx.numpy()])
+    out = np.concatenate(preds)
+    return (out, np.concatenate(own), ctx_rows) if want_own else out
+```
+
+## Fitting it, and checking the proposition
+
+```{python}
+Z_learn = cls_tokens(base_ct, D, idx_learn)
+Z_test = cls_tokens(base_ct, D, idx_test)
+y_learn_t = torch.tensor(yl, dtype=torch.float32)
+
+fresh = ICLCT(base_ct, b=base_ct.b, kappa=1.0, seed=100)
+p_init = predict_icl(fresh, Z_learn, y_learn_t, Z_test)
+print(f"identity check: max |p_ICL - p_base| = {np.abs(p_init - p_base_t).max():.2e}"
+      f",  deviance {dev(p_init, yt):.3f} against the base model's "
+      f"{dev(p_base_t, yt):.3f}")
+
+icl_ct, hist = train_icl(base_ct, D, Z_learn, seed=100, kappa=1.0)
+Z_learn2 = cls_tokens(icl_ct.base, D, idx_learn)
+Z_test2 = cls_tokens(icl_ct.base, D, idx_test)
+p_icl_t, own_w, ctx_rows = predict_icl(icl_ct, Z_learn2, y_learn_t, Z_test2,
+                                       want_own=True, pool_idx=idx_learn)
+print(f"\nICL-CT out-of-sample {dev(p_icl_t, yt):.3f}   "
+      f"AUC {roc_auc_score(yt, p_icl_t):.4f}")
+for ph in ("2", "3"):
+    h = hist[ph]
+    print(f"  phase {ph}: baseline {h['baseline']:.4f}, best {h['val']:.4f} "
+          f"at epoch {h['epochs']}")
+    print(f"           trace {h['trace']}")
+```
+
+```{python}
+#| code-fold: true
+#| code-summary: "The attention row: does it sum to one, and is it flat?"
+with torch.no_grad():
+    ctx_chk = retrieve(Z_test2[:200], Z_learn2, K=64, c_max=1000)
+    _, A_chk = icl_ct(Z_test2[:200], Z_learn2[ctx_chk],
+                      y_learn_t[ctx_chk], want_A=True)
+n_ctx = len(ctx_chk)
+row_sums = A_chk.sum(1).numpy()
+tt = A_chk[:, n_ctx:].numpy().copy()
+np.fill_diagonal(tt, 0.0)
+w_ctx = A_chk[:, :n_ctx].numpy()
+uniform = 1.0 / (n_ctx + 1)
+print(f"context instances retrieved for this batch: {n_ctx}")
+print(f"  max |row sum - 1|            {np.abs(row_sums - 1).max():.2e}")
+print(f"  max target-to-target weight  {np.abs(tt).max():.2e}")
+print(f"  a_ii mean                    {own_w.mean():.2e}  "
+      f"(sd {own_w.std():.2e})")
+print(f"  context weight mean          {w_ctx.mean():.2e}")
+print(f"  context weight sd            {w_ctx.std():.2e}  "
+      f"(coefficient of variation {w_ctx.std() / w_ctx.mean():.3f})")
+print(f"  largest context weight       {w_ctx.max():.2e}  "
+      f"= {w_ctx.max() / w_ctx.mean():.2f} x the mean")
+print(f"  a uniform row would give     {uniform:.2e} to every entry")
+```
+
+The proposition's arithmetic holds. Row sums sit within a few parts in ten
+million of one, and the target-to-target weights are exactly zero, which
+says the mask does what section 3.3 claims.
+
+The weights themselves say something the proposition does not. The row
+spreads over about a thousand retrieved neighbours and one self token, so
+the target's own signal receives roughly a thousandth of the attention row.
+Consequently the "credibility blend between the target's own signal and the
+context" puts essentially all of its weight on other borrowers, and the
+applicant's own characteristics reach the decoder through the residual
+connection instead. Furthermore the context weights are close to uniform:
+their coefficient of variation is about a tenth, and the largest is under
+twice the mean. Retrieval has therefore selected a neighbourhood, and inside
+that neighbourhood attention is barely distinguishing between its members.
+
+## Results against the series
+
+Five seeds, each fitting a base model and then an ICL-CT on top of it. The
+comparison is paired within seed, which is what makes a difference of a
+tenth of a deviance point readable at all against a seed standard deviation
+of 0.126.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Five paired fits"
+seed_rows = [dict(seed=100, base=dev(p_base_t, yt), icl=dev(p_icl_t, yt),
+                  ph2=hist["2"]["epochs"], ph3=hist["3"]["epochs"],
+                  a_ii=float(own_w.mean()))]
+for sd_ in (101, 102, 103, 104):
+    b_, _ = train_ct(D, seed=sd_, alpha=0.95)
+    pb_ = predict(b_, D, idx_test)
+    Zl_ = cls_tokens(b_, D, idx_learn)
+    Zt_ = cls_tokens(b_, D, idx_test)
+    m_, h_ = train_icl(b_, D, Zl_, seed=sd_, kappa=1.0)
+    Zl2_ = cls_tokens(m_.base, D, idx_learn)
+    Zt2_ = cls_tokens(m_.base, D, idx_test)
+    pi_, ow_, _ = predict_icl(m_, Zl2_, y_learn_t, Zt2_, want_own=True)
+    seed_rows.append(dict(seed=sd_, base=dev(pb_, yt), icl=dev(pi_, yt),
+                          ph2=h_["2"]["epochs"], ph3=h_["3"]["epochs"],
+                          a_ii=float(ow_.mean())))
+seeds = pd.DataFrame(seed_rows)
+seeds["ICL minus base"] = seeds["icl"] - seeds["base"]
+print(seeds.to_string(index=False, float_format=lambda v: f"{v:9.4f}"))
+print(f"\nbase CT over five seeds     mean {seeds['base'].mean():.3f}   "
+      f"sd {seeds['base'].std():.3f}")
+print(f"ICL-CT over five seeds      mean {seeds['icl'].mean():.3f}   "
+      f"sd {seeds['icl'].std():.3f}")
+print(f"paired difference           mean {seeds['ICL minus base'].mean():+.4f}   "
+      f"sd {seeds['ICL minus base'].std():.4f}")
+```
+
+The answer is a clean null, and the way it is null is worth reading off the
+table rather than off the means alone.
+
+Over five seeds the base model averages 107.345 and the ICL-CT averages
+107.356, so in-context learning moves the paired difference by $+0.012$ with
+a standard deviation of 0.032 across seeds. Pairing matters here: the
+between-seed spread of either model is about 0.09, and lecture 10-11
+measured 0.126 over ten seeds, so an unpaired comparison could not resolve a
+tenth of a point. The paired comparison can, and what it resolves is a
+difference of about a third of its own standard error in the wrong
+direction.
+
+The best-epoch columns say why, and they say it in two different ways
+depending on the seed. At seeds 100 and 103 no epoch of phase two improved
+on the identity initialisation at all, so the model selection returned the
+base model unchanged and the deviances match to three decimals by
+construction. At seeds 101, 102 and 104 phase two did find a better
+validation state, and that improvement failed to reach the test sample: seed
+101 gained on validation and lost 0.039 out of sample, and seed 104 lost
+0.052. Consequently the mechanism either declines to train or trains into
+noise, and on this book neither outcome produces an improvement a lender
+could bank.
+
+::: {.callout-note}
+## What a null result here does and does not license
+
+This is a statement about Bondora application data with eight covariates, at
+$n = 118{,}933$, against a base model that was already strong. It is not a
+statement about the ICL-CT on French motor insurance, where Padayachy et al.
+(2025) report a gain, and section 3.11 gives a mechanical reason why the two
+books might genuinely differ. What travels is the method: initialise at the
+base model, pair by seed, and report the best epoch, because without those
+three a difference of a tenth of a point is unreadable either way.
+:::
+
+## Why the mechanism finds nothing to add
+
+Three explanations are available, they are separable by measurement, and this
+section separates them. All three need a model that is actually doing
+in-context learning, so the first cell fits one: phase two to a fixed epoch
+budget, keeping the final state rather than the state section 3.8's selection
+rule chose. Section 5.2 reuses it.
+
+```{python}
+#| code-fold: true
+#| code-summary: "An actively trained ICL state"
+def train_phase2_fixed(base, D_, Z_pool, seed=100, kappa=1.0, epochs=8,
+                       steps=50, m=200):
+    """Phase two to a fixed epoch budget, keeping the final state.
+
+    Section 3.8's selection rule returns the initialisation at this seed, and
+    the initialisation ignores its context by construction, so a fixed budget
+    is what produces a state whose prediction depends on its context at all.
+    """
+    il = D_["idx_learn"]
+    y_l = torch.tensor(D_["y_all"].iloc[il].to_numpy(), dtype=torch.float32)
+    model = ICLCT(base, b=base.b, kappa=kappa, seed=seed)
+    bce = torch.nn.BCELoss()
+    rng = np.random.default_rng(seed + 3)
+    tr_pos = np.random.default_rng(seed).permutation(len(il))[:int(0.9 * len(il))]
+    for prm in base.parameters():
+        prm.requires_grad_(False)
+    opt = torch.optim.AdamW([z for z in model.parameters() if z.requires_grad],
+                            lr=3e-4, weight_decay=1e-2, betas=(0.9, 0.95))
+    for _ in range(epochs):
+        model.train()
+        for _ in range(steps):
+            tgt = rng.choice(tr_pos, size=m, replace=False)
+            excl = torch.zeros(len(il), dtype=torch.bool)
+            excl[tgt] = True
+            ctx = retrieve(Z_pool[tgt], Z_pool, K=64, c_max=1000, exclude=excl)
+            opt.zero_grad()
+            bce(model(Z_pool[tgt], Z_pool[ctx], y_l[ctx]),
+                y_l[tgt].unsqueeze(1)).backward()
+            opt.step()
+    model.eval()
+    return model
+
+
+# Section 3.8's phase three can move the encoder in place, so the tokens are
+# recomputed from `base_ct` as it stands now rather than reusing section 3.7's.
+Z_pool5 = cls_tokens(base_ct, D, idx_learn)
+Z_test5 = cls_tokens(base_ct, D, idx_test)
+active = train_phase2_fixed(base_ct, D, Z_pool5, seed=100)
+p_active = predict_icl(active, Z_pool5, y_learn_t, Z_test5)
+print(f"actively trained state: out-of-sample {dev(p_active, yt):.3f} against "
+      f"the base model's {dev(p_base_t, yt):.3f}")
+```
+
+### The batch context is barely the borrower's own
+
+Section 3.1's retrieval takes each target's top $K = 64$ neighbours, unions
+them across a batch of $m = 200$ targets, and caps the union at $c = 1000$ by
+keeping the rows retrieved most often. That is the paper's procedure. Whether
+it delivers a borrower its own neighbours depends on how much the 200
+neighbourhoods overlap, which is a property of the book rather than of the
+architecture, so it is worth measuring.
+
+```{python}
+#| code-fold: true
+#| code-summary: "How much of a borrower's own neighbourhood survives the cap"
+Zq = torch.nn.functional.normalize(Z_test5[:200], dim=1)
+Zp = torch.nn.functional.normalize(Z_pool5, dim=1)
+top64 = torch.topk(Zq @ Zp.T, k=64, dim=1).indices
+uniq_r, counts_r = torch.unique(top64.reshape(-1), return_counts=True)
+kept_r = uniq_r[torch.topk(counts_r, k=min(1000, len(uniq_r))).indices]
+kept_set = set(kept_r.tolist())
+surv = np.array([len(kept_set & set(top64[i].tolist())) / 64 for i in range(200)])
+print(f"200 targets x 64 neighbours = {top64.numel():,} draws")
+print(f"  distinct rows in the union            {len(uniq_r):,}")
+print(f"  context cap                           1,000")
+print(f"  retrieval frequency: mean {counts_r.float().mean():.2f}, "
+      f"max {counts_r.max().item()}, share retrieved exactly once "
+      f"{(counts_r == 1).float().mean():.1%}")
+print(f"  share of a target's own top-64 surviving the cap: "
+      f"mean {surv.mean():.3f}, median {np.median(surv):.3f}, "
+      f"range {surv.min():.3f} to {surv.max():.3f}")
+```
+
+The 200 neighbourhoods barely overlap on this book. Almost 95 per cent of
+retrieved rows are retrieved by exactly one target and none by more than two,
+so the 12,800 draws collapse to about 12,100 distinct rows and the cap keeps
+roughly 8 per cent of them on a frequency criterion that is close to a
+tie-break. Consequently the median borrower is handed **three of its own
+sixty-four nearest neighbours**, and the mean is about eight.
+
+So the context a borrower actually receives is close to a random
+thousand-row sample of the learning book. That is not a bug in this
+implementation, since the batching is the paper's; it is a scale mismatch,
+because a union of 200 neighbourhoods only fits inside 1,000 slots when
+neighbourhoods overlap heavily, and on 118,933 loans described by eight
+covariates they do not.
+
+### Per-borrower context does not sharpen the row
+
+The obvious next question is whether the flatness of section 3.9's attention
+row is caused by that dilution. Scoring one target at a time makes the
+context exactly its own 64 neighbours, which is the sharpest context the
+mechanism can be given.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Batch context against per-borrower context"
+for chunk_, label in ((200, "batch context, 200 targets"),
+                      (1, "per-borrower context, one target")):
+    p_, own_, _ = predict_icl(active, Z_pool5, y_learn_t, Z_test5[:400],
+                              chunk=chunk_, want_own=True)
+    with torch.no_grad():
+        c_ = retrieve(Z_test5[:chunk_], Z_pool5, K=64, c_max=1000)
+        _, A_ = active(Z_test5[:chunk_], Z_pool5[c_], y_learn_t[c_], want_A=True)
+    w_ = A_[:, :len(c_)].numpy()
+    print(f"{label}: {len(c_)} context instances")
+    print(f"  a_ii mean {own_.mean():.2e}   uniform would be "
+          f"{1 / (len(c_) + 1):.2e}")
+    print(f"  context weight coefficient of variation {w_.std() / w_.mean():.3f}"
+          f"   largest / mean {w_.max() / w_.mean():.2f}")
+    print(f"  deviance on 400 test rows {dev(p_, yt[:400]):.3f}   "
+          f"base {dev(p_base_t[:400], yt[:400]):.3f}   "
+          f"largest move {np.abs(p_ - p_base_t[:400]).max():.4f}")
+```
+
+It does not. Given its own 64 neighbours the row is **flatter**, with a
+coefficient of variation of about 0.02 against 0.10 for the batch context,
+and the largest weight within 2 per cent of the mean. The prediction does
+move further from the base model's, roughly twice as far, and it does not
+move to a better place: the deviance on those 400 rows is slightly worse than
+the base model's rather than better.
+
+Hence the dilution and the flatness are separate facts and neither rescues
+the mechanism. The batching does dilute the context severely, and sharpening
+it to a single borrower makes attention more uniform rather than less.
+
+### The context is a restatement of the base model's own prediction
+
+The third explanation is the one that ties the other two together. Retrieval
+runs in the CLS token space, and the CLS token is what the decoder reads, so
+borrowers retrieved as neighbours are precisely those the base model already
+scores alike. If the mean response of a target's neighbours tracks the base
+model's own prediction, the context is telling the model what it already
+says.
+
+```{python}
+#| code-fold: true
+#| code-summary: "What the retrieved context knows"
+ctx_rate, tgt_pred = [], []
+with torch.no_grad():
+    for s in range(0, len(idx_test), 200):
+        sl = slice(s, s + 200)
+        c_ = retrieve(Z_test5[sl], Z_pool5, K=64, c_max=1000)
+        ctx_rate.append(yl[c_.numpy()].mean())
+        tgt_pred.append(p_base_t[sl].mean())
+ctx_rate, tgt_pred = np.array(ctx_rate), np.array(tgt_pred)
+print(f"per 200-target batch, {len(ctx_rate)} batches")
+print(f"  retrieved-context default rate: mean {ctx_rate.mean():.4f}, "
+      f"sd {ctx_rate.std():.4f}, range {ctx_rate.min():.4f} to {ctx_rate.max():.4f}")
+print(f"  learning-sample default rate:   {yl.mean():.4f}")
+print(f"  correlation with the base model's own predicted PD: "
+      f"{np.corrcoef(ctx_rate, tgt_pred)[0, 1]:+.4f}")
+```
+
+Retrieval does find neighbourhoods with genuinely different default rates,
+from 0.208 to 0.400 across target batches against a learning-sample rate of
+0.2888, so it is not simply returning the portfolio average. However that
+variation correlates at $+0.65$ with the base model's own predicted
+probability for the same targets, which is what searching the decoder's own
+space should produce.
+
+Put the three together and the mechanism's problem is fully visible. The
+decorator injects each neighbour's outcome with a weight section 3.2 showed
+to be constant. Attention then averages those injections almost uniformly,
+whether over a diluted thousand-row sample or over a borrower's own
+sixty-four. And the quantity that survives the averaging is a neighbourhood
+mean two-thirds explained by what the base model already predicts. So the
+layer is offered a noisy copy of its own output and correctly learns to
+ignore it.
+
+This also suggests where the architecture would pay, and it is a testable
+prediction rather than a hedge. In-context learning has something to add when
+the retrieved neighbours carry information the base model cannot use: an
+unseen category, for instance, which section 4 turns to next.
+
+
+# Cold start: a country with no history
+
+## Bondora's Slovak book
+
+The course's zero-shot experiment remaps French regions totalling 10 per
+cent of exposure to an *unseen* category and asks whether in-context
+learning can price them. Credit supplies the same experiment without the
+remapping, because a lender's segments genuinely appear and disappear.
+
+```{python}
+#| code-fold: true
+#| code-summary: "The four country books"
+by_country = (g.groupby("Country")
+              .agg(loans=("default_12m", "size"),
+                   default_rate=("default_12m", "mean"),
+                   first=("LoanDate", "min"), last=("LoanDate", "max"))
+              .sort_values("loans", ascending=False))
+print(by_country.to_string(float_format=lambda v: f"{v:.4f}"))
+```
+
+Slovakia is a closed cohort. Originations run for ten months and then stop,
+which is what a withdrawal from a market looks like in a loan book, and the
+296 loans that remain default at 70.6 per cent against Estonia's 17.0.
+Consequently it is a hard cold start rather than a cosmetic one: a model
+trained on the other three countries has to price a segment whose base rate
+is four times the largest book's.
+
+## The unseen-country setup
+
+Slovakia is relabelled *unseen* and held out entirely, so every Slovak loan
+is a test row and none is available for fitting. A random 2 per cent of the
+three trained countries is relabelled *unseen* as well, which is what gives
+the level any training signal at all and mirrors what the course does with
+its small-exposure regions.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Holding Slovakia out"
+is_sk = (g["Country"] == "SK").to_numpy()
+extra = (~is_sk) & (np.random.default_rng(11).random(len(g)) < 0.02)
+country_cs = np.where(is_sk | extra, "unseen", g["Country"].to_numpy())
+
+D_cs = build_design(g, country=country_cs)
+y_cs = D_cs["y_all"].to_numpy()
+learn_cs = np.array([i for i in D_cs["idx_learn"] if not is_sk[i]])
+test_cs = np.where(is_sk)[0]
+y_test_cs = y_cs[test_cs]
+print(f"learn {len(learn_cs):,} loans, {extra.sum():,} of them relabelled unseen")
+print(f"test  {len(test_cs)} Slovak loans, default rate {y_test_cs.mean():.4f}, "
+      f"against a learning-sample rate of {y_cs[learn_cs].mean():.4f}")
+```
+
+## Four models, with intervals
+
+A point deviance on 296 rows is not readable, so every figure below carries
+a bootstrap interval over the test rows. Reporting one without the other
+would invite a comparison the sample cannot support.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Null, GLM, base CT and ICL-CT on the held-out Slovak book"
+g_cs = g.copy()
+g_cs["Country"] = country_cs
+Xg_cs = np.asarray(patsy.dmatrix(FORMULA, g_cs, return_type="dataframe"))
+keep_cs = Xg_cs[learn_cs].std(0) > 0
+keep_cs[0] = True
+glm_cs = sm.GLM(y_cs[learn_cs], Xg_cs[learn_cs][:, keep_cs],
+                family=sm.families.Binomial()).fit()
+p_cs_glm = np.asarray(glm_cs.predict(Xg_cs[test_cs][:, keep_cs]))
+
+base_cs, stop_cs = train_ct(D_cs, seed=100, alpha=0.95, idx_learn_=learn_cs)
+p_cs_base = predict(base_cs, D_cs, test_cs)
+
+D_cs_icl = dict(D_cs)
+D_cs_icl["idx_learn"] = learn_cs
+Z_cs_l = cls_tokens(base_cs, D_cs, learn_cs)
+Z_cs_t = cls_tokens(base_cs, D_cs, test_cs)
+y_cs_l = torch.tensor(y_cs[learn_cs], dtype=torch.float32)
+icl_cs, hist_cs = train_icl(base_cs, D_cs_icl, Z_cs_l, seed=100, kappa=1.0)
+Z_cs_l2 = cls_tokens(icl_cs.base, D_cs, learn_cs)
+Z_cs_t2 = cls_tokens(icl_cs.base, D_cs, test_cs)
+p_cs_icl, own_cs, ctx_cs = predict_icl(icl_cs, Z_cs_l2, y_cs_l, Z_cs_t2,
+                                       want_own=True, pool_idx=learn_cs)
+
+p_cs_null = np.full(len(test_cs), y_cs[learn_cs].mean())
+
+
+def boot_ci(pred, obs, B=2000, seed=5):
+    r = np.random.default_rng(seed)
+    n = len(obs)
+    vals = [dev(pred[i], obs[i]) for i in (r.integers(0, n, n) for _ in range(B))]
+    return np.percentile(vals, 2.5), np.percentile(vals, 97.5)
+
+
+rows = []
+for name, p_ in [("null model", p_cs_null), ("logistic GLM", p_cs_glm),
+                 ("base CT", p_cs_base), ("ICL-CT", p_cs_icl)]:
+    lo, hi = boot_ci(np.asarray(p_), y_test_cs)
+    rows.append(dict(model=name, deviance=dev(p_, y_test_cs), lo=lo, hi=hi,
+                     mean_pred=float(np.mean(p_)),
+                     AUC=(np.nan if name == "null model"
+                          else roc_auc_score(y_test_cs, p_))))
+cold = pd.DataFrame(rows)
+print(f"held-out Slovak book, {len(test_cs)} loans, "
+      f"observed default rate {y_test_cs.mean():.4f}")
+print(cold.to_string(index=False, float_format=lambda v: f"{v:9.4f}"))
+print(f"\nphase two best epoch {hist_cs['2']['epochs']}, "
+      f"phase three best epoch {hist_cs['3']['epochs']}")
+```
+
+Separate intervals on two models scored over the same 296 loans understate
+how precisely their difference is known, because the resample is common to
+both. So the ICL-CT against the base model gets a paired bootstrap of its
+own.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Paired bootstrap of the in-context gain"
+r_ = np.random.default_rng(5)
+n_cs = len(test_cs)
+d_pair, d_null = [], []
+for _ in range(2000):
+    i_ = r_.integers(0, n_cs, n_cs)
+    d_pair.append(dev(p_cs_icl[i_], y_test_cs[i_]) - dev(p_cs_base[i_], y_test_cs[i_]))
+    d_null.append(dev(p_cs_icl[i_], y_test_cs[i_]) - dev(p_cs_null[i_], y_test_cs[i_]))
+d_pair, d_null = np.array(d_pair), np.array(d_null)
+print(f"ICL-CT minus base CT   {dev(p_cs_icl, y_test_cs) - dev(p_cs_base, y_test_cs):+.3f}"
+      f"   95% CI [{np.percentile(d_pair, 2.5):+.3f}, {np.percentile(d_pair, 97.5):+.3f}]"
+      f"   improves in {(d_pair < 0).mean():.1%} of resamples")
+print(f"ICL-CT minus null      {dev(p_cs_icl, y_test_cs) - dev(p_cs_null, y_test_cs):+.3f}"
+      f"   95% CI [{np.percentile(d_null, 2.5):+.3f}, {np.percentile(d_null, 97.5):+.3f}]")
+```
+
+Four things happen on the Slovak book and three of them are failures.
+
+**Every model under-predicts, badly.** The observed default rate is 70.6 per
+cent and the mean predicted probabilities run from 21.9 to 30.8 per cent.
+None of the four models comes close, which is what a cold start looks like
+when the new segment's risk is genuinely different rather than merely
+unobserved. No amount of in-context learning fixes a level error of forty
+percentage points.
+
+**Both neural models are decisively worse than the null model.** The base
+Credibility Transformer scores 236.6 and the ICL-CT 234.6, against the null
+model's 195.8, and neither interval comes near the null's. Predicting the
+portfolio average for every Slovak applicant would have been substantially
+better than either fitted network. That is the single most useful number in
+this lecture for anyone about to score a new segment with a model trained
+elsewhere.
+
+**Only the GLM beats the null, and only just.** Its 185.7 against 195.8 is
+an improvement of about ten deviance points, and the two intervals overlap,
+so even that edge is not established on 296 loans. Its discrimination is
+real if modest at an AUC of 0.623, where both networks sit near 0.55 and are
+therefore close to uninformative on this segment. The reason is worth
+naming: the GLM's country effect enters as one coefficient on an *unseen*
+level estimated from the 2,929 relabelled training rows, whereas the networks
+learn an embedding for that level and then interact it with everything else,
+which is exactly the flexibility that has nothing to generalise from here.
+
+**In-context learning helps here, by about two deviance points, and the sign
+depends on the training budget.** The paired difference is $-1.99$ with a
+bootstrap interval that excludes zero and every one of 2,000 resamples
+improving, so on the sampling uncertainty of these 296 loans the gain looks
+settled. It is not. Training the same mechanism to a longer budget reverses
+it.
+
+```{python}
+#| code-fold: true
+#| code-summary: "The same mechanism, trained to a longer budget"
+icl_cs_long, hist_cs_long = train_icl(base_cs, D_cs_icl, Z_cs_l, seed=100,
+                                      kappa=1.0, phase2_epochs=30,
+                                      phase3_epochs=8, steps=100)
+Z_csl_L = cls_tokens(icl_cs_long.base, D_cs, learn_cs)
+Z_cst_L = cls_tokens(icl_cs_long.base, D_cs, test_cs)
+p_cs_long = predict_icl(icl_cs_long, Z_csl_L, y_cs_l, Z_cst_L)
+d_long = []
+r2_ = np.random.default_rng(5)
+for _ in range(2000):
+    i_ = r2_.integers(0, n_cs, n_cs)
+    d_long.append(dev(p_cs_long[i_], y_test_cs[i_]) - dev(p_cs_base[i_], y_test_cs[i_]))
+d_long = np.array(d_long)
+print(f"phase-two budget 20 epochs x 50 steps: ICL-CT "
+      f"{dev(p_cs_icl, y_test_cs):.3f}, difference "
+      f"{dev(p_cs_icl, y_test_cs) - dev(p_cs_base, y_test_cs):+.3f}, "
+      f"best epoch {hist_cs['2']['epochs']}")
+print(f"phase-two budget 30 epochs x 100 steps: ICL-CT "
+      f"{dev(p_cs_long, y_test_cs):.3f}, difference "
+      f"{dev(p_cs_long, y_test_cs) - dev(p_cs_base, y_test_cs):+.3f}, "
+      f"best epoch {hist_cs_long['2']['epochs']}")
+print(f"  the longer budget's paired 95% CI "
+      f"[{np.percentile(d_long, 2.5):+.3f}, {np.percentile(d_long, 97.5):+.3f}]"
+      f", improves in {(d_long < 0).mean():.1%} of resamples")
+```
+
+The shorter budget stops at epoch 6 and gains two points; the longer one
+stops at epoch 11 and loses four, with a bootstrap interval just as tight and
+not one resample in two thousand pointing the other way. Both intervals are
+honest about what they measure, which is sampling variation in a 296-row test
+set, and neither measures the uncertainty that actually dominates here,
+namely which epoch model selection lands on.
+
+Hence the lesson for a validation function is about the interval rather than
+the architecture. A paired bootstrap on a small out-of-time or out-of-segment
+sample can report a confident difference that reverses under a change to the
+training schedule, so a confidence interval on the test sample is not
+evidence that a model comparison is settled. Refit under more than one
+schedule before quoting either.
+
+## Where the context comes from
+
+An in-context prediction is built out of retrieved neighbours, so for a
+Slovak applicant it is worth asking whose experience is actually being used.
+The pool contains no Slovak loans by construction, so the answer has to be
+somebody else's.
+
+```{python}
+#| code-fold: true
+#| code-summary: "The country composition of the retrieved context"
+ctx_all = np.concatenate(ctx_cs)
+share = (pd.Series(g["Country"].to_numpy()[ctx_all])
+         .value_counts(normalize=True).round(4))
+print("retrieved context by country, pooled over every target batch")
+print(share.to_string())
+print(f"\nlearning-sample composition for comparison")
+print((pd.Series(g["Country"].to_numpy()[learn_cs])
+       .value_counts(normalize=True).round(4)).to_string())
+```
+
+Estonia supplies 71.0 per cent of the retrieved context against 58.1 per
+cent of the pool it is drawn from, so retrieval over-weights it by about
+thirteen percentage points, while Finland is under-weighted by ten. Estonia
+is the pool's most benign book at a 17.0 per cent default rate, and
+Slovakia, the segment being priced, is its most adverse at 70.6 per cent.
+
+Hence the mechanism imports the wrong country's experience, and it does so
+for a structural reason rather than by accident. Retrieval measures
+similarity in the CLS token space, which encodes what the base model has
+learned to predict, and the base model predicts Slovak applicants to be
+low-risk because it has never seen a Slovak default. Consequently its
+nearest neighbours are the applicants it also scores low, which are
+disproportionately Estonian, and the retrieved outcomes then confirm the
+prediction that selected them. So a retrieval mechanism whose similarity
+metric comes from the model being corrected cannot correct that model where
+it is wrong about a whole segment.
+
+That is a design finding rather than a bug in this implementation, and it
+suggests the fix: retrieve in a space that does not depend on the fitted
+model, for instance on raw standardised covariates or on a within-segment
+metric. This lecture does not build that variant, and lecture `R3`'s point
+about sample design is the more immediate lesson, namely that a segment whose
+base rate differs by a factor of four is not represented by the pool at all,
+whatever metric is used to search it.
+
+# What in-context learning costs in governance
+
+Sections 2 to 4 measured what these models deliver. This section measures
+what they cost, and the costs are specific to credit rather than general to
+machine learning, because a lending decision has to be explainable to the
+person it is made about and a rating system has to be documented to a
+supervisor.
+
+## The explanation is other borrowers
+
+Lecture 9 built a per-decision decomposition on this book and tested it.
+Its finding was quantitative: among the highest-PD decile the leading
+adverse characteristic was identical across all ten refits for 92.0 per cent
+of applicants, while the second-ranked one agreed for 1.6 per cent, because
+the leading contribution exceeded the second by 1.043 on the log-odds scale
+and the second exceeded the third by 0.118. One reason code is therefore
+defensible on this book and three are not.
+
+An in-context prediction complicates that, because it is a function of the
+retrieved neighbours as well as of the applicant's own characteristics. The
+worry is therefore that a full account of what moved the score would have to
+name which other borrowers were in the pool, which is not something a lender
+can put in an adverse-action notice.
+
+That is an argument from the construction, and this series does not stop at
+arguments from construction. The measurable version asks how much a
+borrower's prediction depends on which other borrowers happened to be in the
+pool, and the test is to re-draw it.
+
+## Reason-code stability under a context re-draw
+
+The retrieval pool is resampled ten times, taking a random half of the
+learning sample on each draw, and every test borrower is rescored. Lecture 9
+supplies the yardstick: on this book the leading adverse contribution
+exceeded the second by 1.043 on the log-odds scale and the second exceeded
+the third by 0.118. So a borrower whose log-odds moves by less than 0.118
+keeps its reason-code ordering intact, and one that moves by more than 1.043
+has no stable leading reason at all.
+
+The model measured has to be one that is actually doing in-context learning,
+so section 3.11's actively trained state is the one re-scored below. Section
+3.9's selected state is the identity initialisation, whose ICL layers return
+the target token untouched, so its prediction does not depend on the pool at
+all and re-drawing it moves nothing by construction. Both are reported, the
+trained state as the measurement and the selected state as a check that the
+measurement is wired up correctly.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Ten pool re-draws on 2,000 test borrowers"
+sub = idx_test[:2000]
+Z_sub = Z_test5[:2000]
+
+
+def redraw(model, label, reps=10, frac=0.5):
+    L = []
+    for rep in range(reps):
+        pos = np.random.default_rng(200 + rep).permutation(len(idx_learn))
+        pos = pos[:int(frac * len(idx_learn))]
+        L.append(logit(predict_icl(model, Z_pool5[pos], y_learn_t[pos], Z_sub)))
+    L = np.vstack(L)
+    sd_b, rg = L.std(0), L.max(0) - L.min(0)
+    print(f"{label}: {reps} re-draws, {L.shape[1]:,} borrowers")
+    print(f"  per-borrower log-odds sd     mean {sd_b.mean():.4f}   "
+          f"median {np.median(sd_b):.4f}   90th pct {np.percentile(sd_b, 90):.4f}")
+    print(f"  per-borrower log-odds range  mean {rg.mean():.4f}   "
+          f"90th pct {np.percentile(rg, 90):.4f}   max {rg.max():.4f}")
+    print(f"  share moving more than 0.118 (lecture 9's second-to-third gap): "
+          f"{(rg > 0.118).mean():.1%}")
+    print(f"  share moving more than 1.043 (its leading-to-second gap):       "
+          f"{(rg > 1.043).mean():.1%}")
+
+
+redraw(active, "section 3.11's actively trained state")
+print()
+redraw(ICLCT(base_ct, b=base_ct.b, kappa=1.0, seed=100),
+       "section 3.9's selected state, which ignores its context")
+```
+
+The concern does not materialise on this book, and the reason it does not is
+the same fact that produced section 3's null result.
+
+Re-drawing half the retrieval pool moves a borrower's fitted log-odds by
+about 0.002 in range and 0.0007 in standard deviation. Set against lecture
+9's 0.118 gap between the second and third reason codes, that is a fiftieth
+of the smallest gap the reason-code ordering has to survive, and no borrower
+in the 2,000 examined moves by even that much. The selected state moves by
+exactly zero, which confirms the measurement is reading the mechanism rather
+than numerical noise.
+
+The mechanism is stable for the two reasons section 3.11 measured. Its
+attention row is nearly uniform, so the quantity reaching the decoder is
+close to the mean outcome of the retrieved set, and a mean over a thousand
+rows barely moves when half the pool is removed. Furthermore the retrieved
+set was never a borrower's own neighbourhood in the first place, since the
+frequency cap leaves the median borrower three of its sixty-four neighbours,
+so resampling the pool exchanges one near-random thousand-row sample for
+another and the two have almost the same mean. Consequently the same
+properties that stopped in-context learning from improving the deviance also
+stop it from destabilising the explanation. A version of this architecture that
+attended sharply to a handful of neighbours would buy more accuracy and
+would put the reason code back at risk, so the two properties trade against
+each other and a lender cannot have the first without testing for the
+second.
+
+::: {.callout-note}
+## The general lesson, which is about the test rather than the answer
+
+The re-draw is cheap, it takes ten forward passes, and it converts an
+argument about explainability into a number on the same scale as the reason
+codes it threatens. Run it on any retrieval-based credit model before
+deciding whether the model can support an adverse-action notice, because the
+answer is a property of that model's attention rather than of the
+architecture in general, and this lecture's answer is reassuring only
+because its mechanism is doing so little.
+:::
+
+## What does bite: the pool's composition
+
+Sampling noise inside the pool turns out to be harmless. The pool's
+**composition** is not, and section 4.5 measured that: retrieval drew 71.0
+per cent of its context from Estonia against 58.1 per cent of the available
+pool, and it did so when pricing the segment whose default rate is four
+times Estonia's.
+
+So the governance question that survives is not "does this prediction wobble
+when the pool is resampled?" but "whose experience is in the pool, and is it
+the right population for this applicant?" That is a representativeness
+question, and it is the one Article 174(c) of the Capital Requirements
+Regulation (CRR) already asks.
+
+## A prior whose training data cannot be shown
+
+Section 2's TabPFN raises a different problem, and it is the sharper one for
+a regulated rating system. The model's weights were fitted on tasks drawn
+from a synthetic prior, so there is no training population to describe.
+
+Lecture `R3` established the anchor. **CRR Article 174(c)** requires that
+the population of exposures represented in the data used for estimation, the
+lending standards used when the data was generated, and other relevant
+characteristics be comparable with those of the firm's actual exposures and
+standards. A lender using a tabular foundation model can satisfy that
+requirement for its **context** dataset, which is its own book. It cannot
+satisfy it for the pretrained weights, because the comparison Article 174(c)
+demands is between two populations and one of them is a prior over
+data-generating mechanisms rather than a population of exposures.
+
+Two readings follow and this lecture does not choose between them, because
+the choice is a supervisory judgement rather than a statistical one. On the
+first, the pretrained weights are part of the estimation method rather than
+part of the data, in the way that the choice of link function is, and
+Article 174(c) then bites on the context set alone. On the second they are
+data by another name, since they are what makes the prediction, and the
+requirement cannot be met at all. The bureau-score precedent of section 1.3
+favours the first reading, and a bureau does at least publish a development
+population.
+
+::: {.callout-warning}
+## What is settled
+
+Whichever reading a supervisor takes, three things follow from section 2's
+measurements rather than from any interpretation. The model arrives about
+1.9 percentage points below the observed portfolio default rate, so it needs
+recalibration before it prices anything. It has no fitted parameter vector
+to document or monitor, so the usual apparatus of parameter stability
+testing has nothing to test. And its advantage over a conventional model
+disappeared by 10,000 observations, so on a book of any size the question
+of whether it may be used is mostly academic.
+:::
+
+## Data protection
+
+One further consequence deserves stating, because it is easy to miss inside
+an architecture diagram. The context batch carries **other borrowers'
+observed outcomes** into this applicant's decision. In the fixed-horizon
+setting those outcomes are defaults, which is personal data about identified
+individuals, and they enter the decision at prediction time rather than
+having been absorbed into a parameter during fitting.
+
+UK GDPR **Articles 22A to 22D**, substituted for the former Article 22 by
+the Data (Use and Access) Act 2025 and in force in that form since
+5 February 2026, govern significant decisions based solely on automated
+processing. Lecture 9 records the verification, and it is worth repeating
+the warning attached to it: much of the secondary literature still quotes
+the superseded Article 22 wording. The safeguards those articles require
+include information about the decision and the right to contest it, and
+section 5.2's measurement is directly relevant to whether those safeguards
+can be met, since a decision that survives a re-draw of the pool can be
+explained by reference to the applicant.
+
+Two points survive the measurement all the same, and both are structural.
+The retrieved outcomes are still other people's defaults, used at prediction
+time rather than absorbed into a parameter during fitting, so the processing
+happens later in the pipeline than a lender's data inventory usually
+assumes. And a lender cannot rely on section 5.2's answer without measuring
+it, because the answer came out reassuring only because the attention was
+flat. This lecture therefore states what it measured rather than a general
+clearance for the architecture.
+
+# Takeaways and outlook {.unnumbered}
+
+Two ways of borrowing experience were tested against one question, and they
+answered it differently.
+
+**A pretrained prior pays where a lender has no history.** TabPFN v2 led the
+learning curve at every sample size up to 10,000 rows, and at 250 rows it
+closed 8.8 deviance points against the null model where a network trained on
+the same data closed 2.5. The classical estimator did not merely
+trail there; it separated, averaging a deviance of 1,901 at 250 rows and
+behaving erratically up to 2,000, because maximum likelihood on thirty
+parameters and a few hundred observations has no mechanism to shrink.
+Consequently the case for a cross-table prior on a small book is a practical
+one rather than a fashionable one.
+
+What the prior does not do is beat a model built on data. TabPFN handed
+10,000 rows reached 110.88 and a logistic GLM fitted on all 118,933 reached
+110.87, so eight per cent of the data with no fitting at all reproduced the
+model a lender would build on the whole of it, and the Credibility
+Transformer on the whole of it took another half point. Furthermore the
+foundation model arrived 1.9 percentage points below the observed default
+rate, about 2.3 sampling standard errors, and it has no parameter through
+which that can be corrected, so lecture 7's recalibration has to sit outside
+the model as a mapping the lender owns.
+
+**In-context learning did nothing on the application book, and the reason is
+measurable rather than mysterious.** Five paired fits put the ICL-CT 0.012
+behind its own base model with a paired standard deviation of 0.032, and in
+two of the five seeds no epoch of either training phase beat the identity
+initialisation.
+
+Three measurements explain that, and the first was a surprise. The paper's
+batch retrieval unions 200 targets' 64 nearest neighbours and caps the union
+at 1,000, and on this book those neighbourhoods hardly overlap: 95 per cent
+of retrieved rows are retrieved by exactly one target, so the cap discards 92
+per cent of the union and hands the median borrower **three of its own
+sixty-four neighbours**. The context is therefore close to a random
+thousand-row sample of the book. Sharpening it does not help either, since
+scoring one borrower at a time against its own 64 neighbours makes the
+attention row flatter still, a coefficient of variation of 0.02 against 0.10,
+and moves the prediction to a slightly worse place rather than a better one.
+And what survives the averaging is a neighbourhood mean correlating 0.65 with
+what the base model already predicts, because retrieval searches the very
+space the decoder reads. The layer is offered a noisy copy of its own output
+and correctly learns to ignore it.
+
+The transfer also loses a component on the way in. The decorator's
+credibility weight is $v/(v+\kappa)$ in exposure, and a fixed-horizon table
+gives every loan the same twelve-month window, so the weight collapses to a
+constant and $\kappa$ becomes a shrinkage scalar. A lender wanting the
+credibility reading back has to move to the survival table, which changes
+the estimand and belongs to the `S` track.
+
+**The cold start is where the series' models fail hardest.** On 296 Slovak
+loans defaulting at 70.6 per cent, both networks scored worse than predicting
+the portfolio average, 236.6 and 234.6 against 195.8, and only the GLM beat
+it and only within overlapping intervals. Every model under-predicted by
+around forty percentage points. Retrieval made the problem worse in a way
+worth understanding: it drew 71.0 per cent of its context from Estonia
+against 58.1 per cent of the available pool, over-weighting the most benign
+book while pricing the most adverse segment, because similarity was measured
+in the space of the model that was wrong about the segment. A retrieval
+metric taken from the fitted model cannot correct that model where it is
+wrong about a whole population.
+
+One methodological finding came out of the same experiment and travels
+further than any of the above. The paired bootstrap reported a confident
+two-point gain under one training budget and a confident four-point loss
+under a longer one, with neither interval containing zero and no resample
+dissenting in either direction. So a confidence interval computed on a small
+test sample measures sampling variation and not model-selection variation,
+and on a 296-row segment the second dominates. Refit under more than one
+schedule before quoting either number.
+
+**The governance bill turned out smaller than the architecture suggests.**
+Re-drawing half the retrieval pool moved a borrower's fitted log-odds by
+0.002, against the 1.043 that separates lecture 9's leading reason code from
+its second, and no borrower among 2,000 moved even as far as the 0.118 that
+separates the second from the third. So the reason code survives. It survives
+because the attention is flat, however, which is the same property that
+denied the mechanism any accuracy, and a sharper variant would put the
+explanation back at risk. Hence the re-draw is ten forward passes and belongs
+in the validation pack of any retrieval-based credit model, rather than being
+assumed either way.
+
+The unresolved question is TabPFN's, and it is not statistical. A model
+pretrained on synthetic tasks has no training population to compare with the
+lender's exposures, which is what CRR Article 174(c) asks for, and whether
+the pretrained weights count as method or as data is a supervisory judgement
+this lecture declines to make on a supervisor's behalf.
+
+Three threads run on from here. Lecture `C2` still owes an account of when an
+attribution may be read causally, and section 5.2's re-draw is a stability
+test rather than a causal one, so it belongs on that list. Lecture `R3`'s
+representativeness machinery is what section 4 kept running into, and a
+version of that lecture written after this one would treat a retrieval pool
+as a sample to be designed rather than a database to be searched. And the
+retrieval metric itself is the obvious experiment this lecture did not run:
+searching on standardised covariates rather than on CLS tokens would test
+whether section 4.5's Estonian bias is a property of in-context learning or
+only of retrieving in the fitted model's own space.
+
+# Copyright and attribution {.unnumbered}
+
+The architecture, the mathematics, and the notation are those of
+Scognamiglio, Maggi, Wüthrich and Richman, from lecture 12 of the summer
+school *Deep Learning for Actuarial Modeling* and from the lecture notes at
+[SSRN 5162304](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304),
+provided under CC BY-NC. The credit adaptation, the implementation, the
+datasets, and every measurement reported above are Mario Ervedosa's, and any
+error in them is his.
+
+# References {.unnumbered}
+
+- Brown, T.B., Mann, B., Ryder, N., Subbiah, M., Kaplan, J., Dhariwal, P.
+  et al. (2020). Language models are few-shot learners. *Advances in Neural
+  Information Processing Systems*, 33.
+- Bühlmann, H. (1967). Experience rating and credibility. *ASTIN Bulletin*,
+  4(3), 199-207.
+- Gorishniy, Y., Rubachev, I., Khrulkov, V. and Babenko, A. (2021).
+  Revisiting deep learning models for tabular data. *Advances in Neural
+  Information Processing Systems*, 34. *arXiv:2106.11959*.
+- Hoffmann, J., Borgeaud, S., Mensch, A. et al. (2022). Training
+  compute-optimal large language models. *arXiv:2203.15556*.
+- Hollmann, N., Müller, S., Eggensperger, K. and Hutter, F. (2022). TabPFN:
+  a transformer that solves small tabular classification problems in a
+  second. *arXiv:2207.01848*.
+- Hollmann, N., Müller, S., Purucker, L., Krishnakumar, A., Körfer, M.,
+  Hoo, S.B. et al. (2025). Accurate predictions on small data with a
+  tabular foundation model. *Nature*, 637(8045), 319-326.
+- Huang, X., Khetan, A., Cvitkovic, M. and Karnin, Z. (2020).
+  TabTransformer: tabular data modeling using contextual embeddings.
+  *arXiv:2012.06678*.
+- Kaplan, J., McCandlish, S., Henighan, T., Brown, T.B. et al. (2020).
+  Scaling laws for neural language models. *arXiv:2001.08361*.
+- Müller, S., Hollmann, N., Pineda Arango, S., Grabocka, J. and Hutter, F.
+  (2021). Transformers can do Bayesian inference. *arXiv:2112.10510*.
+- OpenAI (2023). GPT-4 technical report. *arXiv:2303.08774*.
+- Ouyang, L., Wu, J., Jiang, X., Almeida, D., Wainwright, C., Mishkin, P.
+  et al. (2022). Training language models to follow instructions with human
+  feedback. *Advances in Neural Information Processing Systems*, 35.
+- Padayachy, K., Richman, R., Scognamiglio, S. and Wüthrich, M.V. (2025).
+  In-context learning enhanced credibility transformer.
+  *arXiv:2509.08122*.
+- Qu, J., Holzmüller, D., Varoquaux, G. and Le Morvan, M. (2025). TabICL: a
+  tabular foundation model for in-context learning on large data.
+  *International Conference on Machine Learning*. *arXiv:2502.05564*.
+- Radford, A., Narasimhan, K., Salimans, T. and Sutskever, I. (2018).
+  Improving language understanding by generative pre-training. *OpenAI
+  technical report*.
+- Radford, A., Wu, J., Child, R., Luan, D., Amodei, D. and Sutskever, I.
+  (2019). Language models are unsupervised multitask learners. *OpenAI
+  technical report*.
+- Richman, R., Scognamiglio, S. and Wüthrich, M.V. (2025). The credibility
+  transformer. *European Actuarial Journal*.
+- Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez,
+  A.N., Kaiser, L. and Polosukhin, I. (2017). Attention is all you need.
+  *Advances in Neural Information Processing Systems*, 30.
+- Wang, Z. and Sun, J. (2022). TransTab: learning transferable tabular
+  transformers across tables. *arXiv:2205.09328*.
+- Wüthrich, M.V., Merz, M., Richman, R., Scognamiglio, S. and Maggi, M.
+  (2025). AI Tools for Actuaries. *SSRN Manuscript 5162304*.
