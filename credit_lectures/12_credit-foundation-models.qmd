@@ -98,8 +98,8 @@ what a learned prior did not. That standard deviation of 0.126 is the
 yardstick, and it is quoted again at every deviance table below.
 
 Credit reframes the course's motivation as well. Insurance lecture 12
-motivates credibility with small portfolios, new products, rare events and
-new vehicle models. A lender's version is sharper, because lenders open and
+motivates credibility with small portfolios, new products, rare events,
+and new vehicle models. A lender's version is sharper, because lenders open and
 close whole books: a new country, a new product, a segment whose default
 history does not exist yet. Bondora supplies a real instance rather than a
 constructed one, and section 4 uses it.
@@ -145,13 +145,16 @@ transfers to many downstream tasks with minimal task-specific change. Three
 properties travel with the definition: scale, in parameters and in training
 tokens; general representations, meaning the learned features are not tied
 to one task; and versatile adaptation, meaning the same weights serve many
-jobs.
+jobs. In particular the third property is what makes the term useful, since
+a model that transferred only to tasks resembling its training corpus would
+be a pretrained model and nothing more.
 
 The backbone is almost always a Transformer with autoregressive generation,
 which lectures 10 and 11 built. Capability then follows a joint power law in
-compute, data and parameters (Kaplan et al., 2020), refined by Hoffmann et
-al. (2022) into the compute-optimal balance that told the field to budget
-tokens rather than parameters alone.
+compute, data, and parameters (Kaplan et al., 2020). However that law was
+initially read as a licence to grow parameters, and Hoffmann et al. (2022)
+corrected it into the compute-optimal balance that told the field to budget
+tokens as well.
 
 ## The model class
 
@@ -178,7 +181,7 @@ $$
 $$
 
 which is the same maximum-likelihood principle lecture 2 applied to a
-logistic GLM, differing in the size of $\Theta$ and in the fact that the
+logistic generalised linear model (GLM), differing in the size of $\Theta$ and in the fact that the
 response at step $t$ is the covariate at step $t+1$.
 
 Note the notation. $K^{\rm cls}$ carries the class count here because
@@ -190,7 +193,9 @@ lecture 2.
 ## Adaptation, and what each rung means for a lender
 
 Adaptation is where a foundation model becomes a credit model, and the
-options form a ladder from cheapest to most invasive.
+options form a ladder from cheapest to most invasive. Note that the rungs
+differ in what they leave a lender owning, which matters more here than
+their compute cost.
 
 - **In-context learning (ICL).** Put demonstrations $\mathcal{C}$ in the
   input and evaluate $f_{\theta^\star_{\rm pre}}([\mathcal{C}, \boldsymbol{x}])$
@@ -203,19 +208,20 @@ options form a ladder from cheapest to most invasive.
   and the only one that produces a model whose weights are wholly yours.
 
 Each rung reads differently in a lending context, and the first thing worth
-saying is that lenders have used the bottom rung for decades without
-calling it that. A **bureau score** is a pretrained prior: somebody else
-fitted it, on a population you cannot inspect, and you consume it as a
-covariate. The governance apparatus around bureau scores, meaning the
-vendor's population documentation and the lender's own monitoring, is
-therefore the closest existing precedent for what section 5 argues a
-tabular foundation model would need.
+saying is that lenders have used the bottom rung for decades without calling
+it that. A **bureau score** is a pretrained prior, since somebody else fitted
+it, on a population you cannot inspect, and you consume it as a covariate.
+Consequently the governance apparatus around bureau scores, meaning the
+vendor's population documentation and the lender's own monitoring, is the
+closest existing precedent for what section 5 argues a tabular foundation
+model would need.
 
-RAG has an obvious home over a credit policy manual, where the question
-"does this application breach policy?" is a retrieval problem before it is
-a modelling one. That use is a document task rather than a scoring task, so
-it sits outside this series' scope; it is named here because it is the rung
-most likely to reach a lending operation first.
+Similarly RAG has an obvious home over a credit policy manual, where the
+question "does this application breach policy?" is a retrieval problem
+before it is a modelling one. That use is a document task rather than a
+scoring task, so it sits outside this series' scope. Nevertheless it is
+named here, because it is the rung most likely to reach a lending operation
+first.
 
 In-context learning over a retrieved set of similar borrowers is the rung
 sections 3 and 4 build, and it is the one that changes what a credit
@@ -254,11 +260,12 @@ kinds of object, they arrive in an arbitrary order, and the next lender's
 table has different columns entirely.
 
 Four consequences follow. Features are heterogeneous and mixed in type.
-Missingness is informative rather than incidental, as lecture 2's
-`HomeOwnershipType` showed. There is no natural order across columns, so a
-model must be permutation invariant or else learn an ordering that means
-nothing. And gradient-boosted trees set a high baseline that deep tabular
-models have repeatedly failed to clear.
+Furthermore missingness is informative rather than incidental, as lecture
+2's `HomeOwnershipType` showed. There is no natural order across columns, so
+a model must be permutation invariant or else learn an ordering that means
+nothing. Above all, gradient-boosted trees set a high baseline that deep
+tabular models have repeatedly failed to clear, whereas language and vision
+offered no comparable incumbent.
 
 The foundation approach answers by pre-training a **cross-table prior**: a
 model learns, over many synthetic tables, what tabular relationships tend
@@ -281,7 +288,9 @@ meaning the treatment of a continuous covariate as a token through a small
 network, belongs to the **FT-Transformer** of Gorishniy, Rubachev, Khrulkov
 and Babenko (2021). Lecture 10-11 section 3.2 uses that construction and
 cites it correctly, and `notes/transformer-lecture-structure.md` records the
-verification.
+verification. In contrast the course attributes it to TabM, which proposes
+no tokeniser at all, so the error is one of attribution rather than of
+substance.
 
 ## TabPFN as approximate Bayesian inference
 
@@ -302,13 +311,13 @@ data-generating mechanisms, and the network learns to do inference under
 it.
 
 At prediction time the whole context dataset is fed in alongside the query,
-and one forward pass returns the predictive distribution. Fitting, in the
-usual sense, does not happen. TabPFN v1 alternates attention over columns
-and over rows, which handles the missing column order and costs quadratically
-in the number of rows, and that cost is what bounds the family's sample
-size. TabICL answers by embedding each row to a fixed dimension first, then
-running in-context learning over those compact embeddings, which reaches
-about $5 \times 10^5$ rows (Qu et al., 2025).
+and one forward pass returns the predictive distribution. Consequently
+fitting, in the usual sense, does not happen. TabPFN v1 alternates attention
+over columns and over rows, which handles the missing column order and yet
+costs quadratically in the number of rows, and that cost is what bounds the
+family's sample size. Alternatively TabICL embeds each row to a fixed
+dimension first and then runs in-context learning over those compact
+embeddings, which reaches about $5 \times 10^5$ rows (Qu et al., 2025).
 
 ::: {.callout-note}
 ## What "no fitting" does and does not mean
@@ -323,7 +332,7 @@ which section 5 takes up.
 
 ## The Bondora book
 
-The frame, the filters and the seed-1 split below are those of lectures 4
+The frame, the filters, and the seed-1 split below are those of lectures 4
 to 11, so the deviances chain to theirs without rescaling.
 
 ```{python}
@@ -625,10 +634,10 @@ null, a little over a quarter, on identical data. By 10,000 rows the three
 arms span 0.16 of a deviance point in total, which is the same order as the
 seed spread of 0.126 and therefore not a ranking worth reading. Consequently the pretrained prior
 behaves exactly as advertised: it substitutes for data a lender does not
-have, and it stops paying once the lender has enough. The AUCs tell the same
-story more starkly, since TabPFN reaches 0.686 on 250 rows where the network
-manages 0.595 and the GLM 0.569, and all three converge to about 0.703 by
-10,000.
+have, and it stops paying once the lender has enough. Similarly the area
+under the receiver operating characteristic curve (AUC) tells the story more
+starkly, since TabPFN reaches 0.686 on 250 rows where the network manages
+0.595 and the GLM 0.569, and all three converge to about 0.703 by 10,000.
 
 **The GLM does not merely lose at small $n$; it separates.** Its mean
 deviance runs from 1,901 at 250 rows to 1,300 at 2,000 before collapsing to
@@ -722,7 +731,7 @@ Discrimination is only half of what a probability of default has to deliver.
 Lecture 7 established the **balance property**, namely that a model's fitted
 probabilities should sum to the observed number of defaults, and showed why
 a portfolio-level bias survives any amount of ranking accuracy. TabPFN
-carries no offset, no exposure and no intercept a modeller can set, so there
+carries no offset, no exposure, and no intercept a modeller can set, so there
 is no mechanism inside it that enforces the property.
 
 One caution has to come before the table. The comparison sample holds 3,000
@@ -776,18 +785,20 @@ Section 2's foundation model carries a prior learned on synthetic tasks. This
 section takes the opposite route to the same idea: keep a model fitted on
 this book, and give it, at prediction time, the observed outcomes of the
 most similar borrowers. That is the **in-context learning credibility
-transformer** of Padayachy, Richman, Scognamiglio and Wüthrich (2025), and
-it is built in five components on top of lecture 10-11's model.
+transformer** (ICL-CT) of Padayachy, Richman, Scognamiglio and Wüthrich
+(2025). Consequently it is built in five components on top of lecture
+10-11's model, and each is taken in turn below.
 
 ## Component 0: the base credibility transformer
 
 The base model is lecture 10-11's Credibility Transformer at $\alpha = 0.95$,
 fitted in this lecture rather than quoted from that one, because a single fit
 on this book is one draw from a distribution whose standard deviation is
-0.126 and a copied number would not reproduce. It does two jobs. Its CLS
-token embedding is the space in which similar borrowers are found, and its
-decoder is frozen and reused, so the ICL mechanism is confined to the CLS
-token space.
+0.126 and a copied number would not reproduce. It does two jobs. Its
+classification (CLS) token embedding, which lecture 10-11 built as the single
+token the decoder reads, is the space in which similar borrowers are found.
+Furthermore its decoder is frozen and reused, so the ICL mechanism is
+confined to that CLS token space.
 
 It is the same fit section 2.7 already ran, reused here rather than
 repeated, since a second identical fit would cost two minutes of render time
@@ -846,10 +857,10 @@ def retrieve(Z_target, Z_pool, K=64, c_max=1000, exclude=None):
 During training the targets sit inside the pool the context is drawn from,
 and a borrower is always its own nearest neighbour. Retrieving a target as
 its own context would therefore hand the model that target's observed
-response and produce a model that scores beautifully in the backtest and
-predicts nothing. The `exclude` mask above is what prevents it, and it is
-the same class of error as lecture 10-11's mis-sorted panel: a leak that
-validates cleanly because the validation shares it.
+response, and the result would score beautifully in the backtest while
+predicting nothing. Hence the `exclude` mask above. Indeed this is the same
+class of error as lecture 10-11's mis-sorted panel, because it is a leak
+that validates cleanly while the validation shares it.
 :::
 
 ## Component 2: the outcome token decorator, and the exposure that is not there
@@ -956,10 +967,11 @@ class ICLLayer(torch.nn.Module):
 
 The decoder mapping the CLS token to a probability is taken from the base
 model and held fixed. The paper's argument for freezing it is an information
-bottleneck: the ICL mechanism must express itself as a movement within the
-CLS token space that the existing decoder already reads, which preserves the
-base model's calibration and regularises what in-context learning is allowed
-to do. Section 3.6's initialisation makes that concrete.
+bottleneck, because the ICL mechanism must then express itself as a movement
+within the CLS token space that the existing decoder already reads. Hence
+the base model's calibration is preserved and what in-context learning is
+allowed to do is regularised, and section 3.6's initialisation makes that
+concrete.
 
 ## The proposition, and its arithmetic
 
@@ -975,10 +987,12 @@ $a_{i,j} = 0$ for every $j$ that is another target. So the head returns a
 credibility blend of the target's own signal and the outcome-enriched
 signals of its neighbours, and the blend weights are the attention row.
 
-This is exact algebra rather than analogy, exactly as lecture 10-11 found
-for the CLS token's own row, and it is worth checking numerically before any
-weight is interpreted. Two things must hold: the row must sum to one, and
-the target-to-target weights must be exactly zero.
+Indeed this is exact algebra rather than analogy, exactly as lecture 10-11
+found for the CLS token's own row. Nevertheless it is worth checking
+numerically before any weight is interpreted, because an arithmetic identity
+that fails in code is a masking bug rather than a proposition. Two things
+must hold: the row must sum to one, and the target-to-target weights must be
+exactly zero.
 
 ## Identity initialisation
 
@@ -1812,7 +1826,8 @@ times Estonia's.
 So the governance question that survives is not "does this prediction wobble
 when the pool is resampled?" but "whose experience is in the pool, and is it
 the right population for this applicant?" That is a representativeness
-question, and it is the one CRR Article 174(c) already asks.
+question, and it is the one Article 174(c) of the Capital Requirements
+Regulation (CRR) already asks.
 
 ## A prior whose training data cannot be shown
 
@@ -1986,12 +2001,12 @@ only of retrieving in the fitted model's own space.
 
 # Copyright and attribution {.unnumbered}
 
-The architecture, the mathematics and the notation are those of
+The architecture, the mathematics, and the notation are those of
 Scognamiglio, Maggi, Wüthrich and Richman, from lecture 12 of the summer
 school *Deep Learning for Actuarial Modeling* and from the lecture notes at
 [SSRN 5162304](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304),
 provided under CC BY-NC. The credit adaptation, the implementation, the
-datasets and every measurement reported above are Mario Ervedosa's, and any
+datasets, and every measurement reported above are Mario Ervedosa's, and any
 error in them is his.
 
 # References {.unnumbered}

@@ -514,4 +514,24 @@ uses `C(Education)`, so this only bites in scratchpad scripts, where it cost a d
    because a slow MathJax CDN yields raw TeX in a PDF that still exits zero.
 4. This note, converted from contract to register. Done.
 5. An `index.html` entry, and the lecture count moved from eighteen to nineteen there and in
-   CLAUDE.md's directory table, with a results summary in the table entry.
+   CLAUDE.md's directory table, with a results summary in the table entry. Done.
+6. `credit_lectures/12_credit-foundation-models_grading-report.md`, from
+   `writing-guidelines-grader`. Done. It found eleven real breaches, six `M10` serial commas
+   and five `J9` abbreviations undefined on first use, and no judgement-criterion breach at
+   all. Two exemptions are recorded there as decisions rather than oversights: `M10` is not
+   applied to author lists, because doing so here alone would make one document of nineteen
+   inconsistent in its citation format, and `GDPR` is left unexpanded because "the UK GDPR" is
+   a defined term in UK statute. `J25` stands as a warn at a document rate of 2.05 per 100
+   words against the 2.5 floor, raised from 1.76 by rewriting the nine weakest sections, four
+   of which carried no connective at all. The report records the per-section table so the
+   verdict can be checked without a rerun.
+
+## A note on render economics, learnt the hard way
+
+The lecture took **four** renders at roughly thirty minutes each, and three of them were
+avoidable. The order that would have taken one: measure everything in scratchpad scripts,
+run the grader's mechanical and `J25` sweeps against the drafted prose **before** rendering,
+then render once and verify. Instead the sequence was render, correct four figures, render,
+add the retrieval diagnosis after review, render, fix eleven grader breaches, render. A
+prose-only edit costs a full re-render here because the figures are computed at render time,
+so batch every prose change before starting one.

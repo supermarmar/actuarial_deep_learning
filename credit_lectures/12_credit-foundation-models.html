@@ -210,8 +210,8 @@ window.Quarto = {
 <h1 class="unnumbered">Introduction</h1>
 <p>Every lecture in this series so far has fitted its model on the book it then scored. Lecture 12 breaks that pattern twice over. A <strong>foundation model</strong> carries a prior learned somewhere else entirely, and <strong>in-context learning</strong> supplies experience at prediction time rather than at fitting time, so neither one is fully described by the weights a lender would document.</p>
 <p>The question this lecture asks is narrower than the course’s, and it is set by what lectures 10 and 11 found. There the Credibility Transformer’s explicit gate behaved exactly as described and bought no accuracy, its sweep spanning 0.213 against a seed standard deviation of 0.126, and its implicit credibility weight turned out to be a property of the fit rather than of the borrower. Consequently the honest question here is not whether in-context learning is impressive. It is whether retrieved context delivers what a learned prior did not. That standard deviation of 0.126 is the yardstick, and it is quoted again at every deviance table below.</p>
-<p>Credit reframes the course’s motivation as well. Insurance lecture 12 motivates credibility with small portfolios, new products, rare events and new vehicle models. A lender’s version is sharper, because lenders open and close whole books: a new country, a new product, a segment whose default history does not exist yet. Bondora supplies a real instance rather than a constructed one, and section 4 uses it.</p>
-<div id="0d02b04a" class="cell" data-execution_count="1">
+<p>Credit reframes the course’s motivation as well. Insurance lecture 12 motivates credibility with small portfolios, new products, rare events, and new vehicle models. A lender’s version is sharper, because lenders open and close whole books: a new country, a new product, a segment whose default history does not exist yet. Bondora supplies a real instance rather than a constructed one, and section 4 uses it.</p>
+<div id="489f3930" class="cell" data-execution_count="1">
 <details class="code-fold">
 <summary>Imports and shared settings</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
@@ -248,8 +248,8 @@ window.Quarto = {
 <h1 data-number="1"><span class="header-section-number">1</span> Foundation models as a model class</h1>
 <section id="what-the-term-means" class="level2" data-number="1.1">
 <h2 data-number="1.1" class="anchored" data-anchor-id="what-the-term-means"><span class="header-section-number">1.1</span> What the term means</h2>
-<p>A <strong>foundation model</strong> is trained on a broad and diverse corpus and then transfers to many downstream tasks with minimal task-specific change. Three properties travel with the definition: scale, in parameters and in training tokens; general representations, meaning the learned features are not tied to one task; and versatile adaptation, meaning the same weights serve many jobs.</p>
-<p>The backbone is almost always a Transformer with autoregressive generation, which lectures 10 and 11 built. Capability then follows a joint power law in compute, data and parameters (Kaplan et al., 2020), refined by Hoffmann et al.&nbsp;(2022) into the compute-optimal balance that told the field to budget tokens rather than parameters alone.</p>
+<p>A <strong>foundation model</strong> is trained on a broad and diverse corpus and then transfers to many downstream tasks with minimal task-specific change. Three properties travel with the definition: scale, in parameters and in training tokens; general representations, meaning the learned features are not tied to one task; and versatile adaptation, meaning the same weights serve many jobs. In particular the third property is what makes the term useful, since a model that transferred only to tasks resembling its training corpus would be a pretrained model and nothing more.</p>
+<p>The backbone is almost always a Transformer with autoregressive generation, which lectures 10 and 11 built. Capability then follows a joint power law in compute, data, and parameters (Kaplan et al., 2020). However that law was initially read as a licence to grow parameters, and Hoffmann et al.&nbsp;(2022) corrected it into the compute-optimal balance that told the field to budget tokens as well.</p>
 </section>
 <section id="the-model-class" class="level2" data-number="1.2">
 <h2 data-number="1.2" class="anchored" data-anchor-id="the-model-class"><span class="header-section-number">1.2</span> The model class</h2>
@@ -266,20 +266,20 @@ p_\theta(Y = k \mid \boldsymbol{x}) = \frac{\exp\{f_{k,\theta}(\boldsymbol{x})\}
 <p><span class="math display">\[
 \theta^\star_{\rm pre} \in \arg\max_{\theta \in \Theta} \sum_t \log p_\theta(Y = x_{t+1} \mid x_{1:t}),
 \]</span></p>
-<p>which is the same maximum-likelihood principle lecture 2 applied to a logistic GLM, differing in the size of <span class="math inline">\(\Theta\)</span> and in the fact that the response at step <span class="math inline">\(t\)</span> is the covariate at step <span class="math inline">\(t+1\)</span>.</p>
+<p>which is the same maximum-likelihood principle lecture 2 applied to a logistic generalised linear model (GLM), differing in the size of <span class="math inline">\(\Theta\)</span> and in the fact that the response at step <span class="math inline">\(t\)</span> is the covariate at step <span class="math inline">\(t+1\)</span>.</p>
 <p>Note the notation. <span class="math inline">\(K^{\rm cls}\)</span> carries the class count here because section 3 needs <span class="math inline">\(K\)</span> for the number of retrieved neighbours, and a twelve-month default response has <span class="math inline">\(K^{\rm cls} = 2\)</span> throughout, so the softmax above reduces to the logistic link this series has used since lecture 2.</p>
 </section>
 <section id="adaptation-and-what-each-rung-means-for-a-lender" class="level2" data-number="1.3">
 <h2 data-number="1.3" class="anchored" data-anchor-id="adaptation-and-what-each-rung-means-for-a-lender"><span class="header-section-number">1.3</span> Adaptation, and what each rung means for a lender</h2>
-<p>Adaptation is where a foundation model becomes a credit model, and the options form a ladder from cheapest to most invasive.</p>
+<p>Adaptation is where a foundation model becomes a credit model, and the options form a ladder from cheapest to most invasive. Note that the rungs differ in what they leave a lender owning, which matters more here than their compute cost.</p>
 <ul>
 <li><strong>In-context learning (ICL).</strong> Put demonstrations <span class="math inline">\(\mathcal{C}\)</span> in the input and evaluate <span class="math inline">\(f_{\theta^\star_{\rm pre}}([\mathcal{C}, \boldsymbol{x}])\)</span> (Brown et al., 2020). No weight changes at all.</li>
 <li><strong>Retrieval-augmented generation (RAG).</strong> Fetch relevant documents and condition on them. Again no weight changes.</li>
 <li><strong>Parameter-efficient fine-tuning (PEFT), including low-rank adaptation (LoRA).</strong> Train a small number of added parameters and freeze the rest.</li>
 <li><strong>Full fine-tuning.</strong> Train everything, which is the most expensive rung and the only one that produces a model whose weights are wholly yours.</li>
 </ul>
-<p>Each rung reads differently in a lending context, and the first thing worth saying is that lenders have used the bottom rung for decades without calling it that. A <strong>bureau score</strong> is a pretrained prior: somebody else fitted it, on a population you cannot inspect, and you consume it as a covariate. The governance apparatus around bureau scores, meaning the vendor’s population documentation and the lender’s own monitoring, is therefore the closest existing precedent for what section 5 argues a tabular foundation model would need.</p>
-<p>RAG has an obvious home over a credit policy manual, where the question “does this application breach policy?” is a retrieval problem before it is a modelling one. That use is a document task rather than a scoring task, so it sits outside this series’ scope; it is named here because it is the rung most likely to reach a lending operation first.</p>
+<p>Each rung reads differently in a lending context, and the first thing worth saying is that lenders have used the bottom rung for decades without calling it that. A <strong>bureau score</strong> is a pretrained prior, since somebody else fitted it, on a population you cannot inspect, and you consume it as a covariate. Consequently the governance apparatus around bureau scores, meaning the vendor’s population documentation and the lender’s own monitoring, is the closest existing precedent for what section 5 argues a tabular foundation model would need.</p>
+<p>Similarly RAG has an obvious home over a credit policy manual, where the question “does this application breach policy?” is a retrieval problem before it is a modelling one. That use is a document task rather than a scoring task, so it sits outside this series’ scope. Nevertheless it is named here, because it is the rung most likely to reach a lending operation first.</p>
 <p>In-context learning over a retrieved set of similar borrowers is the rung sections 3 and 4 build, and it is the one that changes what a credit decision is made of.</p>
 </section>
 <section id="the-gpt-series-briefly" class="level2" data-number="1.4">
@@ -293,7 +293,7 @@ p_\theta(Y = k \mid \boldsymbol{x}) = \frac{\exp\{f_{k,\theta}(\boldsymbol{x})\}
 <section id="why-tabular-data-resists-the-recipe" class="level2" data-number="2.1">
 <h2 data-number="2.1" class="anchored" data-anchor-id="why-tabular-data-resists-the-recipe"><span class="header-section-number">2.1</span> Why tabular data resists the recipe</h2>
 <p>Language and images gave foundation models two gifts that a credit application table withholds. Tokens share a vocabulary across every document, and pixels share a grid across every image, so a model pretrained on one corpus meets familiar inputs in the next. A table’s columns share nothing: <code>IncomeTotal</code> in euros and <code>Education</code> as a code are different kinds of object, they arrive in an arbitrary order, and the next lender’s table has different columns entirely.</p>
-<p>Four consequences follow. Features are heterogeneous and mixed in type. Missingness is informative rather than incidental, as lecture 2’s <code>HomeOwnershipType</code> showed. There is no natural order across columns, so a model must be permutation invariant or else learn an ordering that means nothing. And gradient-boosted trees set a high baseline that deep tabular models have repeatedly failed to clear.</p>
+<p>Four consequences follow. Features are heterogeneous and mixed in type. Furthermore missingness is informative rather than incidental, as lecture 2’s <code>HomeOwnershipType</code> showed. There is no natural order across columns, so a model must be permutation invariant or else learn an ordering that means nothing. Above all, gradient-boosted trees set a high baseline that deep tabular models have repeatedly failed to clear, whereas language and vision offered no comparable incumbent.</p>
 <p>The foundation approach answers by pre-training a <strong>cross-table prior</strong>: a model learns, over many synthetic tables, what tabular relationships tend to look like, and then reuses that prior on a table it has never seen.</p>
 </section>
 <section id="the-families" class="level2" data-number="2.2">
@@ -344,7 +344,7 @@ p_\theta(Y = k \mid \boldsymbol{x}) = \frac{\exp\{f_{k,\theta}(\boldsymbol{x})\}
 </tr>
 </tbody>
 </table>
-<p>One attribution is worth correcting, because the course misplaces it and this series has already checked the primary text. Feature tokenisation, meaning the treatment of a continuous covariate as a token through a small network, belongs to the <strong>FT-Transformer</strong> of Gorishniy, Rubachev, Khrulkov and Babenko (2021). Lecture 10-11 section 3.2 uses that construction and cites it correctly, and <code>notes/transformer-lecture-structure.md</code> records the verification.</p>
+<p>One attribution is worth correcting, because the course misplaces it and this series has already checked the primary text. Feature tokenisation, meaning the treatment of a continuous covariate as a token through a small network, belongs to the <strong>FT-Transformer</strong> of Gorishniy, Rubachev, Khrulkov and Babenko (2021). Lecture 10-11 section 3.2 uses that construction and cites it correctly, and <code>notes/transformer-lecture-structure.md</code> records the verification. In contrast the course attributes it to TabM, which proposes no tokeniser at all, so the error is one of attribution rather than of substance.</p>
 </section>
 <section id="tabpfn-as-approximate-bayesian-inference" class="level2" data-number="2.3">
 <h2 data-number="2.3" class="anchored" data-anchor-id="tabpfn-as-approximate-bayesian-inference"><span class="header-section-number">2.3</span> TabPFN as approximate Bayesian inference</h2>
@@ -353,7 +353,7 @@ p_\theta(Y = k \mid \boldsymbol{x}) = \frac{\exp\{f_{k,\theta}(\boldsymbol{x})\}
 p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D}) = \int p(y^\star \mid \boldsymbol{x}^\star, \boldsymbol{\theta})\, p(\boldsymbol{\theta} \mid \mathcal{D})\, \mathrm{d}\boldsymbol{\theta},
 \]</span></p>
 <p>which is intractable for any interesting model class. TabPFN instead learns a function <span class="math inline">\(f_\psi(\boldsymbol{x}^\star, \mathcal{D})\)</span> to approximate that posterior directly, by minimising expected negative log-likelihood over tasks drawn from a synthetic prior (Müller et al., 2021). The training distribution is therefore not data at all. It is a prior over data-generating mechanisms, and the network learns to do inference under it.</p>
-<p>At prediction time the whole context dataset is fed in alongside the query, and one forward pass returns the predictive distribution. Fitting, in the usual sense, does not happen. TabPFN v1 alternates attention over columns and over rows, which handles the missing column order and costs quadratically in the number of rows, and that cost is what bounds the family’s sample size. TabICL answers by embedding each row to a fixed dimension first, then running in-context learning over those compact embeddings, which reaches about <span class="math inline">\(5 \times 10^5\)</span> rows (Qu et al., 2025).</p>
+<p>At prediction time the whole context dataset is fed in alongside the query, and one forward pass returns the predictive distribution. Consequently fitting, in the usual sense, does not happen. TabPFN v1 alternates attention over columns and over rows, which handles the missing column order and yet costs quadratically in the number of rows, and that cost is what bounds the family’s sample size. Alternatively TabICL embeds each row to a fixed dimension first and then runs in-context learning over those compact embeddings, which reaches about <span class="math inline">\(5 \times 10^5\)</span> rows (Qu et al., 2025).</p>
 <div class="callout callout-style-default callout-note callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -370,8 +370,8 @@ p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D}) = \int p(y^\star \mid \boldsym
 </section>
 <section id="the-bondora-book" class="level2" data-number="2.4">
 <h2 data-number="2.4" class="anchored" data-anchor-id="the-bondora-book"><span class="header-section-number">2.4</span> The Bondora book</h2>
-<p>The frame, the filters and the seed-1 split below are those of lectures 4 to 11, so the deviances chain to theirs without rescaling.</p>
-<div id="a3583659" class="cell" data-execution_count="2">
+<p>The frame, the filters, and the seed-1 split below are those of lectures 4 to 11, so the deviances chain to theirs without rescaling.</p>
+<div id="952af4f8" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>The Bondora modelling frame, unchanged from lectures 4 to 11</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dat <span class="op">=</span> pl.read_parquet(<span class="st">"../data/bondora_pd.parquet"</span>)</span>
@@ -443,7 +443,7 @@ p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D}) = \int p(y^\star \mid \boldsym
 <p>The course claims these architectures are strong where the sample is small and may struggle on unbalanced data. Both halves are testable here, so this section tests them.</p>
 <p>The design is a nested learning curve. Three independent subsamples of the learning sample are drawn at each of six sizes, and at each size three models are fitted: lecture 2’s logistic GLM, the Credibility Transformer of section 3, and TabPFN v2. Every model is then scored on one fixed test sample so the arms are comparable.</p>
 <p>One departure from the rest of the series is forced and is worth stating plainly. TabPFN’s cost grows quadratically in the size of its context, and scoring all 29,734 test rows at every point on the curve would dominate the render, so the curve is scored on a fixed random 3,000-row subsample of that test set. Consequently the curve’s deviances are comparable <strong>with each other</strong> and sit slightly above the series’ full-test figures. Section 3 returns to the full test set for the numbers that chain.</p>
-<div id="4277f0eb" class="cell" data-execution_count="3">
+<div id="4c154034" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>The three arms of the learning curve</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tabpfn <span class="im">import</span> TabPFNClassifier</span>
@@ -493,7 +493,7 @@ p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D}) = \int p(y^\star \mid \boldsym
 </div>
 </div>
 <p>The third arm is lectures 10 and 11’s Credibility Transformer, imported unchanged. That lecture owns the architecture, so the cell below is folded and cited rather than re-derived; section 3 explains only the parts this lecture adds.</p>
-<div id="a6a1a5d0" class="cell" data-execution_count="4">
+<div id="7bba90a5" class="cell" data-execution_count="4">
 <details class="code-fold">
 <summary>Lecture 10-11’s Credibility Transformer, unchanged</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> attention(Q, K, V, mask<span class="op">=</span><span class="va">None</span>):</span>
@@ -615,7 +615,7 @@ p(y^\star \mid \boldsymbol{x}^\star, \mathcal{D}) = \int p(y^\star \mid \boldsym
 <span id="cb5-117"><a href="#cb5-117" aria-hidden="true" tabindex="-1"></a>                     gate<span class="op">=</span><span class="va">False</span>, force<span class="op">=</span>force).numpy().ravel()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
-<div id="927e1db8" class="cell" data-execution_count="5">
+<div id="c0d69c66" class="cell" data-execution_count="5">
 <details class="code-fold">
 <summary>Running the curve: three sizes-by-draws grid, three arms</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>NS <span class="op">=</span> [<span class="dv">250</span>, <span class="dv">500</span>, <span class="dv">1000</span>, <span class="dv">2000</span>, <span class="dv">5000</span>, <span class="dv">10000</span>]</span>
@@ -665,10 +665,10 @@ n
 </div>
 </div>
 <p>Three readings follow, and the first is the one the course predicts.</p>
-<p><strong>TabPFN leads wherever the sample is small, and its margin closes fast.</strong> At 250 training rows it reaches 113.3 against the Credibility Transformer’s 119.6, on a subsample whose null model scores 122.1. So the network closes 2.5 of the 8.8 deviance points the foundation model closes against that null, a little over a quarter, on identical data. By 10,000 rows the three arms span 0.16 of a deviance point in total, which is the same order as the seed spread of 0.126 and therefore not a ranking worth reading. Consequently the pretrained prior behaves exactly as advertised: it substitutes for data a lender does not have, and it stops paying once the lender has enough. The AUCs tell the same story more starkly, since TabPFN reaches 0.686 on 250 rows where the network manages 0.595 and the GLM 0.569, and all three converge to about 0.703 by 10,000.</p>
+<p><strong>TabPFN leads wherever the sample is small, and its margin closes fast.</strong> At 250 training rows it reaches 113.3 against the Credibility Transformer’s 119.6, on a subsample whose null model scores 122.1. So the network closes 2.5 of the 8.8 deviance points the foundation model closes against that null, a little over a quarter, on identical data. By 10,000 rows the three arms span 0.16 of a deviance point in total, which is the same order as the seed spread of 0.126 and therefore not a ranking worth reading. Consequently the pretrained prior behaves exactly as advertised: it substitutes for data a lender does not have, and it stops paying once the lender has enough. Similarly the area under the receiver operating characteristic curve (AUC) tells the story more starkly, since TabPFN reaches 0.686 on 250 rows where the network manages 0.595 and the GLM 0.569, and all three converge to about 0.703 by 10,000.</p>
 <p><strong>The GLM does not merely lose at small <span class="math inline">\(n\)</span>; it separates.</strong> Its mean deviance runs from 1,901 at 250 rows to 1,300 at 2,000 before collapsing to 111.6 at 5,000, because maximum likelihood on around thirty parameters and a few hundred observations drives coefficients towards infinity whenever a covariate pattern is perfectly classified. A fitted probability of essentially zero attached to an observed default then costs the deviance without limit. The behaviour is erratic as well as bad, since whether any pattern separates depends on the draw. This is worth dwelling on, because it is the practical case for a prior rather than a rhetorical one: the classical estimator has no mechanism to shrink, so on a genuinely small book it fails loudly and needs either penalisation, classing (lecture <code>F1</code>), or a prior from somewhere else.</p>
 <p><strong>The plot below shows the shape.</strong> Note the logarithmic vertical axis, without which the GLM’s small-sample behaviour would flatten everything else into a line.</p>
-<div id="bad58e82" class="cell" data-execution_count="6">
+<div id="8be98617" class="cell" data-execution_count="6">
 <details class="code-fold">
 <summary>The learning curve</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">9</span>, <span class="dv">4</span>))</span>
@@ -702,7 +702,7 @@ n
 <section id="what-twelve-times-the-data-is-worth" class="level2" data-number="2.6">
 <h2 data-number="2.6" class="anchored" data-anchor-id="what-twelve-times-the-data-is-worth"><span class="header-section-number">2.6</span> What twelve times the data is worth</h2>
 <p>The curve stops at 10,000 rows because TabPFN’s cost grows quadratically in its context and its pretraining regime does not extend much beyond that. The comparison a lender actually faces is therefore between TabPFN at its ceiling and a network trained on everything.</p>
-<div id="559b55b6" class="cell" data-execution_count="7">
+<div id="e4586270" class="cell" data-execution_count="7">
 <details class="code-fold">
 <summary>TabPFN at its ceiling against the full-sample Credibility Transformer</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>full_tr <span class="op">=</span> idx_learn[np.random.default_rng(<span class="dv">101</span>).permutation(<span class="bu">len</span>(idx_learn))[:<span class="dv">10000</span>]]</span>
@@ -740,9 +740,9 @@ on the full 29,734-row test sample, which is the series' scale
 </section>
 <section id="calibration-and-the-balance-property" class="level2" data-number="2.7">
 <h2 data-number="2.7" class="anchored" data-anchor-id="calibration-and-the-balance-property"><span class="header-section-number">2.7</span> Calibration, and the balance property</h2>
-<p>Discrimination is only half of what a probability of default has to deliver. Lecture 7 established the <strong>balance property</strong>, namely that a model’s fitted probabilities should sum to the observed number of defaults, and showed why a portfolio-level bias survives any amount of ranking accuracy. TabPFN carries no offset, no exposure and no intercept a modeller can set, so there is no mechanism inside it that enforces the property.</p>
+<p>Discrimination is only half of what a probability of default has to deliver. Lecture 7 established the <strong>balance property</strong>, namely that a model’s fitted probabilities should sum to the observed number of defaults, and showed why a portfolio-level bias survives any amount of ranking accuracy. TabPFN carries no offset, no exposure, and no intercept a modeller can set, so there is no mechanism inside it that enforces the property.</p>
 <p>One caution has to come before the table. The comparison sample holds 3,000 loans, so its own observed default rate carries a standard error of about 0.8 percentage points, and the learning sample’s rate differs from it by about one percentage point through sampling alone. A shortfall is therefore only worth calling a bias if it is large against that standard error.</p>
-<div id="29781cf3" class="cell" data-execution_count="8">
+<div id="0a7d23d7" class="cell" data-execution_count="8">
 <details class="code-fold">
 <summary>Portfolio-level calibration on the test subsample</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>obs <span class="op">=</span> yte.mean()</span>
@@ -784,12 +784,12 @@ on the full 29,734-row test sample
 </section>
 <section id="the-in-context-learning-credibility-transformer" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> The in-context learning credibility transformer</h1>
-<p>Section 2’s foundation model carries a prior learned on synthetic tasks. This section takes the opposite route to the same idea: keep a model fitted on this book, and give it, at prediction time, the observed outcomes of the most similar borrowers. That is the <strong>in-context learning credibility transformer</strong> of Padayachy, Richman, Scognamiglio and Wüthrich (2025), and it is built in five components on top of lecture 10-11’s model.</p>
+<p>Section 2’s foundation model carries a prior learned on synthetic tasks. This section takes the opposite route to the same idea: keep a model fitted on this book, and give it, at prediction time, the observed outcomes of the most similar borrowers. That is the <strong>in-context learning credibility transformer</strong> (ICL-CT) of Padayachy, Richman, Scognamiglio and Wüthrich (2025). Consequently it is built in five components on top of lecture 10-11’s model, and each is taken in turn below.</p>
 <section id="component-0-the-base-credibility-transformer" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="component-0-the-base-credibility-transformer"><span class="header-section-number">3.1</span> Component 0: the base credibility transformer</h2>
-<p>The base model is lecture 10-11’s Credibility Transformer at <span class="math inline">\(\alpha = 0.95\)</span>, fitted in this lecture rather than quoted from that one, because a single fit on this book is one draw from a distribution whose standard deviation is 0.126 and a copied number would not reproduce. It does two jobs. Its CLS token embedding is the space in which similar borrowers are found, and its decoder is frozen and reused, so the ICL mechanism is confined to the CLS token space.</p>
+<p>The base model is lecture 10-11’s Credibility Transformer at <span class="math inline">\(\alpha = 0.95\)</span>, fitted in this lecture rather than quoted from that one, because a single fit on this book is one draw from a distribution whose standard deviation is 0.126 and a copied number would not reproduce. It does two jobs. Its classification (CLS) token embedding, which lecture 10-11 built as the single token the decoder reads, is the space in which similar borrowers are found. Furthermore its decoder is frozen and reused, so the ICL mechanism is confined to that CLS token space.</p>
 <p>It is the same fit section 2.7 already ran, reused here rather than repeated, since a second identical fit would cost two minutes of render time and produce the same weights.</p>
-<div id="d4052790" class="cell" data-execution_count="9">
+<div id="4c46bba9" class="cell" data-execution_count="9">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>base_ct, base_stop <span class="op">=</span> m_full, stop_full</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>p_base_l <span class="op">=</span> predict(base_ct, D, idx_learn)</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>p_base_t <span class="op">=</span> p_full_all</span>
@@ -806,7 +806,7 @@ on the full 29,734-row test sample
 <h2 data-number="3.2" class="anchored" data-anchor-id="component-1-context-retrieval"><span class="header-section-number">3.2</span> Component 1: context retrieval</h2>
 <p>Similarity is measured in the base model’s CLS token space by cosine similarity, which is the paper’s choice and a sensible one here: the CLS token is what the decoder reads, so two borrowers with nearby CLS tokens are borrowers the fitted model treats alike.</p>
 <p>For each target the top <span class="math inline">\(K = 64\)</span> neighbours are taken, the results are unioned across a target batch of <span class="math inline">\(m = 200\)</span>, and the union is capped at <span class="math inline">\(c = 1000\)</span> context instances by keeping those retrieved most often.</p>
-<div id="132e3cab" class="cell" data-execution_count="10">
+<div id="188eee79" class="cell" data-execution_count="10">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cls_tokens(model, D_, idx, batch<span class="op">=</span><span class="dv">20000</span>):</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""The CLS token for each row, which is the retrieval space."""</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    out <span class="op">=</span> []</span>
@@ -842,7 +842,7 @@ on the full 29,734-row test sample
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>During training the targets sit inside the pool the context is drawn from, and a borrower is always its own nearest neighbour. Retrieving a target as its own context would therefore hand the model that target’s observed response and produce a model that scores beautifully in the backtest and predicts nothing. The <code>exclude</code> mask above is what prevents it, and it is the same class of error as lecture 10-11’s mis-sorted panel: a leak that validates cleanly because the validation shares it.</p>
+<p>During training the targets sit inside the pool the context is drawn from, and a borrower is always its own nearest neighbour. Retrieving a target as its own context would therefore hand the model that target’s observed response, and the result would score beautifully in the backtest while predicting nothing. Hence the <code>exclude</code> mask above. Indeed this is the same class of error as lecture 10-11’s mis-sorted panel, because it is a leak that validates cleanly while the validation shares it.</p>
 </div>
 </div>
 </section>
@@ -857,7 +857,7 @@ on the full 29,734-row test sample
 <p>That weight is what makes this a credibility construction. A policy observed for three years contributes its outcome nearly in full; one observed for a month contributes a shrunken version. In an insurance pricing table, where <span class="math inline">\(v\)</span> is exposure in policy-years and varies genuinely across rows, the weight carries real per-policy content.</p>
 <p><strong>Bondora’s fixed-horizon table has no exposure.</strong> Lecture <code>D1</code> owns this point: <code>default_12m</code> is an indicator over a twelve-month window that every seasoned loan carries identically by construction, so there is no <span class="math inline">\(v_j\)</span> to put in the formula. Setting <span class="math inline">\(v \equiv 1\)</span> collapses the weight to the constant <span class="math inline">\(1/(1+\kappa)\)</span>, and <span class="math inline">\(\kappa\)</span> stops being a credibility coefficient and becomes a plain shrinkage scalar applied to every retrieved outcome alike.</p>
 <p>Two alternatives exist and both belong to other lectures. The survival table’s observed duration is the honest exposure analogue, and it changes the estimand, which is the <code>S</code> track’s subject. The loan <code>Amount</code> would make the decorator a loss-weighted construction rather than a credibility one, which is exposure at default rather than statistical exposure. Neither is substituted in here, because manufacturing a <span class="math inline">\(v\)</span> would make the formula look transferable when the transfer is precisely what fails.</p>
-<div id="40425cf6" class="cell" data-execution_count="11">
+<div id="b8f4b0b1" class="cell" data-execution_count="11">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ICLCT(torch.nn.Module):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""Base CT plus the outcome decorator and two causally masked ICL layers."""</span></span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -885,7 +885,7 @@ on the full 29,734-row test sample
 <section id="component-3-causal-self-attention" class="level2" data-number="3.4">
 <h2 data-number="3.4" class="anchored" data-anchor-id="component-3-causal-self-attention"><span class="header-section-number">3.4</span> Component 3: causal self-attention</h2>
 <p>The context and target tokens are concatenated and a mask blocks target-to-target attention, so a target reads the context and itself and nothing else. Without the mask the targets in a batch would read each other’s tokens and, through their shared neighbours, their own responses.</p>
-<div id="4a0590e3" class="cell" data-execution_count="12">
+<div id="84682cf4" class="cell" data-execution_count="12">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ICLLayer(torch.nn.Module):</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""One causally masked attention layer: targets query [context | self]."""</span></span>
 <span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -917,7 +917,7 @@ on the full 29,734-row test sample
 </section>
 <section id="component-4-the-frozen-decoder" class="level2" data-number="3.5">
 <h2 data-number="3.5" class="anchored" data-anchor-id="component-4-the-frozen-decoder"><span class="header-section-number">3.5</span> Component 4: the frozen decoder</h2>
-<p>The decoder mapping the CLS token to a probability is taken from the base model and held fixed. The paper’s argument for freezing it is an information bottleneck: the ICL mechanism must express itself as a movement within the CLS token space that the existing decoder already reads, which preserves the base model’s calibration and regularises what in-context learning is allowed to do. Section 3.6’s initialisation makes that concrete.</p>
+<p>The decoder mapping the CLS token to a probability is taken from the base model and held fixed. The paper’s argument for freezing it is an information bottleneck, because the ICL mechanism must then express itself as a movement within the CLS token space that the existing decoder already reads. Hence the base model’s calibration is preserved and what in-context learning is allowed to do is regularised, and section 3.6’s initialisation makes that concrete.</p>
 </section>
 <section id="the-proposition-and-its-arithmetic" class="level2" data-number="3.6">
 <h2 data-number="3.6" class="anchored" data-anchor-id="the-proposition-and-its-arithmetic"><span class="header-section-number">3.6</span> The proposition, and its arithmetic</h2>
@@ -927,7 +927,7 @@ on the full 29,734-row test sample
 + \sum_{j \in \mathcal{I}_{\rm context}} a_{i,j}\, \boldsymbol{z}^{\rm FNN}_V\!\left( \boldsymbol{c}^{\rm decor}(\boldsymbol{x}_j) \right),
 \]</span></p>
 <p>with <span class="math inline">\(a_{i,j} \geq 0\)</span>, with <span class="math inline">\(a_{i,i} + \sum_j a_{i,j} = 1\)</span>, and with <span class="math inline">\(a_{i,j} = 0\)</span> for every <span class="math inline">\(j\)</span> that is another target. So the head returns a credibility blend of the target’s own signal and the outcome-enriched signals of its neighbours, and the blend weights are the attention row.</p>
-<p>This is exact algebra rather than analogy, exactly as lecture 10-11 found for the CLS token’s own row, and it is worth checking numerically before any weight is interpreted. Two things must hold: the row must sum to one, and the target-to-target weights must be exactly zero.</p>
+<p>Indeed this is exact algebra rather than analogy, exactly as lecture 10-11 found for the CLS token’s own row. Nevertheless it is worth checking numerically before any weight is interpreted, because an arithmetic identity that fails in code is a masking bug rather than a proposition. Two things must hold: the row must sum to one, and the target-to-target weights must be exactly zero.</p>
 </section>
 <section id="identity-initialisation" class="level2" data-number="3.7">
 <h2 data-number="3.7" class="anchored" data-anchor-id="identity-initialisation"><span class="header-section-number">3.7</span> Identity initialisation</h2>
@@ -938,7 +938,7 @@ on the full 29,734-row test sample
 <h2 data-number="3.8" class="anchored" data-anchor-id="the-three-training-phases"><span class="header-section-number">3.8</span> The three training phases</h2>
 <p>Phase one is the base model above. Phase two inserts the decorator and the ICL layers, freezes the base model outright and trains the new parts alone, which keeps the retrieval space fixed and lets the CLS tokens be computed once. Phase three unfreezes the encoder, keeps the decoder frozen and fine-tunes everything at a tenth of the learning rate.</p>
 <p>One departure from the paper is deliberate. Freezing the whole base model in phase two, rather than the decoder alone, is what makes the retrieval space constant during that phase; the paper’s retrieval is computed in the base model’s space in any case, so this removes a moving part rather than adding one. Validation is scored on a <strong>fixed</strong> set of context draws, re-seeded on every call, because re-drawing the context each epoch makes the early-stopping signal noisy enough to select an epoch at random.</p>
-<div id="a2f0e6a5" class="cell" data-execution_count="13">
+<div id="dfbccb6c" class="cell" data-execution_count="13">
 <details class="code-fold">
 <summary>Phases two and three</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_icl(base, D_, Z_learn, seed<span class="op">=</span><span class="dv">100</span>, kappa<span class="op">=</span><span class="fl">1.0</span>, n_layers<span class="op">=</span><span class="dv">2</span>, m<span class="op">=</span><span class="dv">200</span>, K<span class="op">=</span><span class="dv">64</span>,</span>
@@ -1034,7 +1034,7 @@ on the full 29,734-row test sample
 </section>
 <section id="fitting-it-and-checking-the-proposition" class="level2" data-number="3.9">
 <h2 data-number="3.9" class="anchored" data-anchor-id="fitting-it-and-checking-the-proposition"><span class="header-section-number">3.9</span> Fitting it, and checking the proposition</h2>
-<div id="62456315" class="cell" data-execution_count="14">
+<div id="f080f782" class="cell" data-execution_count="14">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>Z_learn <span class="op">=</span> cls_tokens(base_ct, D, idx_learn)</span>
 <span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>Z_test <span class="op">=</span> cls_tokens(base_ct, D, idx_test)</span>
 <span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>y_learn_t <span class="op">=</span> torch.tensor(yl, dtype<span class="op">=</span>torch.float32)</span>
@@ -1067,7 +1067,7 @@ ICL-CT out-of-sample 107.342   AUC 0.7250
            trace [107.3104, 107.3394, 107.3026, 107.2996, 107.3185]</code></pre>
 </div>
 </div>
-<div id="e7b4ea93" class="cell" data-execution_count="15">
+<div id="03993fa5" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>The attention row: does it sum to one, and is it flat?</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> torch.no_grad():</span>
@@ -1109,7 +1109,7 @@ ICL-CT out-of-sample 107.342   AUC 0.7250
 <section id="results-against-the-series" class="level2" data-number="3.10">
 <h2 data-number="3.10" class="anchored" data-anchor-id="results-against-the-series"><span class="header-section-number">3.10</span> Results against the series</h2>
 <p>Five seeds, each fitting a base model and then an ICL-CT on top of it. The comparison is paired within seed, which is what makes a difference of a tenth of a deviance point readable at all against a seed standard deviation of 0.126.</p>
-<div id="59c2af0e" class="cell" data-execution_count="16">
+<div id="f836683c" class="cell" data-execution_count="16">
 <details class="code-fold">
 <summary>Five paired fits</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>seed_rows <span class="op">=</span> [<span class="bu">dict</span>(seed<span class="op">=</span><span class="dv">100</span>, base<span class="op">=</span>dev(p_base_t, yt), icl<span class="op">=</span>dev(p_icl_t, yt),</span>
@@ -1170,7 +1170,7 @@ paired difference           mean +0.0115   sd 0.0319</code></pre>
 <section id="why-the-mechanism-finds-nothing-to-add" class="level2" data-number="3.11">
 <h2 data-number="3.11" class="anchored" data-anchor-id="why-the-mechanism-finds-nothing-to-add"><span class="header-section-number">3.11</span> Why the mechanism finds nothing to add</h2>
 <p>Three explanations are available, they are separable by measurement, and this section separates them. All three need a model that is actually doing in-context learning, so the first cell fits one: phase two to a fixed epoch budget, keeping the final state rather than the state section 3.8’s selection rule chose. Section 5.2 reuses it.</p>
-<div id="567eac5d" class="cell" data-execution_count="17">
+<div id="227eb14f" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>An actively trained ICL state</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> train_phase2_fixed(base, D_, Z_pool, seed<span class="op">=</span><span class="dv">100</span>, kappa<span class="op">=</span><span class="fl">1.0</span>, epochs<span class="op">=</span><span class="dv">8</span>,</span>
@@ -1222,7 +1222,7 @@ paired difference           mean +0.0115   sd 0.0319</code></pre>
 <section id="the-batch-context-is-barely-the-borrowers-own" class="level3" data-number="3.11.1">
 <h3 data-number="3.11.1" class="anchored" data-anchor-id="the-batch-context-is-barely-the-borrowers-own"><span class="header-section-number">3.11.1</span> The batch context is barely the borrower’s own</h3>
 <p>Section 3.1’s retrieval takes each target’s top <span class="math inline">\(K = 64\)</span> neighbours, unions them across a batch of <span class="math inline">\(m = 200\)</span> targets, and caps the union at <span class="math inline">\(c = 1000\)</span> by keeping the rows retrieved most often. That is the paper’s procedure. Whether it delivers a borrower its own neighbours depends on how much the 200 neighbourhoods overlap, which is a property of the book rather than of the architecture, so it is worth measuring.</p>
-<div id="eaffa17b" class="cell" data-execution_count="18">
+<div id="68d45292" class="cell" data-execution_count="18">
 <details class="code-fold">
 <summary>How much of a borrower’s own neighbourhood survives the cap</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>Zq <span class="op">=</span> torch.nn.functional.normalize(Z_test5[:<span class="dv">200</span>], dim<span class="op">=</span><span class="dv">1</span>)</span>
@@ -1256,7 +1256,7 @@ paired difference           mean +0.0115   sd 0.0319</code></pre>
 <section id="per-borrower-context-does-not-sharpen-the-row" class="level3" data-number="3.11.2">
 <h3 data-number="3.11.2" class="anchored" data-anchor-id="per-borrower-context-does-not-sharpen-the-row"><span class="header-section-number">3.11.2</span> Per-borrower context does not sharpen the row</h3>
 <p>The obvious next question is whether the flatness of section 3.9’s attention row is caused by that dilution. Scoring one target at a time makes the context exactly its own 64 neighbours, which is the sharpest context the mechanism can be given.</p>
-<div id="bdeaf206" class="cell" data-execution_count="19">
+<div id="baeeb321" class="cell" data-execution_count="19">
 <details class="code-fold">
 <summary>Batch context against per-borrower context</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> chunk_, label <span class="kw">in</span> ((<span class="dv">200</span>, <span class="st">"batch context, 200 targets"</span>),</span>
@@ -1293,7 +1293,7 @@ per-borrower context, one target: 64 context instances
 <section id="the-context-is-a-restatement-of-the-base-models-own-prediction" class="level3" data-number="3.11.3">
 <h3 data-number="3.11.3" class="anchored" data-anchor-id="the-context-is-a-restatement-of-the-base-models-own-prediction"><span class="header-section-number">3.11.3</span> The context is a restatement of the base model’s own prediction</h3>
 <p>The third explanation is the one that ties the other two together. Retrieval runs in the CLS token space, and the CLS token is what the decoder reads, so borrowers retrieved as neighbours are precisely those the base model already scores alike. If the mean response of a target’s neighbours tracks the base model’s own prediction, the context is telling the model what it already says.</p>
-<div id="1511545b" class="cell" data-execution_count="20">
+<div id="757492c6" class="cell" data-execution_count="20">
 <details class="code-fold">
 <summary>What the retrieved context knows</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>ctx_rate, tgt_pred <span class="op">=</span> [], []</span>
@@ -1329,7 +1329,7 @@ per-borrower context, one target: 64 context instances
 <section id="bondoras-slovak-book" class="level2" data-number="4.1">
 <h2 data-number="4.1" class="anchored" data-anchor-id="bondoras-slovak-book"><span class="header-section-number">4.1</span> Bondora’s Slovak book</h2>
 <p>The course’s zero-shot experiment remaps French regions totalling 10 per cent of exposure to an <em>unseen</em> category and asks whether in-context learning can price them. Credit supplies the same experiment without the remapping, because a lender’s segments genuinely appear and disappear.</p>
-<div id="e0f81152" class="cell" data-execution_count="21">
+<div id="17187bf6" class="cell" data-execution_count="21">
 <details class="code-fold">
 <summary>The four country books</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>by_country <span class="op">=</span> (g.groupby(<span class="st">"Country"</span>)</span>
@@ -1353,7 +1353,7 @@ SK         296        0.7061 2014-03-13 2015-01-05</code></pre>
 <section id="the-unseen-country-setup" class="level2" data-number="4.2">
 <h2 data-number="4.2" class="anchored" data-anchor-id="the-unseen-country-setup"><span class="header-section-number">4.2</span> The unseen-country setup</h2>
 <p>Slovakia is relabelled <em>unseen</em> and held out entirely, so every Slovak loan is a test row and none is available for fitting. A random 2 per cent of the three trained countries is relabelled <em>unseen</em> as well, which is what gives the level any training signal at all and mirrors what the course does with its small-exposure regions.</p>
-<div id="a3fddad6" class="cell" data-execution_count="22">
+<div id="8141062e" class="cell" data-execution_count="22">
 <details class="code-fold">
 <summary>Holding Slovakia out</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>is_sk <span class="op">=</span> (g[<span class="st">"Country"</span>] <span class="op">==</span> <span class="st">"SK"</span>).to_numpy()</span>
@@ -1378,7 +1378,7 @@ test  296 Slovak loans, default rate 0.7061, against a learning-sample rate of 0
 <section id="four-models-with-intervals" class="level2" data-number="4.3">
 <h2 data-number="4.3" class="anchored" data-anchor-id="four-models-with-intervals"><span class="header-section-number">4.3</span> Four models, with intervals</h2>
 <p>A point deviance on 296 rows is not readable, so every figure below carries a bootstrap interval over the test rows. Reporting one without the other would invite a comparison the sample cannot support.</p>
-<div id="eed14533" class="cell" data-execution_count="23">
+<div id="9259ee72" class="cell" data-execution_count="23">
 <details class="code-fold">
 <summary>Null, GLM, base CT and ICL-CT on the held-out Slovak book</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>g_cs <span class="op">=</span> g.copy()</span>
@@ -1441,7 +1441,7 @@ phase two best epoch 6, phase three best epoch 0</code></pre>
 </div>
 </div>
 <p>Separate intervals on two models scored over the same 296 loans understate how precisely their difference is known, because the resample is common to both. So the ICL-CT against the base model gets a paired bootstrap of its own.</p>
-<div id="7c2cafea" class="cell" data-execution_count="24">
+<div id="2e74d40c" class="cell" data-execution_count="24">
 <details class="code-fold">
 <summary>Paired bootstrap of the in-context gain</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>r_ <span class="op">=</span> np.random.default_rng(<span class="dv">5</span>)</span>
@@ -1468,7 +1468,7 @@ ICL-CT minus null      +38.855   95% CI [+28.930, +49.170]</code></pre>
 <p><strong>Both neural models are decisively worse than the null model.</strong> The base Credibility Transformer scores 236.6 and the ICL-CT 234.6, against the null model’s 195.8, and neither interval comes near the null’s. Predicting the portfolio average for every Slovak applicant would have been substantially better than either fitted network. That is the single most useful number in this lecture for anyone about to score a new segment with a model trained elsewhere.</p>
 <p><strong>Only the GLM beats the null, and only just.</strong> Its 185.7 against 195.8 is an improvement of about ten deviance points, and the two intervals overlap, so even that edge is not established on 296 loans. Its discrimination is real if modest at an AUC of 0.623, where both networks sit near 0.55 and are therefore close to uninformative on this segment. The reason is worth naming: the GLM’s country effect enters as one coefficient on an <em>unseen</em> level estimated from the 2,929 relabelled training rows, whereas the networks learn an embedding for that level and then interact it with everything else, which is exactly the flexibility that has nothing to generalise from here.</p>
 <p><strong>In-context learning helps here, by about two deviance points, and the sign depends on the training budget.</strong> The paired difference is <span class="math inline">\(-1.99\)</span> with a bootstrap interval that excludes zero and every one of 2,000 resamples improving, so on the sampling uncertainty of these 296 loans the gain looks settled. It is not. Training the same mechanism to a longer budget reverses it.</p>
-<div id="996cfb34" class="cell" data-execution_count="25">
+<div id="3ab555ea" class="cell" data-execution_count="25">
 <details class="code-fold">
 <summary>The same mechanism, trained to a longer budget</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb41"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>icl_cs_long, hist_cs_long <span class="op">=</span> train_icl(base_cs, D_cs_icl, Z_cs_l, seed<span class="op">=</span><span class="dv">100</span>,</span>
@@ -1507,7 +1507,7 @@ phase-two budget 30 epochs x 100 steps: ICL-CT 240.798, difference +4.172, best 
 <section id="where-the-context-comes-from" class="level2" data-number="4.4">
 <h2 data-number="4.4" class="anchored" data-anchor-id="where-the-context-comes-from"><span class="header-section-number">4.4</span> Where the context comes from</h2>
 <p>An in-context prediction is built out of retrieved neighbours, so for a Slovak applicant it is worth asking whose experience is actually being used. The pool contains no Slovak loans by construction, so the answer has to be somebody else’s.</p>
-<div id="b127d3c6" class="cell" data-execution_count="26">
+<div id="acf6d37e" class="cell" data-execution_count="26">
 <details class="code-fold">
 <summary>The country composition of the retrieved context</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>ctx_all <span class="op">=</span> np.concatenate(ctx_cs)</span>
@@ -1549,7 +1549,7 @@ ES    0.1776</code></pre>
 <h2 data-number="5.2" class="anchored" data-anchor-id="reason-code-stability-under-a-context-re-draw"><span class="header-section-number">5.2</span> Reason-code stability under a context re-draw</h2>
 <p>The retrieval pool is resampled ten times, taking a random half of the learning sample on each draw, and every test borrower is rescored. Lecture 9 supplies the yardstick: on this book the leading adverse contribution exceeded the second by 1.043 on the log-odds scale and the second exceeded the third by 0.118. So a borrower whose log-odds moves by less than 0.118 keeps its reason-code ordering intact, and one that moves by more than 1.043 has no stable leading reason at all.</p>
 <p>The model measured has to be one that is actually doing in-context learning, so section 3.11’s actively trained state is the one re-scored below. Section 3.9’s selected state is the identity initialisation, whose ICL layers return the target token untouched, so its prediction does not depend on the pool at all and re-drawing it moves nothing by construction. Both are reported, the trained state as the measurement and the selected state as a check that the measurement is wired up correctly.</p>
-<div id="cf901d49" class="cell" data-execution_count="27">
+<div id="f545266e" class="cell" data-execution_count="27">
 <details class="code-fold">
 <summary>Ten pool re-draws on 2,000 test borrowers</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb45"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>sub <span class="op">=</span> idx_test[:<span class="dv">2000</span>]</span>
@@ -1614,7 +1614,7 @@ section 3.9's selected state, which ignores its context: 10 re-draws, 2,000 borr
 <section id="what-does-bite-the-pools-composition" class="level2" data-number="5.3">
 <h2 data-number="5.3" class="anchored" data-anchor-id="what-does-bite-the-pools-composition"><span class="header-section-number">5.3</span> What does bite: the pool’s composition</h2>
 <p>Sampling noise inside the pool turns out to be harmless. The pool’s <strong>composition</strong> is not, and section 4.5 measured that: retrieval drew 71.0 per cent of its context from Estonia against 58.1 per cent of the available pool, and it did so when pricing the segment whose default rate is four times Estonia’s.</p>
-<p>So the governance question that survives is not “does this prediction wobble when the pool is resampled?” but “whose experience is in the pool, and is it the right population for this applicant?” That is a representativeness question, and it is the one CRR Article 174(c) already asks.</p>
+<p>So the governance question that survives is not “does this prediction wobble when the pool is resampled?” but “whose experience is in the pool, and is it the right population for this applicant?” That is a representativeness question, and it is the one Article 174(c) of the Capital Requirements Regulation (CRR) already asks.</p>
 </section>
 <section id="a-prior-whose-training-data-cannot-be-shown" class="level2" data-number="5.4">
 <h2 data-number="5.4" class="anchored" data-anchor-id="a-prior-whose-training-data-cannot-be-shown"><span class="header-section-number">5.4</span> A prior whose training data cannot be shown</h2>
@@ -1658,7 +1658,7 @@ section 3.9's selected state, which ignores its context: 10 re-draws, 2,000 borr
 </section>
 <section id="copyright-and-attribution" class="level1 unnumbered">
 <h1 class="unnumbered">Copyright and attribution</h1>
-<p>The architecture, the mathematics and the notation are those of Scognamiglio, Maggi, Wüthrich and Richman, from lecture 12 of the summer school <em>Deep Learning for Actuarial Modeling</em> and from the lecture notes at <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304">SSRN 5162304</a>, provided under CC BY-NC. The credit adaptation, the implementation, the datasets and every measurement reported above are Mario Ervedosa’s, and any error in them is his.</p>
+<p>The architecture, the mathematics, and the notation are those of Scognamiglio, Maggi, Wüthrich and Richman, from lecture 12 of the summer school <em>Deep Learning for Actuarial Modeling</em> and from the lecture notes at <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5162304">SSRN 5162304</a>, provided under CC BY-NC. The credit adaptation, the implementation, the datasets, and every measurement reported above are Mario Ervedosa’s, and any error in them is his.</p>
 </section>
 <section id="references" class="level1 unnumbered">
 <h1 class="unnumbered">References</h1>
