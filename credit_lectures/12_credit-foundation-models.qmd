@@ -28,11 +28,15 @@ abstract: >
   reproduces that model exactly, which is the check to run before reading any
   attention weight, and from there five paired fits put in-context learning
   0.012 behind the base model with a paired standard deviation of 0.032. In
-  two of the five seeds no epoch beat the initialisation at all. The reason is
-  mechanical: the attention row spreads almost uniformly over a thousand
-  neighbours, its coefficient of variation is a tenth before training and a
-  tenth after, and the neighbourhood mean it delivers correlates 0.65 with
-  what the base model already predicts.
+  two of the five seeds no epoch beat the initialisation at all. Three
+  measurements say why. The paper's batch retrieval unions 200 targets'
+  neighbourhoods and caps the union at 1,000, and since 95 per cent of
+  retrieved rows are retrieved by exactly one target the cap hands the median
+  borrower three of its own sixty-four neighbours. Scoring one borrower at a
+  time against its own neighbours makes the attention row flatter still, a
+  coefficient of variation of 0.02 against 0.10, without improving the
+  deviance. And the neighbourhood mean that survives the averaging correlates
+  0.65 with what the base model already predicts.
   Credit's version of the course's limited-data problem is a cold start, and
   Bondora supplies a real one in a Slovak book of 296 loans, originated over
   ten months and then closed, defaulting at 70.6 per cent against Estonia's
@@ -615,11 +619,11 @@ Three readings follow, and the first is the one the course predicts.
 
 **TabPFN leads wherever the sample is small, and its margin closes fast.**
 At 250 training rows it reaches 113.3 against the Credibility Transformer's
-119.6, on a subsample whose null model scores 122.1. So the network has
-recovered about a fifth of the distance from the null that the foundation
-model recovers, on identical data. By 10,000 rows the three arms span 0.16
-of a deviance point in total, which is well inside the seed spread of 0.126
-and therefore not a difference at all. Consequently the pretrained prior
+119.6, on a subsample whose null model scores 122.1. So the network closes
+2.5 of the 8.8 deviance points the foundation model closes against that
+null, a little over a quarter, on identical data. By 10,000 rows the three
+arms span 0.16 of a deviance point in total, which is the same order as the
+seed spread of 0.126 and therefore not a ranking worth reading. Consequently the pretrained prior
 behaves exactly as advertised: it substitutes for data a lender does not
 have, and it stops paying once the lender has enough. The AUCs tell the same
 story more starkly, since TabPFN reaches 0.686 on 250 rows where the network
@@ -750,12 +754,13 @@ print(f"  CT, 118,933 rows  {p_full_all.mean():.5f}   "
       f"gap {p_full_all.mean() - yt.mean():+.5f}")
 ```
 
-TabPFN lands about 1.9 percentage points below the observed rate, which is
-roughly 2.3 sampling standard errors and so a real shortfall rather than
-noise, though a modest one. The Credibility Transformer's gap is about a
-third of that and the GLM's is similar, and on the full test sample, where
-the standard error is a quarter as large, the Credibility Transformer sits
-within a percentage point of the observed rate.
+TabPFN lands 1.9 percentage points below the observed rate, which is 2.3
+sampling standard errors and so a real shortfall rather than noise, though a
+modest one. The Credibility Transformer's gap is about two-fifths of that at
+1.0 standard error and the GLM's is similar at 1.2, so neither is
+distinguishable from calibrated on this sample. On the full test sample,
+where the standard error is a quarter as large, the Credibility Transformer
+sits 0.3 percentage points below the observed rate.
 
 Consequently a TabPFN score is usable for ranking and wants lecture 7's
 recalibration before any exposure is priced off it. That is the same
@@ -1240,20 +1245,149 @@ three a difference of a tenth of a point is unreadable either way.
 
 ## Why the mechanism finds nothing to add
 
-Two explanations are available and they are separable by measurement, so
-this section separates them.
+Three explanations are available, they are separable by measurement, and this
+section separates them. All three need a model that is actually doing
+in-context learning, so the first cell fits one: phase two to a fixed epoch
+budget, keeping the final state rather than the state section 3.8's selection
+rule chose. Section 5.2 reuses it.
 
-The first is that the attention row never learned anything, since section
-3.9's row was read off a model whose selected state is the initialisation.
-The test is to take the state validation rejected, meaning the final epoch
-rather than the best one, and look at its row.
+```{python}
+#| code-fold: true
+#| code-summary: "An actively trained ICL state"
+def train_phase2_fixed(base, D_, Z_pool, seed=100, kappa=1.0, epochs=8,
+                       steps=50, m=200):
+    """Phase two to a fixed epoch budget, keeping the final state.
 
-The second is that the retrieved context carries no information the base
-model lacks. Retrieval runs in the CLS token space, and the CLS token is
-what the decoder reads, so borrowers retrieved as neighbours are precisely
-those the base model already scores alike. If the mean response of a
-target's neighbours tracks the base model's own prediction, then the context
-is telling the model what it already says.
+    Section 3.8's selection rule returns the initialisation at this seed, and
+    the initialisation ignores its context by construction, so a fixed budget
+    is what produces a state whose prediction depends on its context at all.
+    """
+    il = D_["idx_learn"]
+    y_l = torch.tensor(D_["y_all"].iloc[il].to_numpy(), dtype=torch.float32)
+    model = ICLCT(base, b=base.b, kappa=kappa, seed=seed)
+    bce = torch.nn.BCELoss()
+    rng = np.random.default_rng(seed + 3)
+    tr_pos = np.random.default_rng(seed).permutation(len(il))[:int(0.9 * len(il))]
+    for prm in base.parameters():
+        prm.requires_grad_(False)
+    opt = torch.optim.AdamW([z for z in model.parameters() if z.requires_grad],
+                            lr=3e-4, weight_decay=1e-2, betas=(0.9, 0.95))
+    for _ in range(epochs):
+        model.train()
+        for _ in range(steps):
+            tgt = rng.choice(tr_pos, size=m, replace=False)
+            excl = torch.zeros(len(il), dtype=torch.bool)
+            excl[tgt] = True
+            ctx = retrieve(Z_pool[tgt], Z_pool, K=64, c_max=1000, exclude=excl)
+            opt.zero_grad()
+            bce(model(Z_pool[tgt], Z_pool[ctx], y_l[ctx]),
+                y_l[tgt].unsqueeze(1)).backward()
+            opt.step()
+    model.eval()
+    return model
+
+
+# Section 3.8's phase three can move the encoder in place, so the tokens are
+# recomputed from `base_ct` as it stands now rather than reusing section 3.7's.
+Z_pool5 = cls_tokens(base_ct, D, idx_learn)
+Z_test5 = cls_tokens(base_ct, D, idx_test)
+active = train_phase2_fixed(base_ct, D, Z_pool5, seed=100)
+p_active = predict_icl(active, Z_pool5, y_learn_t, Z_test5)
+print(f"actively trained state: out-of-sample {dev(p_active, yt):.3f} against "
+      f"the base model's {dev(p_base_t, yt):.3f}")
+```
+
+### The batch context is barely the borrower's own
+
+Section 3.1's retrieval takes each target's top $K = 64$ neighbours, unions
+them across a batch of $m = 200$ targets, and caps the union at $c = 1000$ by
+keeping the rows retrieved most often. That is the paper's procedure. Whether
+it delivers a borrower its own neighbours depends on how much the 200
+neighbourhoods overlap, which is a property of the book rather than of the
+architecture, so it is worth measuring.
+
+```{python}
+#| code-fold: true
+#| code-summary: "How much of a borrower's own neighbourhood survives the cap"
+Zq = torch.nn.functional.normalize(Z_test5[:200], dim=1)
+Zp = torch.nn.functional.normalize(Z_pool5, dim=1)
+top64 = torch.topk(Zq @ Zp.T, k=64, dim=1).indices
+uniq_r, counts_r = torch.unique(top64.reshape(-1), return_counts=True)
+kept_r = uniq_r[torch.topk(counts_r, k=min(1000, len(uniq_r))).indices]
+kept_set = set(kept_r.tolist())
+surv = np.array([len(kept_set & set(top64[i].tolist())) / 64 for i in range(200)])
+print(f"200 targets x 64 neighbours = {top64.numel():,} draws")
+print(f"  distinct rows in the union            {len(uniq_r):,}")
+print(f"  context cap                           1,000")
+print(f"  retrieval frequency: mean {counts_r.float().mean():.2f}, "
+      f"max {counts_r.max().item()}, share retrieved exactly once "
+      f"{(counts_r == 1).float().mean():.1%}")
+print(f"  share of a target's own top-64 surviving the cap: "
+      f"mean {surv.mean():.3f}, median {np.median(surv):.3f}, "
+      f"range {surv.min():.3f} to {surv.max():.3f}")
+```
+
+The 200 neighbourhoods barely overlap on this book. Almost 95 per cent of
+retrieved rows are retrieved by exactly one target and none by more than two,
+so the 12,800 draws collapse to about 12,100 distinct rows and the cap keeps
+roughly 8 per cent of them on a frequency criterion that is close to a
+tie-break. Consequently the median borrower is handed **three of its own
+sixty-four nearest neighbours**, and the mean is about eight.
+
+So the context a borrower actually receives is close to a random
+thousand-row sample of the learning book. That is not a bug in this
+implementation, since the batching is the paper's; it is a scale mismatch,
+because a union of 200 neighbourhoods only fits inside 1,000 slots when
+neighbourhoods overlap heavily, and on 118,933 loans described by eight
+covariates they do not.
+
+### Per-borrower context does not sharpen the row
+
+The obvious next question is whether the flatness of section 3.9's attention
+row is caused by that dilution. Scoring one target at a time makes the
+context exactly its own 64 neighbours, which is the sharpest context the
+mechanism can be given.
+
+```{python}
+#| code-fold: true
+#| code-summary: "Batch context against per-borrower context"
+for chunk_, label in ((200, "batch context, 200 targets"),
+                      (1, "per-borrower context, one target")):
+    p_, own_, _ = predict_icl(active, Z_pool5, y_learn_t, Z_test5[:400],
+                              chunk=chunk_, want_own=True)
+    with torch.no_grad():
+        c_ = retrieve(Z_test5[:chunk_], Z_pool5, K=64, c_max=1000)
+        _, A_ = active(Z_test5[:chunk_], Z_pool5[c_], y_learn_t[c_], want_A=True)
+    w_ = A_[:, :len(c_)].numpy()
+    print(f"{label}: {len(c_)} context instances")
+    print(f"  a_ii mean {own_.mean():.2e}   uniform would be "
+          f"{1 / (len(c_) + 1):.2e}")
+    print(f"  context weight coefficient of variation {w_.std() / w_.mean():.3f}"
+          f"   largest / mean {w_.max() / w_.mean():.2f}")
+    print(f"  deviance on 400 test rows {dev(p_, yt[:400]):.3f}   "
+          f"base {dev(p_base_t[:400], yt[:400]):.3f}   "
+          f"largest move {np.abs(p_ - p_base_t[:400]).max():.4f}")
+```
+
+It does not. Given its own 64 neighbours the row is **flatter**, with a
+coefficient of variation of about 0.02 against 0.10 for the batch context,
+and the largest weight within 2 per cent of the mean. The prediction does
+move further from the base model's, roughly twice as far, and it does not
+move to a better place: the deviance on those 400 rows is slightly worse than
+the base model's rather than better.
+
+Hence the dilution and the flatness are separate facts and neither rescues
+the mechanism. The batching does dilute the context severely, and sharpening
+it to a single borrower makes attention more uniform rather than less.
+
+### The context is a restatement of the base model's own prediction
+
+The third explanation is the one that ties the other two together. Retrieval
+runs in the CLS token space, and the CLS token is what the decoder reads, so
+borrowers retrieved as neighbours are precisely those the base model already
+scores alike. If the mean response of a target's neighbours tracks the base
+model's own prediction, the context is telling the model what it already
+says.
 
 ```{python}
 #| code-fold: true
@@ -1262,7 +1396,7 @@ ctx_rate, tgt_pred = [], []
 with torch.no_grad():
     for s in range(0, len(idx_test), 200):
         sl = slice(s, s + 200)
-        c_ = retrieve(Z_test2[sl], Z_learn2, K=64, c_max=1000)
+        c_ = retrieve(Z_test5[sl], Z_pool5, K=64, c_max=1000)
         ctx_rate.append(yl[c_.numpy()].mean())
         tgt_pred.append(p_base_t[sl].mean())
 ctx_rate, tgt_pred = np.array(ctx_rate), np.array(tgt_pred)
@@ -1274,40 +1408,27 @@ print(f"  correlation with the base model's own predicted PD: "
       f"{np.corrcoef(ctx_rate, tgt_pred)[0, 1]:+.4f}")
 ```
 
-Both measurements point the same way, and together they explain the null
-mechanically rather than leaving it as an empirical shrug.
+Retrieval does find neighbourhoods with genuinely different default rates,
+from 0.208 to 0.400 across target batches against a learning-sample rate of
+0.2888, so it is not simply returning the portfolio average. However that
+variation correlates at $+0.65$ with the base model's own predicted
+probability for the same targets, which is what searching the decoder's own
+space should produce.
 
-**Training does not sharpen the attention row.** At initialisation the
-context weights have a coefficient of variation of 0.100 and the largest is
-1.86 times the mean; after eight phase-two epochs the figures are 0.099 and
-1.97. The row is therefore about as flat after training as before it, and
-the target's own weight stays near a thousandth. Note that the state
-examined here is the one validation rejected, so this is not a case of the
-selection rule hiding a trained mechanism: the trained mechanism exists, and
-it reaches 107.362 out of sample against the base model's 107.342.
-
-**The retrieved context is largely a restatement of the base model's own
-prediction.** Retrieval finds neighbourhoods with genuinely different
-default rates, from 0.208 to 0.400 across target batches against a
-learning-sample rate of 0.2888, so it is not simply returning the portfolio
-average. However that variation correlates at $+0.65$ with the base model's
-own predicted probability for the same targets, which is what one should
-expect: retrieval runs in the CLS token space, and the CLS token is what the
-decoder reads, so two borrowers are neighbours precisely when the base model
-scores them alike.
-
-Put the two together and the mechanism's problem is visible. The decorator
-injects each neighbour's outcome with a weight that section 3.2 showed to be
-constant, attention then averages those injections almost uniformly over a
-thousand neighbours, and the resulting quantity is close to the
-neighbourhood's mean default rate. That mean is two-thirds explained by what
-the base model already predicts, so the ICL layer is offered a noisy copy of
-the base model's output and correctly learns to ignore it.
+Put the three together and the mechanism's problem is fully visible. The
+decorator injects each neighbour's outcome with a weight section 3.2 showed
+to be constant. Attention then averages those injections almost uniformly,
+whether over a diluted thousand-row sample or over a borrower's own
+sixty-four. And the quantity that survives the averaging is a neighbourhood
+mean two-thirds explained by what the base model already predicts. So the
+layer is offered a noisy copy of its own output and correctly learns to
+ignore it.
 
 This also suggests where the architecture would pay, and it is a testable
-prediction rather than a hedge. In-context learning has something to add
-when the retrieved neighbours carry information the base model cannot use:
-an unseen category, for instance, which section 4 turns to next.
+prediction rather than a hedge. In-context learning has something to add when
+the retrieved neighbours carry information the base model cannot use: an
+unseen category, for instance, which section 4 turns to next.
+
 
 # Cold start: a country with no history
 
@@ -1602,58 +1723,17 @@ the third by 0.118. So a borrower whose log-odds moves by less than 0.118
 keeps its reason-code ordering intact, and one that moves by more than 1.043
 has no stable leading reason at all.
 
-The model measured has to be one that is actually doing in-context learning.
-Section 3.9's selected state is the identity initialisation, whose ICL layers
-return the target token untouched, so its prediction does not depend on the
-pool at all and re-drawing it moves nothing by construction. Both are
-reported below, the trained state as the measurement and the selected state
-as a check that the measurement is wired up correctly.
+The model measured has to be one that is actually doing in-context learning,
+so section 3.11's actively trained state is the one re-scored below. Section
+3.9's selected state is the identity initialisation, whose ICL layers return
+the target token untouched, so its prediction does not depend on the pool at
+all and re-drawing it moves nothing by construction. Both are reported, the
+trained state as the measurement and the selected state as a check that the
+measurement is wired up correctly.
 
 ```{python}
 #| code-fold: true
-#| code-summary: "An actively trained ICL state, and ten pool re-draws"
-def train_phase2_fixed(base, D_, Z_learn, seed=100, kappa=1.0, epochs=8,
-                       steps=50, m=200):
-    """Phase two to a fixed epoch budget, keeping the final state.
-
-    Section 3.9's selection rule returns the initialisation on this seed, so
-    a fixed budget is what produces a state whose prediction depends on its
-    context at all.
-    """
-    il = D_["idx_learn"]
-    y_l = torch.tensor(D_["y_all"].iloc[il].to_numpy(), dtype=torch.float32)
-    model = ICLCT(base, b=base.b, kappa=kappa, seed=seed)
-    bce = torch.nn.BCELoss()
-    rng = np.random.default_rng(seed + 3)
-    tr_pos = np.random.default_rng(seed).permutation(len(il))[:int(0.9 * len(il))]
-    for prm in base.parameters():
-        prm.requires_grad_(False)
-    opt = torch.optim.AdamW([z for z in model.parameters() if z.requires_grad],
-                            lr=3e-4, weight_decay=1e-2, betas=(0.9, 0.95))
-    for _ in range(epochs):
-        model.train()
-        for _ in range(steps):
-            tgt = rng.choice(tr_pos, size=m, replace=False)
-            excl = torch.zeros(len(il), dtype=torch.bool)
-            excl[tgt] = True
-            ctx = retrieve(Z_learn[tgt], Z_learn, K=64, c_max=1000, exclude=excl)
-            opt.zero_grad()
-            bce(model(Z_learn[tgt], Z_learn[ctx], y_l[ctx]),
-                y_l[tgt].unsqueeze(1)).backward()
-            opt.step()
-    model.eval()
-    return model
-
-
-# Section 3.8's phase three can move the encoder in place, so the tokens are
-# recomputed from `base_ct` as it stands now rather than reusing section 3.9's.
-Z_pool5 = cls_tokens(base_ct, D, idx_learn)
-Z_test5 = cls_tokens(base_ct, D, idx_test)
-active = train_phase2_fixed(base_ct, D, Z_pool5, seed=100)
-p_active = predict_icl(active, Z_pool5, y_learn_t, Z_test5)
-print(f"actively trained ICL state: out-of-sample {dev(p_active, yt):.3f} "
-      f"against the base model's {dev(p_base_t, yt):.3f}")
-
+#| code-summary: "Ten pool re-draws on 2,000 test borrowers"
 sub = idx_test[:2000]
 Z_sub = Z_test5[:2000]
 
@@ -1666,7 +1746,7 @@ def redraw(model, label, reps=10, frac=0.5):
         L.append(logit(predict_icl(model, Z_pool5[pos], y_learn_t[pos], Z_sub)))
     L = np.vstack(L)
     sd_b, rg = L.std(0), L.max(0) - L.min(0)
-    print(f"\n{label}: {reps} re-draws, {L.shape[1]:,} borrowers")
+    print(f"{label}: {reps} re-draws, {L.shape[1]:,} borrowers")
     print(f"  per-borrower log-odds sd     mean {sd_b.mean():.4f}   "
           f"median {np.median(sd_b):.4f}   90th pct {np.percentile(sd_b, 90):.4f}")
     print(f"  per-borrower log-odds range  mean {rg.mean():.4f}   "
@@ -1677,7 +1757,8 @@ def redraw(model, label, reps=10, frac=0.5):
           f"{(rg > 1.043).mean():.1%}")
 
 
-redraw(active, "actively trained state")
+redraw(active, "section 3.11's actively trained state")
+print()
 redraw(ICLCT(base_ct, b=base_ct.b, kappa=1.0, seed=100),
        "section 3.9's selected state, which ignores its context")
 ```
@@ -1693,13 +1774,16 @@ in the 2,000 examined moves by even that much. The selected state moves by
 exactly zero, which confirms the measurement is reading the mechanism rather
 than numerical noise.
 
-The mechanism is stable because it is nearly flat. Section 3.11 measured
-attention weights whose coefficient of variation is a tenth, so the quantity
-reaching the decoder is close to the mean outcome of a thousand retrieved
-neighbours, and the mean of a thousand draws from a similar neighbourhood
-barely moves when half the pool is removed. Consequently the same flatness
-that stopped in-context learning from improving the deviance also stops it
-from destabilising the explanation. A version of this architecture that
+The mechanism is stable for the two reasons section 3.11 measured. Its
+attention row is nearly uniform, so the quantity reaching the decoder is
+close to the mean outcome of the retrieved set, and a mean over a thousand
+rows barely moves when half the pool is removed. Furthermore the retrieved
+set was never a borrower's own neighbourhood in the first place, since the
+frequency cap leaves the median borrower three of its sixty-four neighbours,
+so resampling the pool exchanges one near-random thousand-row sample for
+another and the two have almost the same mean. Consequently the same
+properties that stopped in-context learning from improving the deviance also
+stop it from destabilising the explanation. A version of this architecture that
 attended sharply to a handful of neighbours would buy more accuracy and
 would put the reason code back at risk, so the two properties trade against
 each other and a lender cannot have the first without testing for the
@@ -1805,8 +1889,8 @@ answered it differently.
 
 **A pretrained prior pays where a lender has no history.** TabPFN v2 led the
 learning curve at every sample size up to 10,000 rows, and at 250 rows it
-recovered roughly five times as much of the distance from the null model as a
-network trained on the same data. The classical estimator did not merely
+closed 8.8 deviance points against the null model where a network trained on
+the same data closed 2.5. The classical estimator did not merely
 trail there; it separated, averaging a deviance of 1,901 at 250 rows and
 behaving erratically up to 2,000, because maximum likelihood on thirty
 parameters and a few hundred observations has no mechanism to shrink.
@@ -1827,13 +1911,22 @@ the model as a mapping the lender owns.
 measurable rather than mysterious.** Five paired fits put the ICL-CT 0.012
 behind its own base model with a paired standard deviation of 0.032, and in
 two of the five seeds no epoch of either training phase beat the identity
-initialisation. The mechanism's attention row spreads almost uniformly over
-a thousand retrieved neighbours, with a coefficient of variation of a tenth
-before training and a tenth after eight epochs of it, so what reaches the
-decoder is close to the neighbourhood's mean default rate. That mean
-correlates 0.65 with what the base model already predicts, because retrieval
-searches the very space the decoder reads. The layer is therefore offered a
-noisy copy of its own output and correctly learns to ignore it.
+initialisation.
+
+Three measurements explain that, and the first was a surprise. The paper's
+batch retrieval unions 200 targets' 64 nearest neighbours and caps the union
+at 1,000, and on this book those neighbourhoods hardly overlap: 95 per cent
+of retrieved rows are retrieved by exactly one target, so the cap discards 92
+per cent of the union and hands the median borrower **three of its own
+sixty-four neighbours**. The context is therefore close to a random
+thousand-row sample of the book. Sharpening it does not help either, since
+scoring one borrower at a time against its own 64 neighbours makes the
+attention row flatter still, a coefficient of variation of 0.02 against 0.10,
+and moves the prediction to a slightly worse place rather than a better one.
+And what survives the averaging is a neighbourhood mean correlating 0.65 with
+what the base model already predicts, because retrieval searches the very
+space the decoder reads. The layer is offered a noisy copy of its own output
+and correctly learns to ignore it.
 
 The transfer also loses a component on the way in. The decorator's
 credibility weight is $v/(v+\kappa)$ in exposure, and a fixed-horizon table

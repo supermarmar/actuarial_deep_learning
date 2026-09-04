@@ -1,16 +1,17 @@
-# Credit lecture 12: overlap map, notation bridge, measured-facts contract and citation register
+# Credit lecture 12: overlap map, notation bridge, measured facts and citation register
 
 Working note for `credit_lectures/12_credit-foundation-models.qmd`, the companion to
 `lectures/12_foundation-models.html`. It records what the earlier lectures already own and
-must not be redefined, which figures must be measured before any prose is written, and which
-citations have to survive verification.
+must not be redefined, which numbers were measured before any prose was written, and which
+citations survived verification.
 
 Read this before editing the lecture. Everything settled here is settled.
 
-Written 4 September 2026, before any modelling cell existed. The measured-facts section is
-therefore a **contract** rather than a register: it names what has to be measured and the
-acceptance criterion for each. Convert each entry to a recorded figure as the lecture is
-built, and delete any entry the measurement kills.
+Planned 4 September 2026 and measured the same day. The measured-facts section began life as
+a contract naming what had to be measured; every entry has now been measured and the section
+is a register. Two entries were killed by their own measurement and both are recorded below
+under "what the measurements changed", because a claim the data refused is worth keeping as a
+warning.
 
 ## Why the lecture exists, and what it discharges
 
@@ -21,11 +22,13 @@ and Wüthrich (2025). It closes the course.
 
 Two debts in the credit series point here.
 
-- `10-11:1505ff` closes on the Credibility Transformer having competed without leading, with
-  the credibility mechanism working mechanically and buying nothing. The obvious next
-  question is whether a mechanism that retrieves **other borrowers' outcomes** at prediction
-  time does better than one that shrinks towards a learned prior. That question is this
-  lecture's.
+- `10-11` closes on the Credibility Transformer having competed without leading, with the
+  credibility mechanism working mechanically and buying nothing. Its takeaways name this
+  lecture explicitly: "Lecture 12 takes up foundation models and in-context learning, where
+  the tokenisation of section 3 becomes the interface to a pretrained model rather than a
+  component of a fitted one." The obvious next question is whether a mechanism that retrieves
+  **other borrowers' outcomes** at prediction time does better than one that shrinks towards
+  a learned prior. That question is this lecture's.
 - `03` promises the deep-learning overview's forward pointers are all discharged. Foundation
   models are the last of them.
 
@@ -40,12 +43,11 @@ closes country books, and Bondora's Slovak book is one of them.
 The lecture therefore asks one question in every act: **does a prior the model did not learn
 from this book, or context it retrieves at prediction time, buy what lecture 10-11's
 credibility gate did not?** The yardstick is stated in the abstract and again at the first
-deviance table: lecture 10-11 measured a seed standard deviation of 0.126 on this book, so
-any difference smaller than that is noise and the lecture says so.
+deviance table: lecture 10-11 measured a seed standard deviation of 0.126 on this book.
 
-**A null result is an acceptable finding and was chosen deliberately.** Mario settled this
-on 4 September 2026, before any fit was run, precisely so the lecture cannot be quietly
-reframed around whatever the numbers turn out to be.
+**A null result was accepted as a finding before any fit was run.** Mario settled this on
+4 September 2026, precisely so the lecture could not be quietly reframed around whatever the
+numbers turned out to be. It was the right call, because the tabular result is null.
 
 ### Why Slovakia carries the cold-start act
 
@@ -73,81 +75,53 @@ withdrawn country book is a real one.
 
 ## The five acts
 
-**Act one, foundation models as a model class.** Exposition, kept short, because the course
-lecture carries it and there is no credit content in the GPT series. It covers the definition,
-scale, the softmax model class, pre-training by autoregressive maximum likelihood, and the
-adaptation ladder (fine-tuning, PEFT and LoRA, in-context learning, retrieval-augmented
-generation). One credit-specific subsection maps that ladder onto credit practice: a bureau
-score is already a pre-trained prior somebody else fitted on a population you cannot inspect;
-RAG has an obvious home over a credit policy manual; and in-context learning over a retrieved
-neighbour set is what acts three and four build.
-
-**Act two, tabular foundation models, empirical on TabPFN v2.** Why tabular is different, then
-the families, then the measurement. The exhibit is a **learning curve**: TabPFN v2 against
-lecture 2's GLM and against the base Credibility Transformer of act three, all three trained on
-nested subsamples of the learning sample at roughly n = 250, 500, 1,000, 2,000, 5,000 and
-10,000, and every model scored on the series' own seed-1 test set so the deviances chain. The
-neural arm is the CT rather than lecture 6's embedded network because act three imports the CT
-class anyway, so the curve costs no second architecture. The question the curve answers is where
-the foundation model's prior stops paying, which is a credit-specific number nobody has
-published for this book. A calibration panel follows, because an IRB PD must be calibrated
-rather than merely discriminating, and TabPFN carries no offset or exposure notion with which
-to satisfy lecture 7's balance property.
-
-**Act three, the ICL credibility transformer, empirical in torch.** Component zero is the base
-CT, refit inside this lecture from lecture 10-11's `CredibilityTransformer` class. Then context
-retrieval in CLS-token space by cosine similarity, the outcome-token decorator, causal
-self-attention over `[context | target]` with the mask blocking target-target interaction, and
-the frozen decoder. The proposition is restated and then **checked numerically**: the attention
-row must satisfy $a_{i,i} + \sum_j a_{i,j} = 1$, and the lecture asks of the own-weight
-$a_{i,i}$ exactly what lecture 10-11 asked of the implicit credibility weight, namely whether
-it is a property of the borrower or of the fit.
-
-**Act four, the Slovak cold start.** Train on EE, FI and ES with Slovakia remapped to an unseen
-country level, then score the 296 Slovak loans. Null model, GLM, base CT and ICL-CT, with the
-ICL-CT's context drawn from the training distribution alone. Every figure carries a bootstrap
-interval, because a point deviance on 296 rows is not readable. The lecture also asks where the
-retrieved context comes from: if retrieval pulls Estonian neighbours for a Slovak borrower, the
-prediction is a statement about Estonians, and the borrower's own book contributed nothing.
-
-**Act five, what this costs in governance.** The closing act, and the one no insurance lecture
-can write. It measures rather than asserts, per Mario's decision of 4 September 2026.
+1. **Foundation models as a model class.** Exposition. The one credit-specific subsection maps
+   the adaptation ladder onto lending practice, and its load-bearing observation is that a
+   **bureau score is already a pretrained prior** somebody else fitted on a population the
+   lender cannot inspect. That precedent is what section 5.4 leans on.
+2. **Tabular foundation models, empirical on TabPFN v2.** A nested learning curve at six
+   sample sizes and three draws, against lecture 2's GLM and the base Credibility
+   Transformer, plus a calibration check against lecture 7's balance property.
+3. **The ICL-CT in torch**, built in five components on lecture 10-11's model, with the
+   proposition's arithmetic checked and five paired seeds.
+4. **The Slovak cold start**, with bootstrap intervals and the retrieved context's country
+   composition.
+5. **Governance**, measured rather than asserted.
 
 ## Boundaries
 
 **`10-11` owns the Credibility Transformer.** Its architecture, the feature tokeniser, the CLS
-token, the explicit Bernoulli gate and the implicit credibility weight are all built there. This
-lecture imports the class and cites backwards. It does **not** re-derive attention, layer
-normalisation or the time-distributed layer.
+token, the explicit Bernoulli gate and the implicit credibility weight are all built there.
+This lecture imports the class in a folded cell and cites backwards. It does **not** re-derive
+attention, layer normalisation or the time-distributed layer.
 
 **`06` owns entity embeddings, one-hot encoding, weight of evidence and Bühlmann credibility.**
-Cite forwards from there, never redefine.
 
 **`09` owns reason codes and variable importance.** Lecture 9 built the per-decision
 decomposition, calibrated it against noise, and established that one reason code is defensible
-on this book while three are not. Act five measures the **stability of an ICL prediction in its
-retrieved context**, which is a different quantity, and it points back to lecture 9 for the
-tested measure rather than inventing a second one.
+on this book while three are not. Section 5.2 measures the **stability of an ICL prediction
+under a re-draw of its retrieval pool**, which is a different quantity, and it uses lecture 9's
+1.043 and 0.118 log-odds gaps as its yardstick rather than inventing a second measure.
 
-**`07` owns the balance property and auto-calibration.** Act two's calibration panel applies
-that machinery and does not restate it.
+**`07` owns the balance property and auto-calibration.** Section 2.8 applies that machinery
+and does not restate it.
 
-**`R3` owns representativeness and sample design.** Its verification record already established
-that representativeness anchors on **CRR Article 174(c)** rather than 179, and that Article
-180(2)(e) carries no economic-cycle requirement. Act five cites `R3` and must not re-import the
-179 anchoring that `R3` rejected.
+**`R3` owns representativeness and sample design.** Its verification record already
+established that representativeness anchors on **CRR Article 174(c)** rather than 179, and
+that Article 180(2)(e) carries no economic-cycle requirement. Section 5.4 cites `R3` and does
+not re-import the 179 anchoring `R3` rejected.
 
-**`D1` owns the target and the exposure convention.** `default_12m` is Bondora's own flag within
-365 days, every loan in the fixed-horizon table carries the same twelve-month window by
-construction, and the declaration lag runs to a median 79 days. Act three's decorator problem
-below turns on that, so it cites `D1` rather than re-deriving it.
+**`D1` owns the target and the exposure convention.** `default_12m` is Bondora's own flag
+within 365 days and every loan in the fixed-horizon table carries the same twelve-month
+window by construction. Section 3.2's decorator problem turns on that, so it cites `D1`.
 
-**`R2` owns IRB capital.** Act five may name the regulatory PD's documentation duty; it does not
-re-run the five-step production sequence.
+**`R2` owns IRB capital.** Section 5.4 names the documentation problem; it does not re-run the
+five-step production sequence.
+
+**`S` track owns the survival estimand.** Section 3.2 names observed duration as the honest
+exposure analogue and declines to use it, because it changes the estimand.
 
 ## The exposure problem, and how the decorator resolves it
-
-This is the lecture's sharpest transfer finding and it is worth stating before any code.
 
 The insurance decorator injects the observed response into a context instance's CLS token in a
 credibility-weighted way:
@@ -155,158 +129,359 @@ credibility-weighted way:
 $$\boldsymbol{c}^{\rm decor}(\boldsymbol{x}_j) = \widehat{\boldsymbol{c}}^{\,\rm cred}(\boldsymbol{x}_j) + \frac{v_j}{v_j + \kappa}\, \boldsymbol{z}^{\rm FNN1}(Y_j),$$
 
 where $v_j$ is exposure in policy-years. The weight $v/(v+\kappa)$ is what makes this a
-credibility construction: a policy observed for a long time contributes its outcome nearly in
-full, and a policy observed briefly contributes a shrunk version.
+credibility construction.
 
-**Bondora's fixed-horizon table has no exposure.** Every loan carries the same twelve-month
-outcome window by construction, which `D1` owns. Setting $v \equiv 1$ therefore collapses the
-weight to the constant $1/(1+\kappa)$, so $\kappa$ stops being a credibility coefficient and
-becomes a plain shrinkage hyper-parameter applied identically to every context instance.
+**Bondora's fixed-horizon table has no exposure.** Setting $v \equiv 1$ collapses the weight
+to the constant $1/(1+\kappa)$, so $\kappa$ stops being a credibility coefficient and becomes
+a plain shrinkage hyper-parameter applied identically to every context instance.
 
-**Resolution.** Take $v \equiv 1$ as the primary specification and say plainly what it costs:
-the decorator's credibility weight has no borrower-level content on this table, and the lecture
-should not pretend otherwise. Name two alternatives without running them as the primary, and
-say why each is a different lecture's problem:
-
-- Observed duration from `bondora_survival.parquet`, which is the honest exposure analogue and
-  belongs to the `S` track's estimand rather than this one's.
-- `Amount` as an EAD-style weight, which measures financial rather than statistical exposure and
-  would make the decorator a loss-weighted construction rather than a credibility one.
-
-Do **not** manufacture an exposure column to make the formula look transferable.
+**Resolution, as built.** $v \equiv 1$, with the demotion stated in the lecture at first use.
+Two alternatives are named and not run: observed duration from `bondora_survival.parquet`,
+which belongs to the `S` track's estimand, and `Amount` as an EAD-style weight, which would
+make the decorator loss-weighted rather than credibility-weighted. Do **not** manufacture an
+exposure column to make the formula look transferable.
 
 ## Notation bridge
 
 | Symbol | Course | Here |
 |---|---|---|
 | $\mathcal{C}$ | prompt demonstration set | the retrieved context batch |
-| $\mathcal{D}$, $S$ | ICL context / support set | unchanged; `S` prefix in this repo means the survival track, so write "support set" in prose and never a bare $S$ |
+| $\mathcal{D}$, $S$ | ICL context / support set | "support set" in prose; a bare $S$ is never used, since `S` prefixes this repo's survival track |
 | $v_j$ | exposure in policy-years | absent by construction; $v \equiv 1$, see above |
-| $\kappa$ | credibility coefficient in the decorator | a shrinkage hyper-parameter, and the lecture says so |
+| $\kappa$ | credibility coefficient in the decorator | a shrinkage hyper-parameter, and the lecture says so at first use |
 | $\mu(\boldsymbol{x})$ | expected claim count per unit exposure | probability of default within twelve months |
-| $a_{i,j}$ | causal attention weights | unchanged |
-| $\alpha$ | Bernoulli gate probability in the base CT | unchanged from `10-11`; the drop-out rate stays $\alpha^{\rm drop}$ and lecture 6's credibility weight stays $\alpha_k$ |
-| $q$ | covariate count | unchanged, per `10-11`'s resolution |
-| $b$ | channels | unchanged, per `10-11`'s resolution |
-| $K$ | retrieved neighbours per target, **and** class count in the softmax | neighbours only; write the class count as $K^{\rm cls}$ if it is ever needed, which for a Bernoulli response it is not |
-| $c$, $m$ | context batch size, target batch size | unchanged |
-| $n$ | sample size | unchanged; act two's learning curve indexes on it |
+| $a_{i,j}$, $a_{i,i}$ | causal attention weights, own-weight | unchanged |
+| $\alpha$ | Bernoulli gate probability in the base CT | unchanged from `10-11`; lecture 6's credibility weight stays $\alpha_k$ |
+| $q$, $b$ | covariate count, channels | unchanged, per `10-11`'s resolution |
+| $K$ | retrieved neighbours per target | neighbours only; the softmax class count is written $K^{\rm cls}$ and equals 2 throughout |
+| $c$, $m$ | context batch size, target batch size | unchanged: $c = 1000$, $m = 200$, $K = 64$ |
+| $n$ | sample size | unchanged; section 2.6's learning curve indexes on it |
 
-Two resolutions worth stating. First, $S$ collides with this repo's own survival-track prefix,
-so the support set is named in words. Second, $\kappa$ keeps the course's letter and loses the
-course's meaning, which is exactly the finding above, so the lecture flags the demotion at first
-use rather than letting the symbol carry an implication the data cannot support.
+## Measured facts
 
-## Measured-facts contract
+Every figure below was measured before the prose around it was written. Deviances are on the
+series' scale, $100 \times 2 \times$ the mean Bernoulli contribution.
 
-Nothing below is a number yet. Each entry names what must be measured and what would make the
-claim reportable. Convert to recorded figures as the lecture is built, and delete any entry the
-measurement kills.
+### The two test samples, and why there are two
 
-### Act two, TabPFN v2
+TabPFN's cost grows quadratically in its context, so scoring all 29,734 test rows at every
+point on the learning curve would have dominated the render. Sections 2.6 to 2.8 therefore
+score on a **fixed random 3,000-row subsample** of the test set, and sections 3 onward return
+to the full test set.
 
-1. **The learning curve.** Out-of-sample deviance and AUC for TabPFN v2, lecture 2's GLM and
-   the base CT at each n, all on the seed-1 test set. Reportable claim: the n
-   at which TabPFN stops leading, with a repeat over at least three subsample draws so the
-   crossover is not one draw's accident.
-2. **Whether TabPFN leads at all on this book.** The course's claim is that these architectures
-   are strong on small problems and may have deficiencies on unbalanced data. Bondora's learning
-   sample runs at roughly a 29 per cent default rate, which is not the low-default case, so the
-   honest expectation is a modest edge at small n. Report what happens, including no edge.
-3. **Calibration.** Mean predicted probability against observed rate on the test set, and the
-   balance property in lecture 7's sense. Reportable claim: whether TabPFN's output satisfies it
-   without recalibration, and by how much it misses if it does not.
-4. **Cost.** Wall-clock seconds to fit and score at each n, because the practical argument for a
-   foundation model is partly that there is no fitting to do. A 2,000-row fit and 4,000-row score
-   took 23.3 seconds on MPS in the smoke test of 4 September 2026.
+| Sample | n | Observed default rate | Null deviance |
+|:---|---:|---:|---:|
+| learning | 118,933 | 0.28878 | |
+| test, full | 29,734 | | 120.808 |
+| test, 3,000-row subsample | 3,000 | 0.29933 | 122.114 |
 
-### Act three, the ICL-CT
+The subsample's observed rate carries a sampling standard error of 0.00836, which is why
+section 2.8's calibration table reports gaps in standard errors rather than in percentage
+points alone.
 
-5. **The base CT, refit here.** In-sample and out-of-sample deviance and AUC. **Do not carry
-   107.342 across from `10-11`.** The seed dispersion on this book is 0.126, so a copied figure
-   will not match and the lecture would be quoting a number it did not measure.
-6. **The attention row sums to one.** Check $a_{i,i} + \sum_{j} a_{i,j} = 1$ numerically and
-   report the maximum absolute departure. This is the proposition's own arithmetic and it is the
-   check to run before reading any weight.
-7. **The own-weight $a_{i,i}$: borrower or fit?** Mean and spread across borrowers within one
-   fit, against the spread of that mean across seeds. `10-11` found the implicit credibility
-   weight's between-fit dispersion to be 9.4 times the within-fit spread. Reportable claim
-   either way, and a repeat of that pathology one architecture up would be the stronger result.
-8. **The deviance against the series**, with a seed spread rather than a single fit, read
-   against 0.126.
+### Act two: the learning curve
 
-### Act four, the Slovak cold start
+Mean over three draws, scored on the 3,000-row subsample.
 
-9. **Four out-of-sample deviances on the 296 Slovak loans**, each with a bootstrap interval:
-   null model, GLM, base CT, ICL-CT. Reportable claim: whether any gap exceeds its interval.
-10. **Where the context comes from.** The country composition of the retrieved neighbours for
-    Slovak targets. Reportable claim: the share of retrieved context drawn from each of EE, FI
-    and ES, and what that means for a prediction described as using the borrower's own segment.
-11. **TabPFN's version of the same experiment**, giving the Slovak rows to TabPFN as context
-    directly, which is the true in-context move and has no training step at all.
+| n | GLM | CT | TabPFN v2 | GLM AUC | CT AUC | TabPFN AUC |
+|---:|---:|---:|---:|---:|---:|---:|
+| 250 | 1901.015 | 119.638 | 113.312 | 0.5685 | 0.5949 | 0.6857 |
+| 500 | 2017.065 | 117.694 | 112.100 | 0.5720 | 0.6547 | 0.6957 |
+| 1,000 | 1370.436 | 116.481 | 111.973 | 0.5860 | 0.6727 | 0.6997 |
+| 2,000 | 1299.679 | 112.951 | 111.575 | 0.6143 | 0.6877 | 0.7031 |
+| 5,000 | 111.568 | 112.170 | 111.367 | 0.7000 | 0.6937 | 0.7071 |
+| 10,000 | 111.150 | 111.093 | 110.988 | 0.7020 | 0.7032 | 0.7069 |
 
-### Act five, governance
+Four facts worth keeping.
 
-12. **Reason-code stability under context re-draw.** Re-draw the retrieved context and measure
-    how far a borrower's fitted probability moves. Reportable claim: the distribution of that
-    movement on the log-odds scale, set against lecture 9's finding that the leading contribution
-    exceeds the second by 1.043 there. If the movement is of that order, no reason code survives
-    a context re-draw, and act five can say so as a measurement.
+- **TabPFN leads at every size up to 10,000** and by 10,000 the three arms span 0.16 in total,
+  which is inside the 0.126 seed spread and therefore not a difference.
+- **The GLM separates below 5,000 rows.** Maximum likelihood on roughly thirty parameters and
+  a few hundred observations drives coefficients to infinity whenever a covariate pattern is
+  perfectly classified. The behaviour is erratic as well as bad, since whether a pattern
+  separates depends on the draw: 1,901 at 250 rows, 2,017 at 500, 1,370 at 1,000.
+- **TabPFN handed 10,000 rows reaches 110.877 and the GLM fitted on all 118,933 reaches
+  110.873.** Those two figures agreeing to 0.004 is the act's headline. The Credibility
+  Transformer on all 118,933 takes 110.363 on the same subsample and 107.342 on the full test
+  set, so twelve times TabPFN's context is worth about half a point.
+- **Cost.** TabPFN is roughly quadratic in context: 7.4 seconds at 1,000 rows, 23.9 at 5,000,
+  75 to 87 at 10,000, and 236.4 at 20,000. The curve stops at 10,000 for that reason and
+  because the v2 pretraining regime does not extend much beyond it.
+
+### Act two: calibration
+
+Mean predicted PD on the 3,000-row subsample, whose observed rate is 0.29933 with a standard
+error of 0.00836.
+
+| Model | Mean predicted PD | Gap | Gap / standard error |
+|:---|---:|---:|---:|
+| TabPFN v2, 10,000 context rows | 0.28024 | −0.01909 | −2.28 |
+| CT, 118,933 rows | 0.29116 | −0.00818 | −0.98 |
+| GLM, 118,933 rows | 0.28972 | −0.00962 | −1.15 |
+
+TabPFN's shortfall is real but modest, and the lecture says so in those terms rather than
+calling 1.9 percentage points a bias without its standard error. The point that does not
+depend on the arithmetic: **TabPFN has no parameter through which a balance correction could
+be applied**, so lecture 7's recalibration has to sit outside the model.
+
+### Act three: the ICL-CT, five paired seeds
+
+| Seed | Base CT | ICL-CT | ICL − base | Phase 2 best epoch | Phase 3 best epoch | $a_{i,i}$ |
+|---:|---:|---:|---:|---:|---:|---:|
+| 100 | 107.342 | 107.342 | 0.000 | 0 | 0 | 0.0009 |
+| 101 | 107.288 | 107.327 | +0.039 | 5 | 1 | 0.0011 |
+| 102 | 107.330 | 107.313 | −0.017 | 12 | 0 | 0.0010 |
+| 103 | 107.265 | 107.249 | −0.016 | 0 | 2 | 0.0010 |
+| 104 | 107.499 | 107.551 | +0.052 | 6 | 0 | 0.0011 |
+
+Base mean 107.345 (sd 0.092); ICL-CT mean 107.356 (sd 0.115); **paired difference +0.0115
+with a paired standard deviation of 0.0319**, so about a third of its own standard error in
+the wrong direction. Pairing is what makes the comparison readable: the unpaired seed spread
+is 0.09 here and 0.126 over lecture 10-11's ten seeds.
+
+**Phase 2 best epoch 0 at seeds 100 and 103** means no epoch beat the identity
+initialisation, so the selection rule returned the base model unchanged. At the other three
+seeds phase two did improve validation and the improvement did not reach the test set. Report
+the best-epoch column, because without it a difference of 0.000 is indistinguishable from a
+mechanism that trained and happened to tie.
+
+### Act three: why the mechanism finds nothing, in three measurements
+
+**This section was rewritten on 4 September 2026 after review.** The first draft attributed
+the null result to attention flatness alone. A reviewer asked whether the batch retrieval was
+delivering per-borrower context at all, and the measurement said it largely is not, which is
+the lecture's most novel finding and was nearly missed.
+
+**1. The batch context is barely the borrower's own.** Retrieval takes each target's top
+$K = 64$ neighbours, unions them across $m = 200$ targets and caps the union at $c = 1000$ by
+retrieval frequency. On this book:
+
+| Quantity | Value |
+|:---|---:|
+| draws (200 × 64) | 12,800 |
+| distinct rows in the union | 12,145 |
+| context cap | 1,000 |
+| mean retrieval frequency | 1.05 |
+| maximum retrieval frequency | 2 |
+| share of rows retrieved exactly once | 94.6% |
+| share of a target's own top-64 surviving the cap, mean | 0.129 |
+| the same, median | 0.047 |
+| the same, range | 0.000 to 0.766 |
+
+So the median borrower receives **three of its own sixty-four nearest neighbours**, the cap
+discards 92 per cent of the union, and it does so on a criterion that is close to a tie-break
+because almost nothing is retrieved more than once. The context a borrower actually gets is
+near a random thousand-row sample of the learning book. This is the paper's own batching, so
+it is a **scale mismatch** rather than an implementation error: a union of 200 neighbourhoods
+fits inside 1,000 slots only when neighbourhoods overlap heavily, and on 118,933 loans with
+eight covariates they do not.
+
+**2. Per-borrower context does not sharpen the row.** Scoring one target at a time gives it
+exactly its own 64 neighbours, which is the sharpest context available.
+
+| | Batch context (200 targets) | Per-borrower context |
+|:---|---:|---:|
+| context instances | 1,000 | 64 |
+| $a_{i,i}$ mean | $9.06 \times 10^{-4}$ | $1.50 \times 10^{-2}$ |
+| uniform weight | $9.99 \times 10^{-4}$ | $1.54 \times 10^{-2}$ |
+| context weight coefficient of variation | 0.099 | 0.023 |
+| largest weight / mean | 1.97 | 1.02 |
+| deviance on 400 test rows | 102.024 | 102.201 |
+| base model on the same 400 rows | 102.052 | 102.052 |
+| largest move from the base model | 0.0195 | 0.0419 |
+
+The row is **flatter** with per-borrower context, and the prediction moves about twice as far
+from the base model's without moving anywhere better. Dilution and flatness are therefore
+separate facts and neither rescues the mechanism.
+
+**3. The context restates the base model's own prediction.** Retrieved-context default rate
+per 200-target batch: mean 0.2874, sd 0.0330, range 0.2080 to 0.4000, against a
+learning-sample rate of 0.2888, correlating **+0.6535** with the base model's own predicted PD
+for the same targets. Retrieval searches the CLS token space and the decoder reads the CLS
+token, so neighbours are by construction the borrowers the base model scores alike.
+
+### Act three: the mechanism's arithmetic and its flatness
+
+- Identity initialisation is exact: max $|p_{\rm ICL} - p_{\rm base}| = 1.19 \times 10^{-7}$.
+- Attention rows sum to one within $3.58 \times 10^{-7}$ to $4.77 \times 10^{-7}$.
+- Target-to-target attention weights are **exactly zero**, which is the mask working.
+- A uniform row over $c + 1 = 1001$ entries would give $9.99 \times 10^{-4}$ to every entry.
+  The measured context-weight mean is $9.99 \times 10^{-4}$.
+- Own-weight $a_{i,i}$ at seed 100: mean $9.23 \times 10^{-4}$, sd $1.60 \times 10^{-4}$.
+- Coefficient of variation of the context weights: **0.100 at initialisation and 0.099 after
+  eight phase-two epochs**; largest weight 1.86 then 1.97 times the mean. Training does not
+  sharpen the row.
+- The last-epoch phase-two state, which validation rejected, scores **107.362** against the
+  base model's 107.342.
+- Retrieved-context default rate per 200-target batch: mean 0.2874, sd 0.033, range 0.208 to
+  0.400, against a learning-sample rate of 0.2888. It correlates **+0.6535** with the base
+  model's own predicted PD for the same targets.
+
+Together with the three measurements above these give the null result a mechanism: the
+decorator's weight is constant, the retrieved set is barely the borrower's own, attention
+averages the injected outcomes almost uniformly either way, and the resulting neighbourhood
+mean is two-thirds explained by what the base model already predicts.
+
+### Act four: the Slovak cold start
+
+118,702 learning rows, of which 2,929 relabelled *unseen*; 296 Slovak test loans at an
+observed rate of 0.7061 against a learning-sample rate of 0.2879.
+
+| Model | Deviance | 95% bootstrap CI | AUC | Mean predicted PD |
+|:---|---:|:---|---:|---:|
+| null model | 195.781 | [185.992, 204.958] | | 0.2879 |
+| logistic GLM | 185.720 | [175.523, 195.438] | 0.6233 | 0.3084 |
+| base CT | 236.626 | [219.568, 253.366] | 0.5497 | 0.2189 |
+| ICL-CT, 20 × 50 | 234.636 | [217.776, 251.201] | 0.5529 | 0.2240 |
+| ICL-CT, 30 × 100 | 240.798 | | 0.5435 | 0.2135 |
+
+Paired against the base CT over the same 296 loans: the 20 × 50 budget gives **−1.990**
+[−2.913, −1.052], improving in 100 per cent of 2,000 resamples and stopping at epoch 6; the
+30 × 100 budget gives **+4.172** [3.450, 4.920], improving in 0 per cent and stopping at
+epoch 11.
+
+Retrieved context by country, pooled over target batches, against the pool it was drawn from:
+
+| Country | Retrieved share | Pool share | Default rate |
+|:---|---:|---:|---:|
+| EE | 0.710 | 0.5810 | 0.1703 |
+| FI | 0.141 | 0.2415 | 0.3784 |
+| ES | 0.149 | 0.1776 | 0.5543 |
+
+Four findings, and the second is the one to quote.
+
+- **Every model under-predicts by around forty percentage points**, so no mechanism here
+  repairs a level error of that size.
+- **Both networks are decisively worse than the null model**, 236.6 and 234.6 against 195.8,
+  with non-overlapping intervals. Predicting the portfolio average for every Slovak applicant
+  would have beaten either fitted network.
+- **Only the GLM beats the null**, 185.7 against 195.8, and the intervals overlap, so even
+  that is not established on 296 loans.
+- **Retrieval imports the wrong country's experience**, over-weighting Estonia by about
+  thirteen percentage points while pricing a segment whose default rate is four times
+  Estonia's. The cause is structural: similarity is measured in the CLS token space of the
+  model that is wrong about the segment, so the retrieved neighbours are the applicants that
+  model also scores low, and their outcomes confirm the prediction that selected them.
+
+### Act five: reason-code stability under a context re-draw
+
+Ten re-draws taking a random half of the learning sample, 2,000 test borrowers, measured on
+the **actively trained** phase-two state, which scores 107.362 against the base model's
+107.342.
+
+| Statistic | Active ICL state | Selected state |
+|:---|---:|---:|
+| per-borrower log-odds sd, mean | 0.0007 | 0.0000 |
+| per-borrower log-odds sd, median | 0.0006 | 0.0000 |
+| per-borrower log-odds sd, 90th percentile | 0.0011 | 0.0000 |
+| per-borrower log-odds range, mean | 0.0023 | 0.0000 |
+| per-borrower log-odds range, max | 0.0072 | 0.0000 |
+| share moving more than 0.118 | 0.0% | 0.0% |
+| share moving more than 1.043 | 0.0% | 0.0% |
+
+Against lecture 9's 1.043 between the leading and second reason codes, and 0.118 between the
+second and third, the re-draw moves nothing. **The stability and the null result are the same
+fact**: a near-uniform average over a thousand neighbours barely moves when half the pool is
+removed. A variant attending sharply to a handful of neighbours would buy accuracy and would
+put the reason code back at risk, so the two properties trade against each other.
+
+## What the measurements changed
+
+Two planned claims did not survive, and both are recorded because the wrong version is the
+intuitive one.
+
+**The governance claim reversed.** The plan expected the re-draw to destabilise the
+prediction, on the argument that an in-context prediction depends on which other borrowers
+were retrieved. The measurement says the opposite by three orders of magnitude, and the
+lecture now leads on why: the same flatness that denied the mechanism any accuracy also makes
+it stable. The prose was rewritten after the measurement rather than around it.
+
+**The seed-100 re-draw of zero is an artefact, not a result.** Because the selection rule
+returned the identity initialisation at that seed, the model's ICL layers return the target
+token untouched and the prediction cannot depend on the pool at all. Reporting that zero as
+evidence of stability would have been badly misleading. Section 5.2 therefore measures the
+actively trained state and reports the selected state alongside it as a wiring check. Anyone
+editing that section must keep both rows.
+
+**A third claim was incomplete and review caught it.** The first draft explained the null
+result by attention flatness alone. The batch-retrieval measurement above shows the context is
+also heavily diluted, and the two are independent: sharpening the context to one borrower
+makes the row flatter, not sharper. Anyone editing section 3.11 must keep all three
+subsections, because dropping the retrieval one restores a claim the data only half supports.
+
+One planned claim was sharpened rather than killed. The plan said in-context learning would
+"move the deviance by less than the seed spread". The measurement supports a stronger and more
+precise statement, namely that in two of five seeds no epoch beat the identity initialisation,
+and where epochs did beat it on validation they lost out of sample.
 
 ## Citation register
 
-Every entry must be verified against primary text before it enters the lecture. Nothing here is
-verified yet.
+**Verified as the version the lecture cites.** TabPFN v2 is Hollmann et al. (2025), *Nature*
+637(8045) 319-326, and the checkpoint the lecture loads is the v2 classifier, so the citation
+and the code agree. The ICL-CT is Padayachy, Richman, Scognamiglio and Wüthrich (2025),
+arXiv 2509.08122. The Credibility Transformer is Richman, Scognamiglio and Wüthrich (2025),
+*European Actuarial Journal*.
 
-**Carried from the course lecture and to be checked against the arXiv or journal record:**
-Vaswani et al. (2017); Brown et al. (2020); Kaplan et al. (2020); Hoffmann et al. (2022);
-Devlin et al. (2019); Su et al. (2021); Radford et al. (2018, 2019); Ouyang et al. (2022);
-OpenAI (2023); Huang et al. (2020) for TabTransformer; Gorishniy, Rubachev, Khrulkov and
-Babenko (2021) for the FT-Transformer; Wang and Sun (2022) for TransTab; Müller et al. (2021)
-and Hollmann et al. (2022) for the prior-data fitted network; Hollmann et al. (2025), *Nature*
-637(8045) 319-326, for TabPFN v2; Qu, Holzmüller, Varoquaux and Le Morvan (2025) for TabICL;
-Helli et al. (2024) for drift-resilient TabPFN; Feuer et al. (2024) for TuneTables; Bühlmann
-(1967); Richman, Scognamiglio and Wüthrich (2025) for the Credibility Transformer; Padayachy,
-Richman, Scognamiglio and Wüthrich (2025), arXiv 2509.08122, for the ICL-CT.
+**Corrected, and the correction must not be lost.** The course attributes feature tokenisation
+to TabM; it belongs to the **FT-Transformer** of Gorishniy, Rubachev, Khrulkov and Babenko
+(2021). `notes/transformer-lecture-structure.md` records the verification, and section 2.3
+states the correction explicitly rather than repeating the course's attribution.
 
-**Already corrected in this series, and the correction must not be lost.** The course
-attributes feature tokenisation to TabM; it belongs to the FT-Transformer of Gorishniy,
-Rubachev, Khrulkov and Babenko (2021). `notes/transformer-lecture-structure.md` records the
-verification, so cite that correction rather than repeating the course's attribution.
+**Regulatory.** Two citations, both reused from verifications this series already performed
+rather than re-sourced from secondary material.
 
-**Regulatory, for act five, each to be verified against primary text:**
-
-- **UK GDPR Articles 22A to 22D**, substituted for the former Article 22 by the Data (Use and
-  Access) Act 2025 and in force in that form since 5 February 2026. The `09` note records the
-  verification and warns that much of the secondary literature still quotes the superseded
-  wording. Reuse that verification; do not re-source it from secondary material.
 - **CRR Article 174(c)** as the representativeness anchor, per `R3`. Article 179 is **not** the
-  anchor and Article 180(2)(e) carries **no** economic-cycle requirement, both of which `R3`
-  established against primary text.
-- Any documentation duty cited for a model whose training data cannot be shown must be quoted
-  from primary text or dropped. A synthetic-prior model is a genuinely awkward case and the
-  temptation to overstate the regulatory position is the risk to guard against.
+  anchor and Article 180(2)(e) carries **no** economic-cycle requirement.
+- **UK GDPR Articles 22A to 22D**, substituted for the former Article 22 by the Data (Use and
+  Access) Act 2025 and in force in that form since 5 February 2026, per `09`. Much of the
+  secondary literature still quotes the superseded Article 22 wording.
 
-**Deliberately absent.** No competitor citation, per `~/.claude/rules/no-competitor-citations.md`.
-No vendor claim about a tabular foundation model's production readiness.
+Section 5.4 deliberately **declines to resolve** whether pretrained weights are method or data
+for the purposes of Article 174(c), and says so, because the question is a supervisory
+judgement rather than a statistical one. That is a decision, not an omission.
 
-## Render cost
+**Deliberately absent.** No competitor citation, per
+`~/.claude/rules/no-competitor-citations.md`. No vendor claim about a tabular foundation
+model's production readiness. TabICL, TuneTables and drift-resilient TabPFN are cited as
+literature and not run, since none is needed for a question the learning curve settles.
 
-Budget: **up to roughly thirty minutes** on this machine, settled 4 September 2026.
+## Render cost and the reuses that must not be tidied apart
 
-The plan that fits it: act two's learning curve at six values of n over three subsample draws,
-each TabPFN call costing seconds rather than minutes; act three's base CT plus the ICL-CT over
-five seeds; act four's cold-start refits on the three-country training set; and act five reusing
-act three's fitted ICL-CT rather than refitting.
+Budget: up to roughly thirty minutes, settled 4 September 2026. The fits are:
 
-Record the reuses here as they are made, the way `10-11` does, so a later tidy-up does not
-silently turn one fit into three. Tune the seed counts to the budget rather than the budget to
-the seed counts, and say in the lecture how many seeds each figure rests on.
+- **Act two**, 18 Credibility Transformer fits on nested subsamples (six sizes, three draws),
+  18 TabPFN calls and 18 GLM fits, then one full-sample GLM, one full-sample CT and one
+  TabPFN call at 10,000 rows.
+- **Act three**, four further CT fits at seeds 101 to 104, each with an ICL-CT on top.
+- **Act four**, one CT fit on the three-country learning sample and two ICL-CT fits on it, one
+  per training budget.
+- **Act three, section 3.11**, one phase-two ICL fit to a fixed epoch budget, plus the
+  per-borrower scoring of 400 test rows at `chunk=1`.
+- **Act five** refits nothing; it reuses section 3.11's fixed-budget state.
+
+Three reuses keep the count down and each would silently become a second fit if somebody
+"tidied" it.
+
+1. **The seed-100 base CT is fitted once, in section 2.7, and reused as section 3.1's base
+   model.** Section 3.1 says so in the prose. Do not re-fit it there.
+2. **Section 3.9's seed-100 row reuses section 3.7's fit** rather than repeating it inside the
+   five-seed loop.
+3. **Act four's 20 × 50 ICL-CT is the model whose context composition section 4.5 reports.**
+4. **Section 3.11's fixed-budget state is section 5.2's re-draw subject**, and `Z_pool5` and
+   `Z_test5` are computed once in 3.11 and reused in 5.2.
+
+One correctness note about ordering, which is easy to break. Phase three unfreezes the encoder
+and `train_icl` restores the selected state into the whole module, base included, so
+`base_ct` after section 3.7 is the encoder as at the selected epoch rather than as fitted.
+Section 3.11 therefore **recomputes** its CLS tokens from `base_ct` instead of reusing section
+3.7's, and the cell carries a comment saying why; section 5.2 then reuses 3.11's. Reusing the earlier tokens would be correct
+today, because seed 100 selects epoch 0 in both phases, and would silently go stale the moment
+a seed changed.
 
 ## Environment note
 
 `tabpfn` 8.5.0 was installed into `.venv` on 4 September 2026 under the render-only precedent
-that CLAUDE.md already records for `pyyaml`, `nbformat` and `nbclient`. It adds nothing to
+CLAUDE.md already records for `pyyaml`, `nbformat` and `nbclient`. It adds nothing to
 `requirements.txt` and it upgraded none of the course pins: `torch` 2.11.0, `polars` 1.40.1,
 `scikit-learn` 1.8.0 and `statsmodels` 0.14.6 all survive the install. It pulls `lightgbm`,
 `mlx` and `huggingface-hub` as dependencies of its own.
@@ -317,22 +492,26 @@ Two traps, both found on 4 September 2026 and both costly to rediscover.
   which is a gated HuggingFace repository and fails with `TabPFNHuggingFaceGatedRepoError`
   unless the user has accepted its terms and authenticated. Pass
   `model_path="tabpfn-v2-classifier.ckpt"` to select the **v2** checkpoint, which is ungated,
-  downloads without credentials, and is the version the course actually cites (Hollmann et al.
-  2025).
-- **Do not pin `tabpfn` 2.x.** Version 2.2.1 carries the ungated weights directly, and
-  installing it downgrades `scikit-learn` to 1.6.1. Restoring the 1.8.0 pin then breaks
-  `tabpfn` outright with an `ImportError` on `_is_pandas_df`. The 8.5.0-with-v2-checkpoint route
-  is what keeps both the course pins and the cited model version.
+  downloads without credentials, and is the version the course cites.
+- **Do not pin `tabpfn` 2.x.** Version 2.2.1 carries ungated weights directly and downgrades
+  `scikit-learn` to 1.6.1. Restoring the 1.8.0 pin then breaks `tabpfn` outright with an
+  `ImportError` on `_is_pandas_df`. The 8.5.0-with-v2-checkpoint route is what keeps both the
+  course pins and the cited model version.
 
 TabPFN also refuses to run on CPU above 1,000 samples unless `ignore_pretraining_limits=True`
-is set. Use `device="mps"` on this machine, per CLAUDE.md's Apple silicon note.
+is set, and it takes `device="mps"` on this machine per CLAUDE.md's Apple silicon note.
+
+One naming trap in the lecture's own code: `patsy` exports `C()` for a categorical contrast, so
+a module aliased to `C` shadows it and the design-matrix build fails with
+`'module' object is not callable`. The lecture builds its design matrix in the same cell that
+uses `C(Education)`, so this only bites in scratchpad scripts, where it cost a debugging cycle.
 
 ## Deliverables
 
-1. `credit_lectures/12_credit-foundation-models.qmd`.
+1. `credit_lectures/12_credit-foundation-models.qmd`. Done.
 2. Rendered HTML via `bash scripts/render_lecture.sh`, never bare `quarto render`.
 3. PDF via `bash scripts/html_to_pdf.sh`, with a page of mathematics opened and eyeballed,
    because a slow MathJax CDN yields raw TeX in a PDF that still exits zero.
-4. This note, converted from contract to register.
+4. This note, converted from contract to register. Done.
 5. An `index.html` entry, and the lecture count moved from eighteen to nineteen there and in
-   CLAUDE.md's directory table, with a results summary in the table entry in the house pattern.
+   CLAUDE.md's directory table, with a results summary in the table entry.
